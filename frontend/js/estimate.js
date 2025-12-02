@@ -595,7 +595,8 @@ const EstimateManager = {
             this.initPropertiesTabs();
 
             if (hasIfc && estimate.xktFileUrl) {
-                await this.loadIfcViewer(estimate.id, `http://localhost:3001/${estimate.xktFileUrl}`);
+                const xktPath = estimate.xktFileUrl.startsWith('/') ? estimate.xktFileUrl : `/${estimate.xktFileUrl}`;
+                await this.loadIfcViewer(estimate.id, xktPath);
             } else {
                 const statusText = document.getElementById('ifc-status-text');
                 const overlay = document.getElementById('ifc-viewer-overlay');
@@ -3370,8 +3371,8 @@ const EstimateManager = {
                 
                 // Автоматически открываем 3D viewer с загруженной моделью, если находимся внутри раздела
                 if (!stayOnList && result.estimate.xktFileUrl) {
-                    const fullXktUrl = `http://localhost:3001/${result.estimate.xktFileUrl}`;
-                    await this.loadIfcViewer(estimateId, fullXktUrl);
+                    const xktPath = result.estimate.xktFileUrl.startsWith('/') ? result.estimate.xktFileUrl : `/${result.estimate.xktFileUrl}`;
+                    await this.loadIfcViewer(estimateId, xktPath);
                 }
                 
                 if (stayOnList) {
@@ -3406,7 +3407,8 @@ const EstimateManager = {
             
             if (statusText) statusText.textContent = 'Загрузка модели...';
             
-            const fullUrl = xktUrl.startsWith('http') ? xktUrl : `http://localhost:3001${xktUrl}`;
+            // Используем относительный путь для работы на любом хосте
+            const fullUrl = xktUrl.startsWith('http') ? xktUrl : (xktUrl.startsWith('/') ? xktUrl : `/${xktUrl}`);
             await IFCViewerManager.loadXKT(fullUrl, `estimate-${estimateId}`);
             
             if (overlay) overlay.style.display = 'none';

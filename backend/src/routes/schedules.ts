@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
       where: projectId ? { projectId: String(projectId) } : undefined,
       include: {
         project: true,
+        block: true,
         _count: {
           select: { items: true },
         },
@@ -67,7 +68,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/schedules - Создать новый график
 router.post('/', async (req, res) => {
   try {
-    const { projectId, name, description, startDate, endDate, status } = req.body;
+    const { projectId, blockId, name, description, startDate, endDate, status } = req.body;
 
     if (!projectId || !name || !startDate || !endDate) {
       return res.status(400).json({
@@ -78,13 +79,14 @@ router.post('/', async (req, res) => {
     const schedule = await prisma.schedule.create({
       data: {
         projectId,
+        blockId: blockId || null,
         name,
         description,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         status: status || 'draft',
       },
-      include: { project: true },
+      include: { project: true, block: true },
     });
 
     res.status(201).json(schedule);

@@ -53,6 +53,7 @@ model Block {
   // Связи
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   estimates   Estimate[]
+  schedules   Schedule[]  // Графики блока
   
   @@index([projectId])
 }
@@ -200,6 +201,7 @@ model Resource {
 model Schedule {
   id          String   @id @default(uuid())
   projectId   String
+  blockId     String?  // Связь с блоком
   name        String   // Название графика
   description String?
   startDate   DateTime
@@ -210,9 +212,11 @@ model Schedule {
   
   // Связи
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  block       Block?   @relation(fields: [blockId], references: [id], onDelete: SetNull)
   items       ScheduleItem[]
   
   @@index([projectId])
+  @@index([blockId])
 }
 
 // ========================================

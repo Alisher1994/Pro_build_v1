@@ -905,12 +905,27 @@ const EstimateManager = {
         // section = это наш ЭТАП (EstimateSection в БД)
         const stages = await api.getStages(section.id);  // stages = виды работ
         
+        // Вычисляем сумму всех видов работ для этого этапа
+        let calculatedSectionTotal = 0;
+        for (const stage of stages) {
+            // Получаем ресурсы для каждого вида работ
+            const workTypes = await api.getWorkTypes(stage.id);
+            let stageTotal = 0;
+            for (const wt of workTypes) {
+                stageTotal += (wt.totalCost || 0);
+            }
+            calculatedSectionTotal += stageTotal > 0 ? stageTotal : (stage.totalCost || 0);
+        }
+        
+        // Используем вычисленную сумму, если она больше 0
+        const displaySectionTotal = calculatedSectionTotal > 0 ? calculatedSectionTotal : (section.totalCost || 0);
+        
         let html = `
             <div class="tree-item stage-item" data-stage-id="${section.id}" style="margin-bottom: 6px; background: var(--white); border: 1px solid var(--gray-200); border-radius: 6px; overflow: hidden;">
                 <div class="stage-header" style="display: flex; align-items: center; padding: 10px 12px; background: linear-gradient(to bottom, #f8f9fa, #e9ecef); border-bottom: 1px solid var(--gray-300);">
                     <span class="collapse-icon" onclick="EstimateManager.toggleStageInTree('${section.id}')" style="margin-right: 10px; cursor: pointer; font-size: 14px; user-select: none;">▶</span>
                     <span class="stage-name-editable" data-stage-id="${section.id}" style="flex: 1; cursor: text; font-weight: 600; font-size: 13px; color: var(--gray-900); padding: 2px 6px; border-radius: 3px; transition: background 0.2s;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${section.name}</span>
-                    <span class="stage-total-cost" style="font-size: 12px; color: var(--primary); font-weight: 600; margin-right: 8px;">${UI.formatCurrency(section.totalCost, this.currentProject?.currency)}</span>
+                    <span class="stage-total-cost" style="font-size: 12px; color: var(--primary); font-weight: 600; margin-right: 8px;">${UI.formatCurrency(displaySectionTotal, this.currentProject?.currency)}</span>
                     <button onclick="EstimateManager.createWorkTypeForStage('${section.id}'); event.stopPropagation();" class="btn-icon-small" style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--primary); background: var(--white); color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; margin-right: 4px; font-size: 16px; font-weight: bold;" title="Добавить вид работ">+</button>
                     <button onclick="EstimateManager.deleteStageFromEstimate('${section.id}'); event.stopPropagation();" class="btn-icon-small" style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--red-500); background: var(--white); color: var(--red-500); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px;" title="Удалить этап">×</button>
                 </div>
@@ -961,22 +976,30 @@ const EstimateManager = {
         
         // WorkTypes здесь - это фактически ресурсы
         let allResources = [];
+        let calculatedTotal = 0; // Вычисляем сумму на фронтенде
+        
         for (const wt of workTypes) {
             // WorkType тут используется как Resource
             const parsedIfcElements = this.parseIfcElements(wt.ifcElements);
+            const resourceTotal = wt.totalCost || 0;
+            calculatedTotal += resourceTotal;
+            
             allResources.push({
                 id: wt.id,
                 name: wt.name,
                 description: wt.description || '',
                 quantity: wt.quantity || 0,
                 unitCost: wt.unitCost || 0,
-                totalCost: wt.totalCost || 0,
+                totalCost: resourceTotal,
                 unit: wt.unit || 'шт',
                 type: 'material', // по умолчанию
                 ifcElements: parsedIfcElements,
                 ifcProperties: wt.ifcProperties || null,
             });
         }
+        
+        // Используем вычисленную сумму, если она больше 0, иначе берем из stage
+        const displayTotal = calculatedTotal > 0 ? calculatedTotal : (stage.totalCost || 0);
         
         const UNITS = ['шт', 'м', 'м²', 'м³', 'кг', 'т', 'л', 'комплект', 'услуга'];
         
@@ -985,7 +1008,7 @@ const EstimateManager = {
                 <div class="work-type-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                     <span class="collapse-icon-wt" onclick="EstimateManager.toggleWorkTypeInTree('${stage.id}')" style="cursor: pointer; font-size: 12px; user-select: none; width: 16px; text-align: center;">${allResources.length > 0 ? '▶' : '•'}</span>
                     <span class="wt-name-editable" data-wt-id="${stage.id}" style="flex: 1; cursor: text; font-size: 13px; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-200)'" onmouseout="this.style.background='transparent'">${stage.name}</span>
-                    <span class="wt-total-cost" style="font-size: 11px; color: var(--primary); font-weight: 600; min-width: 80px; text-align: right;">${UI.formatCurrency(stage.totalCost, this.currentProject?.currency)}</span>
+                    <span class="wt-total-cost" style="font-size: 11px; color: var(--primary); font-weight: 600; min-width: 80px; text-align: right;">${UI.formatCurrency(displayTotal, this.currentProject?.currency)}</span>
                     <button onclick="EstimateManager.createResourceForStage('${stage.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--primary); background: var(--white); color: var(--primary); cursor: pointer; font-size: 14px; font-weight: bold;" title="Добавить ресурс">+</button>
                     <button onclick="EstimateManager.deleteWorkTypeFromStage('${stage.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--red-500); background: var(--white); color: var(--red-500); cursor: pointer; font-size: 16px;" title="Удалить вид работ">×</button>
                 </div>

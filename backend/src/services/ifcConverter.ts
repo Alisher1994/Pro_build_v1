@@ -7,6 +7,22 @@ export interface ConvertOptions {
   outputDir: string;
 }
 
+// Проверка что файл действительно XKT (начинается с правильной сигнатуры)
+function isValidXkt(filePath: string): boolean {
+  try {
+    const buffer = Buffer.alloc(4);
+    const fd = fs.openSync(filePath, 'r');
+    fs.readSync(fd, buffer, 0, 4, 0);
+    fs.closeSync(fd);
+    
+    // XKT файл начинается с версии (маленькое число 1-12)
+    const version = buffer.readUInt32LE(0);
+    return version >= 1 && version <= 12;
+  } catch {
+    return false;
+  }
+}
+
 export async function convertIfcToXkt(options: ConvertOptions): Promise<string> {
   const { ifcPath, outputDir } = options;
 
@@ -29,19 +45,27 @@ export async function convertIfcToXkt(options: ConvertOptions): Promise<string> 
   const xktPath = path.join(outputDir, xktFileName);
 
   try {
-    // Используем xeokit-convert через CLI с правильными флагами
+    // Используем xeokit-convert через CLI
     const convertCmd = `npx @xeokit/xeokit-convert -s "${ifcPath}" -o "${xktPath}" -l`;
     
     console.log('⚙️ Выполнение команды:', convertCmd);
     
     execSync(convertCmd, {
-      stdio: 'inherit',
+      stdio: 'pipe', // Захватываем вывод
       cwd: path.join(__dirname, '../..'),
+      timeout: 120000, // 2 минуты таймаут
     });
 
     // Проверяем что XKT файл создан
     if (!fs.existsSync(xktPath)) {
       throw new Error('XKT файл не был создан');
+    }
+
+    // Проверяем что это действительно XKT файл
+    if (!isValidXkt(xktPath)) {
+      console.error('❌ Созданный файл не является валидным XKT');
+      fs.unlinkSync(xktPath); // Удаляем невалидный файл
+      throw new Error('Конвертация не удалась: файл не является валидным XKT');
     }
 
     const stats = fs.statSync(xktPath);

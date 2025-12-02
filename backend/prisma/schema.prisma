@@ -1,0 +1,352 @@
+// ========================================
+// ProBIM Database Schema
+// Полная иерархия: Объект > Блок > Смета > Разделы > Этапы > Виды работ > Ресурсы
+// ========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// 1. ОБЪЕКТ (Проект)
+// ========================================
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  address     String?
+  client      String?
+  currency    String   @default("RUB") // RUB, UZS, USD, EUR, KGS, KZT, etc.
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("planning") // planning, in_progress, completed, on_hold
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  blocks      Block[]
+  estimates   Estimate[]
+  schedules   Schedule[]
+  supplies    Supply[]
+  finances    Finance[]
+}
+
+// ========================================
+// 2. БЛОК (Здание/Корпус)
+// ========================================
+model Block {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  floors      Int      @default(1)
+  area        Float?   // Площадь в м²
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  estimates   Estimate[]
+  
+  @@index([projectId])
+}
+
+// ========================================
+// 3. СМЕТА (для блока)
+// ========================================
+model Estimate {
+  id          String   @id @default(uuid())
+  projectId   String
+  blockId     String
+  name        String
+  description String?
+  totalCost   Float    @default(0)
+  status      String   @default("draft") // draft, approved, in_progress, completed
+  
+  // IFC модель для всей сметы
+  ifcFileUrl  String?  // Путь к IFC файлу
+  xktFileUrl  String?  // Путь к конвертированному XKT файлу
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  block       Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  sections    EstimateSection[]
+  
+  @@index([projectId])
+  @@index([blockId])
+}
+
+// ========================================
+// 4. РАЗДЕЛ СМЕТЫ (АР, КЖ, КМ, ОВ, ВК и т.д.)
+// ========================================
+model EstimateSection {
+  id          String   @id @default(uuid())
+  estimateId  String
+  code        String   // "АР", "КЖ", "КМ", "ОВ", "ВК", "ЭОМ", "БЛАГ" и т.д.
+  name        String   // Полное название раздела
+  description String?
+  totalCost   Float    @default(0)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  stages      EstimateStage[]
+  
+  @@index([estimateId])
+}
+
+// ========================================
+// 5. ЭТАП РАБОТ (внутри раздела)
+// ========================================
+model EstimateStage {
+  id          String   @id @default(uuid())
+  sectionId   String
+  name        String   // "Подготовительные работы", "Основные работы", "Отделочные работы"
+  description String?
+  totalCost   Float    @default(0)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  section     EstimateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  workTypes   WorkType[]
+  
+  @@index([sectionId])
+}
+
+// ========================================
+// 6. ВИД РАБОТ (внутри этапа)
+// ========================================
+model WorkType {
+  id          String   @id @default(uuid())
+  stageId     String
+  name        String   // "Земляные работы", "Бетонные работы", "Кладка стен"
+  description String?
+  unit        String?  // Единица измерения
+  quantity    Float?   // Количество
+  unitCost    Float?   // Цена за единицу
+  totalCost   Float    @default(0)
+  
+  // Привязка к IFC модели
+  ifcElements   String?  // JSON массив ID элементов IFC
+  ifcProperties String?  // JSON свойства из IFC
+  
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  stage       EstimateStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  resources   Resource[]
+  
+  @@index([stageId])
+}
+
+// ========================================
+// 7. РЕСУРС (материалы, работы, оборудование)
+// ========================================
+model Resource {
+  id            String   @id @default(uuid())
+  workTypeId    String
+  name          String   // Название ресурса
+  code          String?  // Код по справочнику
+  unit          String   // Единица измерения (м³, т, м², шт, чел-час)
+  quantity      Float    // Количество
+  unitPrice     Float    // Цена за единицу
+  totalCost     Float    // Общая стоимость
+  resourceType  String   @default("material") // material, labor, equipment, other
+  
+  // Привязка к IFC модели
+  ifcElements   String?  // JSON массив ID элементов IFC
+  ifcProperties String?  // JSON свойства из IFC
+  
+  description   String?
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Связи
+  workType      WorkType @relation(fields: [workTypeId], references: [id], onDelete: Cascade)
+  scheduleItems ScheduleItem[]
+  supplyItems   SupplyItem[]
+  
+  @@index([workTypeId])
+  @@index([resourceType])
+}
+
+// ========================================
+// 8. ГРАФИК ПРОИЗВОДСТВА РАБОТ (ГПР)
+// ========================================
+model Schedule {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String   // Название графика
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("draft") // draft, active, completed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items       ScheduleItem[]
+  
+  @@index([projectId])
+}
+
+// ========================================
+// 9. ПОЗИЦИЯ ГРАФИКА (отдельная работа в ГПР)
+// ========================================
+model ScheduleItem {
+  id              String   @id @default(uuid())
+  scheduleId      String
+  resourceId      String
+  floor           Int?     // Этаж
+  zone            String?  // Зона/участок
+  
+  plannedStart    DateTime
+  plannedEnd      DateTime
+  plannedQuantity Float
+  
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  actualQuantity  Float    @default(0)
+  
+  progress        Float    @default(0) // Процент выполнения (0-100)
+  status          String   @default("not_started") // not_started, in_progress, completed, delayed
+  
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Связи
+  schedule        Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@index([scheduleId])
+  @@index([resourceId])
+  @@index([status])
+}
+
+// ========================================
+// 10. СНАБЖЕНИЕ (Supply)
+// ========================================
+model Supply {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String   // План снабжения
+  description String?
+  status      String   @default("planning") // planning, in_progress, completed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items       SupplyItem[]
+  
+  @@index([projectId])
+}
+
+// ========================================
+// 11. ПОЗИЦИЯ СНАБЖЕНИЯ
+// ========================================
+model SupplyItem {
+  id              String   @id @default(uuid())
+  supplyId        String
+  resourceId      String
+  
+  requiredDate    DateTime // Требуемая дата поставки
+  requiredQuantity Float   // Требуемое количество
+  
+  orderedDate     DateTime? // Дата заказа
+  orderedQuantity Float    @default(0) // Заказанное количество
+  
+  deliveredDate   DateTime? // Дата поставки
+  deliveredQuantity Float  @default(0) // Поставленное количество
+  
+  supplier        String?  // Поставщик
+  purchasePrice   Float?   // Закупочная цена
+  
+  status          String   @default("not_ordered") // not_ordered, ordered, partial, delivered
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Связи
+  supply          Supply   @relation(fields: [supplyId], references: [id], onDelete: Cascade)
+  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@index([supplyId])
+  @@index([resourceId])
+  @@index([status])
+}
+
+// ========================================
+// 12. ФИНАНСЫ
+// ========================================
+model Finance {
+  id          String   @id @default(uuid())
+  projectId   String
+  
+  type        String   // income (приход), expense (расход)
+  category    String   // Категория (materials, labor, equipment, other)
+  
+  amount      Float    // Сумма
+  date        DateTime // Дата операции
+  
+  description String?
+  reference   String?  // Ссылка на документ/счет
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+  @@index([type])
+  @@index([date])
+}
+
+// ========================================
+// 13. ЭЛЕМЕНТЫ IFC МОДЕЛИ
+// ========================================
+model IFCElement {
+  id            String   @id @default(uuid())
+  elementId     String   // ID элемента в IFC
+  sectionId     String?  // К какому разделу относится
+  
+  globalId      String?  // GlobalId из IFC
+  type          String?  // Тип элемента (IfcWall, IfcSlab и т.д.)
+  name          String?
+  description   String?
+  
+  floor         Int?
+  category      String?
+  
+  properties    String?  // JSON всех свойств из IFC
+  geometry      String?  // JSON геометрии (если нужно)
+  
+  status        String   @default("not_planned") // not_planned, planned, in_progress, completed
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([elementId, sectionId])
+  @@index([sectionId])
+  @@index([type])
+  @@index([status])
+}

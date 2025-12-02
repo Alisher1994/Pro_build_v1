@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.env
+.DS_Store
+*.db
+*.db-journal
+uploads/*
+!uploads/.gitkeep
+!**/uploads/.gitkeep
+!**/uploads/ifc/.gitkeep
+!**/uploads/xkt/.gitkeep
+.vscode/
+.idea/

@@ -87,13 +87,16 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, totalCost, orderIndex } = req.body;
+    const { name, description, unit, quantity, unitCost, totalCost, orderIndex } = req.body;
 
     const stage = await prisma.estimateStage.update({
       where: { id },
       data: {
         name,
         description,
+        unit,
+        quantity,
+        unitCost,
         totalCost,
         orderIndex,
       },

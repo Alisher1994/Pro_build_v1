@@ -1002,14 +1002,39 @@ const EstimateManager = {
         // Используем вычисленную сумму, если она больше 0, иначе берем из stage
         const displayTotal = calculatedTotal > 0 ? calculatedTotal : (stage.totalCost || 0);
         
-        const UNITS = ['шт', 'м', 'м²', 'м³', 'кг', 'т', 'л', 'комплект', 'услуга'];
+        // Расчёт цены за единицу: сумма / количество
+        const stageQuantity = stage.quantity || 0;
+        const stageUnitCost = stageQuantity > 0 ? (displayTotal / stageQuantity) : 0;
+        const stageUnit = stage.unit || '';
+        
+        const UNITS = ['шт', 'м', 'м²', 'м³', 'кг', 'т', 'л', 'комплект', 'услуга', 'чел/час'];
+        
+        // Генерируем options для select
+        const unitOptions = UNITS.map(u => 
+            `<option value="${u}" ${stageUnit === u ? 'selected' : ''}>${u}</option>`
+        ).join('');
         
         let html = `
             <div class="work-type-item" data-worktype-id="${stage.id}" style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; padding: 8px 10px; transition: all 0.2s;">
-                <div class="work-type-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <div class="work-type-header" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <span class="collapse-icon-wt" onclick="EstimateManager.toggleWorkTypeInTree('${stage.id}')" style="cursor: pointer; font-size: 12px; user-select: none; width: 16px; text-align: center;">${allResources.length > 0 ? '▶' : '•'}</span>
-                    <span class="wt-name-editable" data-wt-id="${stage.id}" style="flex: 1; cursor: text; font-size: 13px; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-200)'" onmouseout="this.style.background='transparent'">${stage.name}</span>
-                    <span class="wt-total-cost" style="font-size: 11px; color: var(--primary); font-weight: 600; min-width: 80px; text-align: right;">${UI.formatCurrency(displayTotal, this.currentProject?.currency)}</span>
+                    <span class="wt-name-editable" data-wt-id="${stage.id}" style="flex: 1; min-width: 150px; cursor: text; font-size: 13px; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-200)'" onmouseout="this.style.background='transparent'">${stage.name}</span>
+                    
+                    <!-- Ед.изм -->
+                    <select class="wt-unit-select" data-wt-id="${stage.id}" onchange="EstimateManager.updateWorkTypeField('${stage.id}', 'unit', this.value)" style="width: 70px; height: 24px; font-size: 11px; padding: 2px 4px; border: 1px solid var(--gray-300); border-radius: 3px; background: var(--white); cursor: pointer;" title="Единица измерения">
+                        <option value="">—</option>
+                        ${unitOptions}
+                    </select>
+                    
+                    <!-- Кол-во -->
+                    <input type="number" class="wt-quantity-input" data-wt-id="${stage.id}" value="${stageQuantity || ''}" placeholder="Кол-во" onchange="EstimateManager.updateWorkTypeField('${stage.id}', 'quantity', this.value)" style="width: 70px; height: 24px; font-size: 11px; padding: 2px 6px; border: 1px solid var(--gray-300); border-radius: 3px; text-align: right;" title="Количество" step="any" min="0">
+                    
+                    <!-- Цена (авто-расчёт) -->
+                    <span class="wt-unit-cost" data-wt-id="${stage.id}" style="width: 80px; height: 24px; font-size: 11px; padding: 2px 6px; border: 1px solid var(--gray-200); border-radius: 3px; background: var(--gray-100); color: var(--gray-700); text-align: right; display: inline-flex; align-items: center; justify-content: flex-end;" title="Цена за единицу (авто)">${stageQuantity > 0 ? UI.formatNumber(stageUnitCost) : '—'}</span>
+                    
+                    <!-- Сумма -->
+                    <span class="wt-total-cost" style="font-size: 11px; color: var(--primary); font-weight: 600; min-width: 90px; text-align: right;">${UI.formatCurrency(displayTotal, this.currentProject?.currency)}</span>
+                    
                     <button onclick="EstimateManager.createResourceForStage('${stage.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--primary); background: var(--white); color: var(--primary); cursor: pointer; font-size: 14px; font-weight: bold;" title="Добавить ресурс">+</button>
                     <button onclick="EstimateManager.deleteWorkTypeFromStage('${stage.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--red-500); background: var(--white); color: var(--red-500); cursor: pointer; font-size: 16px;" title="Удалить вид работ">×</button>
                 </div>
@@ -2858,6 +2883,50 @@ const EstimateManager = {
             UI.showNotification('Вид работ удален', 'success');
             await this.loadEstimateStructure(this.currentEstimateId);
         } catch (error) {
+            UI.showNotification('Ошибка: ' + error.message, 'error');
+        }
+    },
+
+    // Обновление полей вида работ (unit, quantity)
+    async updateWorkTypeField(stageId, field, value) {
+        try {
+            const updateData = {};
+            
+            if (field === 'unit') {
+                updateData.unit = value;
+            } else if (field === 'quantity') {
+                updateData.quantity = value ? parseFloat(value) : null;
+            }
+            
+            await api.updateStage(stageId, updateData);
+            
+            // Пересчитываем цену за единицу после обновления количества
+            if (field === 'quantity') {
+                const stage = await api.getStage(stageId);
+                const workTypes = await api.getWorkTypes(stageId);
+                
+                // Вычисляем сумму ресурсов
+                let totalCost = 0;
+                for (const wt of workTypes) {
+                    totalCost += (wt.totalCost || 0);
+                }
+                if (totalCost === 0) totalCost = stage.totalCost || 0;
+                
+                // Обновляем отображение цены за единицу
+                const quantity = parseFloat(value) || 0;
+                const unitCost = quantity > 0 ? (totalCost / quantity) : 0;
+                
+                const unitCostEl = document.querySelector(`.wt-unit-cost[data-wt-id="${stageId}"]`);
+                if (unitCostEl) {
+                    unitCostEl.textContent = quantity > 0 ? UI.formatNumber(unitCost) : '—';
+                }
+                
+                // Сохраняем вычисленную цену в БД
+                await api.updateStage(stageId, { unitCost: unitCost });
+            }
+            
+        } catch (error) {
+            console.error('Ошибка обновления вида работ:', error);
             UI.showNotification('Ошибка: ' + error.message, 'error');
         }
     },

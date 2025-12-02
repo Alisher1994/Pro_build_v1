@@ -112,13 +112,16 @@ model EstimateSection {
 }
 
 // ========================================
-// 5. ЭТАП РАБОТ (внутри раздела)
+// 5. ЭТАП РАБОТ (внутри раздела) - в UI это "Вид работ"
 // ========================================
 model EstimateStage {
   id          String   @id @default(uuid())
   sectionId   String
   name        String   // "Подготовительные работы", "Основные работы", "Отделочные работы"
   description String?
+  unit        String?  // Единица измерения
+  quantity    Float?   // Количество
+  unitCost    Float?   // Цена за единицу (авто-расчёт: totalCost / quantity)
   totalCost   Float    @default(0)
   orderIndex  Int      @default(0)
   createdAt   DateTime @default(now())

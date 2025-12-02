@@ -67,9 +67,10 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 ProBIM Server running on http://localhost:${PORT}`);
-  console.log(`📊 API available at http://localhost:${PORT}/api`);
+const portNumber = Number(PORT);
+app.listen(portNumber, '0.0.0.0', () => {
+  console.log(`🚀 ProBIM Server running on http://0.0.0.0:${portNumber}`);
+  console.log(`📊 API available at http://0.0.0.0:${portNumber}/api`);
 });
 
 export default app;

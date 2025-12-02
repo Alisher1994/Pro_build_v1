@@ -94,6 +94,11 @@ model EstimateSection {
   code        String   // "АР", "КЖ", "КМ", "ОВ", "ВК", "ЭОМ", "БЛАГ" и т.д.
   name        String   // Полное название раздела
   description String?
+  
+  // IFC файлы
+  ifcFileUrl  String?
+  xktFileUrl  String?
+
   totalCost   Float    @default(0)
   orderIndex  Int      @default(0)
   createdAt   DateTime @default(now())

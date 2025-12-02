@@ -128,8 +128,9 @@ model EstimateStage {
   updatedAt   DateTime @updatedAt
   
   // Связи
-  section     EstimateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  workTypes   WorkType[]
+  section       EstimateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  workTypes     WorkType[]
+  scheduleItems ScheduleItem[]  // Позиции ГПР, привязанные к этому виду работ
   
   @@index([sectionId])
 }
@@ -187,7 +188,6 @@ model Resource {
   
   // Связи
   workType      WorkType @relation(fields: [workTypeId], references: [id], onDelete: Cascade)
-  scheduleItems ScheduleItem[]
   supplyItems   SupplyItem[]
   
   @@index([workTypeId])
@@ -217,21 +217,30 @@ model Schedule {
 
 // ========================================
 // 9. ПОЗИЦИЯ ГРАФИКА (отдельная работа в ГПР)
+// Связь со сметой через EstimateStage (Вид работ)
 // ========================================
 model ScheduleItem {
   id              String   @id @default(uuid())
   scheduleId      String
-  resourceId      String
+  
+  // Связь с видом работ из сметы (опционально)
+  estimateStageId String?
+  
+  // Собственные данные для ГПР
+  name            String   // Название работы в ГПР (например "Колонны Этаж 6")
+  unit            String?  // Единица измерения
   floor           Int?     // Этаж
   zone            String?  // Зона/участок
   
   plannedStart    DateTime
   plannedEnd      DateTime
-  plannedQuantity Float
+  plannedQuantity Float    // Объём для этой конкретной задачи
+  plannedCost     Float    @default(0) // Плановая стоимость (авто-расчёт из сметы)
   
   actualStart     DateTime?
   actualEnd       DateTime?
   actualQuantity  Float    @default(0)
+  actualCost      Float    @default(0)
   
   progress        Float    @default(0) // Процент выполнения (0-100)
   status          String   @default("not_started") // not_started, in_progress, completed, delayed
@@ -241,11 +250,11 @@ model ScheduleItem {
   updatedAt       DateTime @updatedAt
   
   // Связи
-  schedule        Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  schedule        Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  estimateStage   EstimateStage? @relation(fields: [estimateStageId], references: [id], onDelete: SetNull)
   
   @@index([scheduleId])
-  @@index([resourceId])
+  @@index([estimateStageId])
   @@index([status])
 }
 

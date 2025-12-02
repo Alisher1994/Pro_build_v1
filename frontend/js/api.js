@@ -339,6 +339,12 @@ class ApiService {
         return await response.json();
     }
 
+    async getSchedule(id) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch schedule');
+        return await response.json();
+    }
+
     async createSchedule(data) {
         const response = await fetch(`${API_BASE_URL}/schedules`, {
             method: 'POST',
@@ -346,6 +352,59 @@ class ApiService {
             body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error('Failed to create schedule');
+        return await response.json();
+    }
+
+    async updateSchedule(id, data) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to update schedule');
+        return await response.json();
+    }
+
+    async deleteSchedule(id) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete schedule');
+        return await response.json();
+    }
+
+    // Schedule Items
+    async getScheduleItems(scheduleId) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${scheduleId}/items`);
+        if (!response.ok) throw new Error('Failed to fetch schedule items');
+        return await response.json();
+    }
+
+    async createScheduleItem(scheduleId, data) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${scheduleId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to create schedule item');
+        return await response.json();
+    }
+
+    async updateScheduleItem(scheduleId, itemId, data) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${scheduleId}/items/${itemId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to update schedule item');
+        return await response.json();
+    }
+
+    async deleteScheduleItem(scheduleId, itemId) {
+        const response = await fetch(`${API_BASE_URL}/schedules/${scheduleId}/items/${itemId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete schedule item');
         return await response.json();
     }
 

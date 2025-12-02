@@ -35,13 +35,13 @@ router.get('/:id', async (req, res) => {
         project: true,
         items: {
           include: {
-            resource: {
+            estimateStage: {
               include: {
-                workType: {
+                section: {
                   include: {
-                    stage: {
+                    estimate: {
                       include: {
-                        section: true,
+                        block: true,
                       },
                     },
                   },
@@ -150,7 +150,11 @@ router.get('/:id/items', async (req, res) => {
     const items = await prisma.scheduleItem.findMany({
       where,
       include: {
-        resource: true,
+        estimateStage: {
+          include: {
+            section: true,
+          },
+        },
       },
       orderBy: { plannedStart: 'asc' },
     });
@@ -166,43 +170,64 @@ router.post('/:id/items', async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      resourceId,
+      estimateStageId,
+      name,
+      unit,
       floor,
       zone,
       plannedStart,
       plannedEnd,
       plannedQuantity,
+      plannedCost,
       actualStart,
       actualEnd,
       actualQuantity,
+      actualCost,
       progress,
       status,
       notes,
     } = req.body;
 
-    if (!resourceId || !plannedStart || !plannedEnd || plannedQuantity === undefined) {
+    if (!name || !plannedStart || !plannedEnd || plannedQuantity === undefined) {
       return res.status(400).json({
-        error: 'resourceId, plannedStart, plannedEnd and plannedQuantity are required',
+        error: 'name, plannedStart, plannedEnd and plannedQuantity are required',
       });
+    }
+
+    // Если есть связь со сметой, рассчитаем стоимость
+    let calculatedPlannedCost = plannedCost || 0;
+    if (estimateStageId && !plannedCost) {
+      const stage = await prisma.estimateStage.findUnique({
+        where: { id: estimateStageId },
+      });
+      if (stage && stage.quantity && stage.quantity > 0) {
+        // Цена за единицу из сметы
+        const unitCost = stage.totalCost / stage.quantity;
+        calculatedPlannedCost = unitCost * plannedQuantity;
+      }
     }
 
     const item = await prisma.scheduleItem.create({
       data: {
         scheduleId: id,
-        resourceId,
+        estimateStageId,
+        name,
+        unit,
         floor,
         zone,
         plannedStart: new Date(plannedStart),
         plannedEnd: new Date(plannedEnd),
         plannedQuantity,
+        plannedCost: calculatedPlannedCost,
         actualStart: actualStart ? new Date(actualStart) : undefined,
         actualEnd: actualEnd ? new Date(actualEnd) : undefined,
         actualQuantity: actualQuantity || 0,
+        actualCost: actualCost || 0,
         progress: progress || 0,
         status: status || 'not_started',
         notes,
       },
-      include: { resource: true },
+      include: { estimateStage: true },
     });
 
     res.status(201).json(item);
@@ -216,14 +241,18 @@ router.put('/:scheduleId/items/:itemId', async (req, res) => {
   try {
     const { itemId } = req.params;
     const {
+      name,
+      unit,
       floor,
       zone,
       plannedStart,
       plannedEnd,
       plannedQuantity,
+      plannedCost,
       actualStart,
       actualEnd,
       actualQuantity,
+      actualCost,
       progress,
       status,
       notes,
@@ -232,14 +261,18 @@ router.put('/:scheduleId/items/:itemId', async (req, res) => {
     const item = await prisma.scheduleItem.update({
       where: { id: itemId },
       data: {
+        name,
+        unit,
         floor,
         zone,
         plannedStart: plannedStart ? new Date(plannedStart) : undefined,
         plannedEnd: plannedEnd ? new Date(plannedEnd) : undefined,
         plannedQuantity,
+        plannedCost,
         actualStart: actualStart ? new Date(actualStart) : undefined,
         actualEnd: actualEnd ? new Date(actualEnd) : undefined,
         actualQuantity,
+        actualCost,
         progress,
         status,
         notes,

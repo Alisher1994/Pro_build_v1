@@ -5,20 +5,9 @@
 const UI = {
     // Показать модальное окно
     showModal(title, content, options = {}) {
-        // Поддержка как строки кнопок, так и объекта опций
-        let buttons = '';
-        let width = '500px';
-        
-        if (typeof options === 'string') {
-            buttons = options;
-        } else if (typeof options === 'object') {
-            buttons = options.buttons || '';
-            width = options.width || '500px';
-        }
-
         const modalHTML = `
             <div class="modal-overlay" id="modal-overlay">
-                <div class="modal" style="max-width: ${width};">
+                <div class="modal" style="max-width: ${options.width || '600px'};">
                     <div class="modal-header">
                         <h3>${title}</h3>
                         <button class="modal-close" onclick="UI.closeModal()">&times;</button>
@@ -26,7 +15,9 @@ const UI = {
                     <div class="modal-body">
                         ${content}
                     </div>
-                    ${buttons ? `<div class="modal-footer">${buttons}</div>` : ''}
+                    <div class="modal-footer">
+                        ${options.buttons || ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -45,6 +36,38 @@ const UI = {
     closeModal() {
         const container = document.getElementById('modal-container');
         container.innerHTML = '';
+    },
+
+    // Показать уведомление (toast)
+    showToast(message, type = 'info') {
+        const colors = {
+            info: '#3b82f6',
+            success: '#10b981',
+            warning: '#f59e0b',
+            error: '#ef4444'
+        };
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${colors[type] || colors.info};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     },
 
     // Показать форму создания проекта
@@ -77,7 +100,7 @@ const UI = {
             <button class="btn btn-primary" id="save-project-btn">Создать</button>
         `;
 
-        UI.showModal('Новый проект', content, buttons);
+        UI.showModal('Новый проект', content, { buttons });
 
         setTimeout(() => {
             document.getElementById('save-project-btn').addEventListener('click', () => {
@@ -125,7 +148,7 @@ const UI = {
             <button class="btn btn-primary" id="save-block-btn">Создать</button>
         `;
 
-        UI.showModal('Новый блок', content, buttons);
+        UI.showModal('Новый блок', content, { buttons });
 
         setTimeout(() => {
             document.getElementById('save-block-btn').addEventListener('click', () => {
@@ -180,7 +203,7 @@ const UI = {
             <button class="btn btn-primary" id="save-section-btn">Создать</button>
         `;
 
-        UI.showModal('Новый раздел сметы', content, buttons);
+        UI.showModal('Новый раздел сметы', content, { buttons });
 
         setTimeout(() => {
             // Auto-fill name based on code selection
@@ -295,11 +318,6 @@ const UI = {
         if (confirm(message)) {
             callback();
         }
-    },
-
-    // Показать toast-уведомление (алиас для showNotification)
-    showToast(message, type = 'info') {
-        this.showNotification(message, type);
     }
 };
 

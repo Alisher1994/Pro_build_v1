@@ -187,7 +187,6 @@ model Resource {
   
   // Связи
   workType      WorkType @relation(fields: [workTypeId], references: [id], onDelete: Cascade)
-  scheduleItems ScheduleItem[]
   supplyItems   SupplyItem[]
   
   @@index([workTypeId])
@@ -267,37 +266,6 @@ model ScheduleTask {
   @@index([scheduleId])
   @@index([stageId])
   @@index([floor])
-  @@index([status])
-}
-
-// ========================================
-// 10. СТАРАЯ МОДЕЛЬ (для обратной совместимости, можно удалить позже)
-// ========================================
-model ScheduleItem {
-  id              String   @id @default(uuid())
-  resourceId      String
-  floor           Int?     // Этаж
-  zone            String?  // Зона/участок
-  
-  plannedStart    DateTime
-  plannedEnd      DateTime
-  plannedQuantity Float
-  
-  actualStart     DateTime?
-  actualEnd       DateTime?
-  actualQuantity  Float    @default(0)
-  
-  progress        Float    @default(0) // Процент выполнения (0-100)
-  status          String   @default("not_started") // not_started, in_progress, completed, delayed
-  
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Связи
-  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-  
-  @@index([resourceId])
   @@index([status])
 }
 

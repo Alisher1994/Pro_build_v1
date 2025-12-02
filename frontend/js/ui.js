@@ -4,10 +4,21 @@
 
 const UI = {
     // Показать модальное окно
-    showModal(title, content, buttons) {
+    showModal(title, content, options = {}) {
+        // Поддержка как строки кнопок, так и объекта опций
+        let buttons = '';
+        let width = '500px';
+        
+        if (typeof options === 'string') {
+            buttons = options;
+        } else if (typeof options === 'object') {
+            buttons = options.buttons || '';
+            width = options.width || '500px';
+        }
+
         const modalHTML = `
             <div class="modal-overlay" id="modal-overlay">
-                <div class="modal">
+                <div class="modal" style="max-width: ${width};">
                     <div class="modal-header">
                         <h3>${title}</h3>
                         <button class="modal-close" onclick="UI.closeModal()">&times;</button>
@@ -15,9 +26,7 @@ const UI = {
                     <div class="modal-body">
                         ${content}
                     </div>
-                    <div class="modal-footer">
-                        ${buttons || ''}
-                    </div>
+                    ${buttons ? `<div class="modal-footer">${buttons}</div>` : ''}
                 </div>
             </div>
         `;
@@ -286,6 +295,11 @@ const UI = {
         if (confirm(message)) {
             callback();
         }
+    },
+
+    // Показать toast-уведомление (алиас для showNotification)
+    showToast(message, type = 'info') {
+        this.showNotification(message, type);
     }
 };
 

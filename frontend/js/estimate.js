@@ -1431,6 +1431,24 @@ const EstimateManager = {
         }
     },
 
+    async createBlock() {
+        if (!this.currentProjectId) {
+            UI.showNotification('Сначала выберите проект', 'error');
+            return;
+        }
+        
+        UI.showCreateBlockModal(this.currentProjectId, async (data) => {
+            try {
+                await api.createBlock(data);
+                UI.closeModal();
+                UI.showNotification('Блок создан', 'success');
+                this.renderEstimateTree(this.currentProjectId);
+            } catch (error) {
+                UI.showNotification('Ошибка: ' + error.message, 'error');
+            }
+        });
+    },
+
     async deleteBlock(blockId) {
         UI.confirmDelete('Вы уверены, что хотите удалить этот блок? Все сметы будут удалены.', async () => {
             try {

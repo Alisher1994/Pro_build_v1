@@ -153,7 +153,7 @@ class ProBIMApp {
                 }
                 break;
             case 'schedule':
-                await ScheduleManager.init(this.currentProjectId);
+                this.loadScheduleTab();
                 break;
             case 'supply':
                 this.loadSupplyTab();
@@ -170,7 +170,14 @@ class ProBIMApp {
         }
     }
 
-    // loadScheduleTab удален - используется ScheduleManager
+    loadScheduleTab() {
+        document.getElementById('content-area').innerHTML = `
+            <div style="padding: 24px;">
+                <h2>График производства работ (ГПР)</h2>
+                <p style="margin-top: 16px; color: var(--gray-600);">Функционал в разработке...</p>
+            </div>
+        `;
+    }
 
     loadSupplyTab() {
         document.getElementById('content-area').innerHTML = `

@@ -4,6 +4,10 @@ import { PrismaClient } from '@prisma/client';
 const router = Router();
 const prisma = new PrismaClient();
 
+// ========================================
+// ГРАФИКИ (Schedule)
+// ========================================
+
 // GET /api/schedules - Получить все графики
 router.get('/', async (req, res) => {
   try {
@@ -13,9 +17,8 @@ router.get('/', async (req, res) => {
       where: projectId ? { projectId: String(projectId) } : undefined,
       include: {
         project: true,
-        block: true,
         _count: {
-          select: { items: true },
+          select: { tasks: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -26,7 +29,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/schedules/:id - Получить график по ID
+// GET /api/schedules/:id - Получить график по ID с задачами
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -34,23 +37,11 @@ router.get('/:id', async (req, res) => {
       where: { id },
       include: {
         project: true,
-        items: {
-          include: {
-            estimateStage: {
-              include: {
-                section: {
-                  include: {
-                    estimate: {
-                      include: {
-                        block: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          orderBy: { plannedStart: 'asc' },
+        tasks: {
+          orderBy: [
+            { floor: 'asc' },
+            { orderIndex: 'asc' }
+          ]
         },
       },
     });
@@ -70,9 +61,9 @@ router.post('/', async (req, res) => {
   try {
     const { projectId, blockId, name, description, startDate, endDate, status } = req.body;
 
-    if (!projectId || !name || !startDate || !endDate) {
+    if (!projectId || !name) {
       return res.status(400).json({
-        error: 'projectId, name, startDate and endDate are required',
+        error: 'projectId and name are required',
       });
     }
 
@@ -82,11 +73,11 @@ router.post('/', async (req, res) => {
         blockId: blockId || null,
         name,
         description,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
         status: status || 'draft',
       },
-      include: { project: true, block: true },
+      include: { project: true, tasks: true },
     });
 
     res.status(201).json(schedule);
@@ -99,13 +90,14 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, startDate, endDate, status } = req.body;
+    const { name, description, blockId, startDate, endDate, status } = req.body;
 
     const schedule = await prisma.schedule.update({
       where: { id },
       data: {
         name,
         description,
+        blockId,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
         status,
@@ -139,171 +131,242 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// GET /api/schedules/:id/items - Получить все позиции графика
-router.get('/:id/items', async (req, res) => {
+// ========================================
+// ЗАДАЧИ (ScheduleTask)
+// ========================================
+
+// GET /api/schedules/:id/tasks - Получить все задачи графика
+router.get('/:id/tasks', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, floor } = req.query;
 
     const where: any = { scheduleId: id };
     if (status) where.status = String(status);
-    if (floor) where.floor = parseInt(String(floor));
+    if (floor) where.floor = String(floor);
 
-    const items = await prisma.scheduleItem.findMany({
+    const tasks = await prisma.scheduleTask.findMany({
       where,
-      include: {
-        estimateStage: {
-          include: {
-            section: true,
-          },
-        },
-      },
-      orderBy: { plannedStart: 'asc' },
+      orderBy: [
+        { floor: 'asc' },
+        { orderIndex: 'asc' }
+      ],
     });
 
-    res.json(items);
+    res.json(tasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST /api/schedules/:id/items - Добавить позицию в график
-router.post('/:id/items', async (req, res) => {
+// POST /api/schedules/:id/tasks - Создать новую задачу
+router.post('/:id/tasks', async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      estimateStageId,
-      name,
-      unit,
+      stageId,
+      stageName,
       floor,
       zone,
-      plannedStart,
-      plannedEnd,
-      plannedQuantity,
-      plannedCost,
-      actualStart,
-      actualEnd,
-      actualQuantity,
-      actualCost,
-      progress,
+      unit,
+      quantity,
+      startDate,
+      endDate,
+      duration,
       status,
+      predecessorIds,
+      ifcElements,
       notes,
+      orderIndex
     } = req.body;
 
-    if (!name || !plannedStart || !plannedEnd || plannedQuantity === undefined) {
+    if (!stageName) {
       return res.status(400).json({
-        error: 'name, plannedStart, plannedEnd and plannedQuantity are required',
+        error: 'stageName is required',
       });
     }
 
-    // Если есть связь со сметой, рассчитаем стоимость
-    let calculatedPlannedCost = plannedCost || 0;
-    if (estimateStageId && !plannedCost) {
-      const stage = await prisma.estimateStage.findUnique({
-        where: { id: estimateStageId },
-      });
-      if (stage && stage.quantity && stage.quantity > 0) {
-        // Цена за единицу из сметы
-        const unitCost = stage.totalCost / stage.quantity;
-        calculatedPlannedCost = unitCost * plannedQuantity;
-      }
+    // Вычисляем duration если есть обе даты
+    let calculatedDuration = duration;
+    if (startDate && endDate && !duration) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      calculatedDuration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     }
 
-    const item = await prisma.scheduleItem.create({
+    const task = await prisma.scheduleTask.create({
       data: {
         scheduleId: id,
-        estimateStageId,
-        name,
-        unit,
-        floor,
-        zone,
-        plannedStart: new Date(plannedStart),
-        plannedEnd: new Date(plannedEnd),
-        plannedQuantity,
-        plannedCost: calculatedPlannedCost,
-        actualStart: actualStart ? new Date(actualStart) : undefined,
-        actualEnd: actualEnd ? new Date(actualEnd) : undefined,
-        actualQuantity: actualQuantity || 0,
-        actualCost: actualCost || 0,
-        progress: progress || 0,
+        stageId: stageId || null,
+        stageName,
+        floor: floor || null,
+        zone: zone || null,
+        unit: unit || null,
+        quantity: quantity || 0,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        duration: calculatedDuration || null,
         status: status || 'not_started',
-        notes,
-      },
-      include: { estimateStage: true },
+        predecessorIds: predecessorIds || null,
+        ifcElements: ifcElements || null,
+        notes: notes || null,
+        orderIndex: orderIndex || 0
+      }
     });
 
-    res.status(201).json(item);
+    res.status(201).json(task);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// PUT /api/schedules/:scheduleId/items/:itemId - Обновить позицию графика
-router.put('/:scheduleId/items/:itemId', async (req, res) => {
+// PUT /api/schedules/:scheduleId/tasks/:taskId - Обновить задачу
+router.put('/:scheduleId/tasks/:taskId', async (req, res) => {
   try {
-    const { itemId } = req.params;
+    const { taskId } = req.params;
     const {
-      name,
-      unit,
+      stageName,
       floor,
       zone,
-      plannedStart,
-      plannedEnd,
-      plannedQuantity,
-      plannedCost,
+      unit,
+      quantity,
+      startDate,
+      endDate,
+      duration,
       actualStart,
       actualEnd,
       actualQuantity,
-      actualCost,
       progress,
       status,
+      predecessorIds,
+      ifcElements,
       notes,
+      orderIndex
     } = req.body;
 
-    const item = await prisma.scheduleItem.update({
-      where: { id: itemId },
+    // Вычисляем duration если есть обе даты
+    let calculatedDuration = duration;
+    if (startDate && endDate && duration === undefined) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      calculatedDuration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    const task = await prisma.scheduleTask.update({
+      where: { id: taskId },
       data: {
-        name,
-        unit,
+        stageName,
         floor,
         zone,
-        plannedStart: plannedStart ? new Date(plannedStart) : undefined,
-        plannedEnd: plannedEnd ? new Date(plannedEnd) : undefined,
-        plannedQuantity,
-        plannedCost,
+        unit,
+        quantity,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        duration: calculatedDuration,
         actualStart: actualStart ? new Date(actualStart) : undefined,
         actualEnd: actualEnd ? new Date(actualEnd) : undefined,
         actualQuantity,
-        actualCost,
         progress,
         status,
+        predecessorIds,
+        ifcElements,
         notes,
-      },
+        orderIndex
+      }
     });
 
-    res.json(item);
+    res.json(task);
   } catch (error: any) {
     if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'Schedule item not found' });
+      return res.status(404).json({ error: 'Task not found' });
     }
     res.status(500).json({ error: error.message });
   }
 });
 
-// DELETE /api/schedules/:scheduleId/items/:itemId - Удалить позицию графика
-router.delete('/:scheduleId/items/:itemId', async (req, res) => {
+// DELETE /api/schedules/:scheduleId/tasks/:taskId - Удалить задачу
+router.delete('/:scheduleId/tasks/:taskId', async (req, res) => {
   try {
-    const { itemId } = req.params;
+    const { taskId } = req.params;
 
-    await prisma.scheduleItem.delete({
-      where: { id: itemId },
+    await prisma.scheduleTask.delete({
+      where: { id: taskId },
     });
 
-    res.json({ message: 'Schedule item deleted successfully' });
+    res.json({ message: 'Task deleted successfully' });
   } catch (error: any) {
     if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'Schedule item not found' });
+      return res.status(404).json({ error: 'Task not found' });
     }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========================================
+// МАССОВОЕ СОЗДАНИЕ ЗАДАЧ ИЗ СМЕТЫ
+// ========================================
+
+// POST /api/schedules/:id/import-from-estimate - Импорт из сметы
+router.post('/:id/import-from-estimate', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estimateIds, floors } = req.body;
+
+    if (!estimateIds || !Array.isArray(estimateIds) || estimateIds.length === 0) {
+      return res.status(400).json({ error: 'estimateIds array is required' });
+    }
+
+    if (!floors || !Array.isArray(floors) || floors.length === 0) {
+      return res.status(400).json({ error: 'floors array is required' });
+    }
+
+    // Получаем виды работ из смет
+    const estimates = await prisma.estimate.findMany({
+      where: {
+        id: { in: estimateIds }
+      },
+      include: {
+        sections: {
+          include: {
+            stages: true
+          }
+        }
+      }
+    });
+
+    const tasks = [];
+    let orderIndex = 0;
+
+    // Создаём задачи: для каждого вида работ × каждый этаж
+    for (const estimate of estimates) {
+      for (const section of estimate.sections) {
+        for (const stage of section.stages) {
+          for (const floor of floors) {
+            tasks.push({
+              scheduleId: id,
+              stageId: stage.id,
+              stageName: `${section.name} - ${stage.name}`,
+              floor: floor,
+              unit: stage.unit,
+              quantity: 0,
+              orderIndex: orderIndex++,
+              status: 'not_started'
+            });
+          }
+        }
+      }
+    }
+
+    // Массовое создание
+    const createdTasks = await prisma.scheduleTask.createMany({
+      data: tasks
+    });
+
+    res.status(201).json({
+      message: `Created ${createdTasks.count} tasks`,
+      count: createdTasks.count
+    });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });

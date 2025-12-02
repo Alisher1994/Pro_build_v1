@@ -146,65 +146,28 @@ const IFCViewerManager = {
                 this.currentModel.destroy();
             }
 
-            return new Promise((resolve, reject) => {
-                // Загружаем новую модель
-                this.currentModel = this.xktLoader.load({
-                    id: modelId,
-                    src: url,
-                    edges: true,
-                    backfaces: false,
-                });
-
-                this.currentModel.on("loaded", () => {
-                    console.log('✓ XKT модель загружена');
-                    this.viewer.cameraFlight.flyTo(this.viewer.scene);
-                    this.setDisplayMode(this.displayMode || 'default');
-                    resolve(this.currentModel);
-                });
-
-                this.currentModel.on("error", (error) => {
-                    console.error('Ошибка загрузки XKT:', error);
-                    // Проверяем на ошибку версии
-                    if (error && error.includes && error.includes('Unsupported .XKT file version')) {
-                        this.showXktError();
-                    }
-                    reject(new Error(error));
-                });
+            // Загружаем новую модель
+            this.currentModel = this.xktLoader.load({
+                id: modelId,
+                src: url,
+                edges: true, // Показывать рёбра
+                backfaces: false,
             });
+
+            this.currentModel.on("loaded", () => {
+                console.log('✓ XKT модель загружена');
+                this.viewer.cameraFlight.flyTo(this.viewer.scene);
+                this.setDisplayMode(this.displayMode || 'default');
+            });
+
+            this.currentModel.on("error", (error) => {
+                console.error('Ошибка загрузки XKT:', error);
+            });
+
+            return this.currentModel;
         } catch (error) {
             console.error('Ошибка при загрузке модели:', error);
             throw error;
-        }
-    },
-
-    // Показать ошибку XKT конвертации
-    showXktError() {
-        const container = document.getElementById('ifc-viewer-container');
-        if (container) {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = `
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 59, 48, 0.9);
-                color: white;
-                padding: 24px;
-                border-radius: 8px;
-                text-align: center;
-                max-width: 400px;
-                z-index: 1000;
-            `;
-            errorDiv.innerHTML = `
-                <h3 style="margin: 0 0 12px 0;">⚠️ Ошибка 3D модели</h3>
-                <p style="margin: 0 0 16px 0;">
-                    Файл XKT не был корректно сконвертирован на сервере.
-                </p>
-                <p style="margin: 0; font-size: 13px; opacity: 0.8;">
-                    Попробуйте загрузить IFC файл заново или обратитесь к администратору.
-                </p>
-            `;
-            container.appendChild(errorDiv);
         }
     },
 

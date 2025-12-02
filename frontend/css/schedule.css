@@ -1,0 +1,346 @@
+/* ========================================
+   Schedule Page Styles - ГПР
+   ======================================== */
+
+.schedule-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+}
+
+.schedule-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.schedule-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.schedule-card-header {
+    margin-bottom: 1rem;
+}
+
+.schedule-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1976d2;
+}
+
+.schedule-card-meta {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.schedule-card-body {
+    margin-bottom: 1rem;
+}
+
+.schedule-card-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    color: #999;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Вкладки переключения вида */
+.view-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: #1976d2;
+    background: #f5f5f5;
+}
+
+.tab-btn.active {
+    color: #1976d2;
+    border-bottom-color: #1976d2;
+    font-weight: 600;
+}
+
+/* Панели вида */
+.view-panel {
+    display: none;
+}
+
+.view-panel.active {
+    display: block;
+}
+
+/* Таблица задач ГПР */
+.table-container {
+    overflow-x: auto;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.schedule-table thead {
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.schedule-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+.schedule-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+    transition: background 0.15s;
+}
+
+.schedule-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.schedule-table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Inline редактирование в таблице */
+.editable-field {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    min-width: 80px;
+    transition: all 0.2s;
+}
+
+.editable-field:hover {
+    background: #f5f5f5;
+    border-color: #ddd;
+}
+
+.editable-field:focus {
+    background: white;
+    border-color: #1976d2;
+    outline: none;
+}
+
+.editable-select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+}
+
+/* Статусы задач */
+.task-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.task-status.not_started {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.task-status.in_progress {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.task-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.task-status.delayed {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Диаграмма Ганта */
+.gantt-container {
+    min-height: 600px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.gantt-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+    font-size: 1.125rem;
+}
+
+/* IFC Viewer */
+.ifc-viewer-container {
+    position: relative;
+    width: 100%;
+    height: 700px;
+    background: #263238;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#ifcCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.ifc-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Checkbox группы */
+.checkbox-group {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.checkbox-item:hover {
+    background: #f5f5f5;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 0.75rem;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-item label {
+    cursor: pointer;
+    flex: 1;
+}
+
+/* Floor inputs */
+.floor-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.floor-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.floor-input-row input {
+    flex: 1;
+}
+
+.floor-input-row button {
+    padding: 0.5rem 0.75rem;
+}
+
+/* Действия в таблице */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #1976d2;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.action-btn:hover {
+    background: #e3f2fd;
+}
+
+.action-btn.delete {
+    color: #d32f2f;
+}
+
+.action-btn.delete:hover {
+    background: #ffebee;
+}
+
+/* Модальные окна большего размера */
+.modal-lg .modal-content {
+    max-width: 800px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .schedule-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .view-tabs {
+        overflow-x: auto;
+    }
+    
+    .schedule-table {
+        font-size: 0.75rem;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 0.5rem;
+    }
+}

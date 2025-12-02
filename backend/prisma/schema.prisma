@@ -53,7 +53,6 @@ model Block {
   // Связи
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   estimates   Estimate[]
-  schedules   Schedule[]  // Графики блока
   
   @@index([projectId])
 }
@@ -129,9 +128,8 @@ model EstimateStage {
   updatedAt   DateTime @updatedAt
   
   // Связи
-  section       EstimateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  workTypes     WorkType[]
-  scheduleItems ScheduleItem[]  // Позиции ГПР, привязанные к этому виду работ
+  section     EstimateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  workTypes   WorkType[]
   
   @@index([sectionId])
 }
@@ -189,6 +187,7 @@ model Resource {
   
   // Связи
   workType      WorkType @relation(fields: [workTypeId], references: [id], onDelete: Cascade)
+  scheduleItems ScheduleItem[]
   supplyItems   SupplyItem[]
   
   @@index([workTypeId])
@@ -201,50 +200,92 @@ model Resource {
 model Schedule {
   id          String   @id @default(uuid())
   projectId   String
-  blockId     String?  // Связь с блоком
-  name        String   // Название графика
+  blockId     String?  // Связь с блоком (из блока берём этажи)
+  name        String   // Название графика (обычно = название блока)
   description String?
-  startDate   DateTime
-  endDate     DateTime
+  startDate   DateTime?
+  endDate     DateTime?
   status      String   @default("draft") // draft, active, completed
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   // Связи
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  block       Block?   @relation(fields: [blockId], references: [id], onDelete: SetNull)
-  items       ScheduleItem[]
+  tasks       ScheduleTask[]
   
   @@index([projectId])
   @@index([blockId])
 }
 
 // ========================================
-// 9. ПОЗИЦИЯ ГРАФИКА (отдельная работа в ГПР)
-// Связь со сметой через EstimateStage (Вид работ)
+// 9. ЗАДАЧА В ГРАФИКЕ (распределение вида работ по этажам с датами)
 // ========================================
-model ScheduleItem {
+model ScheduleTask {
   id              String   @id @default(uuid())
   scheduleId      String
   
-  // Связь с видом работ из сметы (опционально)
-  estimateStageId String?
+  // Связь с видом работ из сметы (EstimateStage - это "Вид работ" в UI)
+  stageId         String?  // ID вида работ из сметы
+  stageName       String   // Название вида работ (копия для истории)
   
-  // Собственные данные для ГПР
-  name            String   // Название работы в ГПР (например "Колонны Этаж 6")
-  unit            String?  // Единица измерения
+  // Распределение по этажам
+  floor           String?  // "Этаж 1", "Этаж 2", "Подвал", "Кровля" и т.д.
+  zone            String?  // Дополнительная зона (опционально)
+  
+  // Объёмы работ для этого этажа
+  unit            String?  // Единица измерения (копия из сметы)
+  quantity        Float    @default(0) // Объём работ на этом этаже
+  
+  // Даты выполнения
+  startDate       DateTime?
+  endDate         DateTime?
+  duration        Int?     // Длительность в днях (автоматический расчёт)
+  
+  // Факт выполнения (для будущего функционала)
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  actualQuantity  Float    @default(0)
+  progress        Float    @default(0) // Процент выполнения (0-100)
+  
+  // Статус
+  status          String   @default("not_started") // not_started, in_progress, completed, delayed
+  
+  // Связи между задачами (зависимости)
+  predecessorIds  String?  // JSON массив ID предшествующих задач
+  
+  // IFC привязка (GUID элементов IFC для подсветки)
+  ifcElements     String?  // JSON массив GUID элементов для подсветки
+  
+  notes           String?
+  orderIndex      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Связи
+  schedule        Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  
+  @@index([scheduleId])
+  @@index([stageId])
+  @@index([floor])
+  @@index([status])
+}
+
+// ========================================
+// 10. СТАРАЯ МОДЕЛЬ (для обратной совместимости, можно удалить позже)
+// ========================================
+model ScheduleItem {
+  id              String   @id @default(uuid())
+  resourceId      String
   floor           Int?     // Этаж
   zone            String?  // Зона/участок
   
   plannedStart    DateTime
   plannedEnd      DateTime
-  plannedQuantity Float    // Объём для этой конкретной задачи
-  plannedCost     Float    @default(0) // Плановая стоимость (авто-расчёт из сметы)
+  plannedQuantity Float
   
   actualStart     DateTime?
   actualEnd       DateTime?
   actualQuantity  Float    @default(0)
-  actualCost      Float    @default(0)
   
   progress        Float    @default(0) // Процент выполнения (0-100)
   status          String   @default("not_started") // not_started, in_progress, completed, delayed
@@ -254,11 +295,9 @@ model ScheduleItem {
   updatedAt       DateTime @updatedAt
   
   // Связи
-  schedule        Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  estimateStage   EstimateStage? @relation(fields: [estimateStageId], references: [id], onDelete: SetNull)
+  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   
-  @@index([scheduleId])
-  @@index([estimateStageId])
+  @@index([resourceId])
   @@index([status])
 }
 

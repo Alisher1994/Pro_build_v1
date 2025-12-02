@@ -4,10 +4,10 @@
 
 const UI = {
     // Показать модальное окно
-    showModal(title, content, options = {}) {
+    showModal(title, content, buttons) {
         const modalHTML = `
             <div class="modal-overlay" id="modal-overlay">
-                <div class="modal" style="max-width: ${options.width || '600px'};">
+                <div class="modal">
                     <div class="modal-header">
                         <h3>${title}</h3>
                         <button class="modal-close" onclick="UI.closeModal()">&times;</button>
@@ -16,7 +16,7 @@ const UI = {
                         ${content}
                     </div>
                     <div class="modal-footer">
-                        ${options.buttons || ''}
+                        ${buttons || ''}
                     </div>
                 </div>
             </div>
@@ -36,38 +36,6 @@ const UI = {
     closeModal() {
         const container = document.getElementById('modal-container');
         container.innerHTML = '';
-    },
-
-    // Показать уведомление (toast)
-    showToast(message, type = 'info') {
-        const colors = {
-            info: '#3b82f6',
-            success: '#10b981',
-            warning: '#f59e0b',
-            error: '#ef4444'
-        };
-
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${colors[type] || colors.info};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 10000;
-            animation: slideIn 0.3s ease-out;
-            max-width: 400px;
-        `;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease-in';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
     },
 
     // Показать форму создания проекта
@@ -100,7 +68,7 @@ const UI = {
             <button class="btn btn-primary" id="save-project-btn">Создать</button>
         `;
 
-        UI.showModal('Новый проект', content, { buttons });
+        UI.showModal('Новый проект', content, buttons);
 
         setTimeout(() => {
             document.getElementById('save-project-btn').addEventListener('click', () => {
@@ -148,7 +116,7 @@ const UI = {
             <button class="btn btn-primary" id="save-block-btn">Создать</button>
         `;
 
-        UI.showModal('Новый блок', content, { buttons });
+        UI.showModal('Новый блок', content, buttons);
 
         setTimeout(() => {
             document.getElementById('save-block-btn').addEventListener('click', () => {
@@ -203,7 +171,7 @@ const UI = {
             <button class="btn btn-primary" id="save-section-btn">Создать</button>
         `;
 
-        UI.showModal('Новый раздел сметы', content, { buttons });
+        UI.showModal('Новый раздел сметы', content, buttons);
 
         setTimeout(() => {
             // Auto-fill name based on code selection

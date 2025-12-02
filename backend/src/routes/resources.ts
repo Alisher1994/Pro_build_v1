@@ -50,6 +50,7 @@ router.get('/:id', async (req, res) => {
             },
           },
         },
+        scheduleItems: true,
         supplyItems: true,
       },
     });

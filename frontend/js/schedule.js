@@ -1,790 +1,470 @@
 // ========================================
-// Schedule Manager - Управление ГПР
-// Пошаговое создание: Блок → Разделы → Этапы/Виды работ
+// Schedule Manager - ГПР
 // ========================================
 
 const ScheduleManager = {
-    currentScheduleId: null,
-    currentProjectId: null,
-    blocks: [],          // Блоки проекта
-    estimates: [],       // Сметы
-    selectedBlockId: null,
-    selectedSections: [], // Выбранные разделы сметы
+    currentProject: null,
+    currentSchedule: null,
+    currentBlock: null,
+    currentView: 'table',
+    tasks: [],
 
-    // ========================================
-    // Инициализация
-    // ========================================
-    async init(projectId) {
-        this.currentProjectId = projectId;
-        await this.loadProjectData();
-        await this.render();
-    },
+    async init() {
+        const projectId = localStorage.getItem('currentProject');
+        const scheduleId = localStorage.getItem('currentSchedule');
 
-    // Загрузить данные проекта (блоки и сметы)
-    async loadProjectData() {
-        try {
-            this.blocks = await api.getBlocks(this.currentProjectId);
-            this.estimates = await api.getEstimates(this.currentProjectId);
-        } catch (error) {
-            console.error('Error loading project data:', error);
-            this.blocks = [];
-            this.estimates = [];
+        if (!projectId) {
+            window.location.href = 'index.html';
+            return;
         }
-    },
 
-    // ========================================
-    // Главный рендер - список ГПР
-    // ========================================
-    async render() {
-        const container = document.getElementById('content-area');
-        if (!container) return;
+        this.currentProject = { id: projectId };
 
-        try {
-            const schedules = await api.getSchedules(this.currentProjectId);
-
-            container.innerHTML = `
-                <div class="schedule-container" style="padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <h2>График производства работ (ГПР)</h2>
-                        <button onclick="ScheduleManager.showCreateScheduleWizard()" class="btn-primary" style="display: flex; align-items: center; gap: 8px;">
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
-                            </svg>
-                            Создать ГПР
-                        </button>
-                    </div>
-
-                    ${this.blocks.length === 0 
-                        ? this.renderNoBlocksState() 
-                        : (schedules.length === 0 ? this.renderEmptyState() : this.renderSchedulesList(schedules))
-                    }
-                </div>
-            `;
-        } catch (error) {
-            console.error('Error rendering schedules:', error);
-            container.innerHTML = `
-                <div style="padding: 24px; color: var(--accent-red);">
-                    Ошибка загрузки графиков: ${error.message}
-                </div>
-            `;
+        if (scheduleId) {
+            await this.loadScheduleDetails(scheduleId);
+        } else {
+            await this.loadSchedulesList();
         }
+
+        this.updateBreadcrumbs();
     },
 
-    renderNoBlocksState() {
-        return `
-            <div style="text-align: center; padding: 48px; background: var(--gray-50); border-radius: 8px;">
-                <svg width="64" height="64" fill="var(--gray-400)" viewBox="0 0 16 16" style="margin-bottom: 16px;">
-                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
-                </svg>
-                <h3 style="color: var(--gray-600); margin-bottom: 8px;">Нет блоков</h3>
-                <p style="color: var(--gray-500);">Сначала создайте блоки и сметы в разделе "Смета"</p>
-            </div>
-        `;
-    },
+    async loadSchedulesList() {
+        try {
+            const response = await fetch(`/api/schedules?projectId=${this.currentProject.id}`);
+            const schedules = await response.json();
 
-    renderEmptyState() {
-        return `
-            <div style="text-align: center; padding: 48px; background: var(--gray-50); border-radius: 8px;">
-                <svg width="64" height="64" fill="var(--gray-400)" viewBox="0 0 16 16" style="margin-bottom: 16px;">
-                    <path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/>
-                </svg>
-                <h3 style="color: var(--gray-600); margin-bottom: 8px;">Нет графиков</h3>
-                <p style="color: var(--gray-500);">Создайте первый ГПР для планирования работ</p>
-            </div>
-        `;
+            document.getElementById('scheduleListView').style.display = 'block';
+            document.getElementById('scheduleDetailView').style.display = 'none';
+
+            this.renderSchedulesList(schedules);
+        } catch (error) {
+            console.error('Error loading schedules:', error);
+            UI.showToast('Ошибка загрузки графиков', 'error');
+        }
     },
 
     renderSchedulesList(schedules) {
-        return `
-            <div class="schedules-list" style="display: flex; flex-direction: column; gap: 16px;">
-                ${schedules.map(schedule => this.renderScheduleCard(schedule)).join('')}
-            </div>
-        `;
-    },
-
-    renderScheduleCard(schedule) {
-        const statusColors = {
-            draft: 'var(--gray-500)',
-            active: 'var(--accent-blue)',
-            completed: 'var(--accent-green)',
-        };
-        const statusLabels = {
-            draft: 'Черновик',
-            active: 'Активный',
-            completed: 'Завершён',
-        };
-
-        // Найти блок для этого графика
-        const block = this.blocks.find(b => b.id === schedule.blockId);
-        const blockName = block?.name || '';
-
-        return `
-            <div class="schedule-card" style="
-                background: var(--white);
-                border-radius: 8px;
-                padding: 16px 20px;
-                box-shadow: var(--shadow-sm);
-                border-left: 4px solid ${statusColors[schedule.status] || statusColors.draft};
-                cursor: pointer;
-                transition: all 0.2s;
-            " onclick="ScheduleManager.openSchedule('${schedule.id}')"
-               onmouseover="this.style.boxShadow='var(--shadow-md)'; this.style.transform='translateX(4px)'"
-               onmouseout="this.style.boxShadow='var(--shadow-sm)'; this.style.transform='translateX(0)'">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                            ${blockName ? `<span style="background: var(--gray-200); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">${blockName}</span>` : ''}
-                            <h4 style="margin: 0; color: var(--gray-800);">${schedule.name}</h4>
-                        </div>
-                        <div style="display: flex; gap: 16px; font-size: 13px; color: var(--gray-500);">
-                            <span>${new Date(schedule.startDate).toLocaleDateString('ru-RU')} — ${new Date(schedule.endDate).toLocaleDateString('ru-RU')}</span>
-                            <span>Работ: ${schedule._count?.items || 0}</span>
-                        </div>
-                    </div>
-                    <span style="
-                        background: ${statusColors[schedule.status]}15;
-                        color: ${statusColors[schedule.status]};
-                        padding: 4px 12px;
-                        border-radius: 12px;
-                        font-size: 12px;
-                        font-weight: 500;
-                    ">${statusLabels[schedule.status] || schedule.status}</span>
-                </div>
-            </div>
-        `;
-    },
-
-    // ========================================
-    // Мастер создания ГПР (Шаг 1: Выбор блока)
-    // ========================================
-    async showCreateScheduleWizard() {
-        this.selectedBlockId = null;
-        this.selectedSections = [];
-
-        if (this.blocks.length === 0) {
-            UI.showToast('Сначала создайте блоки в разделе Смета', 'warning');
-            return;
-        }
-
-        UI.showModal('Создание ГПР — Шаг 1: Выбор блока', `
-            <div id="wizard-step-1">
-                <p style="color: var(--gray-600); margin-bottom: 16px;">
-                    Выберите блок, для которого создаётся график работ:
-                </p>
-                <div class="block-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto;">
-                    ${this.blocks.map(block => {
-                        const blockEstimates = this.estimates.filter(e => e.blockId === block.id);
-                        const hasEstimates = blockEstimates.length > 0;
-                        return `
-                            <div class="block-option ${hasEstimates ? '' : 'disabled'}" 
-                                 data-block-id="${block.id}"
-                                 style="
-                                    padding: 16px;
-                                    border: 2px solid var(--gray-200);
-                                    border-radius: 8px;
-                                    cursor: ${hasEstimates ? 'pointer' : 'not-allowed'};
-                                    opacity: ${hasEstimates ? '1' : '0.5'};
-                                    transition: all 0.2s;
-                                 "
-                                 ${hasEstimates ? `onclick="ScheduleManager.selectBlock('${block.id}')"` : ''}>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <strong style="color: var(--gray-800);">${block.name}</strong>
-                                        <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--gray-500);">
-                                            ${block.description || 'Без описания'}
-                                        </p>
-                                    </div>
-                                    <div style="text-align: right; font-size: 13px;">
-                                        <div style="color: var(--gray-600);">Смет: ${blockEstimates.length}</div>
-                                        ${!hasEstimates ? '<div style="color: var(--accent-red);">Нет смет</div>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-                    <button type="button" onclick="UI.closeModal()" class="btn-secondary">Отмена</button>
-                </div>
-            </div>
-        `, { width: '500px' });
-    },
-
-    // ========================================
-    // Шаг 2: Выбор разделов сметы
-    // ========================================
-    async selectBlock(blockId) {
-        this.selectedBlockId = blockId;
-        const block = this.blocks.find(b => b.id === blockId);
-        const blockEstimates = this.estimates.filter(e => e.blockId === blockId);
-
-        // Загружаем разделы для всех смет блока
-        let allSections = [];
-        for (const estimate of blockEstimates) {
-            const sections = await api.getSections(estimate.id);
-            for (const section of sections) {
-                allSections.push({
-                    ...section,
-                    estimateName: estimate.name,
-                    estimateId: estimate.id,
-                });
-            }
-        }
-
-        if (allSections.length === 0) {
-            UI.showToast('В сметах этого блока нет разделов', 'warning');
-            return;
-        }
-
-        UI.showModal(`Создание ГПР — Шаг 2: Разделы (${block.name})`, `
-            <div id="wizard-step-2">
-                <p style="color: var(--gray-600); margin-bottom: 16px;">
-                    Выберите разделы сметы для включения в график:
-                </p>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="select-all-sections" onchange="ScheduleManager.toggleAllSections(this)">
-                        <strong>Выбрать все</strong>
-                    </label>
-                </div>
-                <div class="sections-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto;">
-                    ${allSections.map(section => `
-                        <label class="section-option" style="
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                            padding: 12px 16px;
-                            border: 1px solid var(--gray-200);
-                            border-radius: 6px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">
-                            <input type="checkbox" class="section-checkbox" value="${section.id}" 
-                                   data-section='${JSON.stringify({id: section.id, code: section.code, name: section.name, estimateName: section.estimateName}).replace(/'/g, "&#39;")}'>
-                            <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="background: var(--accent-blue); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
-                                        ${section.code}
-                                    </span>
-                                    <strong>${section.name}</strong>
-                                </div>
-                                <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">
-                                    Смета: ${section.estimateName} • Сумма: ${UI.formatCurrency(section.totalCost || 0)}
-                                </div>
-                            </div>
-                        </label>
-                    `).join('')}
-                </div>
-                <div style="display: flex; justify-content: space-between; gap: 12px; margin-top: 24px;">
-                    <button type="button" onclick="ScheduleManager.showCreateScheduleWizard()" class="btn-secondary">← Назад</button>
-                    <button type="button" onclick="ScheduleManager.goToStep3()" class="btn-primary">Далее →</button>
-                </div>
-            </div>
-        `, { width: '550px' });
-    },
-
-    toggleAllSections(checkbox) {
-        const checkboxes = document.querySelectorAll('.section-checkbox');
-        checkboxes.forEach(cb => cb.checked = checkbox.checked);
-    },
-
-    // ========================================
-    // Шаг 3: Настройки и предпросмотр
-    // ========================================
-    async goToStep3() {
-        const checkboxes = document.querySelectorAll('.section-checkbox:checked');
-        if (checkboxes.length === 0) {
-            UI.showToast('Выберите хотя бы один раздел', 'warning');
-            return;
-        }
-
-        this.selectedSections = [];
-        checkboxes.forEach(cb => {
-            this.selectedSections.push(JSON.parse(cb.dataset.section.replace(/&#39;/g, "'")));
-        });
-
-        const block = this.blocks.find(b => b.id === this.selectedBlockId);
-        const today = new Date().toISOString().split('T')[0];
-        const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-        UI.showModal(`Создание ГПР — Шаг 3: Настройки`, `
-            <form id="create-schedule-form">
-                <div style="background: var(--gray-50); padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
-                    <div style="font-size: 13px; color: var(--gray-500);">Блок: <strong style="color: var(--gray-800);">${block.name}</strong></div>
-                    <div style="font-size: 13px; color: var(--gray-500); margin-top: 4px;">
-                        Разделы: ${this.selectedSections.map(s => s.code).join(', ')}
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Название графика *</label>
-                    <input type="text" name="name" required value="ГПР ${block.name}" placeholder="Название графика">
-                </div>
-                
-                <div class="form-group">
-                    <label>Описание</label>
-                    <textarea name="description" rows="2" placeholder="Описание графика...">${this.selectedSections.map(s => s.name).join(', ')}</textarea>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>Дата начала *</label>
-                        <input type="date" name="startDate" required value="${today}">
-                    </div>
-                    <div class="form-group">
-                        <label>Дата окончания *</label>
-                        <input type="date" name="endDate" required value="${endDate}">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" name="importWorkTypes" checked>
-                        Импортировать виды работ из выбранных разделов
-                    </label>
-                    <small style="color: var(--gray-500); display: block; margin-top: 4px;">
-                        Виды работ будут добавлены как позиции графика
-                    </small>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; gap: 12px; margin-top: 24px;">
-                    <button type="button" onclick="ScheduleManager.selectBlock('${this.selectedBlockId}')" class="btn-secondary">← Назад</button>
-                    <button type="submit" class="btn-primary">Создать ГПР</button>
-                </div>
-            </form>
-        `, { width: '500px' });
-
-        document.getElementById('create-schedule-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.createScheduleWithItems(new FormData(e.target));
-        });
-    },
-
-    // ========================================
-    // Создание ГПР с импортом видов работ
-    // ========================================
-    async createScheduleWithItems(formData) {
-        try {
-            UI.showToast('Создание графика...', 'info');
-
-            // 1. Создаём график
-            const schedule = await api.createSchedule({
-                projectId: this.currentProjectId,
-                blockId: this.selectedBlockId,
-                name: formData.get('name'),
-                description: formData.get('description'),
-                startDate: formData.get('startDate'),
-                endDate: formData.get('endDate'),
-            });
-
-            // 2. Если выбран импорт — добавляем виды работ
-            if (formData.get('importWorkTypes')) {
-                const startDate = new Date(formData.get('startDate'));
-                let dayOffset = 0;
-
-                for (const section of this.selectedSections) {
-                    // Загружаем этапы (виды работ) раздела
-                    const stages = await api.getStages(section.id);
-                    
-                    for (const stage of stages) {
-                        // Каждый этап добавляем как позицию графика
-                        const itemStart = new Date(startDate);
-                        itemStart.setDate(itemStart.getDate() + dayOffset);
-                        
-                        const itemEnd = new Date(itemStart);
-                        itemEnd.setDate(itemEnd.getDate() + 7); // По умолчанию неделя
-
-                        await api.createScheduleItem(schedule.id, {
-                            estimateStageId: stage.id,
-                            name: `${section.code}: ${stage.name}`,
-                            unit: stage.unit || '',
-                            plannedQuantity: stage.quantity || 0,
-                            plannedCost: stage.totalCost || 0,
-                            plannedStart: itemStart.toISOString().split('T')[0],
-                            plannedEnd: itemEnd.toISOString().split('T')[0],
-                        });
-
-                        dayOffset += 3; // Смещаем следующую работу на 3 дня
-                    }
-                }
-            }
-
-            UI.closeModal();
-            await this.render();
-            UI.showToast('ГПР создан успешно!', 'success');
-            
-            // Открываем созданный график
-            await this.openSchedule(schedule.id);
-
-        } catch (error) {
-            console.error('Error creating schedule:', error);
-            UI.showToast('Ошибка создания: ' + error.message, 'error');
-        }
-    },
-
-    // ========================================
-    // Открыть график (детальный вид)
-    // ========================================
-    async openSchedule(scheduleId) {
-        this.currentScheduleId = scheduleId;
+        const container = document.getElementById('scheduleList');
         
-        try {
-            const schedule = await api.getSchedule(scheduleId);
-            const container = document.getElementById('content-area');
-
-            // Группируем позиции по разделам
-            const groupedItems = this.groupItemsBySection(schedule.items || []);
-
+        if (schedules.length === 0) {
             container.innerHTML = `
-                <div class="schedule-detail" style="padding: 24px;">
-                    <!-- Заголовок -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <button onclick="ScheduleManager.render()" class="btn-icon" title="Назад">
-                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                                </svg>
-                            </button>
-                            <div>
-                                <h2 style="margin: 0;">${schedule.name}</h2>
-                                <p style="margin: 4px 0 0 0; color: var(--gray-500); font-size: 14px;">
-                                    ${new Date(schedule.startDate).toLocaleDateString('ru-RU')} — 
-                                    ${new Date(schedule.endDate).toLocaleDateString('ru-RU')}
-                                </p>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 12px;">
-                            <button onclick="ScheduleManager.showAddItemModal()" class="btn-secondary" style="display: flex; align-items: center; gap: 8px;">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
-                                </svg>
-                                Добавить работу
-                            </button>
-                            <button onclick="ScheduleManager.deleteSchedule('${scheduleId}')" class="btn-icon" style="color: var(--accent-red);" title="Удалить график">
-                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Сводка -->
-                    ${this.renderScheduleSummary(schedule)}
-
-                    <!-- Позиции по разделам -->
-                    ${this.renderGroupedItems(groupedItems)}
+                <div class="empty-state">
+                    <p>Нет созданных графиков</p>
+                    <button class="btn btn-primary" onclick="ScheduleManager.createSchedule()">
+                        Создать первый ГПР
+                    </button>
                 </div>
             `;
-        } catch (error) {
-            console.error('Error opening schedule:', error);
-            UI.showToast('Ошибка загрузки графика: ' + error.message, 'error');
-        }
-    },
-
-    groupItemsBySection(items) {
-        const groups = {};
-        for (const item of items) {
-            const sectionCode = item.estimateStage?.section?.code || 'Без раздела';
-            const sectionName = item.estimateStage?.section?.name || '';
-            const key = sectionCode;
-            
-            if (!groups[key]) {
-                groups[key] = {
-                    code: sectionCode,
-                    name: sectionName,
-                    items: [],
-                    totalCost: 0,
-                };
-            }
-            groups[key].items.push(item);
-            groups[key].totalCost += item.plannedCost || 0;
-        }
-        return groups;
-    },
-
-    renderScheduleSummary(schedule) {
-        const items = schedule.items || [];
-        const totalCost = items.reduce((sum, i) => sum + (i.plannedCost || 0), 0);
-        const completedCount = items.filter(i => i.status === 'completed').length;
-        const inProgressCount = items.filter(i => i.status === 'in_progress').length;
-
-        return `
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
-                <div style="background: var(--white); padding: 16px; border-radius: 8px; box-shadow: var(--shadow-sm);">
-                    <div style="color: var(--gray-500); font-size: 13px;">Всего работ</div>
-                    <div style="font-size: 24px; font-weight: 600; color: var(--gray-800);">${items.length}</div>
-                </div>
-                <div style="background: var(--white); padding: 16px; border-radius: 8px; box-shadow: var(--shadow-sm);">
-                    <div style="color: var(--gray-500); font-size: 13px;">В работе</div>
-                    <div style="font-size: 24px; font-weight: 600; color: var(--accent-blue);">${inProgressCount}</div>
-                </div>
-                <div style="background: var(--white); padding: 16px; border-radius: 8px; box-shadow: var(--shadow-sm);">
-                    <div style="color: var(--gray-500); font-size: 13px;">Завершено</div>
-                    <div style="font-size: 24px; font-weight: 600; color: var(--accent-green);">${completedCount}</div>
-                </div>
-                <div style="background: var(--white); padding: 16px; border-radius: 8px; box-shadow: var(--shadow-sm);">
-                    <div style="color: var(--gray-500); font-size: 13px;">Плановая стоимость</div>
-                    <div style="font-size: 20px; font-weight: 600; color: var(--gray-800);">${UI.formatCurrency(totalCost)}</div>
-                </div>
-            </div>
-        `;
-    },
-
-    renderGroupedItems(groupedItems) {
-        const sections = Object.values(groupedItems);
-        
-        if (sections.length === 0) {
-            return `
-                <div style="text-align: center; padding: 32px; background: var(--gray-50); border-radius: 8px;">
-                    <p style="color: var(--gray-500);">Нет работ в графике</p>
-                </div>
-            `;
+            return;
         }
 
-        return sections.map(section => `
-            <div class="schedule-section" style="margin-bottom: 24px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: var(--gray-100); border-radius: 6px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="background: var(--accent-blue); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                            ${section.code}
-                        </span>
-                        <strong>${section.name}</strong>
+        container.innerHTML = schedules.map(schedule => `
+            <div class="schedule-card" onclick="ScheduleManager.openSchedule('${schedule.id}')">
+                <div class="schedule-card-header">
+                    <div class="schedule-card-title">${schedule.name}</div>
+                    <div class="schedule-card-meta">
+                        Создан: ${new Date(schedule.createdAt).toLocaleDateString('ru-RU')}
                     </div>
-                    <span style="font-size: 14px; color: var(--gray-600);">
-                        ${UI.formatCurrency(section.totalCost)}
-                    </span>
                 </div>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                        <thead>
-                            <tr style="background: var(--gray-50);">
-                                <th style="padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--gray-200);">Работа</th>
-                                <th style="padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--gray-200); width: 80px;">Объём</th>
-                                <th style="padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--gray-200); width: 100px;">Начало</th>
-                                <th style="padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--gray-200); width: 100px;">Окончание</th>
-                                <th style="padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--gray-200); width: 120px;">Стоимость</th>
-                                <th style="padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--gray-200); width: 100px;">Статус</th>
-                                <th style="padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--gray-200); width: 60px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${section.items.map(item => this.renderItemRow(item)).join('')}
-                        </tbody>
-                    </table>
+                <div class="schedule-card-body">
+                    ${schedule.description ? `<p>${schedule.description}</p>` : ''}
+                </div>
+                <div class="schedule-card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Задач</span>
+                        <span class="stat-value">${schedule._count?.tasks || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Статус</span>
+                        <span class="stat-value">${this.getStatusLabel(schedule.status)}</span>
+                    </div>
+                    ${schedule.startDate ? `
+                        <div class="stat-item">
+                            <span class="stat-label">Начало</span>
+                            <span class="stat-value">${new Date(schedule.startDate).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `).join('');
     },
 
-    renderItemRow(item) {
-        const statusColors = {
-            not_started: 'var(--gray-500)',
-            in_progress: 'var(--accent-blue)',
-            completed: 'var(--accent-green)',
-            delayed: 'var(--accent-red)',
-        };
+    async loadScheduleDetails(scheduleId) {
+        try {
+            const response = await fetch(`/api/schedules/${scheduleId}`);
+            this.currentSchedule = await response.json();
 
-        return `
-            <tr style="border-bottom: 1px solid var(--gray-100);">
-                <td style="padding: 10px 12px;">
-                    <div>${item.name}</div>
-                    ${item.floor ? `<div style="font-size: 12px; color: var(--gray-500);">Этаж ${item.floor}</div>` : ''}
+            // Загружаем задачи
+            const tasksResponse = await fetch(`/api/schedules/${scheduleId}/tasks`);
+            this.tasks = await tasksResponse.json();
+
+            document.getElementById('scheduleListView').style.display = 'none';
+            document.getElementById('scheduleDetailView').style.display = 'block';
+            document.getElementById('scheduleTitle').textContent = this.currentSchedule.name;
+
+            this.renderTasks();
+        } catch (error) {
+            console.error('Error loading schedule details:', error);
+            UI.showToast('Ошибка загрузки графика', 'error');
+        }
+    },
+
+    renderTasks() {
+        const tbody = document.getElementById('tasksTableBody');
+        
+        if (this.tasks.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2rem; color: #999;">
+                        Нет задач. Используйте "Импорт из сметы" для добавления работ.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = this.tasks.map(task => `
+            <tr data-task-id="${task.id}">
+                <td>
+                    <input type="text" 
+                           class="editable-field" 
+                           value="${task.floor || ''}" 
+                           onchange="ScheduleManager.updateTask('${task.id}', 'floor', this.value)">
                 </td>
-                <td style="padding: 10px 12px; text-align: center;">
-                    ${item.plannedQuantity || 0} ${item.unit || ''}
+                <td>${task.stageName}</td>
+                <td>${task.unit || '-'}</td>
+                <td>
+                    <input type="number" 
+                           class="editable-field" 
+                           value="${task.quantity}" 
+                           step="0.01"
+                           onchange="ScheduleManager.updateTask('${task.id}', 'quantity', parseFloat(this.value))">
                 </td>
-                <td style="padding: 10px 12px; text-align: center; font-size: 13px;">
-                    ${new Date(item.plannedStart).toLocaleDateString('ru-RU')}
+                <td>
+                    <input type="date" 
+                           class="editable-field" 
+                           value="${task.startDate ? task.startDate.split('T')[0] : ''}" 
+                           onchange="ScheduleManager.updateTask('${task.id}', 'startDate', this.value)">
                 </td>
-                <td style="padding: 10px 12px; text-align: center; font-size: 13px;">
-                    ${new Date(item.plannedEnd).toLocaleDateString('ru-RU')}
+                <td>
+                    <input type="date" 
+                           class="editable-field" 
+                           value="${task.endDate ? task.endDate.split('T')[0] : ''}" 
+                           onchange="ScheduleManager.updateTask('${task.id}', 'endDate', this.value)">
                 </td>
-                <td style="padding: 10px 12px; text-align: right; font-weight: 500;">
-                    ${UI.formatCurrency(item.plannedCost || 0)}
-                </td>
-                <td style="padding: 10px 12px; text-align: center;">
-                    <select onchange="ScheduleManager.updateItemStatus('${item.id}', this.value)" 
-                            style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--gray-300); font-size: 12px; background: ${statusColors[item.status]}15; color: ${statusColors[item.status]};">
-                        <option value="not_started" ${item.status === 'not_started' ? 'selected' : ''}>Ожидает</option>
-                        <option value="in_progress" ${item.status === 'in_progress' ? 'selected' : ''}>В работе</option>
-                        <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>Готово</option>
-                        <option value="delayed" ${item.status === 'delayed' ? 'selected' : ''}>Задержка</option>
+                <td>${task.duration ? task.duration + ' дн.' : '-'}</td>
+                <td>
+                    <select class="editable-select" 
+                            onchange="ScheduleManager.updateTask('${task.id}', 'status', this.value)">
+                        <option value="not_started" ${task.status === 'not_started' ? 'selected' : ''}>Не начато</option>
+                        <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>В работе</option>
+                        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Завершено</option>
+                        <option value="delayed" ${task.status === 'delayed' ? 'selected' : ''}>Задержка</option>
                     </select>
                 </td>
-                <td style="padding: 10px 12px; text-align: center;">
-                    <button onclick="ScheduleManager.deleteItem('${item.id}')" class="btn-icon" style="color: var(--accent-red);" title="Удалить">
-                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                        </svg>
-                    </button>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn delete" onclick="ScheduleManager.deleteTask('${task.id}')">
+                            🗑️
+                        </button>
+                    </div>
                 </td>
             </tr>
+        `).join('');
+    },
+
+    async updateTask(taskId, field, value) {
+        try {
+            const updateData = { [field]: value };
+
+            const response = await fetch(`/api/schedules/${this.currentSchedule.id}/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) throw new Error('Failed to update task');
+
+            // Обновляем локальные данные
+            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                this.tasks[taskIndex] = await response.json();
+                this.renderTasks(); // Перерисовываем для обновления duration
+            }
+
+            UI.showToast('Изменения сохранены', 'success');
+        } catch (error) {
+            console.error('Error updating task:', error);
+            UI.showToast('Ошибка сохранения', 'error');
+        }
+    },
+
+    async deleteTask(taskId) {
+        if (!confirm('Удалить эту задачу?')) return;
+
+        try {
+            const response = await fetch(`/api/schedules/${this.currentSchedule.id}/tasks/${taskId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete task');
+
+            this.tasks = this.tasks.filter(t => t.id !== taskId);
+            this.renderTasks();
+            UI.showToast('Задача удалена', 'success');
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            UI.showToast('Ошибка удаления', 'error');
+        }
+    },
+
+    switchView(view) {
+        // Обновляем активную вкладку
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+
+        // Переключаем панели
+        document.querySelectorAll('.view-panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+
+        this.currentView = view;
+
+        if (view === 'table') {
+            document.getElementById('tableView').classList.add('active');
+        } else if (view === 'gantt') {
+            document.getElementById('ganttView').classList.add('active');
+            this.renderGantt();
+        } else if (view === 'ifc') {
+            document.getElementById('ifcView').classList.add('active');
+            this.loadIFCViewer();
+        }
+    },
+
+    renderGantt() {
+        const container = document.getElementById('ganttChart');
+        
+        // TODO: Интеграция с библиотекой Gantt (например, DHTMLX Gantt, Frappe Gantt)
+        container.innerHTML = `
+            <div class="gantt-placeholder">
+                <div style="text-align: center;">
+                    <p>Диаграмма Ганта будет реализована в следующей версии</p>
+                    <p style="color: #999; font-size: 0.875rem;">Сейчас используйте табличный вид для работы с датами</p>
+                </div>
+            </div>
         `;
     },
 
-    // ========================================
-    // Обновление статуса позиции
-    // ========================================
-    async updateItemStatus(itemId, status) {
+    loadIFCViewer() {
+        const container = document.getElementById('ifcContainer');
+        
+        // TODO: Интеграция с xeokit для загрузки IFC модели
+        container.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white;">
+                <div style="text-align: center;">
+                    <p>IFC Viewer будет реализован в следующей версии</p>
+                    <p style="color: #ccc; font-size: 0.875rem;">Здесь будет отображаться 3D модель с подсветкой элементов по этажам</p>
+                </div>
+            </div>
+        `;
+    },
+
+    async createSchedule() {
+        // Загружаем блоки для выбора
         try {
-            await api.updateScheduleItem(this.currentScheduleId, itemId, { status });
+            const response = await fetch(`/api/blocks?projectId=${this.currentProject.id}`);
+            const blocks = await response.json();
+
+            const blockSelect = document.getElementById('blockSelect');
+            blockSelect.innerHTML = `
+                <option value="">Выберите блок</option>
+                ${blocks.map(block => `
+                    <option value="${block.id}">${block.name} (${block.floors} этажей)</option>
+                `).join('')}
+            `;
+
+            // Автозаполнение названия при выборе блока
+            blockSelect.onchange = (e) => {
+                const block = blocks.find(b => b.id === e.target.value);
+                if (block) {
+                    document.getElementById('scheduleName').value = `ГПР ${block.name}`;
+                    this.currentBlock = block;
+                }
+            };
+
+            UI.showModal('createScheduleModal');
         } catch (error) {
-            UI.showToast('Ошибка обновления: ' + error.message, 'error');
-            await this.openSchedule(this.currentScheduleId);
+            console.error('Error loading blocks:', error);
+            UI.showToast('Ошибка загрузки блоков', 'error');
         }
     },
 
-    // ========================================
-    // Модальное окно добавления работы
-    // ========================================
-    async showAddItemModal() {
-        const schedule = await api.getSchedule(this.currentScheduleId);
-        
-        // Получаем виды работ из смет блока
-        const blockEstimates = this.estimates.filter(e => e.blockId === schedule.blockId);
-        let allStages = [];
-        
-        for (const estimate of blockEstimates) {
-            const sections = await api.getSections(estimate.id);
-            for (const section of sections) {
-                const stages = await api.getStages(section.id);
-                for (const stage of stages) {
-                    allStages.push({
-                        id: stage.id,
-                        name: stage.name,
-                        unit: stage.unit,
-                        quantity: stage.quantity || 0,
-                        totalCost: stage.totalCost || 0,
-                        sectionCode: section.code,
-                        sectionName: section.name,
-                    });
+    async saveSchedule() {
+        const blockId = document.getElementById('blockSelect').value;
+        const name = document.getElementById('scheduleName').value.trim();
+        const description = document.getElementById('scheduleDescription').value.trim();
+
+        if (!blockId || !name) {
+            UI.showToast('Заполните все обязательные поля', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/schedules', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectId: this.currentProject.id,
+                    blockId,
+                    name,
+                    description
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to create schedule');
+
+            const schedule = await response.json();
+            
+            UI.closeModal('createScheduleModal');
+            UI.showToast('ГПР создан', 'success');
+            
+            this.openSchedule(schedule.id);
+        } catch (error) {
+            console.error('Error creating schedule:', error);
+            UI.showToast('Ошибка создания ГПР', 'error');
+        }
+    },
+
+    async importFromEstimate() {
+        try {
+            // Загружаем сметы проекта
+            const response = await fetch(`/api/estimates?projectId=${this.currentProject.id}`);
+            const estimates = await response.json();
+
+            const container = document.getElementById('estimateCheckboxes');
+            container.innerHTML = estimates.map(est => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="est_${est.id}" value="${est.id}">
+                    <label for="est_${est.id}">${est.name}</label>
+                </div>
+            `).join('');
+
+            // Генерируем поля этажей из блока
+            if (this.currentSchedule?.blockId) {
+                const blockResponse = await fetch(`/api/blocks/${this.currentSchedule.blockId}`);
+                const block = await blockResponse.json();
+                
+                const floorContainer = document.getElementById('floorInputs');
+                floorContainer.innerHTML = '';
+                
+                for (let i = 1; i <= block.floors; i++) {
+                    this.addFloorInput(`Этаж ${i}`);
                 }
             }
-        }
 
-        const today = new Date().toISOString().split('T')[0];
-        const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-        UI.showModal('Добавить работу', `
-            <form id="add-item-form">
-                <div class="form-group">
-                    <label>Вид работ из сметы</label>
-                    <select name="estimateStageId" id="stage-select" onchange="ScheduleManager.onStageSelect(this)">
-                        <option value="">— Выберите или добавьте вручную —</option>
-                        ${allStages.map(s => `
-                            <option value="${s.id}" 
-                                data-unit="${s.unit || ''}"
-                                data-quantity="${s.quantity}"
-                                data-cost="${s.totalCost}"
-                                data-name="${s.sectionCode}: ${s.name}">
-                                ${s.sectionCode}: ${s.name} (${s.quantity} ${s.unit || ''})
-                            </option>
-                        `).join('')}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Название работы *</label>
-                    <input type="text" name="name" id="item-name" required placeholder="Название работы">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                    <div class="form-group">
-                        <label>Ед. изм.</label>
-                        <input type="text" name="unit" id="item-unit" placeholder="м³">
-                    </div>
-                    <div class="form-group">
-                        <label>Объём</label>
-                        <input type="number" name="plannedQuantity" id="item-quantity" step="0.01" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Этаж</label>
-                        <input type="number" name="floor" placeholder="1">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="form-group">
-                        <label>Дата начала *</label>
-                        <input type="date" name="plannedStart" required value="${today}">
-                    </div>
-                    <div class="form-group">
-                        <label>Дата окончания *</label>
-                        <input type="date" name="plannedEnd" required value="${nextWeek}">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Плановая стоимость</label>
-                    <input type="number" name="plannedCost" id="item-cost" step="0.01" value="0">
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-                    <button type="button" onclick="UI.closeModal()" class="btn-secondary">Отмена</button>
-                    <button type="submit" class="btn-primary">Добавить</button>
-                </div>
-            </form>
-        `);
-
-        document.getElementById('add-item-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            try {
-                await api.createScheduleItem(this.currentScheduleId, {
-                    estimateStageId: formData.get('estimateStageId') || null,
-                    name: formData.get('name'),
-                    unit: formData.get('unit'),
-                    floor: formData.get('floor') ? parseInt(formData.get('floor')) : null,
-                    plannedQuantity: parseFloat(formData.get('plannedQuantity')) || 0,
-                    plannedCost: parseFloat(formData.get('plannedCost')) || 0,
-                    plannedStart: formData.get('plannedStart'),
-                    plannedEnd: formData.get('plannedEnd'),
-                });
-                UI.closeModal();
-                await this.openSchedule(this.currentScheduleId);
-                UI.showToast('Работа добавлена', 'success');
-            } catch (error) {
-                UI.showToast('Ошибка: ' + error.message, 'error');
-            }
-        });
-    },
-
-    onStageSelect(select) {
-        const option = select.options[select.selectedIndex];
-        if (!option.value) return;
-
-        document.getElementById('item-name').value = option.dataset.name;
-        document.getElementById('item-unit').value = option.dataset.unit;
-        document.getElementById('item-quantity').value = option.dataset.quantity;
-        document.getElementById('item-cost').value = option.dataset.cost;
-    },
-
-    // ========================================
-    // Удаление
-    // ========================================
-    async deleteItem(itemId) {
-        if (!confirm('Удалить эту работу?')) return;
-        try {
-            await api.deleteScheduleItem(this.currentScheduleId, itemId);
-            await this.openSchedule(this.currentScheduleId);
-            UI.showToast('Работа удалена', 'success');
+            UI.showModal('importEstimateModal');
         } catch (error) {
-            UI.showToast('Ошибка: ' + error.message, 'error');
+            console.error('Error loading estimates:', error);
+            UI.showToast('Ошибка загрузки смет', 'error');
         }
     },
 
-    async deleteSchedule(scheduleId) {
-        if (!confirm('Удалить весь график? Это действие нельзя отменить.')) return;
+    addFloorInput(value = '') {
+        const container = document.getElementById('floorInputs');
+        const row = document.createElement('div');
+        row.className = 'floor-input-row';
+        row.innerHTML = `
+            <input type="text" class="form-control floor-input" value="${value}" placeholder="Название этажа">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(row);
+    },
+
+    async executeImport() {
+        const selectedEstimates = Array.from(document.querySelectorAll('#estimateCheckboxes input:checked'))
+            .map(cb => cb.value);
+
+        const floors = Array.from(document.querySelectorAll('.floor-input'))
+            .map(input => input.value.trim())
+            .filter(v => v);
+
+        if (selectedEstimates.length === 0) {
+            UI.showToast('Выберите хотя бы одну смету', 'error');
+            return;
+        }
+
+        if (floors.length === 0) {
+            UI.showToast('Укажите хотя бы один этаж', 'error');
+            return;
+        }
+
         try {
-            await api.deleteSchedule(scheduleId);
-            await this.render();
-            UI.showToast('График удалён', 'success');
+            const response = await fetch(`/api/schedules/${this.currentSchedule.id}/import-from-estimate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    estimateIds: selectedEstimates,
+                    floors
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to import');
+
+            const result = await response.json();
+            
+            UI.closeModal('importEstimateModal');
+            UI.showToast(`Импортировано ${result.count} задач`, 'success');
+            
+            // Перезагружаем задачи
+            await this.loadScheduleDetails(this.currentSchedule.id);
         } catch (error) {
-            UI.showToast('Ошибка: ' + error.message, 'error');
+            console.error('Error importing tasks:', error);
+            UI.showToast('Ошибка импорта', 'error');
         }
     },
+
+    openSchedule(scheduleId) {
+        localStorage.setItem('currentSchedule', scheduleId);
+        this.loadScheduleDetails(scheduleId);
+    },
+
+    goBack() {
+        if (this.currentSchedule) {
+            localStorage.removeItem('currentSchedule');
+            this.currentSchedule = null;
+            this.loadSchedulesList();
+        } else {
+            window.location.href = 'index.html';
+        }
+    },
+
+    updateBreadcrumbs() {
+        const breadcrumbs = document.getElementById('breadcrumbs');
+        
+        let html = '<span class="breadcrumb-item">Объекты</span>';
+        
+        if (this.currentSchedule) {
+            html += ` → <span class="breadcrumb-item">${this.currentSchedule.name}</span>`;
+        } else {
+            html += ` → <span class="breadcrumb-item">Графики работ</span>`;
+        }
+        
+        breadcrumbs.innerHTML = html;
+    },
+
+    getStatusLabel(status) {
+        const labels = {
+            draft: 'Черновик',
+            active: 'Активен',
+            completed: 'Завершён'
+        };
+        return labels[status] || status;
+    }
 };
 
-// Экспорт для глобального доступа
-window.ScheduleManager = ScheduleManager;
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    ScheduleManager.init();
+});

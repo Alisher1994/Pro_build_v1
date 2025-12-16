@@ -781,10 +781,83 @@ body {
     resize: vertical;
 }
 
+/* ========================================
+   IMPORT MODAL STYLES
+   ======================================== */
+.import-step {
+    min-height: 300px;
+}
+
+.step-indicator {
+    position: relative;
+}
+
+.step-indicator.active {
+    color: var(--accent-blue);
+}
+
+#import-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+#import-preview table th {
+    background: var(--gray-100);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+#import-preview table td,
+#import-preview table th {
+    padding: 8px;
+    border-bottom: 1px solid var(--gray-200);
+    text-align: left;
+}
+
+#import-preview table tr:hover {
+    background: var(--gray-50);
+}
+
+.btn-delete-row {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-delete-row:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23605E5C' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.form-group select:hover {
+    border-color: var(--gray-500);
+}
+
+.form-group select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px var(--primary-light);
 }
@@ -912,4 +985,71 @@ body {
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
+}
+/* ========================================
+   SECTION ACTION BUTTONS & TABS
+   ======================================== */
+.section-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    color: var(--gray-700);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.section-action-btn:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-400);
+    color: var(--gray-900);
+    box-shadow: var(--shadow-sm);
+}
+
+.section-action-btn:active {
+    background: var(--gray-100);
+    transform: translateY(1px);
+}
+
+.section-action-btn svg {
+    flex-shrink: 0;
+}
+
+.section-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--gray-600);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.section-tab-btn:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-300);
+    color: var(--gray-900);
+}
+
+.section-tab-btn.active {
+    background: var(--white);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary-light);
+}
+
+.section-tab-btn svg {
+    flex-shrink: 0;
 }

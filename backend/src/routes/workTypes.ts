@@ -100,6 +100,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       stageId,
+      code,
       name,
       description,
       unit,
@@ -121,6 +122,8 @@ router.post('/', async (req, res) => {
       description,
       orderIndex: orderIndex ?? 0,
     };
+
+    if (code !== undefined) data.code = code;
 
     if (unit !== undefined) data.unit = unit;
     if (quantity !== undefined) data.quantity = quantity;
@@ -160,6 +163,7 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
+      code,
       name,
       description,
       unit,
@@ -179,6 +183,7 @@ router.put('/:id', async (req, res) => {
 
     const data: any = {};
 
+    if (code !== undefined) data.code = code;
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
     if (unit !== undefined) data.unit = unit;

@@ -2,7 +2,18 @@
 // API Service - Взаимодействие с backend
 // ========================================
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = window.PROBIM_API_BASE_URL || (() => {
+    const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const isBackendOrigin = window.location.port === '3001' || window.location.origin.endsWith(':3001');
+
+    // When frontend is served separately (e.g., via http://127.0.0.1:8000) hit backend on port 3001
+    if (isLocalHost && !isBackendOrigin) {
+        return `${window.location.protocol}//${window.location.hostname}:3001/api`;
+    }
+
+    // Default to relative path so the same origin backend can serve both API and static files
+    return '/api';
+})();
 
 class ApiService {
     // ========================================

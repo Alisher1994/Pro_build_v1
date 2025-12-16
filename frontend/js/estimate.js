@@ -36,6 +36,92 @@ const EstimateManager = {
         return symbols[currency] || currency;
     },
 
+    // Обновить breadcrumb в верхней панели
+    async updateBreadcrumb(items = null) {
+        const container = document.getElementById('breadcrumb-container');
+        if (!container) return;
+
+        // Если items не передан, строим из текущего состояния
+        if (!items) {
+            items = [];
+            
+            if (this.currentProject) {
+                items.push({
+                    text: this.currentProject.name,
+                    clickable: false
+                });
+            }
+            
+            if (this.currentBlockId && this.currentBlock) {
+                items.push({
+                    text: 'Блоки',
+                    clickable: true,
+                    onClick: () => this.renderEstimateTree(this.currentProjectId)
+                });
+                items.push({
+                    text: this.currentBlock.name,
+                    clickable: !!this.currentEstimateId,
+                    onClick: this.currentEstimateId ? () => this.openBlock(this.currentBlockId) : null
+                });
+            }
+            
+            if (this.currentEstimateId && this.currentEstimate) {
+                items.push({
+                    text: this.currentEstimate.name,
+                    clickable: !!this.currentSectionId,
+                    onClick: this.currentSectionId ? () => this.openEstimate(this.currentEstimateId) : null
+                });
+            }
+            
+            if (this.currentSectionId && this.currentSection) {
+                items.push({
+                    text: `${this.currentSection.code} - ${this.currentSection.name}`,
+                    clickable: !!this.currentStageId,
+                    onClick: this.currentStageId ? () => this.openSection(this.currentSectionId) : null
+                });
+            }
+            
+            if (this.currentStageId) {
+                // Получаем stage для отображения в breadcrumb
+                try {
+                    const stage = await api.getStage(this.currentStageId);
+                    if (stage) {
+                        items.push({
+                            text: stage.name,
+                            clickable: false
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Could not load stage for breadcrumb:', error);
+                }
+            }
+        }
+
+        if (items.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        items.forEach((item, index) => {
+            if (index > 0) {
+                html += '<span style="margin: 0 8px; color: var(--gray-400);">/</span>';
+            }
+            
+            if (item.clickable && item.onClick) {
+                // Создаем уникальный идентификатор для обработчика
+                const handlerId = `breadcrumb_handler_${index}_${Date.now()}`;
+                // Сохраняем обработчик в глобальную область
+                window[handlerId] = item.onClick;
+                html += `<span onclick="window['${handlerId}']()" style="cursor: pointer; color: var(--primary-color);" title="${item.title || ''}">${item.text}</span>`;
+            } else {
+                html += `<span style="color: ${index === items.length - 1 ? 'var(--gray-900); font-weight: 700;' : 'var(--gray-600)'};">${item.text}</span>`;
+            }
+        });
+
+        container.innerHTML = html;
+    },
+
     // Восстановление состояния (открытый блок или смета)
     async restoreState(projectId) {
         this.currentProjectId = projectId;
@@ -58,6 +144,18 @@ const EstimateManager = {
                 if (lastBlockId) {
                     this.currentBlockId = lastBlockId;
                     await this.openEstimate(lastEstimateId);
+                    
+                    // Пытаемся восстановить раздел, если он был открыт
+                    const lastSectionId = localStorage.getItem('probim_current_section_id');
+                    if (lastSectionId) {
+                        console.log('Restoring section after estimate:', lastSectionId);
+                        // Небольшая задержка, чтобы смета успела загрузиться
+                        setTimeout(() => {
+                            this.openSection(lastSectionId).catch(err => {
+                                console.warn('Could not restore section:', err);
+                            });
+                        }, 200);
+                    }
                     return;
                 }
             }
@@ -65,11 +163,34 @@ const EstimateManager = {
             if (lastBlockId) {
                 console.log('Restoring block:', lastBlockId);
                 await this.openBlock(lastBlockId);
+                
+                // Пытаемся восстановить раздел, если он был открыт
+                const lastSectionId = localStorage.getItem('probim_current_section_id');
+                if (lastSectionId) {
+                    console.log('Restoring section:', lastSectionId);
+                    // Небольшая задержка, чтобы блок успел загрузиться
+                    setTimeout(() => {
+                        this.openSection(lastSectionId).catch(err => {
+                            console.warn('Could not restore section:', err);
+                        });
+                    }, 100);
+                }
                 return;
             }
 
             // Если ничего не сохранено, рендерим дерево блоков
             await this.renderEstimateTree(projectId);
+            
+            // Пытаемся восстановить раздел, если он был открыт
+            const lastSectionId = localStorage.getItem('probim_current_section_id');
+            if (lastSectionId) {
+                console.log('Restoring section after tree render:', lastSectionId);
+                setTimeout(() => {
+                    this.openSection(lastSectionId).catch(err => {
+                        console.warn('Could not restore section:', err);
+                    });
+                }, 100);
+            }
 
         } catch (error) {
             console.error('Error restoring state:', error);
@@ -82,6 +203,11 @@ const EstimateManager = {
 
     async renderEstimateTree(projectId) {
         this.currentProjectId = projectId;
+        this.currentBlockId = null;
+        this.currentEstimateId = null;
+        // НЕ сбрасываем currentSectionId, если раздел открыт
+        // this.currentSectionId = null;
+        this.currentStageId = null;
         
         // Если мы рендерим дерево блоков явно, значит мы вышли на уровень вверх
         // Очищаем сохраненное состояние глубины
@@ -91,6 +217,9 @@ const EstimateManager = {
         try {
             // Получаем данные проекта
             this.currentProject = await api.getProject(projectId);
+            
+            // Обновляем breadcrumb
+            await this.updateBreadcrumb();
             
             // Получаем блоки проекта
             const blocks = await api.getBlocks(projectId);
@@ -167,6 +296,9 @@ const EstimateManager = {
 
     async openBlock(blockId) {
         this.currentBlockId = blockId;
+        this.currentEstimateId = null;
+        this.currentSectionId = null;
+        this.currentStageId = null;
         
         // Сохраняем состояние
         localStorage.setItem('probim_last_block_id', blockId);
@@ -174,19 +306,16 @@ const EstimateManager = {
         
         try {
             const block = await api.getBlock(blockId);
+            this.currentBlock = block;
             const estimates = await api.getEstimates(this.currentProjectId, blockId);
+            
+            // Обновляем breadcrumb
+            await this.updateBreadcrumb();
             
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
                 <div style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div style="font-size: 10px; color: var(--gray-600);">
-                            <span style="color: var(--gray-500);">${this.currentProject.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.renderEstimateTree('${this.currentProjectId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к блокам">Блоки</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span style="font-weight: 700; color: var(--gray-900);">${block.name}</span>
-                        </div>
                         <h2 style="margin: 0;">Сметы</h2>
                     </div>
                     <div id="estimates-container"></div>
@@ -432,60 +561,19 @@ const EstimateManager = {
                 block = await api.getBlock(this.currentBlockId);
             }
             
+            this.currentEstimate = estimate;
+            this.currentBlock = block;
+            
+            // Обновляем breadcrumb
+            await this.updateBreadcrumb();
+            
             const hasIfc = Boolean(estimate.xktFileUrl);
             const ifcFileName = estimate.ifcFileUrl ? estimate.ifcFileUrl.split('/').pop() : null;
 
             const contentArea = document.getElementById('content-area');
+
             contentArea.innerHTML = `
                 <div style="height: 100%; display: flex; flex-direction: column;">
-                    <!-- Заголовок -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: var(--white); border-bottom: 1px solid var(--gray-300); flex-shrink: 0;">
-                        <div style="font-size: 10px; color: var(--gray-600);">
-                            <span style="color: var(--gray-500);">${this.currentProject.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.renderEstimateTree('${this.currentProjectId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к блокам">Блоки</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openBlock('${this.currentBlockId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к сметам">${block.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span style="font-weight: 700; color: var(--gray-900);">${estimate.name}</span>
-                        </div>
-                        <div style="display: flex; gap: 16px; align-items: center;">
-                            <div style="text-align: right; display: flex; flex-direction: column; gap: 4px;">
-                                <span style="font-size: 12px; font-weight: 600; color: ${hasIfc ? 'var(--accent-green)' : 'var(--gray-600)'};">
-                                    ${hasIfc ? 'IFC модель привязана к этой смете' : 'IFC модель не прикреплена'}
-                                </span>
-                                <span style="font-size: 11px; color: var(--gray-500);">
-                                    ${hasIfc ? `Файл: ${ifcFileName || '—'} (доступен справа)` : 'Добавьте IFC в списке смет, чтобы активировать 3D просмотр'}
-                                </span>
-                            </div>
-                            <div id="selection-info" style="display: none; flex: 0 0 auto; padding: 8px 12px; background: var(--primary-lighter); border: 1px solid var(--primary); border-radius: 6px; font-size: 12px; color: var(--primary);">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="16" x2="12" y2="12"/>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
-                                </svg>
-                                <span id="selection-info-text">Выберите ресурсы (Ctrl+Click) и элементы в 3D модели, затем нажмите "Связать"</span>
-                            </div>
-                            <button id="btn-link-resource" onclick="EstimateManager.linkSelectedResource()" class="btn btn-success" style="display: none;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                                </svg>
-                                <span id="link-btn-text">Связать</span>
-                            </button>
-                            <button id="btn-unlink-resource" onclick="EstimateManager.unlinkSelectedResource()" class="btn btn-warning" style="display: none;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                                    <path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/>
-                                    <path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/>
-                                    <line x1="8" x2="8" y1="2" y2="5"/>
-                                    <line x1="2" x2="5" y1="8" y2="8"/>
-                                    <line x1="16" x2="16" y1="19" y2="22"/>
-                                    <line x1="19" x2="22" y1="16" y2="16"/>
-                                </svg>
-                                <span id="unlink-btn-text">Отвязать</span>
-                            </button>
-                        </div>
-                    </div>
 
                     <!-- Трехпанельный интерфейс -->
                     <div style="flex: 1; display: flex; overflow: hidden;">
@@ -1101,6 +1189,7 @@ const EstimateManager = {
                     <input type="checkbox" class="resource-checkbox" data-resource-id="${resource.id}" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary);" title="Ctrl+Click для выбора">
                     <span class="res-link-icon" data-res-id="${resource.id}" style="display: flex; align-items: center; cursor: help;" title="${hasIfcLink ? 'Связано с IFC элементами' : 'Не связано с IFC'}">${linkIcon}</span>
                     <span class="res-type-editable" data-res-id="${resource.id}" style="font-size: 16px; cursor: pointer;" title="Тип: ${resource.type}">${typeIcon}</span>
+                    <span class="res-code-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 50px; text-align: left; font-size: 10px; color: var(--gray-600);" onmouseover="this.style.background='var(--gray-200)'" onmouseout="this.style.background='var(--gray-100)'">${resource.code || ''}</span>
                     <span class="res-name-editable" data-res-id="${resource.id}" style="flex: 1; cursor: text; padding: 2px 4px; border-radius: 2px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${resource.name}</span>
                     <span class="res-unit-editable" data-res-id="${resource.id}" style="cursor: pointer; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 30px; text-align: center;">${resource.unit}</span>
                     <span class="res-quantity-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 40px; text-align: right;">${UI.formatNumber(resource.quantity)}</span>
@@ -1153,6 +1242,15 @@ const EstimateManager = {
                     typeEl.appendChild(select);
                     select.focus();
                 };
+            }
+
+            const codeEl = document.querySelector(`[data-res-id="${resource.id}"].res-code-editable`);
+            if (codeEl) {
+                this.makeEditable(codeEl, resource.code || '', async (newValue) => {
+                    await api.updateWorkType(resource.id, { code: newValue });
+                    codeEl.textContent = newValue;
+                    UI.showNotification('Код ресурса обновлен', 'success');
+                });
             }
 
             const nameEl = document.querySelector(`[data-res-id="${resource.id}"].res-name-editable`);
@@ -1558,35 +1656,134 @@ const EstimateManager = {
     // ========================================
 
     async openSection(sectionId) {
+        console.log('=== openSection called ===');
+        console.log('sectionId parameter:', sectionId);
+        console.log('currentSectionId before:', this.currentSectionId);
+        
         this.currentSectionId = sectionId;
+        
+        // Сохраняем в глобальную переменную для доступа из любого места
+        window.currentSectionId = sectionId;
+        
+        // Сохраняем в localStorage для восстановления при перезагрузке
+        if (sectionId) {
+            localStorage.setItem('probim_current_section_id', sectionId);
+            console.log('Saved sectionId to localStorage:', sectionId);
+        }
+        
+        console.log('Opening section:', sectionId);
+        console.log('EstimateManager.currentSectionId is now:', this.currentSectionId);
+        console.log('window.currentSectionId is now:', window.currentSectionId);
+        
+        // Показываем кнопки раздела в ribbon панели
+        if (typeof app !== 'undefined' && typeof app.setEstimateRibbonContext === 'function') {
+            console.log('Setting ribbon context to section');
+            app.setEstimateRibbonContext('section');
+        } else {
+            console.warn('app.setEstimateRibbonContext not available');
+            // Показываем группу напрямую
+            const sectionGroup = document.getElementById('ribbon-group-section-actions');
+            const sepAfterSectionActions = document.getElementById('ribbon-separator-after-section-actions');
+            if (sectionGroup) {
+                sectionGroup.classList.remove('hidden');
+                console.log('Показал ribbon-group-section-actions');
+            }
+            if (sepAfterSectionActions) {
+                sepAfterSectionActions.classList.remove('hidden');
+            }
+        }
         
         try {
             const section = await api.getSection(sectionId);
-            const estimate = await api.getEstimate(this.currentEstimateId);
-            const block = await api.getBlock(this.currentBlockId);
+            this.currentSection = section;
+            
+            const estimate = await api.getEstimate(section.estimateId);
+            this.currentEstimateId = section.estimateId;
+            this.currentEstimate = estimate;
+            
+            const block = await api.getBlock(estimate.blockId);
+            this.currentBlockId = estimate.blockId;
+            this.currentBlock = block;
+            
+            // Обновляем breadcrumb
+            await this.updateBreadcrumb();
             
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
-                <div style="height: 100%; display: flex; flex-direction: column;">
+                <div style="height: 100%; display: flex; flex-direction: column;" data-section-id="${sectionId}">
                     <!-- Заголовок -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: var(--white); border-bottom: 1px solid var(--gray-300); flex-shrink: 0;">
-                        <div style="font-size: 10px; color: var(--gray-600);">
-                            <span style="color: var(--gray-500);">${this.currentProject.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.renderEstimateTree('${this.currentProjectId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к блокам">Блоки</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openBlock('${this.currentBlockId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к сметам">${block.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openEstimate('${this.currentEstimateId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к разделам">${estimate.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span style="font-weight: 700; color: var(--gray-900);">${section.code} - ${section.name}</span>
-                        </div>
-                        <button onclick="EstimateManager.createStage('${sectionId}')" class="btn btn-primary">
+                    <div style="display: flex; justify-content: flex-end; align-items: center; padding: 16px 24px; background: var(--white); border-bottom: 1px solid var(--gray-300); flex-shrink: 0;">
+                        <button onclick="EstimateManager.createStage('${sectionId}')" class="btn btn-primary" data-section-id="${sectionId}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
                                 <path d="M12 5v14"/>
                                 <path d="M5 12h14"/>
                             </svg>
                             Добавить этап
+                        </button>
+                    </div>
+
+                    <!-- Панель вкладок раздела -->
+                    <div style="display: flex; gap: 8px; padding: 12px 24px; background: var(--gray-50); border-bottom: 1px solid var(--gray-300); flex-shrink: 0; align-items: center;">
+                        <!-- Новые кнопки: Импорт, Экспорт, Поделиться -->
+                        <button class="section-tab-btn" title="Импорт сметы">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span>Импорт сметы</span>
+                        </button>
+                        <button class="section-tab-btn" title="Экспорт сметы">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            <span>Экспорт сметы</span>
+                        </button>
+                        <button class="section-tab-btn" title="Поделиться">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="18" cy="5" r="3"/>
+                                <circle cx="6" cy="12" r="3"/>
+                                <circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                            <span>Поделиться</span>
+                        </button>
+                        
+                        <div style="width: 1px; height: 24px; background: var(--gray-300); margin: 0 8px;"></div>
+
+                        <!-- Вкладки: Вид, Этапы, Ресурсы, 3D режим -->
+                        <button class="section-tab-btn active" data-section-tab="view" title="Вид">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                            <span>Вид</span>
+                        </button>
+                        <button class="section-tab-btn" data-section-tab="stages" title="Этапы">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3v18h18"/>
+                                <path d="M7 16h8"/>
+                                <path d="M7 11h12"/>
+                                <path d="M7 6h3"/>
+                            </svg>
+                            <span>Этапы</span>
+                        </button>
+                        <button class="section-tab-btn" data-section-tab="resources" title="Ресурсы">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                            </svg>
+                            <span>Ресурсы</span>
+                        </button>
+                        <button class="section-tab-btn" data-section-tab="3d" title="3D режим">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                            <span>3D режим</span>
                         </button>
                     </div>
 
@@ -1660,7 +1857,30 @@ const EstimateManager = {
 
             await this.loadStagesTree(sectionId);
             
+            // Убеждаемся, что currentSectionId установлен
+            if (!this.currentSectionId) {
+                this.currentSectionId = sectionId;
+                console.log('Restored currentSectionId from openSection:', sectionId);
+            }
+            
+            // Финальная проверка
+            console.log('=== openSection completed ===');
+            console.log('Final currentSectionId:', this.currentSectionId);
+            console.log('Final currentSection:', this.currentSection);
+            
+            // Дополнительная проверка через небольшую задержку
+            setTimeout(() => {
+                if (EstimateManager.currentSectionId !== sectionId) {
+                    console.warn('WARNING: currentSectionId was changed after openSection!');
+                    console.warn('Expected:', sectionId, 'Actual:', EstimateManager.currentSectionId);
+                    // Восстанавливаем
+                    EstimateManager.currentSectionId = sectionId;
+                    localStorage.setItem('probim_current_section_id', sectionId);
+                }
+            }, 100);
+            
         } catch (error) {
+            console.error('Error in openSection:', error);
             UI.showNotification('Ошибка загрузки раздела: ' + error.message, 'error');
         }
     },
@@ -1876,24 +2096,26 @@ const EstimateManager = {
         try {
             const stage = await api.getStage(stageId);
             const section = await api.getSection(this.currentSectionId);
+            this.currentSection = section;
             
+            // Получаем данные для breadcrumb
+            if (section && section.estimate) {
+                this.currentEstimate = section.estimate;
+                this.currentEstimateId = section.estimate.id;
+                
+                if (section.estimate.block) {
+                    this.currentBlock = section.estimate.block;
+                    this.currentBlockId = section.estimate.block.id;
+                }
+            }
+            
+            // Обновляем breadcrumb
+            await this.updateBreadcrumb();
+
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
                 <div style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div style="font-size: 10px; color: var(--gray-600);">
-                            <span style="color: var(--gray-500);">${this.currentProject.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.renderEstimateTree('${this.currentProjectId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к блокам">Блоки</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openBlock('${this.currentBlockId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к сметам">${block.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openEstimate('${this.currentEstimateId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к разделам">${estimate.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openSection('${this.currentSectionId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к этапам">${section.code} - ${section.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span style="font-weight: 700; color: var(--gray-900);">${stage.name}</span>
-                        </div>
                         <h2 style="margin: 0;">Виды работ</h2>
                         <button onclick="EstimateManager.createWorkType('${stageId}')" class="btn btn-primary">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
@@ -1975,25 +2197,29 @@ const EstimateManager = {
             const workType = await api.getWorkType(workTypeId);
             const stage = await api.getStage(this.currentStageId);
             
+            // Обновляем данные для breadcrumb
+            if (stage && stage.section) {
+                this.currentSection = stage.section;
+                this.currentSectionId = stage.section.id;
+                
+                if (stage.section.estimate) {
+                    this.currentEstimate = stage.section.estimate;
+                    this.currentEstimateId = stage.section.estimate.id;
+                    
+                    if (stage.section.estimate.block) {
+                        this.currentBlock = stage.section.estimate.block;
+                        this.currentBlockId = stage.section.estimate.block.id;
+                    }
+                }
+            }
+            
+            // Обновляем breadcrumb
+            await this.updateBreadcrumb();
+
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
                 <div style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div style="font-size: 10px; color: var(--gray-600);">
-                            <span style="color: var(--gray-500);">${this.currentProject.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.renderEstimateTree('${this.currentProjectId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к блокам">Блоки</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openBlock('${this.currentBlockId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к сметам">${block.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openEstimate('${this.currentEstimateId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к разделам">${estimate.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openSection('${this.currentSectionId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к этапам">${section.code} - ${section.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span onclick="EstimateManager.openStage('${this.currentStageId}')" style="cursor: pointer; color: var(--primary-color);" title="Вернуться к видам работ">${stage.name}</span>
-                            <span style="margin: 0 8px;">/</span>
-                            <span style="font-weight: 700; color: var(--gray-900);">${workType.name}</span>
-                        </div>
                         <h2 style="margin: 0;">Ресурсы</h2>
                         <button onclick="EstimateManager.createResource('${workTypeId}')" class="btn btn-primary">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
@@ -3564,8 +3790,6 @@ const EstimateManager = {
         const btnUnlink = document.getElementById('btn-unlink-resource');
         const linkBtnText = document.getElementById('link-btn-text');
         const unlinkBtnText = document.getElementById('unlink-btn-text');
-        const selectionInfo = document.getElementById('selection-info');
-        const selectionInfoText = document.getElementById('selection-info-text');
         
         if (!btnLink || !btnUnlink) return;
         
@@ -3576,7 +3800,9 @@ const EstimateManager = {
         if (linkBtnText && hasResourceSelection) {
             const resourceText = this.selectedResources.length === 1 ? 'ресурс' : 'ресурсов';
             const ifcText = this.selectedIfcElements.length === 1 ? 'элемент' : 'элементов';
-            linkBtnText.textContent = `Связать (${this.selectedResources.length} ${resourceText} → ${this.selectedIfcElements.length} ${ifcText})`;
+            linkBtnText.textContent = hasIfcSelection 
+                ? `Связать (${this.selectedResources.length} ${resourceText} → ${this.selectedIfcElements.length} ${ifcText})`
+                : `Связать (${this.selectedResources.length} ${resourceText})`;
         } else if (linkBtnText) {
             linkBtnText.textContent = 'Связать';
         }
@@ -3587,37 +3813,27 @@ const EstimateManager = {
             unlinkBtnText.textContent = 'Отвязать';
         }
         
-        // Показываем кнопки и информацию
+        // Показываем кнопки в ribbon
         if (hasResourceSelection) {
             btnLink.style.display = 'flex';
             btnUnlink.style.display = 'flex';
-            
-            // Показываем информационную подсказку
-            if (selectionInfo && selectionInfoText) {
-                selectionInfo.style.display = 'flex';
-                
-                if (!hasIfcSelection) {
-                    selectionInfoText.innerHTML = `Выбрано ресурсов: <strong>${this.selectedResources.length}</strong>. Теперь выберите элементы в 3D модели (кликайте по элементам)`;
-                } else {
-                    selectionInfoText.innerHTML = `Готово к связыванию: <strong>${this.selectedResources.length}</strong> ресурсов → <strong>${this.selectedIfcElements.length}</strong> элементов`;
-                }
-            }
             
             // Активность кнопки "Связать" зависит от наличия выбранных IFC элементов
             btnLink.disabled = !hasIfcSelection;
             if (!hasIfcSelection) {
                 btnLink.style.opacity = '0.5';
                 btnLink.style.cursor = 'not-allowed';
+                btnLink.title = `Выбрано ресурсов: ${this.selectedResources.length}. Теперь выберите элементы в 3D модели (кликайте по элементам)`;
             } else {
                 btnLink.style.opacity = '1';
                 btnLink.style.cursor = 'pointer';
+                btnLink.title = `Связать ${this.selectedResources.length} ресурсов с ${this.selectedIfcElements.length} IFC элементами`;
             }
+            
+            btnUnlink.title = `Отвязать ${this.selectedResources.length} выбранных ресурсов от IFC элементов`;
         } else {
             btnLink.style.display = 'none';
             btnUnlink.style.display = 'none';
-            if (selectionInfo) {
-                selectionInfo.style.display = 'none';
-            }
         }
     },
 
@@ -3886,5 +4102,30 @@ const EstimateManager = {
     },
     async updateHierarchySums(resourceId) {
         return this.updateHierarchySumsFixed(resourceId);
+    },
+
+    // ========================================
+    // Новые функции для работы с разделом сметы
+    // ========================================
+    
+    // Импорт сметы
+    async importEstimate(sectionId) {
+        UI.showNotification('Функция импорта сметы будет доступна в следующей версии', 'info');
+        console.log('Import estimate for section:', sectionId);
+        // TODO: Реализовать импорт сметы из Excel/CSV
+    },
+
+    // Экспорт сметы
+    async exportEstimate(sectionId) {
+        UI.showNotification('Функция экспорта сметы будет доступна в следующей версии', 'info');
+        console.log('Export estimate for section:', sectionId);
+        // TODO: Реализовать экспорт сметы в Excel/PDF
+    },
+
+    // Поделиться сметой
+    async shareEstimate(sectionId) {
+        UI.showNotification('Функция публикации сметы будет доступна в следующей версии', 'info');
+        console.log('Share estimate for section:', sectionId);
+        // TODO: Реализовать создание ссылки для совместного доступа
     }
 };

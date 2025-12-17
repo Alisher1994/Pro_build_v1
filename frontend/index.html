@@ -125,6 +125,35 @@
                         <span class="ribbon-group-label">Сметы</span>
                     </div>
                     <div class="ribbon-separator" id="ribbon-separator-after-estimates"></div>
+                    <div class="ribbon-group" id="ribbon-group-import">
+                        <div class="ribbon-group-content">
+                            <button id="import-estimate-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                <span>Импорт<br>файла</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Импорт</span>
+                    </div>
+                    <div class="ribbon-separator" id="ribbon-separator-after-import"></div>
+                    <div class="ribbon-group" id="ribbon-group-ifc-upload">
+                        <div class="ribbon-group-content">
+                            <button id="upload-ifc-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <path d="M12 17V11"/>
+                                    <polyline points="9 14 12 11 15 14"/>
+                                </svg>
+                                <span>IFC<br>файл</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">IFC</span>
+                    </div>
+                    <div class="ribbon-separator" id="ribbon-separator-after-ifc"></div>
                     <div class="ribbon-group" id="ribbon-group-view-tools">
                         <div class="ribbon-group-content row">
                             <button id="expand-all-btn" class="ribbon-btn">
@@ -345,12 +374,16 @@
     <!-- Modals будут добавлены через JavaScript -->
     <div id="modal-container"></div>
 
+    <!-- XLSX Library for Excel/CSV parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
     <!-- xeokit SDK - подключаем как ES-модуль и переопределяем в window.xeokit -->
     <script type="module" src="js/xeokit-loader.js"></script>
 
     <script src="js/api.js" defer></script>
     <script src="js/ui.js" defer></script>
     <script src="js/ifcViewer.js" defer></script>
+    <script src="js/import.js" defer></script>
     <script src="js/estimate.js" defer></script>
     <script src="js/settings.js" defer></script>
     <script src="js/app.js" defer></script>

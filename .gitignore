@@ -5,7 +5,8 @@ dist/
 .DS_Store
 *.db
 *.db-journal
-uploads/*
+uploads/**
+**/uploads/**
 !uploads/.gitkeep
 !**/uploads/.gitkeep
 !**/uploads/ifc/.gitkeep

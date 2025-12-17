@@ -191,16 +191,23 @@ router.put('/:id', async (req, res) => {
     if (unitCost !== undefined) data.unitCost = unitCost;
     if (orderIndex !== undefined) data.orderIndex = orderIndex;
 
-    // Вычисляем totalCost с учетом текущих и новых значений
-    const newQuantity = quantity !== undefined ? quantity : current.quantity;
-    const newUnitCost = unitCost !== undefined ? unitCost : current.unitCost;
-    
-    const computedTotal =
-      totalCost !== undefined
-        ? totalCost
-        : newQuantity * newUnitCost;
-    
-    data.totalCost = computedTotal;
+    // totalCost является суммой (обычно из ресурсов) и не должен автоматически
+    // пересчитываться из quantity * unitCost при изменении quantity.
+    const effectiveTotalCost = totalCost !== undefined ? totalCost : current.totalCost;
+    const effectiveQuantity = quantity !== undefined ? quantity : current.quantity;
+
+    if (totalCost !== undefined) {
+      data.totalCost = totalCost;
+    }
+
+    // unitCost вычисляем автоматически, если изменили quantity или totalCost
+    // (или если unitCost не задан), чтобы цена всегда = сумма / кол-во.
+    const shouldAutoUnitCost = unitCost === undefined && (quantity !== undefined || totalCost !== undefined);
+    if (shouldAutoUnitCost) {
+      const q = typeof effectiveQuantity === 'number' ? effectiveQuantity : 0;
+      const t = typeof effectiveTotalCost === 'number' ? effectiveTotalCost : 0;
+      data.unitCost = q > 0 ? t / q : 0;
+    }
 
     const formattedIfcElements = formatJsonField(ifcElements);
     if (formattedIfcElements !== undefined) {
@@ -253,6 +260,14 @@ router.post('/:id/recalculate', async (req, res) => {
   try {
     const { id } = req.params;
 
+    const current = await prisma.workType.findUnique({
+      where: { id },
+      select: { quantity: true },
+    });
+    if (!current) {
+      return res.status(404).json({ error: 'Work type not found' });
+    }
+
     // Получить все ресурсы вида работ
     const resources = await prisma.resource.findMany({
       where: { workTypeId: id },
@@ -261,9 +276,12 @@ router.post('/:id/recalculate', async (req, res) => {
 
     const totalCost = resources.reduce((sum, r) => sum + r.totalCost, 0);
 
+    const qty = typeof current.quantity === 'number' ? current.quantity : 0;
+    const unitCost = qty > 0 ? totalCost / qty : 0;
+
     const workType = await prisma.workType.update({
       where: { id },
-      data: { totalCost },
+      data: { totalCost, unitCost },
     });
 
     res.json(normalizeWorkType(workType));

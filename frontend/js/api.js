@@ -223,7 +223,11 @@ class ApiService {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
-        if (!response.ok) throw new Error('Failed to create stage');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to create stage. Status:', response.status, 'Response:', errorText);
+            throw new Error(`Failed to create stage: ${response.status} - ${errorText}`);
+        }
         return await response.json();
     }
 

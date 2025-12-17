@@ -145,17 +145,11 @@ const EstimateManager = {
                     this.currentBlockId = lastBlockId;
                     await this.openEstimate(lastEstimateId);
                     
-                    // Пытаемся восстановить раздел, если он был открыт
-                    const lastSectionId = localStorage.getItem('probim_current_section_id');
-                    if (lastSectionId) {
-                        console.log('Restoring section after estimate:', lastSectionId);
-                        // Небольшая задержка, чтобы смета успела загрузиться
-                        setTimeout(() => {
-                            this.openSection(lastSectionId).catch(err => {
-                                console.warn('Could not restore section:', err);
-                            });
-                        }, 200);
-                    }
+                    // Не восстанавливаем автоматически openSection при загрузке страницы,
+                    // чтобы не "перекидывало" на другой экран и не казалось, что данные пропали.
+                    localStorage.removeItem('probim_current_section_id');
+                    this.currentSectionId = null;
+                    window.currentSectionId = null;
                     return;
                 }
             }
@@ -164,33 +158,18 @@ const EstimateManager = {
                 console.log('Restoring block:', lastBlockId);
                 await this.openBlock(lastBlockId);
                 
-                // Пытаемся восстановить раздел, если он был открыт
-                const lastSectionId = localStorage.getItem('probim_current_section_id');
-                if (lastSectionId) {
-                    console.log('Restoring section:', lastSectionId);
-                    // Небольшая задержка, чтобы блок успел загрузиться
-                    setTimeout(() => {
-                        this.openSection(lastSectionId).catch(err => {
-                            console.warn('Could not restore section:', err);
-                        });
-                    }, 100);
-                }
+                localStorage.removeItem('probim_current_section_id');
+                this.currentSectionId = null;
+                window.currentSectionId = null;
                 return;
             }
 
             // Если ничего не сохранено, рендерим дерево блоков
             await this.renderEstimateTree(projectId);
             
-            // Пытаемся восстановить раздел, если он был открыт
-            const lastSectionId = localStorage.getItem('probim_current_section_id');
-            if (lastSectionId) {
-                console.log('Restoring section after tree render:', lastSectionId);
-                setTimeout(() => {
-                    this.openSection(lastSectionId).catch(err => {
-                        console.warn('Could not restore section:', err);
-                    });
-                }, 100);
-            }
+            localStorage.removeItem('probim_current_section_id');
+            this.currentSectionId = null;
+            window.currentSectionId = null;
 
         } catch (error) {
             console.error('Error restoring state:', error);
@@ -664,6 +643,15 @@ const EstimateManager = {
                 </div>
             `;
 
+            // Важно: canvas пересоздаётся при перерисовке openEstimate.
+            // Если xeokit viewer был уже инициализирован ранее, он может остаться привязанным к старому canvas,
+            // из-за чего после загрузки IFC окно может быть чёрным до обновления страницы.
+            this.viewerInitialized = false;
+            this.viewerInitPromise = null;
+            if (typeof IFCViewerManager !== 'undefined' && IFCViewerManager && typeof IFCViewerManager.destroy === 'function') {
+                IFCViewerManager.destroy();
+            }
+
             this.updateViewerDisplayModeButtons();
             await this.loadEstimateStructure(estimateId);
 
@@ -940,7 +928,6 @@ const EstimateManager = {
 
     async loadEstimateStructure(estimateId) {
         try {
-            // Sections = Этапы в нашем случае
             const sections = await api.getSections(estimateId);
             const container = document.getElementById('estimate-tree-container');
 
@@ -959,14 +946,67 @@ const EstimateManager = {
                 return;
             }
 
-            // Рендерим этапы (sections) которые содержат виды работ (stages)
-            let html = '<div class="tree-structure">';
+            // На экране сметы показываем группы: Этапы → Виды работ → Ресурсы.
+            // Разделы (sections) — технический контейнер в БД, в UI их не показываем.
+            const allStages = [];
             for (const section of sections) {
-                html += await this.renderStageTree(section);
+                const stages = await api.getStages(section.id);
+                for (const s of stages) {
+                    allStages.push({ ...s, __sectionId: section.id });
+                }
+            }
+
+            const defaultSectionId = sections?.[0]?.id;
+
+            if (allStages.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color: var(--gray-400); margin-bottom: 12px;">
+                            <path d="M12 2v20M2 12h20"/>
+                        </svg>
+                        <p style="color: var(--gray-600); font-size: 14px; margin-bottom: 12px;">Этапы не созданы</p>
+                        ${defaultSectionId ? `<button onclick=\"EstimateManager.createStage('${defaultSectionId}')\" class=\"btn btn-primary btn-sm\">Создать первый этап</button>` : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                    ${defaultSectionId ? `<button onclick=\"EstimateManager.createStage('${defaultSectionId}')\" class=\"btn btn-primary btn-sm\">Добавить этап</button>` : ''}
+                </div>
+                <div class="tree-structure">
+            `;
+            for (const stage of allStages) {
+                html += `
+                    <div class="tree-node" style="margin-bottom: 8px;">
+                        <div onclick="EstimateManager.toggleStage('${stage.id}')" style="padding: 8px 12px; background: var(--gray-50); border-left: 3px solid var(--primary); cursor: pointer; border-radius: 4px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                                    <svg id="stage-icon-${stage.id}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                    <span class="stage-name-inline" data-stage-id="${stage.id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: text; font-weight: 600; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(stage.name)}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span data-stage-total-for="${stage.id}" style="font-size: 12px; color: var(--primary);">${UI.formatCurrency(stage.totalCost || 0, this.currentProject?.currency)}</span>
+                                    <button onclick="EstimateManager.createWorkType('${stage.id}'); event.stopPropagation();" class="btn btn-secondary btn-sm" title="Добавить вид работ" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">+</button>
+                                    <button onclick="EstimateManager.deleteStage('${stage.id}'); event.stopPropagation();" class="btn btn-danger btn-sm" title="Удалить этап" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">×</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="stage-${stage.id}-content" style="display: none; margin-left: 20px; margin-top: 4px;"></div>
+                    </div>
+                `;
             }
             html += '</div>';
             container.innerHTML = html;
-            this.highlightResourceElements([]);
+
+            // Inline редактирование как в Excel (без модалок)
+            this.bindEstimateTreeInlineEdits(container);
+
+            // Восстанавливаем раскрытые группы
+            await this.restoreExpandedEstimateTree();
             
             // Сбрасываем фильтр на "все" после загрузки
             this.currentResourceFilter = 'all';
@@ -988,6 +1028,27 @@ const EstimateManager = {
                 `;
             }
         }
+    },
+
+    bindEstimateTreeInlineEdits(rootEl) {
+        if (!rootEl) return;
+
+        const stageEls = rootEl.querySelectorAll('.stage-name-inline[data-stage-id]');
+        stageEls.forEach((el) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+
+            const stageId = el.dataset.stageId;
+            const bind = (currentValue) => {
+                this.makeEditable(el, currentValue, async (newValue) => {
+                    await api.updateStage(stageId, { name: newValue });
+                    el.textContent = newValue;
+                    UI.showNotification('Этап обновлен', 'success');
+                    bind(newValue);
+                });
+            };
+            bind(el.textContent);
+        });
     },
 
     async renderStageTree(section) {
@@ -1881,7 +1942,17 @@ const EstimateManager = {
             
         } catch (error) {
             console.error('Error in openSection:', error);
+            
+            // Если раздел не найден - очищаем его из localStorage
+            if (error.message.includes('Failed to fetch section') || error.message.includes('not found')) {
+                console.warn('Section not found, clearing from localStorage');
+                localStorage.removeItem('probim_current_section_id');
+                this.currentSectionId = null;
+                window.currentSectionId = null;
+            }
+            
             UI.showNotification('Ошибка загрузки раздела: ' + error.message, 'error');
+            throw error; // Пробрасываем ошибку дальше для catch в restoreState
         }
     },
 
@@ -1940,10 +2011,94 @@ const EstimateManager = {
         if (content.style.display === 'none') {
             content.style.display = 'block';
             icon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            this.expandedStageIds.add(stageId);
             await this.loadWorkTypesTree(stageId);
         } else {
             content.style.display = 'none';
             icon.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+            this.expandedStageIds.delete(stageId);
+        }
+    },
+
+    getVisibleStageIdsFromDom() {
+        const ids = new Set();
+        document.querySelectorAll('[id^="stage-"][id$="-content"]').forEach((el) => {
+            const m = el.id.match(/^stage-(.+)-content$/);
+            if (m && m[1]) ids.add(m[1]);
+        });
+        return Array.from(ids);
+    },
+
+    async expandAllTree() {
+        const stageIds = this.getVisibleStageIdsFromDom();
+        if (!stageIds.length) return;
+
+        for (const stageId of stageIds) {
+            const content = document.getElementById(`stage-${stageId}-content`);
+            const icon = document.getElementById(`stage-icon-${stageId}`);
+            if (!content) continue;
+
+            content.style.display = 'block';
+            if (icon) icon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            this.expandedStageIds.add(stageId);
+
+            // Render work types first
+            await this.loadWorkTypesTree(stageId);
+
+            // Expand all work types with resources in this stage
+            const stageContainer = document.getElementById(`stage-${stageId}-content`);
+            if (!stageContainer) continue;
+
+            const resourceBlocks = stageContainer.querySelectorAll('[id^="worktype-"][id$="-resources"]');
+            for (const rb of resourceBlocks) {
+                const mm = rb.id.match(/^worktype-(.+)-resources$/);
+                if (!mm || !mm[1]) continue;
+                const workTypeId = mm[1];
+
+                const wtIcon = document.getElementById(`worktype-icon-${workTypeId}`);
+                // Only expand those that have an expander icon (i.e., resources exist)
+                if (!wtIcon) continue;
+
+                rb.style.display = 'block';
+                wtIcon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+                this.expandedWorkTypeIds.add(workTypeId);
+                await this.loadResourcesTree(workTypeId);
+            }
+        }
+    },
+
+    async collapseAllTree() {
+        // Clear state
+        this.expandedStageIds.clear();
+        this.expandedWorkTypeIds.clear();
+
+        // Hide all stage contents and reset arrows
+        document.querySelectorAll('[id^="stage-"][id$="-content"]').forEach((el) => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('[id^="stage-icon-"]').forEach((el) => {
+            el.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+        });
+
+        // Hide all worktype resources and reset arrows
+        document.querySelectorAll('[id^="worktype-"][id$="-resources"]').forEach((el) => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('[id^="worktype-icon-"]').forEach((el) => {
+            el.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+        });
+    },
+
+    async restoreExpandedEstimateTree() {
+        // Раскрываем этапы
+        const stageIds = Array.from(this.expandedStageIds);
+        for (const stageId of stageIds) {
+            const content = document.getElementById(`stage-${stageId}-content`);
+            const icon = document.getElementById(`stage-icon-${stageId}`);
+            if (!content || !icon) continue;
+            content.style.display = 'block';
+            icon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            await this.loadWorkTypesTree(stageId);
         }
     },
 
@@ -1958,31 +2113,450 @@ const EstimateManager = {
             }
 
             let html = '';
-            for (const workType of workTypes) {
+            for (let index = 0; index < workTypes.length; index++) {
+                const workType = workTypes[index];
+                const resourcesCount = workType?._count?.resources ?? 0;
+                const hasResources = resourcesCount > 0;
+
+                const workTypeNoRaw = (workType.code && String(workType.code).trim())
+                    ? String(workType.code).trim().replace(/\.$/, '')
+                    : String((workType.orderIndex ?? index) + 1);
+                const displayNo = this.escapeHtml(workTypeNoRaw);
+
+                const wtQty = typeof workType.quantity === 'number' ? workType.quantity : 0;
+                const wtTotal = typeof workType.totalCost === 'number' ? workType.totalCost : 0;
+                const wtUnitCostAuto = wtQty > 0 ? wtTotal / wtQty : 0;
+
+                const expander = hasResources
+                    ? `<span onclick="EstimateManager.toggleWorkTypeResourcesTree('${workType.id}'); event.stopPropagation();" style="width: 16px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; color: var(--gray-700); align-self: center;">
+                            <svg id="worktype-icon-${workType.id}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                       </span>`
+                    : `<span style="width: 16px; display: inline-flex; align-items: center; justify-content: center; user-select: none; color: var(--gray-500); align-self: center;">•</span>`;
+
                 html += `
-                    <div style="padding: 6px 10px; background: var(--white); border: 1px solid var(--gray-300); border-radius: 4px; margin-bottom: 4px; font-size: 13px; cursor: pointer;" onclick="EstimateManager.selectWorkType('${workType.id}')">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>${workType.name}</span>
-                            <span style="color: var(--primary); font-weight: 600;">${UI.formatCurrency(workType.totalCost, this.currentProject?.currency)}</span>
+                    <div style="margin-bottom: 6px;">
+                        <div style="padding: 6px 10px; background: var(--white); border: 1px solid var(--gray-300); border-radius: 4px; font-size: 13px; cursor: pointer;" onclick="EstimateManager.selectWorkType('${workType.id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                <div style="display: flex; align-items: flex-start; gap: 8px; min-width: 0;">
+                                    ${expander}
+                                    <div style="min-width: 0; display: flex; align-items: flex-start; gap: 6px;">
+                                        <span style="width: 44px; text-align: center; font-size: 12px; color: var(--gray-500); flex-shrink: 0; align-self: center;">${displayNo}.</span>
+                                        <div style="min-width: 0; display: flex; flex-direction: column;">
+                                            <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                                                <span class="worktype-name-inline" data-worktype-id="${workType.id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: text; padding: 1px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(workType.name)}</span>
+                                            </div>
+                                            <div style="color: var(--gray-600); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <span class="worktype-quantity-inline" data-worktype-id="${workType.id}" style="cursor: text; padding: 1px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(workType.quantity ?? 0)}</span>
+                                                <span class="worktype-unit-inline" data-worktype-id="${workType.id}" style="cursor: text; padding: 1px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(workType.unit ?? '')}</span>
+                                                ×
+                                                <span class="worktype-unitcost-inline" data-worktype-id="${workType.id}" style="padding: 1px 4px; border-radius: 3px;">${UI.formatNumber(wtUnitCostAuto)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ${hasResources ? `<span style=\"font-size: 11px; color: var(--gray-500);\">(${resourcesCount})</span>` : ''}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                    <span data-worktype-total-for="${workType.id}" style="color: var(--primary); font-weight: 600;">${UI.formatCurrency(workType.totalCost || 0, this.currentProject?.currency)}</span>
+                                    <button onclick="EstimateManager.createResource('${workType.id}'); event.stopPropagation();" class="btn btn-secondary btn-sm" title="Добавить ресурс" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">+</button>
+                                    <button onclick="EstimateManager.deleteWorkType('${workType.id}'); event.stopPropagation();" class="btn btn-danger btn-sm" title="Удалить вид работ" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">×</button>
+                                </div>
+                            </div>
                         </div>
+                        <div id="worktype-${workType.id}-resources" style="display: none; margin-left: 18px; margin-top: 6px;"></div>
                     </div>
                 `;
             }
             container.innerHTML = html;
+
+            this.bindWorkTypesTreeInlineEdits(container, stageId);
+
+            // Восстанавливаем раскрытые ресурсы в видах работ
+            await this.restoreExpandedWorkTypesInStage(stageId);
 
         } catch (error) {
             console.error('Error loading work types:', error);
         }
     },
 
+    bindWorkTypesTreeInlineEdits(rootEl, stageId) {
+        if (!rootEl) return;
+
+        const parseNumber = (value) => {
+            const normalized = String(value ?? '').trim().replace(',', '.');
+            const parsed = parseFloat(normalized);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        const bindText = (el, workTypeId, field) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+            const bind = (currentValue) => {
+                this.makeEditable(el, currentValue, async (newValue) => {
+                    await api.updateWorkType(workTypeId, { [field]: newValue });
+                    el.textContent = newValue;
+                    UI.showNotification('Обновлено', 'success');
+                    bind(newValue);
+                });
+            };
+            bind(el.textContent);
+        };
+
+        const bindNumber = (el, workTypeId, field, recalc = false) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+            const bind = (currentText) => {
+                this.makeEditable(el, currentText, async (newValueText) => {
+                    const num = parseNumber(newValueText);
+                    if (num === null) {
+                        UI.showNotification('Введите число', 'warning');
+                        el.textContent = currentText;
+                        bind(currentText);
+                        return;
+                    }
+                    await api.updateWorkType(workTypeId, { [field]: num });
+                    el.textContent = UI.formatNumber(num);
+                    if (recalc) {
+                        await this.recalculateHierarchyFixed(workTypeId);
+                        await this.refreshTotalsForWorkType(workTypeId, stageId);
+                    }
+                    UI.showNotification('Обновлено', 'success');
+                    bind(el.textContent);
+                });
+            };
+            bind(el.textContent);
+        };
+
+        rootEl.querySelectorAll('.worktype-name-inline[data-worktype-id]').forEach((el) => {
+            bindText(el, el.dataset.worktypeId, 'name');
+        });
+        rootEl.querySelectorAll('.worktype-unit-inline[data-worktype-id]').forEach((el) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+
+            const workTypeId = el.dataset.worktypeId;
+            const unitOptions = this.getUnitOptions();
+            const initial = el.textContent?.trim() || 'шт';
+
+            const bind = (currentValue) => {
+                this.makeEditableSelect(el, currentValue, unitOptions, async (newValue) => {
+                    await api.updateWorkType(workTypeId, { unit: newValue });
+                    el.textContent = newValue;
+                    UI.showNotification('Обновлено', 'success');
+                    bind(newValue);
+                });
+            };
+            bind(initial);
+        });
+        rootEl.querySelectorAll('.worktype-quantity-inline[data-worktype-id]').forEach((el) => {
+            bindNumber(el, el.dataset.worktypeId, 'quantity', true);
+        });
+    },
+
+    async refreshTotalsForWorkType(workTypeId, stageId) {
+        try {
+            const workType = await api.getWorkType(workTypeId);
+            const wtTotalEl = document.querySelector(`[data-worktype-total-for="${workTypeId}"]`);
+            if (wtTotalEl) {
+                wtTotalEl.textContent = UI.formatCurrency(workType.totalCost || 0, this.currentProject?.currency);
+            }
+
+            // Auto unit cost = totalCost / quantity
+            const qty = typeof workType.quantity === 'number' ? workType.quantity : 0;
+            const total = typeof workType.totalCost === 'number' ? workType.totalCost : 0;
+            const unitCostAuto = qty > 0 ? total / qty : 0;
+            document.querySelectorAll(`.worktype-unitcost-inline[data-worktype-id="${workTypeId}"]`).forEach((el) => {
+                el.textContent = UI.formatNumber(unitCostAuto);
+            });
+
+            if (stageId) {
+                const stage = await api.getStage(stageId);
+                const stageTotalEl = document.querySelector(`[data-stage-total-for="${stageId}"]`);
+                if (stageTotalEl) {
+                    stageTotalEl.textContent = UI.formatCurrency(stage.totalCost || 0, this.currentProject?.currency);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to refresh totals', error);
+        }
+    },
+
+    async toggleWorkTypeResourcesTree(workTypeId) {
+        const container = document.getElementById(`worktype-${workTypeId}-resources`);
+        if (!container) return;
+
+        const iconSvg = document.getElementById(`worktype-icon-${workTypeId}`);
+
+        const isHidden = container.style.display === 'none' || container.style.display === '';
+        if (isHidden) {
+            container.style.display = 'block';
+            if (iconSvg) iconSvg.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            this.expandedWorkTypeIds.add(workTypeId);
+            await this.loadResourcesTree(workTypeId);
+        } else {
+            container.style.display = 'none';
+            if (iconSvg) iconSvg.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+            this.expandedWorkTypeIds.delete(workTypeId);
+        }
+    },
+
+    async restoreExpandedWorkTypesInStage(stageId) {
+        const stageContainer = document.getElementById(`stage-${stageId}-content`);
+        if (!stageContainer) return;
+
+        const workTypeIds = Array.from(this.expandedWorkTypeIds);
+        for (const wtId of workTypeIds) {
+            const resourcesContainer = stageContainer.querySelector(`#worktype-${wtId}-resources`);
+            if (!resourcesContainer) continue;
+            resourcesContainer.style.display = 'block';
+            const iconSvg = document.getElementById(`worktype-icon-${wtId}`);
+            if (iconSvg) iconSvg.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            await this.loadResourcesTree(wtId);
+        }
+    },
+
+    async loadResourcesTree(workTypeId) {
+        const container = document.getElementById(`worktype-${workTypeId}-resources`);
+        if (!container) return;
+
+        try {
+            const workType = await api.getWorkType(workTypeId);
+            const parentNoRaw = (workType?.code && String(workType.code).trim())
+                ? String(workType.code).trim().replace(/\.$/, '')
+                : String((workType?.orderIndex ?? 0) + 1);
+
+            const resources = await api.getResources(workTypeId);
+            if (!resources || resources.length === 0) {
+                container.innerHTML = `<div style="padding: 6px 8px; color: var(--gray-500); font-size: 12px;">Нет ресурсов</div>`;
+                return;
+            }
+
+            const typeLabels = {
+                material: 'Материал',
+                labor: 'Труд',
+                equipment: 'Оборудование',
+            };
+
+            let html = '';
+            for (let index = 0; index < resources.length; index++) {
+                const r = resources[index];
+                const safeType = this.escapeHtml(r.resourceType || 'material');
+                const typeTitle = this.escapeHtml(this.getResourceTypeBadgeConfig(r.resourceType).label);
+
+                const fallbackNo = `${parentNoRaw}.${(r.orderIndex ?? index) + 1}`;
+                const stored = (r.code && String(r.code).trim()) ? String(r.code).trim() : '';
+                const useStored = stored && (stored.startsWith(parentNoRaw + '.') || stored === fallbackNo);
+                const displayNo = this.escapeHtml(useStored ? stored : fallbackNo);
+
+                const metricsColor = this.getResourceMetricsColor(r.resourceType);
+                const metricsStyle = metricsColor ? `color: ${metricsColor};` : '';
+                html += `
+                    <div style="padding: 6px 10px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; margin-bottom: 4px; font-size: 12px;">
+                        <div style="display: flex; justify-content: space-between; gap: 10px;">
+                            <div style="min-width: 0;">
+                                <div style="display: flex; align-items: flex-start; gap: 6px; min-width: 0;">
+                                    <div style="width: 64px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; align-self: center;">
+                                        <span style="width: 36px; text-align: center; font-size: 12px; color: var(--gray-500); flex-shrink: 0;">${displayNo}</span>
+                                        <span class="resource-type-inline" title="${typeTitle}" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" data-resource-type="${safeType}" style="${this.getResourceTypeBadgeInlineStyle(r.resourceType)}">${this.getResourceTypeBadgeInner(r.resourceType)}</span>
+                                    </div>
+                                    <div style="min-width: 0;">
+                                        <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                                            <span class="resource-name-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(r.name)}</span>
+                                        </div>
+                                        <div style="color: var(--gray-600); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            <span class="resource-quantity-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(r.quantity ?? 0)}</span>
+                                            <span class="resource-unit-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(r.unit ?? '')}</span>
+                                            ×
+                                            <span class="resource-unitprice-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(r.unitPrice ?? 0)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                <div style="${metricsStyle} font-weight: 600; white-space: nowrap;">${UI.formatCurrency(r.totalCost || 0, this.currentProject?.currency)}</div>
+                                <button onclick="EstimateManager.deleteResource('${r.id}'); event.stopPropagation();" class="btn btn-danger btn-sm" title="Удалить ресурс" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">×</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+
+            this.bindResourcesTreeInlineEdits(container, workTypeId);
+        } catch (error) {
+            console.error('Error loading resources tree:', error);
+            container.innerHTML = `<div style="padding: 6px 8px; color: var(--red-600); font-size: 12px;">Ошибка загрузки ресурсов</div>`;
+        }
+    },
+
+    bindResourcesTreeInlineEdits(rootEl, workTypeId) {
+        if (!rootEl) return;
+
+        const parseNumber = (value) => {
+            const normalized = String(value ?? '').trim().replace(',', '.');
+            const parsed = parseFloat(normalized);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        const bindText = (el, resourceId, field) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+            const bind = (currentValue) => {
+                this.makeEditable(el, currentValue, async (newValue) => {
+                    await api.updateResource(resourceId, { [field]: newValue });
+                    el.textContent = newValue;
+                    UI.showNotification('Обновлено', 'success');
+                    bind(newValue);
+                });
+            };
+            bind(el.textContent);
+        };
+
+        const bindNumber = (el, resourceId, field) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+            const bind = (currentText) => {
+                this.makeEditable(el, currentText, async (newValueText) => {
+                    const num = parseNumber(newValueText);
+                    if (num === null) {
+                        UI.showNotification('Введите число', 'warning');
+                        el.textContent = currentText;
+                        bind(currentText);
+                        return;
+                    }
+                    await api.updateResource(resourceId, { [field]: num });
+                    el.textContent = UI.formatNumber(num);
+                    await this.recalculateHierarchyFixed(workTypeId);
+                    await this.refreshTotalsForWorkType(workTypeId);
+                    // Перерисовываем только ресурсы внутри текущего вида работ
+                    await this.loadResourcesTree(workTypeId);
+                    UI.showNotification('Обновлено', 'success');
+                });
+            };
+            bind(el.textContent);
+        };
+
+        rootEl.querySelectorAll('.resource-name-inline[data-resource-id]').forEach((el) => {
+            bindText(el, el.dataset.resourceId, 'name');
+        });
+        rootEl.querySelectorAll('.resource-unit-inline[data-resource-id]').forEach((el) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+
+            const resourceId = el.dataset.resourceId;
+            const unitOptions = this.getUnitOptions();
+            const initial = el.textContent?.trim() || 'шт';
+
+            const bind = (currentValue) => {
+                this.makeEditableSelect(el, currentValue, unitOptions, async (newValue) => {
+                    await api.updateResource(resourceId, { unit: newValue });
+                    el.textContent = newValue;
+                    await this.recalculateHierarchyFixed(workTypeId);
+                    await this.refreshTotalsForWorkType(workTypeId);
+                    UI.showNotification('Обновлено', 'success');
+                    bind(newValue);
+                });
+            };
+            bind(initial);
+        });
+        rootEl.querySelectorAll('.resource-quantity-inline[data-resource-id]').forEach((el) => {
+            bindNumber(el, el.dataset.resourceId, 'quantity');
+        });
+        rootEl.querySelectorAll('.resource-unitprice-inline[data-resource-id]').forEach((el) => {
+            bindNumber(el, el.dataset.resourceId, 'unitPrice');
+        });
+
+        // Тип ресурса (select)
+        rootEl.querySelectorAll('.resource-type-inline[data-resource-id]').forEach((el) => {
+            if (el.dataset.inlineBound === 'true') return;
+            el.dataset.inlineBound = 'true';
+
+            const manager = this;
+
+            const resourceId = el.dataset.resourceId;
+            const options = [
+                { value: 'material', label: 'Материал' },
+                { value: 'labor', label: 'Труд' },
+                { value: 'equipment', label: 'Оборудование' },
+            ];
+
+            const bind = (currentValue) => {
+                el.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (el.querySelector('select')) return;
+
+                    const prevHeight = Math.max(18, el.getBoundingClientRect().height || 18);
+                    // Badge is small; make dropdown usable
+                    const prevWidth = Math.max(160, el.getBoundingClientRect().width || 60);
+
+                    // Keep badge layout stable during edit
+                    el.style.display = 'inline-flex';
+                    el.style.minHeight = `${Math.ceil(prevHeight)}px`;
+                    el.style.minWidth = `${Math.ceil(prevWidth)}px`;
+
+                    const select = document.createElement('select');
+                    select.className = 'inline-edit-select';
+                    select.style.cssText = `width: ${Math.ceil(prevWidth)}px; height: ${Math.ceil(prevHeight)}px; box-sizing: border-box; padding: 1px 6px; border: 1px solid var(--primary); outline: none; border-radius: 4px; font: inherit; line-height: inherit; background: var(--white);`;
+
+                    options.forEach((opt) => {
+                        const optionEl = document.createElement('option');
+                        optionEl.value = opt.value;
+                        optionEl.textContent = opt.label;
+                        if (opt.value === currentValue) optionEl.selected = true;
+                        select.appendChild(optionEl);
+                    });
+
+                    select.onchange = async () => {
+                        const newValue = select.value;
+                        if (newValue && newValue !== currentValue) {
+                            await api.updateResource(resourceId, { resourceType: newValue });
+                            el.dataset.resourceType = newValue;
+                            await this.recalculateHierarchyFixed(workTypeId);
+                            await this.refreshTotalsForWorkType(workTypeId);
+                            await this.loadResourcesTree(workTypeId);
+                            UI.showNotification('Обновлено', 'success');
+                        } else {
+                            el.innerHTML = manager.getResourceTypeBadgeInner(currentValue);
+                            el.title = manager.getResourceTypeBadgeConfig(currentValue).label;
+                            el.style.cssText = manager.getResourceTypeBadgeInlineStyle(currentValue);
+                        }
+                    };
+
+                    select.onblur = () => {
+                        const selected = select.value || currentValue;
+                        el.innerHTML = manager.getResourceTypeBadgeInner(selected);
+                        el.title = manager.getResourceTypeBadgeConfig(selected).label;
+                        el.dataset.resourceType = selected;
+                        el.style.minHeight = '';
+                        el.style.minWidth = '';
+                        el.style.cssText = manager.getResourceTypeBadgeInlineStyle(selected);
+                    };
+
+                    el.textContent = '';
+                    el.appendChild(select);
+                    select.focus();
+                };
+            };
+
+            const initialValue = el.dataset.resourceType || 'material';
+            bind(initialValue);
+        });
+    },
+
     async selectWorkType(workTypeId) {
         // Выделяем выбранный элемент
-        document.querySelectorAll('#stages-tree-container [onclick*="selectWorkType"]').forEach(el => {
+        document.querySelectorAll('#stages-tree-container [onclick*="selectWorkType"], #estimate-tree-container [onclick*="selectWorkType"]').forEach(el => {
             el.style.background = 'var(--white)';
             el.style.borderColor = 'var(--gray-300)';
         });
-        event.target.closest('[onclick*="selectWorkType"]').style.background = 'var(--primary-light)';
-        event.target.closest('[onclick*="selectWorkType"]').style.borderColor = 'var(--primary)';
+        if (typeof event !== 'undefined' && event?.target?.closest) {
+            const row = event.target.closest('[onclick*="selectWorkType"]');
+            if (row) {
+                row.style.background = 'var(--primary-light)';
+                row.style.borderColor = 'var(--primary)';
+            }
+        }
 
         // Загружаем свойства в нижнюю панель
         try {
@@ -2014,15 +2588,15 @@ const EstimateManager = {
             } else {
                 for (const resource of resources) {
                     const typeLabels = {
-                        'material': 'Материал',
-                        'labor': 'Труд',
-                        'equipment': 'Оборудование'
+                        material: 'Материал',
+                        labor: 'Труд',
+                        equipment: 'Оборудование',
                     };
                     html += `
                         <div style="padding: 10px; background: var(--white); border: 1px solid var(--gray-300); border-radius: 4px; margin-bottom: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
                                 <strong style="font-size: 13px;">${resource.name}</strong>
-                                <span style="padding: 2px 8px; background: var(--primary-light); color: var(--primary); border-radius: 3px; font-size: 11px;">${typeLabels[resource.type] || resource.type}</span>
+                                <span style="padding: 2px 8px; background: var(--primary-light); color: var(--primary); border-radius: 3px; font-size: 11px;">${typeLabels[resource.resourceType] || resource.resourceType || ''}</span>
                             </div>
                             <div style="font-size: 12px; color: var(--gray-600); display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
                                 <span>Кол-во: ${UI.formatNumber(resource.quantity)} ${resource.unit}</span>
@@ -2349,7 +2923,11 @@ const EstimateManager = {
                     await api.createStage(data);
                     UI.closeModal();
                     UI.showNotification('Этап создан', 'success');
-                    this.loadStages(sectionId);
+                    if (document.getElementById('estimate-tree-container')) {
+                        await this.loadEstimateStructure(this.currentEstimateId);
+                    } else {
+                        this.loadStages(sectionId);
+                    }
                 } catch (error) {
                     UI.showNotification('Ошибка: ' + error.message, 'error');
                 }
@@ -2362,7 +2940,11 @@ const EstimateManager = {
             try {
                 await api.deleteStage(stageId);
                 UI.showNotification('Этап удален', 'success');
-                this.loadStages(this.currentSectionId);
+                if (document.getElementById('estimate-tree-container')) {
+                    await this.loadEstimateStructure(this.currentEstimateId);
+                } else {
+                    this.loadStages(this.currentSectionId);
+                }
             } catch (error) {
                 UI.showNotification('Ошибка: ' + error.message, 'error');
             }
@@ -2412,7 +2994,11 @@ const EstimateManager = {
                         await api.updateStage(stageId, data);
                         UI.closeModal();
                         UI.showNotification('Этап обновлен', 'success');
-                        this.loadStages(this.currentSectionId);
+                        if (document.getElementById('estimate-tree-container')) {
+                            await this.loadEstimateStructure(this.currentEstimateId);
+                        } else {
+                            this.loadStages(this.currentSectionId);
+                        }
                     } catch (error) {
                         UI.showNotification('Ошибка: ' + error.message, 'error');
                     }
@@ -2478,7 +3064,12 @@ const EstimateManager = {
                     await api.createWorkType(data);
                     UI.closeModal();
                     UI.showNotification('Вид работ создан', 'success');
-                    this.loadWorkTypes(stageId);
+                    if (document.getElementById('estimate-tree-container')) {
+                        await this.loadWorkTypesTree(stageId);
+                        await this.loadEstimateStructure(this.currentEstimateId);
+                    } else {
+                        this.loadWorkTypes(stageId);
+                    }
                 } catch (error) {
                     UI.showNotification('Ошибка: ' + error.message, 'error');
                 }
@@ -2491,7 +3082,11 @@ const EstimateManager = {
             try {
                 await api.deleteWorkType(workTypeId);
                 UI.showNotification('Вид работ удален', 'success');
-                this.loadWorkTypes(this.currentStageId);
+                if (document.getElementById('estimate-tree-container')) {
+                    await this.loadEstimateStructure(this.currentEstimateId);
+                } else {
+                    this.loadWorkTypes(this.currentStageId);
+                }
             } catch (error) {
                 UI.showNotification('Ошибка: ' + error.message, 'error');
             }
@@ -2551,7 +3146,16 @@ const EstimateManager = {
                         await api.updateWorkType(workTypeId, data);
                         UI.closeModal();
                         UI.showNotification('Вид работ обновлен', 'success');
-                        this.loadWorkTypes(this.currentStageId);
+                        if (document.getElementById('estimate-tree-container')) {
+                            const wt = await api.getWorkType(workTypeId);
+                            const stageId = wt?.stageId;
+                            if (stageId) {
+                                await this.loadWorkTypesTree(stageId);
+                            }
+                            await this.loadEstimateStructure(this.currentEstimateId);
+                        } else {
+                            this.loadWorkTypes(this.currentStageId);
+                        }
                     } catch (error) {
                         UI.showNotification('Ошибка: ' + error.message, 'error');
                     }
@@ -2592,10 +3196,6 @@ const EstimateManager = {
                 <label>Цена за единицу (${this.getCurrencySymbol()}) *</label>
                 <input type="number" id="resource-unit-cost" step="0.01" min="0" required>
             </div>
-            <div class="form-group">
-                <label>ID элемента IFC (опционально)</label>
-                <input type="text" id="resource-ifc" placeholder="Например: 0ABC123XYZ">
-            </div>
         `;
 
         const buttons = `
@@ -2614,7 +3214,6 @@ const EstimateManager = {
                     unit: document.getElementById('resource-unit').value.trim(),
                     quantity: parseFloat(document.getElementById('resource-quantity').value),
                     unitPrice: parseFloat(document.getElementById('resource-unit-cost').value),
-                    ifcElementId: document.getElementById('resource-ifc').value.trim() || null,
                 };
 
                 if (!data.name || !data.unit) {
@@ -2625,10 +3224,15 @@ const EstimateManager = {
                 try {
                     await api.createResource(data);
                     // Каскадный пересчет после создания ресурса
-                    await this.recalculateHierarchy(workTypeId);
+                    await this.recalculateHierarchyFixed(workTypeId);
                     UI.closeModal();
                     UI.showNotification('Ресурс создан', 'success');
-                    this.loadResources(workTypeId);
+                    if (document.getElementById('estimate-tree-container')) {
+                        await this.loadResourcesTree(workTypeId);
+                        await this.loadEstimateStructure(this.currentEstimateId);
+                    } else {
+                        this.loadResources(workTypeId);
+                    }
                 } catch (error) {
                     UI.showNotification('Ошибка: ' + error.message, 'error');
                 }
@@ -2639,20 +3243,23 @@ const EstimateManager = {
     async deleteResource(resourceId) {
         UI.confirmDelete('Удалить этот ресурс?', async () => {
             try {
-                // Получаем ресурс для получения workTypeId перед удалением
-                const resource = await api.getWorkType(resourceId);
-                const workTypeId = resource.stageId;
-                
+                // Получаем ресурс, чтобы узнать workTypeId перед удалением
+                const resource = await api.getResource(resourceId);
+                const workTypeId = resource?.workTypeId;
+
                 await api.deleteResource(resourceId);
-                
-                // Каскадный пересчет после удаления ресурса
+
                 if (workTypeId) {
-                    await this.recalculateHierarchy(workTypeId);
+                    await this.recalculateHierarchyFixed(workTypeId);
                 }
                 
                 UI.showNotification('Ресурс удален', 'success');
-                // Перезагружаем ресурсы для текущего вида работ
-                if (this.currentWorkTypeId) {
+                if (document.getElementById('estimate-tree-container')) {
+                    if (workTypeId) {
+                        await this.loadResourcesTree(workTypeId);
+                    }
+                    await this.loadEstimateStructure(this.currentEstimateId);
+                } else if (this.currentWorkTypeId) {
                     this.loadResources(this.currentWorkTypeId);
                 }
             } catch (error) {
@@ -2669,9 +3276,9 @@ const EstimateManager = {
                 <div class="form-group">
                     <label>Тип ресурса *</label>
                     <select id="resource-type" required>
-                        <option value="material" ${resource.type === 'material' ? 'selected' : ''}>Материал</option>
-                        <option value="labor" ${resource.type === 'labor' ? 'selected' : ''}>Труд</option>
-                        <option value="equipment" ${resource.type === 'equipment' ? 'selected' : ''}>Оборудование</option>
+                        <option value="material" ${resource.resourceType === 'material' ? 'selected' : ''}>Материал</option>
+                        <option value="labor" ${resource.resourceType === 'labor' ? 'selected' : ''}>Труд</option>
+                        <option value="equipment" ${resource.resourceType === 'equipment' ? 'selected' : ''}>Оборудование</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -2688,11 +3295,7 @@ const EstimateManager = {
                 </div>
                 <div class="form-group">
                     <label>Цена за единицу (${this.getCurrencySymbol()}) *</label>
-                    <input type="number" id="resource-unit-cost" value="${resource.unitCost}" step="0.01" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label>ID элемента IFC (опционально)</label>
-                    <input type="text" id="resource-ifc" value="${resource.ifcElementId || ''}" placeholder="Например: 0ABC123XYZ">
+                    <input type="number" id="resource-unit-cost" value="${resource.unitPrice}" step="0.01" min="0" required>
                 </div>
             `;
 
@@ -2711,7 +3314,6 @@ const EstimateManager = {
                     unit: document.getElementById('resource-unit').value.trim(),
                     quantity: parseFloat(document.getElementById('resource-quantity').value),
                     unitPrice: parseFloat(document.getElementById('resource-unit-cost').value),
-                    ifcElementId: document.getElementById('resource-ifc').value.trim() || null,
                 };                    if (!data.name || !data.unit) {
                         alert('Заполните обязательные поля');
                         return;
@@ -2720,10 +3322,19 @@ const EstimateManager = {
                     try {
                         await api.updateResource(resourceId, data);
                         // Каскадный пересчет после обновления ресурса
-                        await this.recalculateHierarchy(resourceId);
+                        if (resource?.workTypeId) {
+                            await this.recalculateHierarchyFixed(resource.workTypeId);
+                        }
                         UI.closeModal();
                         UI.showNotification('Ресурс обновлен', 'success');
-                        this.loadResources(this.currentWorkTypeId);
+                        if (document.getElementById('estimate-tree-container')) {
+                            if (resource?.workTypeId) {
+                                await this.loadResourcesTree(resource.workTypeId);
+                            }
+                            await this.loadEstimateStructure(this.currentEstimateId);
+                        } else {
+                            this.loadResources(this.currentWorkTypeId);
+                        }
                     } catch (error) {
                         UI.showNotification('Ошибка: ' + error.message, 'error');
                     }
@@ -2894,6 +3505,110 @@ const EstimateManager = {
     // Inline редактирование (как в MyBuilding)
     // ========================================
 
+    // Состояние раскрытия дерева (чтобы группы не схлопывались после добавления/перезагрузки)
+    expandedStageIds: new Set(),
+    expandedWorkTypeIds: new Set(),
+
+    getUnitOptions() {
+        // Минимальный, но практичный набор единиц измерения
+        return [
+            'шт', 'компл',
+            'м', 'п.м.',
+            'м²', 'м3', 'м³',
+            'кг', 'т',
+            'л',
+            'ч', 'чел·ч', 'чел-час',
+            'маш-час',
+            'тыс.шт',
+            'дн'
+        ];
+    },
+
+    getResourceMetricsColor(resourceType) {
+        const t = (resourceType || '').toString().toLowerCase();
+        if (t === 'labor') return '#800080';
+        if (t === 'material') return '#000080';
+        return null;
+    },
+
+    getResourceTypeBadgeConfig(resourceType) {
+        const t = (resourceType || 'material').toString().toLowerCase();
+
+        // Lightweight inline SVG icons
+        const iconMaterial = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <path d="M3.3 7L12 12l8.7-5"/>
+                <path d="M12 22V12"/>
+            </svg>
+        `;
+
+        const iconLabor = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M20 21a8 8 0 0 0-16 0"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+        `;
+
+        const iconEquipment = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="7" cy="18" r="2"/>
+                <circle cx="17" cy="18" r="2"/>
+                <path d="M3 18h2"/>
+                <path d="M9 18h6"/>
+                <path d="M19 18h2"/>
+                <path d="M6 18V9h7l2 3h3v6"/>
+                <path d="M6 9l-1-3"/>
+            </svg>
+        `;
+
+        if (t === 'labor') {
+            return {
+                value: 'labor',
+                label: 'Труд',
+                color: '#800080',
+                bg: 'rgba(128, 0, 128, 0.12)',
+                border: 'rgba(128, 0, 128, 0.35)',
+                icon: iconLabor,
+            };
+        }
+
+        if (t === 'equipment') {
+            return {
+                value: 'equipment',
+                label: 'Оборуд.',
+                color: 'var(--accent-orange)',
+                bg: 'rgba(202, 80, 16, 0.12)',
+                border: 'rgba(202, 80, 16, 0.35)',
+                icon: iconEquipment,
+            };
+        }
+
+        return {
+            value: 'material',
+            label: 'Материал',
+            color: '#000080',
+            bg: 'rgba(0, 0, 128, 0.12)',
+            border: 'rgba(0, 0, 128, 0.35)',
+            icon: iconMaterial,
+        };
+    },
+
+    getResourceTypeBadgeInner(resourceType) {
+        const cfg = this.getResourceTypeBadgeConfig(resourceType);
+        return `
+            <span style="display: inline-flex; align-items: center; justify-content: center;">
+                ${cfg.icon}
+            </span>
+        `;
+    },
+
+    getResourceTypeBadgeInlineStyle(resourceType) {
+        const cfg = this.getResourceTypeBadgeConfig(resourceType);
+        // Square icon-only badge
+        return `width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 4px; border: 1px solid ${cfg.border}; background: ${cfg.bg}; color: ${cfg.color}; cursor: pointer; flex-shrink: 0;`;
+    },
+
     makeEditable(element, currentValue, onSave) {
         element.onclick = async function(e) {
             e.stopPropagation();
@@ -2901,11 +3616,18 @@ const EstimateManager = {
             // Если уже редактируется - выходим
             if (element.querySelector('input')) return;
             
+            const prevHeight = Math.max(18, element.getBoundingClientRect().height || 18);
+            const prevWidth = Math.max(60, element.getBoundingClientRect().width || 60);
+
+            element.style.display = 'inline-block';
+            element.style.minHeight = `${Math.ceil(prevHeight)}px`;
+            element.style.minWidth = `${Math.ceil(prevWidth)}px`;
+
             const input = document.createElement('input');
             input.type = 'text';
             input.value = currentValue;
             input.className = 'inline-edit-input';
-            input.style.cssText = 'width: 100%; padding: 4px 8px; border: 2px solid var(--primary); border-radius: 4px; font: inherit;';
+            input.style.cssText = `width: ${Math.ceil(prevWidth)}px; height: ${Math.ceil(prevHeight)}px; box-sizing: border-box; padding: 1px 6px; border: 1px solid var(--primary); outline: none; border-radius: 4px; font: inherit; line-height: inherit; background: var(--white);`;
 
             const save = async () => {
                 const newValue = input.value.trim();
@@ -2914,6 +3636,10 @@ const EstimateManager = {
                 } else {
                     element.textContent = currentValue;
                 }
+
+                // Возвращаем авто-размер, чтобы не ломать верстку
+                element.style.minHeight = '';
+                element.style.minWidth = '';
             };
 
             input.onblur = save;
@@ -2923,6 +3649,8 @@ const EstimateManager = {
                     input.blur();
                 } else if (e.key === 'Escape') {
                     element.textContent = currentValue;
+                    element.style.minHeight = '';
+                    element.style.minWidth = '';
                 }
             };
 
@@ -2939,9 +3667,16 @@ const EstimateManager = {
             
             if (element.querySelector('select')) return;
             
+            const prevHeight = Math.max(18, element.getBoundingClientRect().height || 18);
+            const prevWidth = Math.max(60, element.getBoundingClientRect().width || 60);
+
+            element.style.display = 'inline-block';
+            element.style.minHeight = `${Math.ceil(prevHeight)}px`;
+            element.style.minWidth = `${Math.ceil(prevWidth)}px`;
+
             const select = document.createElement('select');
             select.className = 'inline-edit-select';
-            select.style.cssText = 'width: 100%; padding: 4px 8px; border: 2px solid var(--primary); border-radius: 4px; font: inherit;';
+            select.style.cssText = `width: ${Math.ceil(prevWidth)}px; height: ${Math.ceil(prevHeight)}px; box-sizing: border-box; padding: 1px 6px; border: 1px solid var(--primary); outline: none; border-radius: 4px; font: inherit; line-height: inherit; background: var(--white);`;
 
             options.forEach(opt => {
                 const option = document.createElement('option');
@@ -2962,6 +3697,8 @@ const EstimateManager = {
 
             select.onblur = () => {
                 element.textContent = select.value || currentValue;
+                element.style.minHeight = '';
+                element.style.minWidth = '';
             };
 
             element.textContent = '';
@@ -2978,12 +3715,26 @@ const EstimateManager = {
     // Создание этапа для сметы (Section)
     async createStageForEstimate(estimateId) {
         try {
-            const data = {
-                estimateId: estimateId,
-                code: 'Этап ' + (new Date().getTime() % 1000),
-                name: 'Новый этап'
-            };
-            await api.createSection(data);
+            // UI скрывает "sections", но в БД этапы (stages) требуют sectionId.
+            // Поэтому при полностью пустой смете сначала создаём section, затем — первый stage.
+            const sections = await api.getSections(estimateId);
+            let sectionId = sections?.[0]?.id;
+
+            if (!sectionId) {
+                const sectionData = {
+                    estimateId: estimateId,
+                    code: 'Раздел',
+                    name: 'Раздел сметы'
+                };
+                const createdSection = await api.createSection(sectionData);
+                sectionId = createdSection?.id;
+            }
+
+            if (!sectionId) {
+                throw new Error('Не удалось создать раздел для сметы');
+            }
+
+            await api.createStage({ sectionId, name: 'Новый этап', order: 1, description: '' });
             UI.showNotification('Этап создан', 'success');
             await this.loadEstimateStructure(estimateId);
         } catch (error) {
@@ -3182,7 +3933,10 @@ const EstimateManager = {
                 name: 'Новый этап работ',
                 description: ''
             };
-            await api.createStage(data);
+            const created = await api.createStage(data);
+            if (created?.id) {
+                this.expandedStageIds.add(created.id);
+            }
             UI.showNotification('Этап создан', 'success');
             await this.loadEstimateStructure(this.currentEstimateId);
         } catch (error) {
@@ -3193,14 +3947,29 @@ const EstimateManager = {
     // Создание вида работ (без модального окна)
     async createWorkType(stageId) {
         try {
+            const existing = await api.getWorkTypes(stageId);
+            const numericCodes = (existing || [])
+                .map(wt => (wt?.code ? String(wt.code).trim().replace(/\.$/, '') : ''))
+                .map(v => (/^\d+$/.test(v) ? parseInt(v, 10) : null))
+                .filter(v => Number.isFinite(v));
+            const nextNo = (numericCodes.length ? Math.max(...numericCodes) : (existing?.length || 0)) + 1;
+            const nextOrderIndex = (existing?.length || 0);
+
             const data = {
                 stageId: stageId,
+                code: String(nextNo),
                 name: 'Новый вид работ',
                 unit: 'шт',
                 quantity: 0,
-                unitCost: 0
+                unitCost: 0,
+                orderIndex: nextOrderIndex
             };
-            await api.createWorkType(data);
+            const created = await api.createWorkType(data);
+            this.expandedStageIds.add(stageId);
+            if (created?.id) {
+                // Обычно ресурс-группа внутри вида работ раскрывается отдельно, но этап держим раскрытым
+                // чтобы новый элемент не "пропадал" визуально.
+            }
             UI.showNotification('Вид работ создан', 'success');
             await this.loadEstimateStructure(this.currentEstimateId);
         } catch (error) {
@@ -3211,19 +3980,37 @@ const EstimateManager = {
     // Создание ресурса (без модального окна)
     async createResource(workTypeId) {
         try {
+            const workType = await api.getWorkType(workTypeId);
+            const parentNoRaw = (workType?.code && String(workType.code).trim())
+                ? String(workType.code).trim().replace(/\.$/, '')
+                : String((workType?.orderIndex ?? 0) + 1);
+
+            const existingResources = await api.getResources(workTypeId);
+            const suffixes = (existingResources || [])
+                .map(r => (r?.code ? String(r.code).trim() : ''))
+                .map(code => {
+                    const m = code.match(new RegExp('^' + parentNoRaw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\.(\\d+)$'));
+                    return m ? parseInt(m[1], 10) : null;
+                })
+                .filter(v => Number.isFinite(v));
+            const nextSuffix = (suffixes.length ? Math.max(...suffixes) : (existingResources?.length || 0)) + 1;
+            const nextCode = `${parentNoRaw}.${nextSuffix}`;
+            const nextOrderIndex = (existingResources?.length || 0);
+
             const data = {
                 workTypeId: workTypeId,
                 resourceType: 'material',
+                code: nextCode,
                 name: 'Новый ресурс',
                 unit: 'шт',
                 quantity: 0,
-                unitPrice: 0
+                unitPrice: 0,
+                orderIndex: nextOrderIndex
             };
             const newResource = await api.createResource(data);
-            // Каскадный пересчет после создания ресурса (передаем ID нового ресурса)
-            if (newResource && newResource.id) {
-                await this.recalculateHierarchy(newResource.id);
-            }
+            // Каскадный пересчет после создания ресурса
+            await this.recalculateHierarchyFixed(workTypeId);
+            this.expandedWorkTypeIds.add(workTypeId);
             UI.showNotification('Ресурс создан', 'success');
             await this.loadEstimateStructure(this.currentEstimateId);
         } catch (error) {
@@ -3262,7 +4049,11 @@ const EstimateManager = {
         if (!confirm('Удалить ресурс?')) return;
         
         try {
+            const resource = await api.getResource(resourceId);
             await api.deleteResource(resourceId);
+            if (resource?.workTypeId) {
+                await this.recalculateHierarchyFixed(resource.workTypeId);
+            }
             UI.showNotification('Ресурс удален', 'success');
             await this.loadEstimateStructure(this.currentEstimateId);
         } catch (error) {
@@ -4012,32 +4803,20 @@ const EstimateManager = {
     // ========================================
     async recalculateHierarchyFixed(workTypeId) {
         try {
-            // ВНИМАНИЕ: В UI "Ресурс" это DB WorkType, "Вид работ" это DB EstimateStage, "Этап" это DB EstimateSection
-            
-            // 1. Получаем WorkType (UI "Ресурс")
+            // Модель: Resource -> WorkType -> Stage -> Section -> Estimate
+            // WorkType.totalCost = сумма ресурсов; Stage.totalCost = сумма WorkType; дальше вверх.
+
             const workType = await api.getWorkType(workTypeId);
-            if (!workType || !workType.stageId) return;
+            const stageId = workType?.stageId;
+            const sectionId = workType?.stage?.sectionId;
+            const estimateId = workType?.stage?.section?.estimateId;
 
-            console.log('Recalculating hierarchy for WorkType (UI Resource):', workTypeId);
+            if (!stageId || !sectionId || !estimateId) return;
 
-            // 2. Пересчитываем Stage (UI "Вид работ") - это родитель WorkType
-            await api.recalculateStage(workType.stageId);
-
-            // 3. Получаем обновленный Stage чтобы найти Section ID
-            const stage = await api.getStage(workType.stageId);
-            if (!stage || !stage.sectionId) return;
-
-            // 4. Пересчитываем Section (UI "Этап")
-            await api.recalculateSection(stage.sectionId);
-
-            // 5. Получаем обновленный Section чтобы найти Estimate ID
-            const section = await api.getSection(stage.sectionId);
-            if (!section || !section.estimateId) return;
-
-            // 6. Пересчитываем Estimate
-            await api.recalculateEstimate(section.estimateId);
-
-            console.log('✓ Cascade recalculation completed');
+            await api.recalculateWorkType(workTypeId);
+            await api.recalculateStage(stageId);
+            await api.recalculateSection(sectionId);
+            await api.recalculateEstimate(estimateId);
         } catch (error) {
             console.error('Ошибка каскадного пересчета:', error);
         }

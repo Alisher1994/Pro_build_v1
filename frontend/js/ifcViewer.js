@@ -158,6 +158,7 @@ const IFCViewerManager = {
                 console.log('✓ XKT модель загружена');
                 this.viewer.cameraFlight.flyTo(this.viewer.scene);
                 this.setDisplayMode(this.displayMode || 'default');
+                this.refreshViewport();
             });
 
             this.currentModel.on("error", (error) => {
@@ -168,6 +169,29 @@ const IFCViewerManager = {
         } catch (error) {
             console.error('Ошибка при загрузке модели:', error);
             throw error;
+        }
+    },
+
+    // Форсируем пересчёт размеров canvas/viewport (полезно после динамической перерисовки DOM)
+    refreshViewport() {
+        if (!this.viewer) {
+            return;
+        }
+
+        try {
+            if (typeof this.viewer.resize === 'function') {
+                this.viewer.resize();
+            }
+        } catch (error) {
+            console.warn('viewer.resize() failed:', error);
+        }
+
+        try {
+            if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+                window.dispatchEvent(new Event('resize'));
+            }
+        } catch (error) {
+            console.warn('Dispatch resize failed:', error);
         }
     },
 

@@ -287,6 +287,37 @@ class ProBIMApp {
             EstimateManager.createEstimate(EstimateManager.currentBlockId);
         });
 
+        // Import button
+        document.getElementById('import-estimate-btn')?.addEventListener('click', () => {
+            ImportManager.showImportModal();
+        });
+
+        // IFC upload button (duplicate of existing binding logic)
+        document.getElementById('upload-ifc-btn')?.addEventListener('click', async () => {
+            if (!EstimateManager.currentEstimateId) {
+                UI.showNotification('Сначала откройте смету', 'error');
+                return;
+            }
+            await EstimateManager.uploadIFCForEstimate(EstimateManager.currentEstimateId);
+        });
+
+        // View tools (expand/collapse all)
+        document.getElementById('expand-all-btn')?.addEventListener('click', async () => {
+            if (!EstimateManager.currentEstimateId && !EstimateManager.currentSectionId) {
+                UI.showNotification('Сначала откройте смету', 'error');
+                return;
+            }
+            await EstimateManager.expandAllTree();
+        });
+
+        document.getElementById('collapse-all-btn')?.addEventListener('click', async () => {
+            if (!EstimateManager.currentEstimateId && !EstimateManager.currentSectionId) {
+                UI.showNotification('Сначала откройте смету', 'error');
+                return;
+            }
+            await EstimateManager.collapseAllTree();
+        });
+
         // Settings button
         document.getElementById('project-settings-btn')?.addEventListener('click', () => {
             if (!this.currentProjectId) {

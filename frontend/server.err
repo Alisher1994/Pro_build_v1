@@ -10,3 +10,14 @@
 ::1 - - [19/Dec/2025 02:50:49] "GET /js/ifcViewer.js HTTP/1.1" 200 -
 ::1 - - [19/Dec/2025 02:50:49] "GET /?id=e2ab165d-a2c1-48fa-a353-a314b97a2b2c&vscodeBrowserReqId=1766094649810 HTTP/1.1" 200 -
 ::1 - - [19/Dec/2025 02:50:50] "GET /js/xeokit-bundle.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET / HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /css/style.css HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/xeokit-loader.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/api.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/ui.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/ifcViewer.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/import.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/estimate.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/settings.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:17] "GET /js/app.js HTTP/1.1" 200 -
+::1 - - [19/Dec/2025 03:42:18] "GET /js/xeokit-bundle.js HTTP/1.1" 200 -

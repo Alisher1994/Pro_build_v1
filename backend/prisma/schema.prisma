@@ -34,6 +34,7 @@ model Project {
   schedules   Schedule[]
   supplies    Supply[]
   finances    Finance[]
+  ganttTasks  GanttTask[]
 }
 
 // ========================================
@@ -47,6 +48,7 @@ model Block {
   floors      Int      @default(1)
   area        Float?   // Площадь в м²
   orderIndex  Int      @default(0)
+  constructionPhase Int @default(1) // Очередь строительства
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -379,3 +381,50 @@ model IFCElement {
   @@index([type])
   @@index([status])
 }
+
+// ========================================
+// 14. ГРАФИК ПРОИЗВОДСТВА РАБОТ (Gantt)
+// ========================================
+model GanttTask {
+  id             String   @id @default(uuid())
+  projectId      String
+  
+  text           String   // Название задачи
+  start_date     DateTime?
+  duration       Int      @default(1)
+  progress       Float    @default(0)
+  parent         String?  // ID родительской задачи (для иерархии)
+  type           String   @default("task") // project, task, milestone
+  
+  // Связи с сущностями сметы (для автоматического обновления)
+  blockId        String?
+  estimateSectionId String?
+  
+  sortOrder      Int      @default(0)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  linksSource    GanttLink[] @relation("SourceTask")
+  linksTarget    GanttLink[] @relation("TargetTask")
+
+  @@index([projectId])
+  @@index([parent])
+}
+
+model GanttLink {
+  id        String   @id @default(uuid())
+  source    String   // ID задачи-источника
+  target    String   // ID задачи-цели
+  type      String   @default("0") // "0" = FS, "1" = SS, "2" = FF, "3" = SF
+  lag       Int      @default(0)
+  
+  sourceTask GanttTask @relation("SourceTask", fields: [source], references: [id], onDelete: Cascade)
+  targetTask GanttTask @relation("TargetTask", fields: [target], references: [id], onDelete: Cascade)
+
+  @@index([source])
+  @@index([target])
+}
+

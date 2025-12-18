@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/blocks - Создать новый блок
 router.post('/', async (req, res) => {
   try {
-    const { projectId, name, description, floors, area, orderIndex } = req.body;
+    const { projectId, name, description, floors, area, orderIndex, constructionPhase } = req.body;
 
     if (!projectId || !name) {
       return res.status(400).json({ error: 'projectId and name are required' });
@@ -67,6 +67,7 @@ router.post('/', async (req, res) => {
         floors: floors || 1,
         area,
         orderIndex: orderIndex || 0,
+        constructionPhase: constructionPhase || 1,
       },
       include: { project: true },
     });
@@ -81,7 +82,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, floors, area, orderIndex } = req.body;
+    const { name, description, floors, area, orderIndex, constructionPhase } = req.body;
 
     const block = await prisma.block.update({
       where: { id },
@@ -91,6 +92,7 @@ router.put('/:id', async (req, res) => {
         floors,
         area,
         orderIndex,
+        constructionPhase,
       },
     });
 

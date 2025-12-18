@@ -160,6 +160,10 @@ const UI = {
                 <label>Площадь (м²)</label>
                 <input type="number" id="block-area" step="0.01" min="0">
             </div>
+            <div class="form-group">
+                <label>Очередь строительства</label>
+                <input type="number" id="block-phase" value="1" min="1">
+            </div>
         `;
 
         const buttons = `
@@ -177,6 +181,7 @@ const UI = {
                     description: document.getElementById('block-description').value.trim(),
                     floors: parseInt(document.getElementById('block-floors').value) || 1,
                     area: parseFloat(document.getElementById('block-area').value) || null,
+                    constructionPhase: parseInt(document.getElementById('block-phase').value) || 1,
                 };
 
                 if (!data.name) {

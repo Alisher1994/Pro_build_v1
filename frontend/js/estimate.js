@@ -225,8 +225,37 @@ const EstimateManager = {
             // Строим дерево блоков и смет
             let html = '<div class="estimate-tree">';
             
-            for (const block of blocks) {
-                html += this.renderBlockItem(block);
+            // Группировка по очередям
+            const phases = {};
+            blocks.forEach(block => {
+                const phase = block.constructionPhase || 1;
+                if (!phases[phase]) phases[phase] = [];
+                phases[phase].push(block);
+            });
+
+            // Сортировка очередей
+            const sortedPhases = Object.keys(phases).sort((a, b) => Number(a) - Number(b));
+
+            for (const phase of sortedPhases) {
+                html += `
+                    <div class="phase-group" style="margin-bottom: 24px;">
+                        <h3 style="font-size: 16px; color: var(--gray-600); margin-bottom: 12px; padding-left: 8px; border-left: 3px solid var(--primary-color);">
+                            Очередь строительства ${phase}
+                        </h3>
+                        <div class="phase-blocks">
+                `;
+                
+                // Сортировка блоков внутри очереди (по orderIndex или имени)
+                const phaseBlocks = phases[phase].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+                
+                for (const block of phaseBlocks) {
+                    html += this.renderBlockItem(block);
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
             }
             
             html += '</div>';
@@ -255,7 +284,7 @@ const EstimateManager = {
                         <polyline points="9 22 9 12 15 12 15 22"/>
                     </svg>
                     <span style="flex: 1; margin-left: 12px; font-weight: 600; font-size: 15px;">${block.name}</span>
-                    <span style="color: var(--gray-600); font-size: 13px; margin-right: 12px;">${block.floors} эт., ${block.area || 0} м²</span>
+                    <span style="color: var(--gray-600); font-size: 13px; margin-right: 12px;">Очередь ${block.constructionPhase || 1}, ${block.floors} эт., ${block.area || 0} м²</span>
                     <button class="btn btn-secondary" onclick="event.stopPropagation(); EstimateManager.editBlock('${block.id}')" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 4px;" title="Редактировать">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -1846,6 +1875,10 @@ const EstimateManager = {
                     <label>Площадь (м²)</label>
                     <input type="number" id="block-area" value="${block.area || ''}" step="0.01">
                 </div>
+                <div class="form-group">
+                    <label>Очередь строительства</label>
+                    <input type="number" id="block-phase" value="${block.constructionPhase || 1}" min="1">
+                </div>
             `;
 
             const buttons = `
@@ -1860,7 +1893,8 @@ const EstimateManager = {
                     const data = {
                         name: document.getElementById('block-name').value.trim(),
                         floors: parseInt(document.getElementById('block-floors').value),
-                        area: parseFloat(document.getElementById('block-area').value) || null
+                        area: parseFloat(document.getElementById('block-area').value) || null,
+                        constructionPhase: parseInt(document.getElementById('block-phase').value) || 1
                     };
 
                     if (!data.name || !data.floors) {

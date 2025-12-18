@@ -93,6 +93,16 @@ const IFCViewerManager = {
             // XKT Loader Plugin
             this.xktLoader = new xeokitSdk.XKTLoaderPlugin(this.viewer);
 
+            // Обработчик клавиши Tab для выбора похожих элементов
+            if (typeof window !== 'undefined') {
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault(); // Предотвращаем смену фокуса браузера
+                        this.handleTabSelection();
+                    }
+                });
+            }
+
             const sceneInput = this.viewer.scene.input;
             if (!sceneInput) {
                 console.warn('⚠️ scene.input недоступен – выбор элементов работать не будет');
@@ -658,6 +668,52 @@ const IFCViewerManager = {
         }
         
         return elementIds;
+    },
+
+    // Обработка нажатия Tab для выбора похожих элементов
+    handleTabSelection() {
+        if (!this.viewer || this.selectedElements.length === 0) {
+            return;
+        }
+
+        // Берем последний выбранный элемент как образец
+        const lastSelectedId = this.selectedElements[this.selectedElements.length - 1];
+        const metaObject = this.viewer.metaScene.metaObjects[lastSelectedId];
+
+        if (!metaObject) {
+            console.warn('Metadata not found for element:', lastSelectedId);
+            return;
+        }
+
+        const targetType = metaObject.type;
+        console.log(`Tab pressed. Selecting all elements of type: ${targetType}`);
+
+        // Находим все элементы того же типа
+        const similarElementIds = this.getElementsByType(targetType);
+
+        if (similarElementIds.length > 0) {
+            // Добавляем к текущему выбору (или заменяем, если нужно)
+            // В Revit Tab обычно циклически переключает, но "Select All Instances" выделяет всё.
+            // Пользователь просил "выделяется все елемены одинаковые семейства".
+            
+            // Очищаем текущий выбор, чтобы показать группу
+            this.clearSelection(false);
+            
+            // Выделяем все найденные
+            this.selectedElements = similarElementIds;
+            this.viewer.scene.setObjectsSelected(similarElementIds, true);
+            this.updateSelectionVisuals();
+            
+            UI.showNotification(`Выбрано ${similarElementIds.length} элементов типа ${targetType}`, 'info');
+            
+            // Вызываем callback для обновления UI (свойств и т.д.)
+            if (this.onElementSelected) {
+                // Передаем первый элемент как "активный" для свойств, но список всех выбранных
+                const firstEntity = this.viewer.scene.objects[similarElementIds[0]];
+                const properties = this.getElementProperties(firstEntity);
+                this.onElementSelected(similarElementIds[0], similarElementIds, properties);
+            }
+        }
     },
 
     // Режимы отображения

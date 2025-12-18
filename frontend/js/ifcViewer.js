@@ -686,16 +686,41 @@ const IFCViewerManager = {
         }
 
         const targetType = metaObject.type;
-        console.log(`Tab pressed. Selecting all elements of type: ${targetType}`);
+        let targetNamePrefix = metaObject.name;
+        
+        // Эвристика для Revit: имя часто содержит ID в конце (например "Family:Type:12345")
+        // Попробуем найти общую часть имени, чтобы выделить всё семейство/тип
+        if (targetNamePrefix && targetNamePrefix.includes(':')) {
+            // Отбрасываем последнюю часть после двоеточия, считая её ID экземпляра
+            const lastColonIndex = targetNamePrefix.lastIndexOf(':');
+            if (lastColonIndex > 0) {
+                targetNamePrefix = targetNamePrefix.substring(0, lastColonIndex);
+            }
+        }
 
-        // Находим все элементы того же типа
-        const similarElementIds = this.getElementsByType(targetType);
+        console.log(`Tab pressed. Type: ${targetType}, Name Prefix: ${targetNamePrefix}`);
+
+        // Находим все элементы того же типа и с похожим именем
+        const metaObjects = this.viewer.metaScene.metaObjects;
+        const similarElementIds = [];
+        
+        for (const id in metaObjects) {
+            const obj = metaObjects[id];
+            // Обязательно совпадение по типу IFC
+            if (obj.type !== targetType) continue;
+
+            // Если у образца есть имя, требуем совпадения начала имени
+            if (targetNamePrefix) {
+                if (obj.name && obj.name.startsWith(targetNamePrefix)) {
+                    similarElementIds.push(id);
+                }
+            } else {
+                // Если имени нет, берем все элементы этого типа (fallback)
+                similarElementIds.push(id);
+            }
+        }
 
         if (similarElementIds.length > 0) {
-            // Добавляем к текущему выбору (или заменяем, если нужно)
-            // В Revit Tab обычно циклически переключает, но "Select All Instances" выделяет всё.
-            // Пользователь просил "выделяется все елемены одинаковые семейства".
-            
             // Очищаем текущий выбор, чтобы показать группу
             this.clearSelection(false);
             
@@ -704,7 +729,7 @@ const IFCViewerManager = {
             this.viewer.scene.setObjectsSelected(similarElementIds, true);
             this.updateSelectionVisuals();
             
-            UI.showNotification(`Выбрано ${similarElementIds.length} элементов типа ${targetType}`, 'info');
+            UI.showNotification(`Выбрано ${similarElementIds.length} элементов типа ${targetType} (семейство: ${targetNamePrefix || 'Все'})`, 'info');
             
             // Вызываем callback для обновления UI (свойств и т.д.)
             if (this.onElementSelected) {

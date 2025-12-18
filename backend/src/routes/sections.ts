@@ -243,4 +243,23 @@ router.post('/:id/recalculate', async (req, res) => {
   }
 });
 
+// DELETE /api/sections/:id/ifc - Удалить привязку IFC файла
+router.delete('/:id/ifc', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const section = await prisma.estimateSection.update({
+      where: { id },
+      data: {
+        ifcFileUrl: null,
+        xktFileUrl: null,
+      },
+    });
+
+    res.json({ message: 'IFC file unlinked successfully', section });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

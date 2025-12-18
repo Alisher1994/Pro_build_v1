@@ -38,6 +38,57 @@ const UI = {
         container.innerHTML = '';
     },
 
+    // Показать модальное окно загрузки с прогресс-баром
+    showLoadingModal(title = 'Загрузка') {
+        const modalHTML = `
+            <div class="modal-overlay" id="loading-modal-overlay" style="background: rgba(0,0,0,0.8); z-index: 10000;">
+                <div class="modal" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                    </div>
+                    <div class="modal-body" style="padding: 30px;">
+                        <div style="margin-bottom: 15px; text-align: center;">
+                            <div id="loading-progress-text" style="font-size: 32px; font-weight: 600; color: var(--primary); margin-bottom: 10px;">0%</div>
+                            <div style="font-size: 14px; color: var(--gray-600);">Загрузка 3D модели...</div>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden;">
+                            <div id="loading-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), #4CAF50); transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем прямо в body для гарантированного отображения
+        const existingModal = document.getElementById('loading-modal-overlay');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    },
+
+    // Обновить прогресс загрузки
+    updateLoadingProgress(percent) {
+        const progressBar = document.getElementById('loading-progress-bar');
+        const progressText = document.getElementById('loading-progress-text');
+        
+        if (progressBar) {
+            progressBar.style.width = `${percent}%`;
+        }
+        if (progressText) {
+            progressText.textContent = `${Math.round(percent)}%`;
+        }
+    },
+
+    // Закрыть модальное окно загрузки
+    closeLoadingModal() {
+        const overlay = document.getElementById('loading-modal-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    },
+
     // Показать форму создания проекта
     showCreateProjectModal(callback) {
         const content = `

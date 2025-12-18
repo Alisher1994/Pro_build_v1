@@ -133,7 +133,7 @@ const IFCViewerManager = {
     },
 
     // Загрузка XKT модели
-    async loadXKT(url, modelId = 'model') {
+    async loadXKT(url, modelId = 'model', onProgress = null) {
         try {
             if (!this.viewer || !this.xktLoader) {
                 throw new Error('IFC viewer не инициализирован');
@@ -154,7 +154,21 @@ const IFCViewerManager = {
                 backfaces: false,
             });
 
+            // Отслеживание прогресса загрузки
+            let lastProgress = 0;
+            const progressInterval = setInterval(() => {
+                // Симулируем прогресс от 0 до 90% до полной загрузки
+                if (lastProgress < 90) {
+                    lastProgress += Math.random() * 15;
+                    if (lastProgress > 90) lastProgress = 90;
+                    if (onProgress) onProgress(lastProgress);
+                }
+            }, 200);
+
             this.currentModel.on("loaded", () => {
+                clearInterval(progressInterval);
+                if (onProgress) onProgress(100);
+                
                 console.log('✓ XKT модель загружена');
                 this.viewer.cameraFlight.flyTo(this.viewer.scene);
                 this.setDisplayMode(this.displayMode || 'default');
@@ -166,6 +180,7 @@ const IFCViewerManager = {
             });
 
             this.currentModel.on("error", (error) => {
+                clearInterval(progressInterval);
                 console.error('Ошибка загрузки XKT:', error);
             });
 

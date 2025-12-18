@@ -193,13 +193,16 @@ class ApiService {
 
     async uploadIFC(sectionId, file) {
         const formData = new FormData();
-        formData.append('ifcFile', file);
+        formData.append('file', file);  // Backend ожидает 'file'
         
         const response = await fetch(`${API_BASE_URL}/sections/${sectionId}/upload-ifc`, {
             method: 'POST',
             body: formData,
         });
-        if (!response.ok) throw new Error('Failed to upload IFC');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
+            throw new Error(errorData.error || 'Failed to upload IFC');
+        }
         return await response.json();
     }
 

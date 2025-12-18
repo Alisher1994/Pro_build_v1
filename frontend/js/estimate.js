@@ -366,14 +366,24 @@ const EstimateManager = {
                                         </span>
                                     </div>
                                 </div>
-                                <button onclick="event.stopPropagation(); EstimateManager.uploadIFCForEstimate('${estimate.id}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}" aria-label="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="23 4 23 10 17 10" />
-                                        <polyline points="1 20 1 14 7 14" />
-                                        <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10" />
-                                        <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14" />
-                                    </svg>
-                                </button>
+                                <div style="display: flex; gap: 4px;">
+                                    <button onclick="event.stopPropagation(); EstimateManager.uploadIFCForEstimate('${estimate.id}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}" aria-label="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="23 4 23 10 17 10" />
+                                            <polyline points="1 20 1 14 7 14" />
+                                            <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10" />
+                                            <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14" />
+                                        </svg>
+                                    </button>
+                                    ${hasIfc ? `
+                                    <button onclick="event.stopPropagation(); EstimateManager.unlinkIFC('${estimate.id}', { stayOnList: true })" class="btn btn-danger" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="Отвязать IFC" aria-label="Отвязать IFC">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                    ` : ''}
+                                </div>
                             </div>
                         </td>
                         <td>
@@ -1717,14 +1727,22 @@ const EstimateManager = {
                     : `<span style="color: var(--gray-500);">Не загружен</span>`;
                 
                 const ifcButton = section.ifcFileUrl
-                    ? `<button onclick="EstimateManager.replaceIFC('${section.id}')" class="btn btn-secondary" style="padding: 4px 12px; height: auto; margin-right: 4px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                            <polyline points="1 4 1 10 7 10"/>
-                            <polyline points="23 20 23 14 17 14"/>
-                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-                        </svg>
-                        Заменить IFC
-                    </button>`
+                    ? `<div style="display: flex; gap: 4px;">
+                        <button onclick="EstimateManager.replaceIFC('${section.id}')" class="btn btn-secondary" style="padding: 4px 12px; height: auto;" title="Заменить IFC">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                                <polyline points="1 4 1 10 7 10"/>
+                                <polyline points="23 20 23 14 17 14"/>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                            </svg>
+                            Заменить
+                        </button>
+                        <button onclick="EstimateManager.unlinkSectionIFC('${section.id}')" class="btn btn-danger" style="padding: 4px 8px; height: auto;" title="Отвязать IFC">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                       </div>`
                     : `<button onclick="EstimateManager.uploadIFC('${section.id}')" class="btn btn-primary" style="padding: 4px 12px; height: auto; margin-right: 4px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -3818,12 +3836,27 @@ const EstimateManager = {
                 }
 
                 try {
-                    UI.showNotification('Загрузка файла...', 'info');
-                    await api.uploadIFC(sectionId, file);
                     UI.closeModal();
-                    UI.showNotification('IFC файл успешно загружен', 'success');
-                    this.loadSections(this.currentEstimateId);
+                    console.log('📦 Начало загрузки IFC...');
+                    UI.showLoadingModal('Импорт IFC модели');
+                    
+                    // Симулируем прогресс загрузки файла
+                    UI.updateLoadingProgress(20);
+                    
+                    console.log('🚀 Отправка файла на сервер...');
+                    await api.uploadIFC(sectionId, file);
+                    
+                    console.log('✅ Файл загружен');
+                    UI.updateLoadingProgress(100);
+                    
+                    setTimeout(() => {
+                        UI.closeLoadingModal();
+                        UI.showNotification('IFC файл успешно загружен и конвертирован', 'success');
+                        this.loadSections(this.currentEstimateId);
+                    }, 500);
                 } catch (error) {
+                    console.error('❌ Ошибка загрузки:', error);
+                    UI.closeLoadingModal();
                     UI.showNotification('Ошибка загрузки: ' + error.message, 'error');
                 }
             });
@@ -3871,12 +3904,27 @@ const EstimateManager = {
                 }
 
                 try {
-                    UI.showNotification('Замена файла...', 'info');
-                    await api.uploadIFC(sectionId, file);
                     UI.closeModal();
-                    UI.showNotification('IFC файл успешно заменён', 'success');
-                    this.loadSections(this.currentEstimateId);
+                    console.log('🔄 Начало замены IFC...');
+                    UI.showLoadingModal('Замена IFC модели');
+                    
+                    UI.updateLoadingProgress(20);
+                    
+                    console.log('🚀 Отправка нового файла...');
+                    await api.uploadIFC(sectionId, file);
+                    
+                    console.log('✅ Файл заменён');
+                    UI.updateLoadingProgress(100);
+                    
+                    setTimeout(() => {
+                        UI.closeLoadingModal();
+                        UI.showNotification('IFC файл успешно заменён и конвертирован', 'success');
+                        this.loadSections(this.currentEstimateId);
+                    }, 500);
                 } catch (error) {
+                    console.error('❌ Ошибка замены:', error);
+                    UI.closeLoadingModal();
+                    UI.showNotification('Ошибка замены: ' + error.message, 'error');
                     UI.showNotification('Ошибка замены: ' + error.message, 'error');
                 }
             });
@@ -4894,6 +4942,53 @@ const EstimateManager = {
     },
 
     // Загрузка IFC модели для сметы
+    async unlinkSectionIFC(sectionId) {
+        if (!confirm('Вы уверены, что хотите отвязать IFC файл от этого раздела?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/sections/${sectionId}/ifc`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Ошибка удаления связи с IFC');
+
+            UI.showNotification('IFC файл успешно отвязан', 'success');
+            await this.loadSections(this.currentEstimateId);
+        } catch (error) {
+            console.error('Error unlinking IFC:', error);
+            UI.showNotification('Ошибка: ' + error.message, 'error');
+        }
+    },
+
+    async unlinkIFC(estimateId, options = {}) {
+        const { stayOnList = false } = options;
+        
+        if (!confirm('Вы уверены, что хотите отвязать IFC файл от этой сметы?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/estimates/${estimateId}/ifc`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Ошибка удаления связи с IFC');
+
+            UI.showNotification('IFC файл успешно отвязан', 'success');
+
+            if (stayOnList) {
+                await this.loadEstimates(this.currentBlockId);
+            } else {
+                await this.openEstimate(estimateId);
+            }
+        } catch (error) {
+            console.error('Error unlinking IFC:', error);
+            UI.showNotification('Ошибка: ' + error.message, 'error');
+        }
+    },
+
     async uploadIFCForEstimate(estimateId, options = {}) {
         const { stayOnList = false } = options;
         const input = document.createElement('input');
@@ -4904,38 +4999,224 @@ const EstimateManager = {
             const file = e.target.files[0];
             if (!file) return;
             
-            try {
-                UI.showNotification('Загрузка IFC файла...', 'info');
-                const formData = new FormData();
-                formData.append('ifc', file);
-                
-                const response = await fetch(`${API_BASE_URL}/estimates/${estimateId}/upload-ifc`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) throw new Error('Ошибка загрузки IFC');
-                
-                const result = await response.json();
-                UI.showNotification('IFC модель успешно загружена и конвертирована', 'success');
-                
-                // Автоматически открываем 3D viewer с загруженной моделью, если находимся внутри раздела
-                if (!stayOnList && result.estimate.xktFileUrl) {
-                    const xktPath = result.estimate.xktFileUrl.startsWith('/') ? result.estimate.xktFileUrl : `/${result.estimate.xktFileUrl}`;
-                    await this.loadIfcViewer(estimateId, xktPath);
+            const startTime = Date.now();
+            this._showUploadModal(file);
+            
+            // Таймер
+            const timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const seconds = Math.floor((elapsed / 1000) % 60);
+                const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                const timerEl = document.getElementById('upload-timer');
+                if (timerEl) timerEl.textContent = timeString;
+            }, 1000);
+
+            const xhr = new XMLHttpRequest();
+            const formData = new FormData();
+            formData.append('ifc', file);
+            
+            // Гибридный прогресс: 
+            // 0-50%: Реальная загрузка файла на сервер
+            // 50-90%: Симуляция обработки/конвертации (калибровка: 32MB ~ 110 сек)
+            // 100%: Готово
+            
+            let simulationStarted = false;
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    // Масштабируем реальную загрузку в диапазон 0-50%
+                    const uploadPercent = (event.loaded / event.total) * 50;
+                    this._updateUploadModal(uploadPercent, event.loaded, event.total);
+                    
+                    // Если загрузка завершена (100% отправлено), запускаем симуляцию конвертации
+                    if (event.loaded === event.total && !simulationStarted) {
+                        simulationStarted = true;
+                        this._startConversionSimulation(event.total);
+                    }
                 }
+            };
+            
+            xhr.onload = async () => {
+                clearInterval(timerInterval);
+                this._stopConversionSimulation();
                 
-                if (stayOnList) {
-                    await this.loadEstimates(this.currentBlockId);
+                if (xhr.status === 200) {
+                    const elapsed = Date.now() - startTime;
+                    const seconds = Math.floor((elapsed / 1000) % 60);
+                    const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
+                    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    this._updateUploadModal(100, file.size, file.size);
+                    setTimeout(() => {
+                        this._showUploadSuccess(file, timeString, estimateId, stayOnList);
+                    }, 500);
                 } else {
-                    await this.openEstimate(estimateId);
+                    const overlay = document.getElementById('upload-modal-overlay');
+                    if (overlay) overlay.remove();
+                    UI.showNotification('Ошибка загрузки: ' + xhr.statusText, 'error');
                 }
-            } catch (error) {
-                UI.showNotification('Ошибка: ' + error.message, 'error');
-            }
+            };
+            
+            xhr.onerror = () => {
+                clearInterval(timerInterval);
+                this._stopConversionSimulation();
+                const overlay = document.getElementById('upload-modal-overlay');
+                if (overlay) overlay.remove();
+                UI.showNotification('Ошибка сети при загрузке', 'error');
+            };
+            
+            xhr.open('POST', `${API_BASE_URL}/estimates/${estimateId}/upload-ifc`);
+            xhr.send(formData);
         };
         
         input.click();
+    },
+
+    _conversionInterval: null,
+
+    _startConversionSimulation(fileSize) {
+        if (this._conversionInterval) clearInterval(this._conversionInterval);
+        
+        let progress = 50;
+        const maxProgress = 90;
+        const intervalTime = 500; // Обновление каждые 0.5 сек
+        
+        // Эвристика на основе данных пользователя: 32 MB = 110 сек (1:50)
+        // Скорость обработки ~ 0.29 MB/сек или ~3.5 сек на 1 MB
+        const sizeMB = fileSize / (1024 * 1024);
+        const estimatedDurationSec = sizeMB * 3.5; 
+        
+        // Минимальное время анимации 5 сек, чтобы не было мгновенных скачков на мелких файлах
+        const duration = Math.max(5, estimatedDurationSec);
+        
+        // Нам нужно пройти 40% (от 50 до 90) за estimatedDurationSec
+        // Количество шагов = duration / (intervalTime / 1000)
+        const totalSteps = duration / (intervalTime / 1000);
+        const step = 40 / totalSteps;
+        
+        this._conversionInterval = setInterval(() => {
+            if (progress < maxProgress) {
+                progress += step;
+                
+                // Обновляем UI, но не трогаем размер файла (он уже загружен)
+                const progressBar = document.getElementById('upload-progress-bar');
+                const percentText = document.getElementById('upload-percent');
+                const statusText = document.getElementById('upload-status');
+                
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (percentText) percentText.textContent = `${Math.round(progress)}%`;
+                if (statusText) statusText.textContent = 'Конвертация...';
+            }
+        }, intervalTime);
+    },
+
+    _stopConversionSimulation() {
+        if (this._conversionInterval) {
+            clearInterval(this._conversionInterval);
+            this._conversionInterval = null;
+        }
+    },
+
+    _showUploadModal(file) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const modalHTML = `
+            <div class="modal-overlay" id="upload-modal-overlay" style="background: rgba(0,0,0,0.8); z-index: 10000;">
+                <div class="modal" style="max-width: 450px;">
+                    <div class="modal-header">
+                        <h3>Импорт IFC модели</h3>
+                    </div>
+                    <div class="modal-body" id="upload-modal-body" style="padding: 24px;">
+                        <div style="margin-bottom: 16px; font-weight: 600; font-size: 16px; word-break: break-all;">${file.name}</div>
+                        <div style="margin-bottom: 24px; color: var(--gray-600); font-family: monospace; font-size: 14px; display: flex; justify-content: space-between;">
+                            <span><span id="upload-size">0.00</span> / ${fileSizeMB} MB</span>
+                            <span id="upload-timer">00:00</span>
+                        </div>
+                        
+                        <div class="progress-bar-container" style="width: 100%; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; margin-bottom: 16px;">
+                            <div id="upload-progress-bar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.1s linear;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div id="upload-status" style="color: var(--gray-600); font-size: 14px;">Подготовка...</div>
+                            <div id="upload-percent" style="font-size: 24px; font-weight: 700; color: var(--primary);">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const existing = document.getElementById('upload-modal-overlay');
+        if (existing) existing.remove();
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    },
+    
+    _updateUploadModal(percent, loaded, total) {
+        const progressBar = document.getElementById('upload-progress-bar');
+        const percentText = document.getElementById('upload-percent');
+        const sizeText = document.getElementById('upload-size');
+        const statusText = document.getElementById('upload-status');
+        
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (percentText) percentText.textContent = `${Math.round(percent)}%`;
+        if (sizeText) sizeText.textContent = (loaded / (1024 * 1024)).toFixed(2);
+        
+        if (percent >= 100 && statusText) {
+            statusText.textContent = 'Конвертация...';
+        } else if (statusText) {
+            statusText.textContent = 'Загрузка...';
+        }
+    },
+    
+    _showUploadSuccess(file, timeString, estimateId, stayOnList) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const body = document.getElementById('upload-modal-body');
+        if (!body) return;
+        
+        body.innerHTML = `
+            <div style="text-align: center;">
+                <div style="width: 64px; height: 64px; background: rgba(16,124,16,0.1); color: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h3 style="margin-bottom: 8px; font-size: 18px;">Файл успешно импортирован</h3>
+                <p style="color: var(--gray-600); margin-bottom: 24px; word-break: break-all;">${file.name}</p>
+                
+                <div style="display: flex; justify-content: center; gap: 32px; margin-bottom: 32px; background: var(--gray-50); padding: 16px; border-radius: 8px;">
+                    <div>
+                        <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">Размер</div>
+                        <div style="font-weight: 600; font-size: 16px;">${fileSizeMB} MB</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">Время</div>
+                        <div style="font-weight: 600; font-size: 16px;">${timeString}</div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" style="min-width: 120px;" onclick="EstimateManager._closeUploadModalAndRefresh('${estimateId}', ${stayOnList})">OK</button>
+            </div>
+        `;
+    },
+    
+    async _closeUploadModalAndRefresh(estimateId, stayOnList) {
+        const overlay = document.getElementById('upload-modal-overlay');
+        if (overlay) overlay.remove();
+        
+        try {
+             const estimate = await api.getEstimate(estimateId);
+             if (!stayOnList && estimate.xktFileUrl) {
+                const xktPath = estimate.xktFileUrl.startsWith('/') ? estimate.xktFileUrl : `/${estimate.xktFileUrl}`;
+                await this.loadIfcViewer(estimateId, xktPath);
+            }
+            
+            if (stayOnList) {
+                await this.loadEstimates(this.currentBlockId);
+            } else {
+                await this.openEstimate(estimateId);
+            }
+        } catch (e) {
+            console.error(e);
+            if (stayOnList) await this.loadEstimates(this.currentBlockId);
+        }
     },
 
     // Загрузка IFC модели в просмотрщик
@@ -4973,6 +5254,8 @@ const EstimateManager = {
                 : (shouldUseBackendOrigin && xktUrl.startsWith('/'))
                     ? `${backendOrigin}${xktUrl}`
                     : (xktUrl.startsWith('/') ? xktUrl : `/${xktUrl}`);
+            
+            // Загружаем модель без модального окна (по требованию пользователя)
             await IFCViewerManager.loadXKT(fullUrl, `estimate-${estimateId}`);
             
             if (overlay) overlay.style.display = 'none';

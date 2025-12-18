@@ -281,11 +281,66 @@ const UI = {
         }, 3000);
     },
 
+    // Показать модальное окно подтверждения с promise
+    showConfirmDialog(title, message, confirmText = 'Да', cancelText = 'Нет') {
+        return new Promise((resolve) => {
+            const content = `
+                <p style="font-size: 14px; color: var(--gray-700); margin: 0;">${message}</p>
+            `;
+
+            const buttons = `
+                <button class="btn btn-secondary" id="confirm-cancel-btn">${cancelText}</button>
+                <button class="btn btn-danger" id="confirm-ok-btn">${confirmText}</button>
+            `;
+
+            UI.showModal(title, content, buttons);
+
+            setTimeout(() => {
+                document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+                    UI.closeModal();
+                    resolve(true);
+                });
+                
+                document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+                    UI.closeModal();
+                    resolve(false);
+                });
+            }, 100);
+        });
+    },
+
     // Подтверждение удаления
     confirmDelete(message, callback) {
         if (confirm(message)) {
             callback();
         }
+    },
+
+    // Показать диалог подтверждения
+    showConfirmDialog(title, message, confirmText = 'Да', cancelText = 'Нет') {
+        return new Promise((resolve) => {
+            const content = `
+                <p style="font-size: 14px; margin: 16px 0;">${message}</p>
+            `;
+
+            const buttons = `
+                <button class="btn btn-secondary" id="confirm-cancel-btn">${cancelText}</button>
+                <button class="btn btn-primary" id="confirm-ok-btn">${confirmText}</button>
+            `;
+
+            UI.showModal(title, content, buttons);
+
+            setTimeout(() => {
+                document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+                    UI.closeModal();
+                    resolve(true);
+                });
+                document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+                    UI.closeModal();
+                    resolve(false);
+                });
+            }, 100);
+        });
     }
 };
 

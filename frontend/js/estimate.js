@@ -557,7 +557,7 @@ const EstimateManager = {
                     <!-- Трехпанельный интерфейс -->
                     <div style="flex: 1; display: flex; overflow: hidden;">
                         <!-- Левая панель: Структура сметы -->
-                        <div id="left-panel" style="width: 70%; background: var(--white); border-right: 1px solid var(--gray-300); display: flex; flex-direction: column; overflow: hidden;">
+                        <div id="left-panel" style="width: 60%; background: var(--white); border-right: 1px solid var(--gray-300); display: flex; flex-direction: column; overflow: hidden;">
                             <div style="padding: 12px 16px; background: var(--gray-50); border-bottom: 1px solid var(--gray-300);">
                                 <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--gray-700);">Структура сметы</h3>
                             </div>
@@ -572,7 +572,16 @@ const EstimateManager = {
                         <div id="resize-divider" style="width: 4px; background: var(--gray-300); cursor: col-resize; flex-shrink: 0;"></div>
 
                         <!-- Правая часть: 3D модель и свойства -->
-                        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                        <div class="right-panel-container" id="right-panel-container">
+                            <button class="right-panel-toggle" id="right-panel-toggle" title="Свернуть панель">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 5 15 12 9 19"></polyline>
+                                </svg>
+                            </button>
+                            <div class="right-panel-collapsed-tab" id="right-panel-collapsed-tab" title="Развернуть панель">
+                                3D Вид и Свойства
+                            </div>
+                            <div class="right-panel-content">
                             <!-- 3D Viewer -->
                             <div id="ifc-viewer-panel" style="flex: 60; background: var(--gray-900); position: relative; overflow: hidden;">
                                 <canvas id="ifc-canvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
@@ -610,6 +619,13 @@ const EstimateManager = {
                                                 <line x1="5" y1="12" x2="19" y2="12"/>
                                             </svg>
                                         </button>
+                                        <button id="toggle-spaces-btn" onclick="EstimateManager.toggleSpacesVisibility()" class="viewer-btn" title="Показать/скрыть помещения" style="background: var(--gray-200);">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                                <line x1="3" y1="9" x2="21" y2="9"/>
+                                                <line x1="9" y1="21" x2="9" y2="9"/>
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -638,6 +654,7 @@ const EstimateManager = {
                                     </div>
                                 </div>
                             </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -648,6 +665,12 @@ const EstimateManager = {
             // из-за чего после загрузки IFC окно может быть чёрным до обновления страницы.
             this.viewerInitialized = false;
             this.viewerInitPromise = null;
+
+            // Инициализируем toggle правой панели после рендера DOM
+            setTimeout(() => {
+                this.initRightPanelToggle();
+            }, 100);
+
             if (typeof IFCViewerManager !== 'undefined' && IFCViewerManager && typeof IFCViewerManager.destroy === 'function') {
                 IFCViewerManager.destroy();
             }
@@ -696,12 +719,16 @@ const EstimateManager = {
     initResizablePanels() {
         const divider = document.getElementById('resize-divider');
         const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel-container');
         
-        if (!divider || !leftPanel) return;
+        if (!divider || !leftPanel || !rightPanel) return;
         
         let isResizing = false;
         
         divider.addEventListener('mousedown', (e) => {
+            // Не позволяем изменять размер если правая панель свернута
+            if (rightPanel.classList.contains('collapsed')) return;
+            
             isResizing = true;
             document.body.style.cursor = 'col-resize';
             e.preventDefault();
@@ -714,8 +741,11 @@ const EstimateManager = {
             const containerRect = container.getBoundingClientRect();
             const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
             
-            if (newWidth > 20 && newWidth < 85) {
+            // Ограничиваем ширину от 30% до 80%
+            if (newWidth > 30 && newWidth < 80) {
                 leftPanel.style.width = newWidth + '%';
+                // Сохраняем последнюю установленную ширину
+                localStorage.setItem('leftPanelWidth', newWidth);
             }
         });
         
@@ -725,6 +755,12 @@ const EstimateManager = {
                 document.body.style.cursor = '';
             }
         });
+        
+        // Восстанавливаем сохраненную ширину
+        const savedWidth = localStorage.getItem('leftPanelWidth');
+        if (savedWidth) {
+            leftPanel.style.width = savedWidth + '%';
+        }
     },
 
     initPropertiesTabs() {
@@ -776,6 +812,84 @@ const EstimateManager = {
                 <p style="font-size: 14px;">Выберите элемент в 3D модели или дереве слева</p>
             </div>
         `;
+    },
+
+    initRightPanelToggle() {
+        const toggleBtn = document.getElementById('right-panel-toggle');
+        const collapsedTab = document.getElementById('right-panel-collapsed-tab');
+        const container = document.getElementById('right-panel-container');
+
+        console.log('initRightPanelToggle called', { toggleBtn, collapsedTab, container });
+
+        if (!toggleBtn || !container) {
+            console.warn('Right panel elements not found');
+            return;
+        }
+
+        // Восстанавливаем сохраненное состояние
+        const savedState = localStorage.getItem('rightPanelCollapsed');
+        if (savedState === 'true') {
+            container.classList.add('collapsed');
+        }
+
+        // Обработчик для кнопки toggle
+        const handleToggle = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Toggle clicked');
+            
+            container.classList.toggle('collapsed');
+            const isCollapsed = container.classList.contains('collapsed');
+            
+            // Сохраняем состояние
+            localStorage.setItem('rightPanelCollapsed', isCollapsed);
+            
+            // Обновляем title
+            if (toggleBtn) {
+                toggleBtn.title = isCollapsed ? 'Развернуть панель' : 'Свернуть панель';
+            }
+            
+            // Обновляем ширину левой панели
+            const leftPanel = document.getElementById('left-panel');
+            if (leftPanel) {
+                if (isCollapsed) {
+                    // Сохраняем текущую ширину
+                    const currentWidth = leftPanel.style.width || '60%';
+                    localStorage.setItem('leftPanelWidthBeforeCollapse', currentWidth);
+                    // Расширяем почти на весь экран, оставляя место только для вкладки (48px) + разделитель (4px)
+                    leftPanel.style.width = 'calc(100% - 52px)';
+                } else {
+                    // Восстанавливаем предыдущую ширину
+                    const savedWidth = localStorage.getItem('leftPanelWidthBeforeCollapse') || localStorage.getItem('leftPanelWidth') || '60%';
+                    leftPanel.style.width = savedWidth;
+                }
+            }
+            
+            // Если панель развернута и есть viewer, обновляем его размер
+            if (!isCollapsed && IFCViewerManager?.viewer) {
+                setTimeout(() => {
+                    try {
+                        if (typeof IFCViewerManager.viewer.resize === 'function') {
+                            IFCViewerManager.viewer.resize();
+                        }
+                    } catch (error) {
+                        console.warn('viewer.resize() failed:', error);
+                    }
+                }, 300);
+            }
+        };
+
+        // Удаляем старые обработчики если есть
+        const newToggleBtn = toggleBtn.cloneNode(true);
+        toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+        
+        newToggleBtn.addEventListener('click', handleToggle);
+        console.log('Event listener added to toggle button');
+        
+        // Обработчик для свернутой вкладки
+        if (collapsedTab) {
+            collapsedTab.addEventListener('click', handleToggle);
+        }
     },
 
     escapeHtml(value) {
@@ -1134,6 +1248,8 @@ const EstimateManager = {
             const resourceTotal = wt.totalCost || 0;
             calculatedTotal += resourceTotal;
             
+            const resourceType = ['material', 'labor', 'equipment', 'service'].includes(wt.description) ? wt.description : 'material';
+            
             allResources.push({
                 id: wt.id,
                 name: wt.name,
@@ -1142,7 +1258,7 @@ const EstimateManager = {
                 unitCost: wt.unitCost || 0,
                 totalCost: resourceTotal,
                 unit: wt.unit || 'шт',
-                type: 'material', // по умолчанию
+                type: resourceType,
                 ifcElements: parsedIfcElements,
                 ifcProperties: wt.ifcProperties || null,
             });
@@ -1240,18 +1356,38 @@ const EstimateManager = {
         const parsedIfcElements = this.parseIfcElements(resource.ifcElements);
         const hasIfcLink = parsedIfcElements.length > 0;
         const ifcElementsJson = JSON.stringify(parsedIfcElements);
-        const linkIcon = hasIfcLink 
-            ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-green);"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gray-400);"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></svg>`;
+        
+        // Иконки связи
+        const linkIconUnlinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-unlink2-icon lucide-unlink-2"><path d="M15 7h2a5 5 0 0 1 0 10h-2m-6 0H7A5 5 0 0 1 7 7h2"/></svg>`;
+        const linkIconLinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>`;
+        const linkIconUnlink = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-off-icon lucide-link-2-off"><path d="M9 17H7A5 5 0 0 1 7 7"/><path d="M15 7h2a5 5 0 0 1 4 8"/><line x1="8" x2="12" y1="12" y2="12"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
+        // Логика отображения кнопки связи
+        let linkButtonHtml = '';
+        if (resource.type === 'material') {
+            if (hasIfcLink) {
+                linkButtonHtml = `
+                    <button class="btn-icon-tiny link-btn linked" data-resource-id="${resource.id}" title="Связано (нажмите, чтобы разорвать)" style="width: 24px; height: 24px; border: none; background: transparent; color: var(--accent-green); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        ${linkIconLinked}
+                    </button>
+                `;
+            } else {
+                linkButtonHtml = `
+                    <button class="btn-icon-tiny link-btn unlinked" data-resource-id="${resource.id}" title="Связать с выбранными элементами" style="width: 24px; height: 24px; border: none; background: transparent; color: var(--gray-400); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        ${linkIconUnlinked}
+                    </button>
+                `;
+            }
+        }
 
         let html = `
             <div class="resource-item" data-resource-id="${resource.id}" data-has-ifc-link="${hasIfcLink}" data-ifc-elements='${ifcElementsJson}' style="background: var(--white); border: 1px solid var(--gray-200); border-radius: 3px; padding: 6px 8px; margin-bottom: 3px; font-size: 11px; cursor: pointer; transition: all 0.15s ease;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <input type="checkbox" class="resource-checkbox" data-resource-id="${resource.id}" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary);" title="Ctrl+Click для выбора">
-                    <span class="res-link-icon" data-res-id="${resource.id}" style="display: flex; align-items: center; cursor: help;" title="${hasIfcLink ? 'Связано с IFC элементами' : 'Не связано с IFC'}">${linkIcon}</span>
                     <span class="res-type-editable" data-res-id="${resource.id}" style="font-size: 16px; cursor: pointer;" title="Тип: ${resource.type}">${typeIcon}</span>
                     <span class="res-code-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 50px; text-align: left; font-size: 10px; color: var(--gray-600);" onmouseover="this.style.background='var(--gray-200)'" onmouseout="this.style.background='var(--gray-100)'">${resource.code || ''}</span>
                     <span class="res-name-editable" data-res-id="${resource.id}" style="flex: 1; cursor: text; padding: 2px 4px; border-radius: 2px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${resource.name}</span>
+                    ${linkButtonHtml}
                     <span class="res-unit-editable" data-res-id="${resource.id}" style="cursor: pointer; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 30px; text-align: center;">${resource.unit}</span>
                     <span class="res-quantity-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 40px; text-align: right;">${UI.formatNumber(resource.quantity)}</span>
                     <span class="res-unitcost-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 60px; text-align: right;">${UI.formatCurrency(resource.unitCost, this.currentProject?.currency)}</span>
@@ -1263,6 +1399,35 @@ const EstimateManager = {
 
         // Добавляем обработчики после рендера
         setTimeout(() => {
+            // Обработчик кнопки связи
+            const linkBtn = document.querySelector(`.link-btn[data-resource-id="${resource.id}"]`);
+            if (linkBtn) {
+                linkBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (linkBtn.classList.contains('linked')) {
+                        // Разорвать связь
+                        this.unlinkResourceFromIfc(resource.id);
+                    } else {
+                        // Связать
+                        this.linkResourceToIfc(resource.id);
+                    }
+                };
+                
+                // Hover эффект для кнопки "Связано" -> "Разорвать"
+                if (linkBtn.classList.contains('linked')) {
+                    linkBtn.onmouseenter = () => {
+                        linkBtn.innerHTML = linkIconUnlink;
+                        linkBtn.style.color = 'var(--red-500)';
+                        linkBtn.title = 'Разорвать связь';
+                    };
+                    linkBtn.onmouseleave = () => {
+                        linkBtn.innerHTML = linkIconLinked;
+                        linkBtn.style.color = 'var(--accent-green)';
+                        linkBtn.title = 'Связано (нажмите, чтобы разорвать)';
+                    };
+                }
+            }
+
             const typeEl = document.querySelector(`[data-res-id="${resource.id}"].res-type-editable`);
             if (typeEl) {
                 const TYPE_NAMES = ['material', 'labor', 'equipment', 'service'];
@@ -2351,8 +2516,39 @@ const EstimateManager = {
 
                 const metricsColor = this.getResourceMetricsColor(r.resourceType);
                 const metricsStyle = metricsColor ? `color: ${metricsColor};` : '';
+
+                // Проверяем наличие связи с IFC элементами
+                const parsedIfcElements = this.parseIfcElements(r.ifcElements);
+                const hasIfcLink = parsedIfcElements.length > 0;
+                
+                // Иконки связи
+                const linkIconUnlinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-unlink2-icon lucide-unlink-2"><path d="M15 7h2a5 5 0 0 1 0 10h-2m-6 0H7A5 5 0 0 1 7 7h2"/></svg>`;
+                const linkIconLinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>`;
+
+                let linkButtonHtml = '';
+                if (safeType === 'material') {
+                    if (hasIfcLink) {
+                        linkButtonHtml = `
+                            <button class="btn-icon-tiny link-btn linked" data-resource-id="${r.id}" title="Связано (нажмите, чтобы разорвать)" style="width: 24px; height: 24px; border: none; background: transparent; color: var(--accent-green); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                ${linkIconLinked}
+                            </button>
+                        `;
+                    } else {
+                        linkButtonHtml = `
+                            <button class="btn-icon-tiny link-btn unlinked" data-resource-id="${r.id}" title="Связать с выбранными элементами" style="width: 24px; height: 24px; border: none; background: transparent; color: var(--gray-400); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                ${linkIconUnlinked}
+                            </button>
+                        `;
+                    }
+                }
+
                 html += `
-                    <div style="padding: 6px 10px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; margin-bottom: 4px; font-size: 12px;">
+                    <div style="padding: 6px 10px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; margin-bottom: 4px; font-size: 12px; cursor: pointer; transition: all 0.15s ease;" 
+                         data-resource-tree-item="${r.id}" 
+                         data-ifc-elements='${JSON.stringify(parsedIfcElements)}'
+                         onclick="EstimateManager.selectResourceInTree('${r.id}')"
+                         onmouseover="this.style.background='var(--gray-100)'" 
+                         onmouseout="if(!this.classList.contains('selected')) this.style.background='var(--gray-50)'">
                         <div style="display: flex; justify-content: space-between; gap: 10px;">
                             <div style="min-width: 0;">
                                 <div style="display: flex; align-items: flex-start; gap: 6px; min-width: 0;">
@@ -2375,6 +2571,7 @@ const EstimateManager = {
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                                 <div style="${metricsStyle} font-weight: 600; white-space: nowrap;">${UI.formatCurrency(r.totalCost || 0, this.currentProject?.currency)}</div>
+                                ${linkButtonHtml}
                                 <button onclick="EstimateManager.deleteResource('${r.id}'); event.stopPropagation();" class="btn btn-danger btn-sm" title="Удалить ресурс" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">×</button>
                             </div>
                         </div>
@@ -2382,6 +2579,19 @@ const EstimateManager = {
                 `;
             }
             container.innerHTML = html;
+
+            // Add event listeners for link buttons
+            container.querySelectorAll('.link-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const resourceId = btn.dataset.resourceId;
+                    if (btn.classList.contains('linked')) {
+                        this.unlinkResourceFromIfc(resourceId);
+                    } else {
+                        this.linkResourceToIfc(resourceId);
+                    }
+                });
+            });
 
             this.bindResourcesTreeInlineEdits(container, workTypeId);
         } catch (error) {
@@ -2558,6 +2768,9 @@ const EstimateManager = {
             }
         }
 
+        // Подсвечиваем связанные элементы в 3D
+        await this.highlightWorkTypeElements(workTypeId);
+
         // Загружаем свойства в нижнюю панель
         try {
             const workType = await api.getWorkType(workTypeId);
@@ -2613,6 +2826,226 @@ const EstimateManager = {
         } catch (error) {
             console.error('Error loading work type details:', error);
         }
+    },
+
+    async highlightWorkTypeElements(workTypeId) {
+        try {
+            const resources = await api.getResources(workTypeId);
+            const allElements = [];
+            for (const res of resources) {
+                const elements = this.parseIfcElements(res.ifcElements);
+                if (elements && elements.length > 0) {
+                    allElements.push(...elements);
+                }
+            }
+            
+            if (allElements.length > 0) {
+                // Убираем дубликаты
+                const uniqueElements = [...new Set(allElements)];
+                this.highlightResourceElements(uniqueElements);
+            } else {
+                this.highlightResourceElements([]); // Очищаем подсветку
+            }
+        } catch (error) {
+            console.error('Error highlighting work type elements:', error);
+        }
+    },
+
+    async selectResourceInTree(resourceId) {
+        try {
+            // Останавливаем всплытие события, чтобы не было конфликтов с inline-редактированием
+            if (event) event.stopPropagation();
+
+            // Снимаем выделение со всех строк (и видов работ, и ресурсов)
+            document.querySelectorAll('[onclick*="selectWorkType"]').forEach(el => {
+                el.style.background = 'var(--white)';
+                el.style.borderColor = 'var(--gray-300)';
+            });
+            document.querySelectorAll('[data-resource-tree-item]').forEach(el => {
+                el.style.background = 'var(--gray-50)';
+                el.style.borderColor = 'var(--gray-200)';
+                el.classList.remove('selected');
+            });
+
+            // Подсвечиваем выбранный ресурс
+            const resourceRow = document.querySelector(`[data-resource-tree-item="${resourceId}"]`);
+            if (resourceRow) {
+                resourceRow.style.background = 'var(--primary-light)';
+                resourceRow.style.borderColor = 'var(--primary)';
+                resourceRow.classList.add('selected');
+
+                // Получаем элементы из data-атрибута
+                const ifcElementsStr = resourceRow.dataset.ifcElements;
+                const ifcElements = this.parseIfcElements(ifcElementsStr);
+                
+                if (ifcElements && ifcElements.length > 0) {
+                    this.highlightResourceElements(ifcElements);
+                } else {
+                    this.highlightResourceElements([]);
+                }
+            }
+
+            // Загружаем информацию о ресурсе в панель
+            const resource = await api.getResource(resourceId);
+            this.showResourcePropertiesPanel(resource);
+        } catch (error) {
+            console.error('Error selecting resource in tree:', error);
+        }
+    },
+
+    showResourcePropertiesPanel(resource) {
+        const panel = document.getElementById('element-properties');
+        if (!panel || !resource) return;
+
+        const typeLabels = {
+            material: 'Материал',
+            labor: 'Труд',
+            equipment: 'Оборудование',
+            service: 'Услуга'
+        };
+
+        const safe = (val) => this.escapeHtml(val === undefined || val === null || val === '' ? '—' : val);
+        const totalCost = (resource.quantity || 0) * (resource.unitPrice || 0);
+        const ifcElements = this.parseIfcElements(resource.ifcElements);
+
+        panel.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
+                <div style="padding-bottom: 8px; border-bottom: 1px solid var(--gray-200);">
+                    <h3 style="margin: 0 0 8px 0; font-size: 18px; color: var(--gray-900);">${safe(resource.name)}</h3>
+                    <div style="font-size: 13px; color: var(--gray-600);">Тип: ${typeLabels[resource.resourceType] || resource.resourceType || 'Не указан'}</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Количество</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${UI.formatNumber(resource.quantity || 0)} ${safe(resource.unit)}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Цена за единицу</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${UI.formatCurrency(resource.unitPrice || 0, this.currentProject?.currency)}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Общая стоимость</div>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--primary);">${UI.formatCurrency(totalCost, this.currentProject?.currency)}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Связанных элементов</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${ifcElements.length || 0}</div>
+                    </div>
+                </div>
+
+                ${ifcElements.length > 0 ? `
+                    <div>
+                        <div style="font-weight: 600; color: var(--gray-800); margin-bottom: 8px;">Связанные IFC элементы (${ifcElements.length})</div>
+                        <div style="border: 1px solid var(--gray-200); border-radius: 8px; max-height: 200px; overflow: auto; padding: 8px;">
+                            ${ifcElements.slice(0, 50).map(id => `
+                                <div style="font-family: monospace; font-size: 11px; color: var(--gray-700); padding: 2px 0;">${this.escapeHtml(id)}</div>
+                            `).join('')}
+                            ${ifcElements.length > 50 ? `<div style="font-size: 11px; color: var(--gray-500); padding: 4px 0; font-style: italic;">... и ещё ${ifcElements.length - 50}</div>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    },
+
+    async selectResourceInTree(resourceId) {
+        try {
+            // Снимаем выделение со всех строк (и видов работ, и ресурсов)
+            document.querySelectorAll('[onclick*="selectWorkType"]').forEach(el => {
+                el.style.background = 'var(--white)';
+                el.style.borderColor = 'var(--gray-300)';
+            });
+            document.querySelectorAll('[data-resource-tree-item]').forEach(el => {
+                const innerDiv = el.querySelector('div');
+                if (innerDiv) {
+                    innerDiv.style.background = 'var(--white)';
+                    innerDiv.style.borderColor = 'var(--gray-200)';
+                }
+            });
+
+            // Подсвечиваем выбранный ресурс
+            const resourceRow = document.querySelector(`[data-resource-tree-item="${resourceId}"]`);
+            if (resourceRow) {
+                const innerDiv = resourceRow.querySelector('div');
+                if (innerDiv) {
+                    innerDiv.style.background = 'var(--primary-light)';
+                    innerDiv.style.borderColor = 'var(--primary)';
+                }
+
+                // Получаем элементы из data-атрибута
+                const ifcElementsStr = resourceRow.dataset.ifcElements;
+                const ifcElements = this.parseIfcElements(ifcElementsStr);
+                
+                if (ifcElements && ifcElements.length > 0) {
+                    this.highlightResourceElements(ifcElements);
+                } else {
+                    this.highlightResourceElements([]);
+                }
+            }
+
+            // Загружаем информацию о ресурсе в панель
+            const resource = await api.getResource(resourceId);
+            this.showResourcePropertiesPanel(resource);
+        } catch (error) {
+            console.error('Error selecting resource in tree:', error);
+        }
+    },
+
+    showResourcePropertiesPanel(resource) {
+        const panel = document.getElementById('element-properties');
+        if (!panel || !resource) return;
+
+        const typeLabels = {
+            material: 'Материал',
+            labor: 'Труд',
+            equipment: 'Оборудование',
+            service: 'Услуга'
+        };
+
+        const safe = (val) => this.escapeHtml(val === undefined || val === null || val === '' ? '—' : val);
+        const totalCost = (resource.quantity || 0) * (resource.unitPrice || 0);
+        const ifcElements = this.parseIfcElements(resource.ifcElements);
+
+        panel.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
+                <div style="padding-bottom: 8px; border-bottom: 1px solid var(--gray-200);">
+                    <h3 style="margin: 0 0 8px 0; font-size: 18px; color: var(--gray-900);">${safe(resource.name)}</h3>
+                    <div style="font-size: 13px; color: var(--gray-600);">Тип: ${typeLabels[resource.resourceType] || resource.resourceType || 'Не указан'}</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Количество</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${UI.formatNumber(resource.quantity || 0)} ${safe(resource.unit)}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Цена за единицу</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${UI.formatCurrency(resource.unitPrice || 0, this.currentProject?.currency)}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Общая стоимость</div>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--primary);">${UI.formatCurrency(totalCost, this.currentProject?.currency)}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Связанных элементов</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${ifcElements.length || 0}</div>
+                    </div>
+                </div>
+
+                ${ifcElements.length > 0 ? `
+                    <div>
+                        <div style="font-weight: 600; color: var(--gray-800); margin-bottom: 8px;">Связанные IFC элементы (${ifcElements.length})</div>
+                        <div style="border: 1px solid var(--gray-200); border-radius: 8px; max-height: 200px; overflow: auto; padding: 8px;">
+                            ${ifcElements.slice(0, 50).map(id => `
+                                <div style="font-family: monospace; font-size: 11px; color: var(--gray-700); padding: 2px 0;">${this.escapeHtml(id)}</div>
+                            `).join('')}
+                            ${ifcElements.length > 50 ? `<div style="font-size: 11px; color: var(--gray-500); padding: 4px 0; font-style: italic;">... и ещё ${ifcElements.length - 50}</div>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
     },
 
     async loadStages(sectionId) {
@@ -4130,15 +4563,18 @@ const EstimateManager = {
         }
 
         const attributes = properties.attributes || {};
+        console.log('Available attributes for selected element:', Object.keys(attributes));
         const attrEntries = Object.entries(attributes);
         const dims = this.computeElementDimensions(properties.aabb);
 
         const elementName = properties.name || this.findAttributeValue(attributes, ['name', 'ifcname', 'objectname']) || 'Элемент без названия';
         const elementId = properties.id || '—';
-        const materialValue = this.findAttributeValue(attributes, ['material', 'materialname', 'ifcmaterial', 'материал', 'finish', 'matname']);
+        const materialValue = this.findAttributeValue(attributes, ['material', 'materialname', 'ifcmaterial', 'материал', 'finish', 'matname', 'construction material', 'material common']);
         const materialDisplay = materialValue ? this.formatAttributeValue(materialValue) : '—';
         const floorValue = this.findAttributeValue(attributes, ['level', 'storey', 'floor', 'этаж', 'ifcbuildingstorey', 'buildingstorey']);
         const manufacturerValue = this.findAttributeValue(attributes, ['manufacturer', 'brand', 'producer', 'vendor', 'supplier', 'производитель']);
+        const categoryValue = this.findAttributeValue(attributes, ['category', 'категория', 'revit category', 'revitcategory', 'model category', 'omniclass', 'uniformat', 'classification']);
+        const elevationValue = this.findAttributeValue(attributes, ['elevation', 'levelelevation', 'baseoffset', 'topoffset', 'отметка', 'высота', 'offset']);
         const guidValue = properties.ifcGuid || this.findAttributeValue(attributes, ['guid', 'ifcguid']);
 
         const rawPrice = this.findAttributeValue(attributes, ['price', 'cost', 'unitcost', 'totalcost', 'стоимость', 'цена']);
@@ -4222,6 +4658,14 @@ const EstimateManager = {
                         <div style="font-size: 13px; color: var(--gray-900);">${safe(this.formatAttributeValue(manufacturerValue))}</div>
                     </div>
                     <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Категория</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${safe(this.formatAttributeValue(categoryValue))}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">Отметка</div>
+                        <div style="font-size: 13px; color: var(--gray-900);">${safe(this.formatAttributeValue(elevationValue))}</div>
+                    </div>
+                    <div class="property-card" style="border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px;">GUID</div>
                         <div style="font-family: monospace; font-size: 12px; color: var(--gray-900);">${safe(guidValue || '—')}</div>
                     </div>
@@ -4290,6 +4734,26 @@ const EstimateManager = {
     viewerZoomOut() {
         if (IFCViewerManager.viewer) {
             IFCViewerManager.zoomOut();
+        }
+    },
+
+    toggleSpacesVisibility() {
+        if (IFCViewerManager.viewer) {
+            const areSpacesVisible = IFCViewerManager.toggleSpaces();
+            
+            // Обновляем стиль кнопки
+            const btn = document.getElementById('toggle-spaces-btn');
+            if (btn) {
+                if (areSpacesVisible) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = 'white';
+                    btn.title = 'Скрыть помещения';
+                } else {
+                    btn.style.background = 'var(--gray-200)';
+                    btn.style.color = 'currentColor';
+                    btn.title = 'Показать помещения';
+                }
+            }
         }
     },
 
@@ -4493,8 +4957,22 @@ const EstimateManager = {
             
             if (statusText) statusText.textContent = 'Загрузка модели...';
             
-            // Используем относительный путь для работы на любом хосте
-            const fullUrl = xktUrl.startsWith('http') ? xktUrl : (xktUrl.startsWith('/') ? xktUrl : `/${xktUrl}`);
+            // Если frontend обслуживается отдельно (например, :8000), то /uploads/... нужно грузить с backend (:3001).
+            const backendOrigin = (typeof API_BASE_URL === 'string')
+                ? API_BASE_URL.replace(/\/?api\/?$/i, '')
+                : '';
+
+            const shouldUseBackendOrigin =
+                backendOrigin &&
+                typeof window !== 'undefined' &&
+                window.location &&
+                (window.location.port !== '3001');
+
+            const fullUrl = xktUrl.startsWith('http')
+                ? xktUrl
+                : (shouldUseBackendOrigin && xktUrl.startsWith('/'))
+                    ? `${backendOrigin}${xktUrl}`
+                    : (xktUrl.startsWith('/') ? xktUrl : `/${xktUrl}`);
             await IFCViewerManager.loadXKT(fullUrl, `estimate-${estimateId}`);
             
             if (overlay) overlay.style.display = 'none';
@@ -4519,25 +4997,11 @@ const EstimateManager = {
     // Подсветка связанных элементов
     async highlightLinkedResources(estimateId) {
         try {
-            const sections = await api.getSections(estimateId);
-            const linkedElements = new Set();
+            const linkedElements = await this.getAllLinkedElements(estimateId);
             
-            for (const section of sections) {
-                const stages = await api.getStages(section.id);
-                for (const stage of stages) {
-                    const workTypes = await api.getWorkTypes(stage.id);
-                    for (const wt of workTypes) {
-                        const elements = this.parseIfcElements(wt.ifcElements);
-                        if (elements.length) {
-                            elements.forEach((el) => linkedElements.add(el));
-                        }
-                    }
-                }
-            }
-            
-            if (linkedElements.size > 0) {
-                IFCViewerManager.setPersistentHighlights(Array.from(linkedElements), [0.1, 0.8, 0.3]);
-                console.log(`✓ Подсвечено ${linkedElements.size} связанных элементов`);
+            if (linkedElements.length > 0) {
+                IFCViewerManager.setPersistentHighlights(linkedElements, [0.1, 0.8, 0.3]);
+                console.log(`✓ Подсвечено ${linkedElements.length} связанных элементов`);
             } else {
                 IFCViewerManager.clearPersistentHighlights();
             }
@@ -4628,8 +5092,51 @@ const EstimateManager = {
         }
     },
 
+    async getAllLinkedElements(estimateId) {
+        const targetEstimateId = estimateId || this.currentEstimateId;
+        if (!targetEstimateId) {
+            console.warn('getAllLinkedElements: No estimate ID provided');
+            return [];
+        }
+
+        const linkedElements = new Set();
+        try {
+            console.log(`Fetching linked elements for estimate ${targetEstimateId}...`);
+            const sections = await api.getSections(targetEstimateId);
+            for (const section of sections) {
+                const stages = await api.getStages(section.id);
+                for (const stage of stages) {
+                    const workTypes = await api.getWorkTypes(stage.id);
+                    for (const wt of workTypes) {
+                        // WorkTypes act as resources here
+                        const wtElements = this.parseIfcElements(wt.ifcElements);
+                        if (wtElements.length > 0) {
+                            wtElements.forEach(el => linkedElements.add(el));
+                        }
+                        
+                        // Also check resources if they exist separately (though current logic seems to use WorkTypes as resources)
+                        // If there are child resources, we should check them too
+                        try {
+                            const resources = await api.getResources(wt.id);
+                            for (const res of resources) {
+                                const resElements = this.parseIfcElements(res.ifcElements);
+                                resElements.forEach(el => linkedElements.add(el));
+                            }
+                        } catch (e) {
+                            // Ignore if resources fetch fails (maybe not implemented or empty)
+                        }
+                    }
+                }
+            }
+            console.log(`Found ${linkedElements.size} unique linked elements.`);
+        } catch (error) {
+            console.error('Error fetching linked elements:', error);
+        }
+        return Array.from(linkedElements);
+    },
+
     // Фильтрация ресурсов по статусу связи с IFC
-    filterResources(filterType) {
+    async filterResources(filterType) {
         this.currentResourceFilter = filterType;
         
         // Обновляем активность кнопок фильтра
@@ -4649,26 +5156,39 @@ const EstimateManager = {
             'unlinked': 'Не связанные с IFC'
         };
         
-        // Применяем фильтр ко всем ресурсам
+        // Получаем актуальные данные о связях с сервера, чтобы избежать проблем с устаревшим DOM
+        let linkedIfcElements = [];
+        if (this.currentEstimateId) {
+            linkedIfcElements = await this.getAllLinkedElements(this.currentEstimateId);
+        }
+        
+        // Также собираем ID из DOM, чтобы учесть только что сделанные изменения, которые могли не успеть попасть в API
         const allResources = document.querySelectorAll('.resource-item');
+        allResources.forEach(resourceEl => {
+            const hasIfcLink = resourceEl.dataset.hasIfcLink === 'true';
+            if (hasIfcLink) {
+                const elements = this.parseIfcElements(resourceEl.dataset.ifcElements);
+                elements.forEach(id => linkedIfcElements.push(id));
+            }
+        });
+        
+        const linkedIfcElementsSet = new Set(linkedIfcElements);
+        // Обновляем массив уникальными значениями
+        linkedIfcElements = Array.from(linkedIfcElementsSet);
+
+        // Применяем фильтр ко всем ресурсам в списке
         let visibleCount = 0;
         let hiddenCount = 0;
-        let linkedIfcElements = []; // Собираем все IFC элементы связанных ресурсов
         
         allResources.forEach(resourceEl => {
+            // Проверяем, есть ли ID этого ресурса в списке связанных (или используем DOM как fallback)
+            // Но лучше доверять DOM для отображения списка, так как он строится из данных
             const hasIfcLink = resourceEl.dataset.hasIfcLink === 'true';
             
             let shouldShow = true;
             
             if (filterType === 'linked') {
                 shouldShow = hasIfcLink;
-                // Если ресурс связан и мы фильтруем связанные, собираем IFC элементы
-                if (shouldShow && hasIfcLink) {
-                    const elements = this.parseIfcElements(resourceEl.dataset.ifcElements);
-                    if (elements.length) {
-                        linkedIfcElements.push(...elements);
-                    }
-                }
             } else if (filterType === 'unlinked') {
                 shouldShow = !hasIfcLink;
             }
@@ -4682,120 +5202,215 @@ const EstimateManager = {
             }
         });
         
-        // Изолируем элементы в 3D если фильтр "связанные" и есть элементы
-        if (filterType === 'linked' && linkedIfcElements.length > 0 && IFCViewerManager.viewer) {
-            // Убираем дубликаты
-            linkedIfcElements = [...new Set(linkedIfcElements)];
-            IFCViewerManager.isolateElements(linkedIfcElements);
-            UI.showNotification(`${filterNames[filterType]}: ${visibleCount} показано, ${linkedIfcElements.length} элементов изолировано в 3D`, 'success');
-        } else if (filterType === 'all' && IFCViewerManager.viewer) {
-            // Показываем все элементы в 3D при сбросе фильтра
-            IFCViewerManager.showAllElements();
-            UI.showNotification(`${filterNames[filterType]}: ${visibleCount} показано${hiddenCount > 0 ? `, ${hiddenCount} скрыто` : ''}`, 'success');
-        } else {
-            UI.showNotification(`${filterNames[filterType]}: ${visibleCount} показано${hiddenCount > 0 ? `, ${hiddenCount} скрыто` : ''}`, 'success');
+        // Логика 3D отображения
+        if (IFCViewerManager.viewer) {
+            // Сбрасываем постоянную подсветку (зеленую), чтобы она не конфликтовала с фильтром
+            IFCViewerManager.clearPersistentHighlights();
+
+            const allIds = IFCViewerManager.getAllObjectIds();
+            
+            if (filterType === 'all') {
+                IFCViewerManager.resetColors();
+                IFCViewerManager.showAllElements();
+                IFCViewerManager.setElementsOpacity(allIds, 1.0);
+                
+                // Восстанавливаем подсветку, если нужно (но пользователь просил сброс)
+                // await this.highlightLinkedResources(this.currentEstimateId); 
+            } else {
+                const unlinkedIds = allIds.filter(id => !linkedIfcElementsSet.has(id));
+                
+                if (filterType === 'linked') {
+                    // Linked: Orange & Opaque, Unlinked: Transparent
+                    IFCViewerManager.showAllElements();
+                    
+                    // Unlinked -> Transparent & No Color
+                    IFCViewerManager.setElementsOpacity(unlinkedIds, 0.1);
+                    IFCViewerManager.setElementsColor(unlinkedIds, null);
+                    
+                    // Linked -> Opaque & Orange
+                    IFCViewerManager.setElementsOpacity(linkedIfcElements, 1.0);
+                    IFCViewerManager.setElementsColor(linkedIfcElements, [1.0, 0.6, 0.0]); // Orange
+                    
+                } else if (filterType === 'unlinked') {
+                    // Unlinked: Linked Hidden, Unlinked Opaque (Solid)
+                    // Скрываем связанные
+                    IFCViewerManager.hideElements(linkedIfcElements);
+                    // Показываем несвязанные
+                    IFCViewerManager.showElements(unlinkedIds);
+                    
+                    // Make unlinked solid and reset color
+                    IFCViewerManager.setElementsOpacity(unlinkedIds, 1.0);
+                    IFCViewerManager.setElementsColor(unlinkedIds, null);
+                }
+            }
         }
+        
+        UI.showNotification(`${filterNames[filterType]}: ${visibleCount} показано${hiddenCount > 0 ? `, ${hiddenCount} скрыто` : ''}`, 'success');
         
         // Обновляем кнопки изоляции
         this.updateIsolationButtons();
     },
 
-    // Связать выбранные ресурсы с элементами IFC
-    async linkSelectedResource() {
-        if (this.selectedResources.length === 0) {
-            UI.showNotification('Выберите ресурс для связывания', 'warning');
-            return;
-        }
-        
+    // Связать ресурс с выбранными элементами IFC
+    async linkResourceToIfc(resourceId) {
         if (this.selectedIfcElements.length === 0) {
-            UI.showNotification('Выберите элементы в IFC модели', 'warning');
+            UI.showNotification('Выберите элементы в IFC модели для связывания', 'warning');
             return;
         }
-        
-        try {
-            const elementsToLink = [...this.selectedIfcElements];
 
-            // Связываем каждый выбранный ресурс с выбранными элементами IFC
-            for (const resourceId of this.selectedResources) {
-                await api.updateWorkType(resourceId, {
-                    ifcElements: elementsToLink,
-                });
+        try {
+            // Получаем текущий ресурс
+            const resource = await api.getResource(resourceId);
+            const currentElements = this.parseIfcElements(resource.ifcElements);
+            
+            // Объединяем текущие и новые элементы (без дубликатов)
+            const newElements = [...new Set([...currentElements, ...this.selectedIfcElements])];
+            
+            // Обновляем ресурс
+            await api.linkIFC(resourceId, newElements);
+
+            // Если это материал, предлагаем рассчитать объем
+            if (resource.resourceType === 'material') {
+                await this.calculateVolumeForResource(resourceId, newElements);
+            } else {
+                UI.showNotification('Связь установлена', 'success');
+                await this.loadEstimateStructure(this.currentEstimateId);
             }
             
-            UI.showNotification(`Связано ресурсов: ${this.selectedResources.length}`, 'success');
+            // Очищаем выбор
+            this.clearIfcSelection();
             
-            // Сбрасываем визуальное состояние выбранных ресурсов
-            for (const resourceId of this.selectedResources) {
-                const resourceEl = document.querySelector(`[data-resource-id="${resourceId}"]`);
-                const checkbox = document.querySelector(`.resource-checkbox[data-resource-id="${resourceId}"]`);
-                if (resourceEl) {
-                    resourceEl.style.background = 'var(--white)';
-                    resourceEl.style.borderColor = 'var(--gray-200)';
-                    resourceEl.style.borderWidth = '1px';
-                }
-                if (checkbox) checkbox.checked = false;
-            }
-            
-            // Очищаем выбор IFC элементов
-            if (IFCViewerManager.viewer) {
-                IFCViewerManager.clearSelection();
-            }
-            
-            // Сбрасываем выбор
-            this.selectedResources = [];
-            this.selectedIfcElements = [];
-            this.updateLinkButtons();
-            this.updateIsolationButtons();
-            
-            // Перезагружаем структуру
-            await this.loadEstimateStructure(this.currentEstimateId);
         } catch (error) {
             UI.showNotification('Ошибка связывания: ' + error.message, 'error');
         }
     },
 
-    // Отвязать выбранные ресурсы от IFC элементов
-    async unlinkSelectedResource() {
-        if (this.selectedResources.length === 0) {
-            UI.showNotification('Выберите ресурс для отвязки', 'warning');
-            return;
-        }
-        
-        if (!confirm(`Отвязать ${this.selectedResources.length} ресурс(ов) от IFC элементов?`)) {
-            return;
-        }
-        
-        try {
-            // Убираем связь с IFC элементами
-            for (const resourceId of this.selectedResources) {
-                await api.updateWorkType(resourceId, {
-                    ifcElements: null
-                });
+    // Разорвать связь ресурса с IFC элементами
+    async unlinkResourceFromIfc(resourceId) {
+        UI.confirmDelete('Вы уверены, что хотите разорвать связь? (Да/Нет)', async () => {
+            try {
+                await api.linkIFC(resourceId, []);
+                
+                UI.showNotification('Связь разорвана', 'success');
+                await this.loadEstimateStructure(this.currentEstimateId);
+                
+                // Очищаем подсветку
+                IFCViewerManager.clearPersistentHighlights();
+                await this.highlightLinkedResources(this.currentEstimateId);
+                
+            } catch (error) {
+                UI.showNotification('Ошибка разрыва связи: ' + error.message, 'error');
             }
-            
-            UI.showNotification('Связь удалена', 'success');
-            
-            // Сбрасываем визуальное состояние выбранных ресурсов
-            for (const resourceId of this.selectedResources) {
-                const resourceEl = document.querySelector(`[data-resource-id="${resourceId}"]`);
-                const checkbox = document.querySelector(`.resource-checkbox[data-resource-id="${resourceId}"]`);
-                if (resourceEl) {
-                    resourceEl.style.background = 'var(--white)';
-                    resourceEl.style.borderColor = 'var(--gray-200)';
-                    resourceEl.style.borderWidth = '1px';
+        });
+    },
+
+    // Расчет объема для ресурса на основе IFC элементов
+    async calculateVolumeForResource(resourceId, elementIds) {
+        // Получаем свойства элементов через viewer
+        if (!IFCViewerManager.viewer) return;
+
+        let count = elementIds.length;
+        
+        // Получаем реальные данные из модели
+        const metrics = IFCViewerManager.getElementsVolumeAndArea(elementIds);
+        const totalVolume = metrics.volume;
+        const totalArea = metrics.area;
+        const totalLength = metrics.length;
+
+        const content = `
+            <div class="form-group">
+                <label style="font-weight: 600; margin-bottom: 10px; display: block;">Выберите единицу измерения для расчета:</label>
+                
+                <div class="radio-list" style="display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--gray-200); border-radius: 6px; padding: 12px;">
+                    
+                    <label class="radio-item" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px;">
+                        <input type="radio" name="calc-unit" value="шт" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 500;">Поштучно</span>
+                            <span style="font-size: 12px; color: var(--gray-600);">${count} шт</span>
+                        </div>
+                    </label>
+
+                    <div style="height: 1px; background: var(--gray-100); width: 100%;"></div>
+
+                    <label class="radio-item" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px;">
+                        <input type="radio" name="calc-unit" value="м3" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 500;">Объем (м³)</span>
+                            <span style="font-size: 12px; color: var(--gray-600);">Суммарно: <b>${totalVolume} м³</b></span>
+                        </div>
+                    </label>
+
+                    <div style="height: 1px; background: var(--gray-100); width: 100%;"></div>
+
+                    <label class="radio-item" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px;">
+                        <input type="radio" name="calc-unit" value="м2" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 500;">Площадь (м²)</span>
+                            <span style="font-size: 12px; color: var(--gray-600);">Суммарно: <b>${totalArea} м²</b></span>
+                        </div>
+                    </label>
+
+                    <div style="height: 1px; background: var(--gray-100); width: 100%;"></div>
+
+                    <label class="radio-item" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px;">
+                        <input type="radio" name="calc-unit" value="м" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 500;">Длина (м)</span>
+                            <span style="font-size: 12px; color: var(--gray-600);">Суммарно: <b>${totalLength} м</b></span>
+                        </div>
+                    </label>
+                </div>
+
+                <p style="color: var(--gray-500); font-size: 11px; margin-top: 12px; font-style: italic;">
+                    * Значения получены из свойств IFC модели (NetVolume, NetArea, Length и др.)
+                </p>
+            </div>
+        `;
+
+        const buttons = `
+            <button class="btn btn-secondary" onclick="UI.closeModal(); EstimateManager.loadEstimateStructure(EstimateManager.currentEstimateId);">Пропустить</button>
+            <button class="btn btn-primary" id="apply-calc-btn">Применить</button>
+        `;
+
+        UI.showModal('Расчет объема', content, buttons);
+
+        setTimeout(() => {
+            document.getElementById('apply-calc-btn').addEventListener('click', async () => {
+                const selectedUnit = document.querySelector('input[name="calc-unit"]:checked').value;
+                
+                let newQuantity = 0;
+                
+                if (selectedUnit === 'шт') {
+                    newQuantity = count;
+                } else if (selectedUnit === 'м3') {
+                    newQuantity = totalVolume;
+                } else if (selectedUnit === 'м2') {
+                    newQuantity = totalArea;
+                } else if (selectedUnit === 'м') {
+                    newQuantity = totalLength;
                 }
-                if (checkbox) checkbox.checked = false;
-            }
-            
-            // Сбрасываем выбор
-            this.selectedResources = [];
-            this.updateLinkButtons();
-            
-            // Перезагружаем структуру
-            await this.loadEstimateStructure(this.currentEstimateId);
-        } catch (error) {
-            UI.showNotification('Ошибка отвязки: ' + error.message, 'error');
-        }
+
+                // Если значение 0, спросим пользователя
+                if (newQuantity === 0 && selectedUnit !== 'шт') {
+                    const manualQty = prompt(`Значение для ${selectedUnit} равно 0 или не найдено в модели. Введите значение вручную:`, '0');
+                    newQuantity = parseFloat(manualQty) || 0;
+                }
+
+                try {
+                    await api.updateResource(resourceId, {
+                        unit: selectedUnit,
+                        quantity: newQuantity
+                    });
+                    
+                    UI.closeModal();
+                    UI.showNotification('Объем и единица измерения обновлены', 'success');
+                    await this.loadEstimateStructure(this.currentEstimateId);
+                } catch (error) {
+                    UI.showNotification('Ошибка обновления: ' + error.message, 'error');
+                }
+            });
+        }, 100);
     },
 
     // ========================================

@@ -158,6 +158,10 @@ const IFCViewerManager = {
                 console.log('✓ XKT модель загружена');
                 this.viewer.cameraFlight.flyTo(this.viewer.scene);
                 this.setDisplayMode(this.displayMode || 'default');
+                
+                // Автоматически скрываем помещения (IfcSpace) при загрузке
+                this.hideSpaces();
+                
                 this.refreshViewport();
             });
 
@@ -170,6 +174,75 @@ const IFCViewerManager = {
             console.error('Ошибка при загрузке модели:', error);
             throw error;
         }
+    },
+
+    // Скрыть все помещения (IfcSpace)
+    hideSpaces() {
+        if (!this.viewer || !this.viewer.metaScene) return;
+        
+        const spaceIds = [];
+        const metaObjects = this.viewer.metaScene.metaObjects;
+        
+        for (const id in metaObjects) {
+            const metaObject = metaObjects[id];
+            if (metaObject.type === 'IfcSpace') {
+                spaceIds.push(metaObject.id);
+            }
+        }
+        
+        if (spaceIds.length > 0) {
+            this.viewer.scene.setObjectsVisible(spaceIds, false);
+            console.log(`Скрыто помещений: ${spaceIds.length}`);
+        }
+    },
+
+    // Показать все помещения (IfcSpace)
+    showSpaces() {
+        if (!this.viewer || !this.viewer.metaScene) return;
+        
+        const spaceIds = [];
+        const metaObjects = this.viewer.metaScene.metaObjects;
+        
+        for (const id in metaObjects) {
+            const metaObject = metaObjects[id];
+            if (metaObject.type === 'IfcSpace') {
+                spaceIds.push(metaObject.id);
+            }
+        }
+        
+        if (spaceIds.length > 0) {
+            this.viewer.scene.setObjectsVisible(spaceIds, true);
+            console.log(`Показано помещений: ${spaceIds.length}`);
+        }
+    },
+
+    // Переключить видимость помещений
+    toggleSpaces() {
+        if (!this.viewer || !this.viewer.metaScene) return false;
+        
+        const spaceIds = [];
+        const metaObjects = this.viewer.metaScene.metaObjects;
+        
+        for (const id in metaObjects) {
+            const metaObject = metaObjects[id];
+            if (metaObject.type === 'IfcSpace') {
+                spaceIds.push(metaObject.id);
+            }
+        }
+        
+        if (spaceIds.length > 0) {
+            // Проверяем видимость первого помещения
+            const firstSpace = this.viewer.scene.objects[spaceIds[0]];
+            const currentlyVisible = firstSpace ? firstSpace.visible : true;
+            
+            // Переключаем видимость всех помещений
+            this.viewer.scene.setObjectsVisible(spaceIds, !currentlyVisible);
+            console.log(`Помещения ${!currentlyVisible ? 'показаны' : 'скрыты'}: ${spaceIds.length}`);
+            
+            return !currentlyVisible;
+        }
+        
+        return false;
     },
 
     // Форсируем пересчёт размеров canvas/viewport (полезно после динамической перерисовки DOM)
@@ -268,6 +341,7 @@ const IFCViewerManager = {
         if (!entity) return null;
 
         const metaObject = this.viewer.metaScene.metaObjects[entity.id];
+        if (!metaObject) return null;
 
         let aabb = null;
         try {
@@ -283,17 +357,115 @@ const IFCViewerManager = {
             console.warn('Не удалось получить AABB для элемента', entity.id, error);
         }
         
+        // Собираем все атрибуты из propertySets
+        const attributes = { ...(metaObject.attributes || {}) };
+        attributes['GlobalId'] = entity.id;
+        attributes['GUID'] = entity.id;
+        
+        if (metaObject.propertySets) {
+            metaObject.propertySets.forEach(pset => {
+                if (pset.properties) {
+                    pset.properties.forEach(prop => {
+                        // Добавляем свойство напрямую для удобства поиска
+                        attributes[prop.name] = prop.value;
+                        // И с префиксом набора свойств для точности
+                        attributes[`${pset.name}.${prop.name}`] = prop.value;
+                    });
+                }
+            });
+        }
+
+        // Поиск этажа (IfcBuildingStorey) через родителей
+        let current = metaObject;
+        while (current) {
+            if (current.type === 'IfcBuildingStorey') {
+                attributes['Level'] = current.name;
+                attributes['Storey'] = current.name;
+                attributes['Этаж'] = current.name;
+                break;
+            }
+            // metaObject.parent хранит ID родителя
+            current = current.parent ? this.viewer.metaScene.metaObjects[current.parent] : null;
+        }
+
         return {
             id: entity.id,
-            name: metaObject?.name || entity.id,
-            type: metaObject?.type || 'Unknown',
-            attributes: metaObject?.attributes || {},
+            name: metaObject.name || entity.id,
+            type: metaObject.type || 'Unknown',
+            attributes: attributes,
             // Геометрические свойства
             aabb,
             // Дополнительные свойства из IFC
-            ifcType: metaObject?.type,
-            ifcGuid: metaObject?.attributes?.GlobalId,
+            ifcType: metaObject.type,
+            ifcGuid: entity.id,
         };
+    },
+
+    // Получить суммарный объем и площадь для списка элементов
+    getElementsVolumeAndArea(elementIds) {
+        let totalVolume = 0;
+        let totalArea = 0;
+        let totalLength = 0;
+
+        if (!this.viewer || !elementIds || elementIds.length === 0) {
+            return { volume: 0, area: 0, length: 0 };
+        }
+
+        elementIds.forEach(id => {
+            const entity = this.viewer.scene.objects[id];
+            if (!entity) return;
+
+            // Попытка получить AABB
+            let aabb = entity.aabb;
+            if (!aabb || aabb.length < 6) {
+                 try {
+                     const computedAABB = this.viewer.scene.getAABB([id]);
+                     if (computedAABB && computedAABB.length === 6) {
+                         aabb = computedAABB;
+                     }
+                 } catch (e) {
+                     console.warn('Failed to get AABB for', id);
+                 }
+            }
+
+            if (aabb) {
+                const length = Math.abs(aabb[3] - aabb[0]); // X axis
+                const height = Math.abs(aabb[4] - aabb[1]); // Y axis
+                const depth = Math.abs(aabb[5] - aabb[2]);  // Z axis
+
+                // Логика должна совпадать с estimate.js computeElementDimensions
+                const volume = length * height * depth;
+                const area = length * depth; // Площадь проекции (как в estimate.js)
+                
+                totalVolume += volume;
+                totalArea += area;
+                totalLength += length;
+            }
+        });
+
+        return {
+            volume: parseFloat(totalVolume.toFixed(3)),
+            area: parseFloat(totalArea.toFixed(3)),
+            length: parseFloat(totalLength.toFixed(3))
+        };
+    },
+
+    // Получить все ID объектов
+    getAllObjectIds() {
+        if (!this.viewer || !this.viewer.scene) return [];
+        return Object.keys(this.viewer.scene.objects);
+    },
+
+    // Установить прозрачность для элементов
+    setElementsOpacity(elementIds, opacity) {
+        if (!this.viewer || !elementIds || elementIds.length === 0) return;
+        this.viewer.scene.setObjectsOpacity(elementIds, opacity);
+    },
+
+    // Установить цвет для элементов
+    setElementsColor(elementIds, color) {
+        if (!this.viewer || !elementIds || elementIds.length === 0) return;
+        this.viewer.scene.setObjectsColorized(elementIds, color);
     },
 
     // Получить выбранные элементы
@@ -406,8 +578,15 @@ const IFCViewerManager = {
         this.viewer.scene.setObjectsVisible(allIds, true);
     },
 
+    // Показать элементы
+    showElements(elementIds) {
+        if (!this.viewer || !elementIds || elementIds.length === 0) return;
+        this.viewer.scene.setObjectsVisible(elementIds, true);
+    },
+
     // Скрыть элементы
     hideElements(elementIds) {
+        if (!this.viewer || !elementIds || elementIds.length === 0) return;
         this.viewer.scene.setObjectsVisible(elementIds, false);
     },
 

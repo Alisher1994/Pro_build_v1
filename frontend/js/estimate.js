@@ -622,9 +622,10 @@ const EstimateManager = {
                             </div>
                             <div class="right-panel-content">
                             <!-- 3D Viewer -->
-                            <div id="ifc-viewer-panel" style="flex: 60; background: var(--gray-900); position: relative; overflow: hidden;">
+                            <div id="ifc-viewer-panel" style="flex: 60; position: relative; overflow: hidden;">
                                 <canvas id="ifc-canvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
-                                <div id="ifc-viewer-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                                <canvas id="ifc-navcube-canvas" class="ifc-navcube-canvas" aria-label="Куб навигации"></canvas>
+                                <div id="ifc-viewer-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
                                     <div style="text-align: center; color: var(--gray-400);">
                                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px;">
                                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
@@ -663,6 +664,27 @@ const EstimateManager = {
                                                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                                                 <line x1="3" y1="9" x2="21" y2="9"/>
                                                 <line x1="9" y1="21" x2="9" y2="9"/>
+                                            </svg>
+                                        </button>
+
+                                        <button id="toggle-section-btn" onclick="EstimateManager.toggleSectionCut()" class="viewer-btn viewer-btn-mode" title="Разрез">
+                                            <!-- scissors icon -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                                <circle cx="6" cy="6" r="2" />
+                                                <circle cx="6" cy="18" r="2" />
+                                                <path d="M20 4L8.5 11.5" />
+                                                <path d="M20 20L8.5 12.5" />
+                                                <path d="M8.5 11.5L7.5 10.5" />
+                                                <path d="M8.5 12.5L7.5 13.5" />
+                                            </svg>
+                                        </button>
+
+                                        <button id="toggle-measure-btn" onclick="EstimateManager.toggleDistanceMeasure()" class="viewer-btn viewer-btn-mode" title="Замер (2 клика)">
+                                            <!-- simple distance icon -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                                <path d="M4 12h16" />
+                                                <path d="M7 9l-3 3 3 3" />
+                                                <path d="M17 9l3 3-3 3" />
                                             </svg>
                                         </button>
                                     </div>
@@ -1868,8 +1890,12 @@ const EstimateManager = {
                     <input type="text" id="block-name" value="${block.name}" required>
                 </div>
                 <div class="form-group">
-                    <label>Количество этажей *</label>
+                    <label>Количество этажей (надземных) *</label>
                     <input type="number" id="block-floors" value="${block.floors}" required>
+                </div>
+                <div class="form-group">
+                    <label>Количество подземных этажей</label>
+                    <input type="number" id="block-underground-floors" value="${block.undergroundFloors || 0}" min="0">
                 </div>
                 <div class="form-group">
                     <label>Площадь (м²)</label>
@@ -1893,6 +1919,7 @@ const EstimateManager = {
                     const data = {
                         name: document.getElementById('block-name').value.trim(),
                         floors: parseInt(document.getElementById('block-floors').value),
+                        undergroundFloors: parseInt(document.getElementById('block-underground-floors').value) || 0,
                         area: parseFloat(document.getElementById('block-area').value) || null,
                         constructionPhase: parseInt(document.getElementById('block-phase').value) || 1
                     };
@@ -2082,7 +2109,7 @@ const EstimateManager = {
                         <!-- Правая часть: 3D модель и свойства -->
                         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
                             <!-- 3D Viewer -->
-                            <div id="ifc-viewer-panel" style="flex: 60; background: var(--gray-900); position: relative; overflow: hidden;">
+                            <div id="ifc-viewer-panel" style="flex: 60; position: relative; overflow: hidden;">
                                 ${section.ifcFileUrl ? `
                                     <div id="ifc-viewer" style="width: 100%; height: 100%; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: flex; align-items: center; justify-content: center;">
                                         <div style="text-align: center; color: var(--gray-400);">
@@ -4836,6 +4863,32 @@ const EstimateManager = {
                     btn.title = 'Показать помещения';
                 }
             }
+        }
+    },
+
+    toggleSectionCut() {
+        if (!IFCViewerManager.viewer || typeof IFCViewerManager.toggleSectionCut !== 'function') {
+            return;
+        }
+
+        const enabled = IFCViewerManager.toggleSectionCut();
+        const btn = document.getElementById('toggle-section-btn');
+        if (btn) {
+            btn.classList.toggle('active', !!enabled);
+            btn.title = enabled ? 'Выключить разрез' : 'Разрез';
+        }
+    },
+
+    toggleDistanceMeasure() {
+        if (!IFCViewerManager.viewer || typeof IFCViewerManager.toggleDistanceMeasure !== 'function') {
+            return;
+        }
+
+        const enabled = IFCViewerManager.toggleDistanceMeasure();
+        const btn = document.getElementById('toggle-measure-btn');
+        if (btn) {
+            btn.classList.toggle('active', !!enabled);
+            btn.title = enabled ? 'Выключить замер' : 'Замер (2 клика)';
         }
     },
 

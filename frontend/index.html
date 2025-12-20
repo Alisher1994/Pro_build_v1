@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProBIM - Управление строительными проектами</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- DHTMLX Gantt -->
+    <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
+    <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
+    <script src="https://cdn.dhtmlx.com/gantt/edge/locale/locale_ru.js"></script>
+    <!-- Custom overrides must come AFTER the library CSS -->
+    <link rel="stylesheet" href="css/gantt-colors.css">
 </head>
 <body>
     <!-- Sidebar с проектами -->
@@ -80,7 +86,7 @@
             <div class="ribbon-tabs-bar">
                 <div class="ribbon-tabs">
                     <button class="ribbon-tab active" data-ribbon="estimate">Смета</button>
-                    <button class="ribbon-tab" data-ribbon="schedule">ГПР</button>
+                    <button class="ribbon-tab" data-ribbon="schedule">График</button>
                     <button class="ribbon-tab" data-ribbon="supply">Снабжение</button>
                     <button class="ribbon-tab" data-ribbon="finance">Финансы</button>
                     <button class="ribbon-tab" data-ribbon="analytics">Аналитика</button>
@@ -261,17 +267,78 @@
                 <div class="ribbon-panel" data-panel="schedule">
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button id="add-schedule-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                    <line x1="16" y1="2" x2="16" y2="6"/>
-                                    <line x1="8" y1="2" x2="8" y2="6"/>
-                                    <line x1="3" y1="10" x2="21" y2="10"/>
-                                </svg>
-                                <span>Создать<br>график</span>
+                            <button id="generate-schedule-btn" class="ribbon-btn large">
+                                <span style="font-size: 24px;">🪄</span>
+                                <span>Мастер<br>генерации</span>
                             </button>
                         </div>
-                        <span class="ribbon-group-label">График</span>
+                        <span class="ribbon-group-label">Создание</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="assign-work-wizard-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                    <path d="M12 2v6" />
+                                    <path d="M7 8h10" />
+                                    <path d="M6 8v8a6 6 0 0 0 12 0V8" />
+                                </svg>
+                                <span>Распределить<br>работы</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Распределение</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="clear-schedule-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                                <span>Очистить<br>ГПР</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Управление</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="export-schedule-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <span>Экспорт<br>в PDF</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Экспорт</span>
+                    </div>
+
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group" id="ribbon-group-schedule-view-tools">
+                        <div class="ribbon-group-content row">
+                            <button id="schedule-expand-all-btn" class="ribbon-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                <span>Развернуть<br>всё</span>
+                            </button>
+                            <button id="schedule-collapse-all-btn" class="ribbon-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="18 15 12 9 6 15"/>
+                                </svg>
+                                <span>Свернуть<br>всё</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Вид</span>
                     </div>
                 </div>
 
@@ -380,10 +447,11 @@
     <!-- xeokit SDK - подключаем как ES-модуль и переопределяем в window.xeokit -->
     <script type="module" src="js/xeokit-loader.js"></script>
 
-    <script src="js/api.js" defer></script>
+    <script src="js/api.js?v=20251219-2" defer></script>
     <script src="js/ui.js" defer></script>
     <script src="js/ifcViewer.js" defer></script>
     <script src="js/import.js" defer></script>
+    <script src="js/schedule.js?v=20251219-2" defer></script>
     <script src="js/estimate.js" defer></script>
     <script src="js/settings.js" defer></script>
     <script src="js/app.js" defer></script>

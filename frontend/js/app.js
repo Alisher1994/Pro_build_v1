@@ -24,8 +24,43 @@ class ProBIMApp {
         this.sidebarCollapsed = false;
     }
 
+    getInitialRibbonTab() {
+        const allowed = new Set(['estimate', 'schedule', 'supply', 'finance', 'analytics', 'settings']);
+
+        const hash = (window.location.hash || '').replace('#', '').trim();
+        if (hash && allowed.has(hash)) return hash;
+
+        const saved = (localStorage.getItem('probim_active_ribbon_tab') || '').trim();
+        if (saved && allowed.has(saved)) return saved;
+
+        return 'estimate';
+    }
+
+    applyRibbonTabToUI(ribbonName) {
+        try {
+            document.querySelectorAll('.ribbon-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.ribbon-panel').forEach(p => p.classList.remove('active'));
+
+            const tabBtn = document.querySelector(`.ribbon-tab[data-ribbon="${ribbonName}"]`);
+            const panel = document.querySelector(`[data-panel="${ribbonName}"]`);
+            if (tabBtn) tabBtn.classList.add('active');
+            if (panel) panel.classList.add('active');
+
+            localStorage.setItem('probim_active_ribbon_tab', ribbonName);
+            // hash сохраняет вкладку даже без localStorage
+            window.location.hash = `#${ribbonName}`;
+        } catch (e) {
+            console.warn('applyRibbonTabToUI failed', e);
+        }
+    }
+
     async init() {
         console.log('🚀 ProBIM Application Starting...');
+
+        // Восстанавливаем активную вкладку ДО загрузки проекта,
+        // чтобы после F5 оставаться на той же странице.
+        this.currentRibbonTab = this.getInitialRibbonTab();
+        this.applyRibbonTabToUI(this.currentRibbonTab);
         
         // Загрузка проектов
         await this.loadProjects();
@@ -37,6 +72,9 @@ class ProBIMApp {
         // Инициализация обработчиков
         this.initEventHandlers();
         this.setEstimateRibbonContext('blocks');
+
+        // Повторно применяем UI вкладки (на случай, если обработчики/DOM обновились)
+        this.applyRibbonTabToUI(this.currentRibbonTab);
         
         console.log('✅ ProBIM Application Ready');
     }
@@ -171,12 +209,9 @@ class ProBIMApp {
     }
 
     loadScheduleTab() {
-        document.getElementById('content-area').innerHTML = `
-            <div style="padding: 24px;">
-                <h2>График производства работ (ГПР)</h2>
-                <p style="margin-top: 16px; color: var(--gray-600);">Функционал в разработке...</p>
-            </div>
-        `;
+        if (this.currentProjectId) {
+            ScheduleManager.init(this.currentProjectId);
+        }
     }
 
     loadSupplyTab() {
@@ -270,6 +305,7 @@ class ProBIMApp {
 
                 // Загружаем содержимое
                 this.currentRibbonTab = ribbonName;
+                this.applyRibbonTabToUI(ribbonName);
                 this.loadCurrentTab();
             });
         });
@@ -290,6 +326,34 @@ class ProBIMApp {
         // Import button
         document.getElementById('import-estimate-btn')?.addEventListener('click', () => {
             ImportManager.showImportModal();
+        });
+
+        // Schedule buttons
+        document.getElementById('generate-schedule-btn')?.addEventListener('click', () => {
+            ScheduleManager.showGenerationWizard();
+        });
+
+        document.getElementById('clear-schedule-btn')?.addEventListener('click', () => {
+            ScheduleManager.clearSchedule();
+        });
+
+        document.getElementById('assign-work-wizard-btn')?.addEventListener('click', () => {
+            ScheduleManager.showWorkDistributionWizard();
+        });
+
+        document.getElementById('export-schedule-btn')?.addEventListener('click', () => {
+            ScheduleManager.exportToPDF();
+        });
+
+        // Schedule view tools (expand/collapse all)
+        document.getElementById('schedule-expand-all-btn')?.addEventListener('click', () => {
+            if (this.currentRibbonTab !== 'schedule') return;
+            ScheduleManager.expandAll();
+        });
+
+        document.getElementById('schedule-collapse-all-btn')?.addEventListener('click', () => {
+            if (this.currentRibbonTab !== 'schedule') return;
+            ScheduleManager.collapseAll();
         });
 
         // IFC upload button (duplicate of existing binding logic)

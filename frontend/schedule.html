@@ -51,9 +51,38 @@
                     <button class="btn btn-secondary" onclick="ScheduleManager.goBack()">
                         ← Назад
                     </button>
-                    <button class="btn btn-primary" onclick="ScheduleManager.createSchedule()">
-                        + Создать ГПР
-                    </button>
+                </div>
+            </div>
+
+            <!-- Ribbon Menu -->
+            <div class="office-ribbon">
+                <div class="ribbon-tabs-bar">
+                    <div class="ribbon-tabs">
+                        <button class="ribbon-tab active">Главная</button>
+                    </div>
+                </div>
+                <div class="ribbon-content">
+                    <div class="ribbon-panel active">
+                        <div class="ribbon-group">
+                            <div class="ribbon-group-content">
+                                <button class="ribbon-btn large" onclick="ScheduleManager.showGenerationWizard()">
+                                    <span style="font-size: 24px;">🪄</span>
+                                    <span>Мастер<br>генерации</span>
+                                </button>
+                            </div>
+                            <span class="ribbon-group-label">Создание</span>
+                        </div>
+                        <div class="ribbon-separator"></div>
+                        <div class="ribbon-group">
+                            <div class="ribbon-group-content">
+                                <button class="ribbon-btn large" onclick="ScheduleManager.exportToPDF()">
+                                    <span style="font-size: 24px;">📄</span>
+                                    <span>Экспорт<br>PDF</span>
+                                </button>
+                            </div>
+                            <span class="ribbon-group-label">Экспорт</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -91,8 +120,8 @@
                     <div class="card">
                         <div class="card-header">
                             <h3>Задачи ГПР</h3>
-                            <button class="btn btn-primary btn-sm" onclick="ScheduleManager.importFromEstimate()">
-                                + Импорт из сметы
+                            <button class="btn btn-primary btn-sm" onclick="ScheduleManager.showGenerationWizard()">
+                                🪄 Мастер генерации
                             </button>
                         </div>
                         <div class="card-body">

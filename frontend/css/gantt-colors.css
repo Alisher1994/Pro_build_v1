@@ -1,0 +1,122 @@
+/* Minimal Gantt row coloring (Primavera-like)
+   Kept separate from schedule.css to avoid overriding app layout/sidebar styles.
+*/
+
+:root {
+    --gantt-phase-color: #2B7A78;   /* Очередь */
+    --gantt-block-color: #76a9a8;   /* Блок */
+    --gantt-floor-color: #c1d8d7;   /* Этаж */
+    --gantt-group-color: #f5f5f5;   /* Light Gray */
+
+    /* DHTMLX Gantt (v9+) skin variables */
+    --dhx-gantt-base-colors-primary: #4BC0BD;
+    /* Force solid (non-blue) task background */
+    --dhx-gantt-task-blue: #dae8e7;
+    --dhx-gantt-task-green: #dae8e7;
+    --dhx-gantt-task-violet: #dae8e7;
+    --dhx-gantt-task-yellow: #dae8e7;
+    --dhx-gantt-task-background: #dae8e7;
+}
+
+/* Fallback for older skins / ensure correct progress colors */
+.gantt_task_line {
+    background-color: #dae8e7;
+}
+
+/* Some skins apply additional classes for task types */
+.gantt_task_line.gantt_bar_task,
+.gantt_task_line.gantt_bar_project,
+.gantt_task_line.gantt_bar_milestone {
+    background-color: #dae8e7;
+}
+
+.gantt_task_line .gantt_task_progress {
+    background-color: #4BC0BD;
+}
+
+/* Today marker (red vertical line) */
+.gantt_marker.today {
+    background-color: #D13438;
+    opacity: 1;
+}
+
+.gantt_marker.today .gantt_marker_content {
+    color: #D13438;
+    font-weight: 600;
+}
+
+/* Legend (shown near the scale selector) */
+.gantt-legend {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--gray-700, #605E5C);
+    user-select: none;
+}
+
+.gantt-legend .legend-item {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.gantt-legend .legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.gantt-legend .legend-swatch.phase { background: var(--gantt-phase-color); }
+.gantt-legend .legend-swatch.block { background: var(--gantt-block-color); }
+.gantt-legend .legend-swatch.floor { background: var(--gantt-floor-color); }
+
+/* Phase (Очередь) */
+.gantt_row.row_phase .gantt_cell {
+    background-color: var(--gantt-phase-color) !important;
+    color: #fff !important;
+    font-weight: bold;
+}
+.gantt_row.row_phase .gantt_tree_content {
+    color: #fff !important;
+}
+
+/* Block */
+.gantt_row.row_block .gantt_cell {
+    background-color: var(--gantt-block-color) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+/* Floor */
+.gantt_row.row_floor .gantt_cell {
+    background-color: var(--gantt-floor-color) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+/* Other group rows */
+.gantt_row.row_stage .gantt_cell {
+    background-color: var(--gantt-group-color) !important;
+    font-weight: bold;
+}
+
+/* Subtle borders on colored rows (grid only) */
+.gantt_row.row_phase .gantt_cell,
+.gantt_row.row_block .gantt_cell,
+.gantt_row.row_floor .gantt_cell,
+.gantt_row.row_stage .gantt_cell {
+    border-right-color: rgba(0,0,0,0.1) !important;
+}
+
+/* Do NOT color the last "add" (+) column (it sits after the % column) */
+.gantt_row.row_phase .gantt_cell.gantt_add,
+.gantt_row.row_block .gantt_cell.gantt_add,
+.gantt_row.row_floor .gantt_cell.gantt_add,
+.gantt_row.row_stage .gantt_cell.gantt_add {
+    background-color: transparent !important;
+    color: inherit !important;
+    font-weight: inherit !important;
+}

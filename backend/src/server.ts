@@ -14,6 +14,7 @@ import resourceRoutes from './routes/resources';
 import scheduleRoutes from './routes/schedules';
 import supplyRoutes from './routes/supplies';
 import financeRoutes from './routes/finances';
+import ganttRoutes from './routes/gantt';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/supplies', supplyRoutes);
 app.use('/api/finances', financeRoutes);
+app.use('/api/gantt', ganttRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -4,10 +4,17 @@
 
 const UI = {
     // Показать модальное окно
-    showModal(title, content, buttons) {
+    showModal(title, content, buttons, options = {}) {
+        const modalClassName = options.modalClassName ? ` ${options.modalClassName}` : '';
+        const modalStyleParts = [];
+        if (options.width) modalStyleParts.push(`width: ${options.width};`);
+        if (options.maxWidth) modalStyleParts.push(`max-width: ${options.maxWidth};`);
+        if (options.maxHeight) modalStyleParts.push(`max-height: ${options.maxHeight};`);
+        const modalStyle = modalStyleParts.length ? ` style="${modalStyleParts.join(' ')}"` : '';
+
         const modalHTML = `
             <div class="modal-overlay" id="modal-overlay">
-                <div class="modal">
+                <div class="modal${modalClassName}"${modalStyle}>
                     <div class="modal-header">
                         <h3>${title}</h3>
                         <button class="modal-close" onclick="UI.closeModal()">&times;</button>
@@ -89,6 +96,28 @@ const UI = {
         }
     },
 
+    // Generic loading spinner overlay
+    showLoading(isLoading, message = 'Загрузка...') {
+        const id = 'generic-loading-overlay';
+        const existing = document.getElementById(id);
+        
+        if (!isLoading) {
+            if (existing) existing.remove();
+            return;
+        }
+
+        if (existing) return;
+
+        const html = `
+            <div id="${id}" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <div style="margin-top: 16px; font-weight: 500; color: var(--gray-800);">${message}</div>
+                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+    },
+
     // Показать форму создания проекта
     showCreateProjectModal(callback) {
         const content = `
@@ -153,8 +182,12 @@ const UI = {
                 <textarea id="block-description" placeholder="Описание блока"></textarea>
             </div>
             <div class="form-group">
-                <label>Количество этажей</label>
+                <label>Количество этажей (надземных)</label>
                 <input type="number" id="block-floors" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Количество подземных этажей</label>
+                <input type="number" id="block-underground-floors" value="0" min="0">
             </div>
             <div class="form-group">
                 <label>Площадь (м²)</label>
@@ -180,6 +213,7 @@ const UI = {
                     name: document.getElementById('block-name').value.trim(),
                     description: document.getElementById('block-description').value.trim(),
                     floors: parseInt(document.getElementById('block-floors').value) || 1,
+                    undergroundFloors: parseInt(document.getElementById('block-underground-floors').value) || 0,
                     area: parseFloat(document.getElementById('block-area').value) || null,
                     constructionPhase: parseInt(document.getElementById('block-phase').value) || 1,
                 };

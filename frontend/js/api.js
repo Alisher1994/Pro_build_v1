@@ -297,6 +297,102 @@ class ApiService {
     }
 
     // ========================================
+    // Gantt Schedule
+    // ========================================
+    async generateGanttSchedule(projectId, mode = 'manual') {
+        const response = await fetch(`${API_BASE_URL}/gantt/generate/${projectId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode }),
+        });
+        if (!response.ok) throw new Error('Failed to generate schedule');
+        return await response.json();
+    }
+
+    async getGanttData(projectId) {
+        const response = await fetch(`${API_BASE_URL}/gantt/${projectId}`);
+        if (!response.ok) throw new Error('Failed to fetch gantt data');
+        return await response.json();
+    }
+
+    async clearGanttSchedule(projectId) {
+        const response = await fetch(`${API_BASE_URL}/gantt/${projectId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to clear schedule');
+        return await response.json();
+    }
+
+    async getEstimateTreeForBlock(blockId) {
+        const response = await fetch(`${API_BASE_URL}/gantt/estimate-tree/${blockId}`);
+        if (!response.ok) throw new Error('Failed to fetch estimate tree');
+        return await response.json();
+    }
+
+    async getAssignmentSources(projectId) {
+        const response = await fetch(`${API_BASE_URL}/gantt/assignment-sources/${projectId}`);
+        if (!response.ok) throw new Error('Failed to fetch assignment sources');
+        return await response.json();
+    }
+
+    async getAssignmentEstimate(projectId, blockId, estimateId) {
+        const response = await fetch(`${API_BASE_URL}/gantt/assignment-estimate/${projectId}/${blockId}/${estimateId}`);
+        if (!response.ok) throw new Error('Failed to fetch assignment estimate');
+        return await response.json();
+    }
+
+    async assignWorkTypeToFloor(projectId, floorTaskId, workTypeId, quantity, operation = 'set') {
+        const response = await fetch(`${API_BASE_URL}/gantt/assign-worktype`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId, floorTaskId, workTypeId, quantity, operation }),
+        });
+        if (!response.ok) throw new Error('Failed to assign work type');
+        return await response.json();
+    }
+
+    async updateGanttTask(id, task) {
+        const normalizedId = (id && typeof id === 'object') ? (id.id ?? task?.id) : (id ?? task?.id);
+        if (!normalizedId) {
+            throw new Error('Failed to update task: missing task id');
+        }
+        const response = await fetch(`${API_BASE_URL}/gantt/task/${encodeURIComponent(String(normalizedId))}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task),
+        });
+        if (!response.ok) throw new Error('Failed to update task');
+        return await response.json();
+    }
+
+    async deleteGanttTask(id) {
+        if (!id) throw new Error('Failed to delete task: missing task id');
+        const response = await fetch(`${API_BASE_URL}/gantt/task/${encodeURIComponent(String(id))}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('Failed to delete task');
+        return await response.json();
+    }
+
+    async createGanttLink(link) {
+        const response = await fetch(`${API_BASE_URL}/gantt/link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(link),
+        });
+        if (!response.ok) throw new Error('Failed to create link');
+        return await response.json();
+    }
+
+    async deleteGanttLink(id) {
+        const response = await fetch(`${API_BASE_URL}/gantt/link/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete link');
+        return await response.json();
+    }
+
+    // ========================================
     // Resources
     // ========================================
     async getResources(workTypeId) {

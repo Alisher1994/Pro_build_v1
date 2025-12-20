@@ -86,6 +86,160 @@ body {
 }
 
 /* ========================================
+   Schedule (Gantt) - Split & Bottom Panel
+   ======================================== */
+
+:root {
+    --schedule-bottom-tabs-height: 38px;
+}
+
+.schedule-root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.schedule-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.schedule-gantt {
+    flex: 1;
+    min-height: 0;
+}
+
+.schedule-bottom {
+    flex: 0 0 auto;
+    height: var(--schedule-bottom-tabs-height);
+    background: var(--white);
+    border-top: 1px solid var(--gray-300);
+    overflow: hidden;
+}
+
+.schedule-bottom.is-open {
+    /* height is controlled by JS to be max 30% */
+}
+
+.schedule-bottom-tabs {
+    height: var(--schedule-bottom-tabs-height);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.schedule-bottom-tab {
+    height: calc(var(--schedule-bottom-tabs-height) - 8px);
+    padding: 0 var(--spacing-md);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--gray-800);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+}
+
+.schedule-bottom-tab:hover {
+    background: var(--gray-100);
+}
+
+.schedule-bottom-tab.active {
+    background: var(--primary-lighter);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.schedule-bottom-content {
+    height: calc(100% - var(--schedule-bottom-tabs-height));
+    overflow: auto;
+    padding: var(--spacing-md);
+    display: none;
+}
+
+.schedule-bottom.is-open .schedule-bottom-content {
+    display: block;
+}
+
+.schedule-bottom-pane {
+    display: none;
+}
+
+.schedule-bottom-pane.active {
+    display: block;
+}
+
+/* Gantt context menu */
+.gantt-context-menu {
+    position: fixed;
+    z-index: 20000;
+    min-width: 180px;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-xs);
+}
+
+.gantt-context-menu.hidden {
+    display: none;
+}
+
+.gantt-context-menu-item {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--gray-900);
+    font-size: var(--font-size-base);
+}
+
+.gantt-context-menu-item:hover {
+    background: var(--gray-100);
+}
+
+.gantt-context-menu-item.danger {
+    color: var(--accent-red);
+}
+
+/* Schedule resources table */
+.schedule-resources-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.schedule-resources-table th,
+.schedule-resources-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: var(--font-size-base);
+}
+
+.schedule-resources-table th {
+    background: var(--gray-50);
+    color: var(--gray-700);
+    font-weight: 600;
+    text-align: left;
+}
+
+.schedule-resources-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ========================================
    SIDEBAR
    ======================================== */
 .sidebar {
@@ -1008,6 +1162,32 @@ body {
 /* ========================================
    IFC VIEWER CONTROLS
    ======================================== */
+.ifc-navcube-canvas {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 120px;
+    height: 120px;
+    z-index: 6;
+    background: transparent;
+}
+
+/* IFC 3D viewer: фон как в SketchUp (сверху светлый, снизу белый) */
+#ifc-viewer-panel {
+    background: linear-gradient(180deg, var(--primary-lighter) 0%, var(--white) 100%);
+}
+
+#ifc-viewer-overlay {
+    background: linear-gradient(180deg, var(--primary-lighter) 0%, var(--white) 100%);
+}
+
+#ifc-canvas {
+    background: transparent;
+    /* Не даём браузеру перехватывать pinch/scroll внутри 3D окна */
+    touch-action: none;
+    overscroll-behavior: contain;
+}
+
 .viewer-controls {
     position: absolute;
     top: 16px;

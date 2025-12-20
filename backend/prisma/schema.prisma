@@ -46,6 +46,7 @@ model Block {
   name        String
   description String?
   floors      Int      @default(1)
+  undergroundFloors Int @default(0)
   area        Float?   // Площадь в м²
   orderIndex  Int      @default(0)
   constructionPhase Int @default(1) // Очередь строительства
@@ -400,6 +401,10 @@ model GanttTask {
   blockId        String?
   estimateSectionId String?
   
+  // Объемы и единицы измерения
+  quantity       Float?
+  unit           String?
+
   sortOrder      Int      @default(0)
   
   createdAt      DateTime @default(now())

@@ -22,7 +22,8 @@ router.get('/', async (req, res) => {
     });
     res.json(projects);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ error: error.message, details: error.stack });
   }
 });
 
@@ -66,22 +67,35 @@ router.get('/:id', async (req, res) => {
 // ========================================
 router.post('/', async (req, res) => {
   try {
-    const { name, description, address, client, currency, startDate, endDate, status } = req.body;
+    const { name, description, address, latitude, longitude, photo, genplan, render, client, manager, deputy, customer, contractor, currency, startDate, endDate, status, coordinates } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
     }
 
+    // Извлекаем координаты из объекта coordinates или напрямую
+    const lat = coordinates?.latitude || latitude;
+    const lng = coordinates?.longitude || longitude;
+
     const project = await prisma.project.create({
       data: {
         name,
-        description,
-        address,
-        client,
+        description: description || undefined,
+        address: address || undefined,
+        latitude: lat ? parseFloat(lat) : undefined,
+        longitude: lng ? parseFloat(lng) : undefined,
+        photo: (photo || genplan) || undefined, // Для обратной совместимости
+        genplan: (genplan && genplan.trim()) || undefined,
+        render: (render && render.trim()) || undefined,
+        client: client || undefined,
+        manager: manager || undefined,
+        deputy: deputy || undefined,
+        customer: customer || undefined,
+        contractor: contractor || undefined,
         currency: currency || 'RUB',
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
-        status: status || 'planning',
+        status: status || 'active',
       },
     });
 
@@ -97,24 +111,41 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, address, client, currency, startDate, endDate, status } = req.body;
+    const { name, description, address, latitude, longitude, photo, genplan, render, client, manager, deputy, customer, contractor, currency, startDate, endDate, status, coordinates } = req.body;
+
+    // Извлекаем координаты из объекта coordinates или напрямую
+    const lat = coordinates?.latitude ?? latitude;
+    const lng = coordinates?.longitude ?? longitude;
+
+    // Строим объект данных только с определенными полями
+    const updateData: any = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (address !== undefined) updateData.address = address;
+    if (lat !== undefined && lat !== null) updateData.latitude = parseFloat(lat.toString());
+    if (lng !== undefined && lng !== null) updateData.longitude = parseFloat(lng.toString());
+    if (photo !== undefined) updateData.photo = photo;
+    if (genplan !== undefined) updateData.genplan = genplan;
+    if (render !== undefined) updateData.render = render;
+    if (client !== undefined) updateData.client = client;
+    if (manager !== undefined) updateData.manager = manager;
+    if (deputy !== undefined) updateData.deputy = deputy;
+    if (customer !== undefined) updateData.customer = customer;
+    if (contractor !== undefined) updateData.contractor = contractor;
+    if (currency !== undefined) updateData.currency = currency;
+    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
+    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+    if (status !== undefined) updateData.status = status;
 
     const project = await prisma.project.update({
       where: { id },
-      data: {
-        name,
-        description,
-        address,
-        client,
-        currency,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
-        status,
-      },
+      data: updateData,
     });
 
     res.json(project);
   } catch (error: any) {
+    console.error('Error updating project:', error);
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Project not found' });
     }

@@ -44,14 +44,14 @@ const EstimateManager = {
         // Если items не передан, строим из текущего состояния
         if (!items) {
             items = [];
-            
+
             if (this.currentProject) {
                 items.push({
                     text: this.currentProject.name,
                     clickable: false
                 });
             }
-            
+
             if (this.currentBlockId && this.currentBlock) {
                 items.push({
                     text: 'Блоки',
@@ -64,7 +64,7 @@ const EstimateManager = {
                     onClick: this.currentEstimateId ? () => this.openBlock(this.currentBlockId) : null
                 });
             }
-            
+
             if (this.currentEstimateId && this.currentEstimate) {
                 items.push({
                     text: this.currentEstimate.name,
@@ -72,7 +72,7 @@ const EstimateManager = {
                     onClick: this.currentSectionId ? () => this.openEstimate(this.currentEstimateId) : null
                 });
             }
-            
+
             if (this.currentSectionId && this.currentSection) {
                 items.push({
                     text: `${this.currentSection.code} - ${this.currentSection.name}`,
@@ -80,7 +80,7 @@ const EstimateManager = {
                     onClick: this.currentStageId ? () => this.openSection(this.currentSectionId) : null
                 });
             }
-            
+
             if (this.currentStageId) {
                 // Получаем stage для отображения в breadcrumb
                 try {
@@ -107,7 +107,7 @@ const EstimateManager = {
             if (index > 0) {
                 html += '<span style="margin: 0 8px; color: var(--gray-400);">/</span>';
             }
-            
+
             if (item.clickable && item.onClick) {
                 // Создаем уникальный идентификатор для обработчика
                 const handlerId = `breadcrumb_handler_${index}_${Date.now()}`;
@@ -125,7 +125,8 @@ const EstimateManager = {
     // Восстановление состояния (открытый блок или смета)
     async restoreState(projectId) {
         this.currentProjectId = projectId;
-        
+        this._isRestoring = true; // Помечаем как восстановление, чтобы не добавлять в историю навигации
+
         try {
             // Получаем данные проекта (нужно для валюты и контекста)
             this.currentProject = await api.getProject(projectId);
@@ -140,11 +141,11 @@ const EstimateManager = {
                 // Нам нужно знать blockId для openEstimate, но openEstimate сам его подтянет если мы сохраним его в this.currentBlockId?
                 // Нет, openEstimate принимает estimateId. Но ему нужен currentBlockId для breadcrumbs.
                 // Давайте сначала восстановим блок.
-                
+
                 if (lastBlockId) {
                     this.currentBlockId = lastBlockId;
                     await this.openEstimate(lastEstimateId);
-                    
+
                     // Не восстанавливаем автоматически openSection при загрузке страницы,
                     // чтобы не "перекидывало" на другой экран и не казалось, что данные пропали.
                     localStorage.removeItem('probim_current_section_id');
@@ -157,7 +158,7 @@ const EstimateManager = {
             if (lastBlockId) {
                 console.log('Restoring block:', lastBlockId);
                 await this.openBlock(lastBlockId);
-                
+
                 localStorage.removeItem('probim_current_section_id');
                 this.currentSectionId = null;
                 window.currentSectionId = null;
@@ -166,7 +167,7 @@ const EstimateManager = {
 
             // Если ничего не сохранено, рендерим дерево блоков
             await this.renderEstimateTree(projectId);
-            
+
             localStorage.removeItem('probim_current_section_id');
             this.currentSectionId = null;
             window.currentSectionId = null;
@@ -177,6 +178,8 @@ const EstimateManager = {
             localStorage.removeItem('probim_last_estimate_id');
             localStorage.removeItem('probim_last_block_id');
             await this.renderEstimateTree(projectId);
+        } finally {
+            this._isRestoring = false; // Сбрасываем флаг восстановления
         }
     },
 
@@ -185,26 +188,31 @@ const EstimateManager = {
         this.currentBlockId = null;
         this.currentEstimateId = null;
         // НЕ сбрасываем currentSectionId, если раздел открыт
+
+        // Добавляем в историю навигации (только если это не восстановление состояния)
+        if (window.app && !this._isRestoring) {
+            window.app.pushNavigationState('project', { projectId: projectId });
+        }
         // this.currentSectionId = null;
         this.currentStageId = null;
-        
+
         // Если мы рендерим дерево блоков явно, значит мы вышли на уровень вверх
         // Очищаем сохраненное состояние глубины
         localStorage.removeItem('probim_last_block_id');
         localStorage.removeItem('probim_last_estimate_id');
-        
+
         try {
             // Получаем данные проекта
             this.currentProject = await api.getProject(projectId);
-            
+
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
-            
+
             // Получаем блоки проекта
             const blocks = await api.getBlocks(projectId);
-            
+
             const contentArea = document.getElementById('content-area');
-            
+
             if (blocks.length === 0) {
                 contentArea.innerHTML = `
                     <div class="welcome-screen">
@@ -216,7 +224,7 @@ const EstimateManager = {
                         </svg>
                         <h2>Блоки не созданы</h2>
                         <p>Создайте первый блок для начала работы со сметами</p>
-                        <button class="primary-btn" onclick="EstimateManager.createBlock()">Создать блок</button>
+                        <button class="primary-btn" onclick="EstimateManager.createBlock()">Добавить блок</button>
                     </div>
                 `;
                 return;
@@ -224,7 +232,7 @@ const EstimateManager = {
 
             // Строим дерево блоков и смет
             let html = '<div class="estimate-tree">';
-            
+
             // Группировка по очередям
             const phases = {};
             blocks.forEach(block => {
@@ -240,35 +248,35 @@ const EstimateManager = {
                 html += `
                     <div class="phase-group" style="margin-bottom: 24px;">
                         <h3 style="font-size: 16px; color: var(--gray-600); margin-bottom: 12px; padding-left: 8px; border-left: 3px solid var(--primary-color);">
-                            Очередь строительства ${phase}
+                            Очередь: ${phase}
                         </h3>
                         <div class="phase-blocks">
                 `;
-                
+
                 // Сортировка блоков внутри очереди (по orderIndex или имени)
                 const phaseBlocks = phases[phase].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-                
+
                 for (const block of phaseBlocks) {
                     html += this.renderBlockItem(block);
                 }
-                
+
                 html += `
                         </div>
                     </div>
                 `;
             }
-            
+
             html += '</div>';
-            
+
             contentArea.innerHTML = html;
-            
+
             // Добавляем обработчики событий
             this.attachEventHandlers();
 
             if (typeof app !== 'undefined' && typeof app.setEstimateRibbonContext === 'function') {
                 app.setEstimateRibbonContext('blocks');
             }
-            
+
         } catch (error) {
             console.error('Error rendering estimate tree:', error);
             UI.showNotification('Ошибка загрузки данных: ' + error.message, 'error');
@@ -307,19 +315,24 @@ const EstimateManager = {
         this.currentEstimateId = null;
         this.currentSectionId = null;
         this.currentStageId = null;
-        
+
         // Сохраняем состояние
         localStorage.setItem('probim_last_block_id', blockId);
         localStorage.removeItem('probim_last_estimate_id');
-        
+
+        // Добавляем в историю навигации (только если это не восстановление состояния)
+        if (window.app && !this._isRestoring) {
+            window.app.pushNavigationState('block', { blockId: blockId });
+        }
+
         try {
             const block = await api.getBlock(blockId);
             this.currentBlock = block;
             const estimates = await api.getEstimates(this.currentProjectId, blockId);
-            
+
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
-            
+
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
                 <div style="padding: 24px;">
@@ -335,7 +348,7 @@ const EstimateManager = {
             }
 
             await this.loadEstimates(blockId);
-            
+
         } catch (error) {
             UI.showNotification('Ошибка загрузки блока: ' + error.message, 'error');
         }
@@ -345,7 +358,7 @@ const EstimateManager = {
         try {
             const estimates = await api.getEstimates(this.currentProjectId, blockId);
             const container = document.getElementById('estimates-container');
-            
+
             if (estimates.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 60px;">
@@ -437,7 +450,7 @@ const EstimateManager = {
 
             html += '</tbody></table></div>';
             container.innerHTML = html;
-            
+
         } catch (error) {
             UI.showNotification('Ошибка загрузки смет: ' + error.message, 'error');
         }
@@ -495,7 +508,7 @@ const EstimateManager = {
     async editEstimate(estimateId) {
         try {
             const estimate = await api.getEstimate(estimateId);
-            
+
             const content = `
                 <div class="form-group">
                     <label>Название сметы *</label>
@@ -555,18 +568,23 @@ const EstimateManager = {
 
     async openEstimate(estimateId) {
         this.currentEstimateId = estimateId;
-        
+
         // Сохраняем состояние
         localStorage.setItem('probim_last_estimate_id', estimateId);
 
+        // Добавляем в историю навигации (только если это не восстановление состояния)
+        if (window.app && !this._isRestoring) {
+            window.app.pushNavigationState('estimate', { estimateId: estimateId });
+        }
+
         try {
             const estimate = await api.getEstimate(estimateId);
-            
+
             // Если currentBlockId не установлен, берем его из сметы
             if (!this.currentBlockId && estimate.blockId) {
                 this.currentBlockId = estimate.blockId;
             }
-            
+
             // Сохраняем block_id
             if (this.currentBlockId) {
                 localStorage.setItem('probim_last_block_id', this.currentBlockId);
@@ -578,13 +596,13 @@ const EstimateManager = {
             if (!block && this.currentBlockId) {
                 block = await api.getBlock(this.currentBlockId);
             }
-            
+
             this.currentEstimate = estimate;
             this.currentBlock = block;
-            
+
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
-            
+
             const hasIfc = Boolean(estimate.xktFileUrl);
             const ifcFileName = estimate.ifcFileUrl ? estimate.ifcFileUrl.split('/').pop() : null;
 
@@ -592,6 +610,10 @@ const EstimateManager = {
 
             contentArea.innerHTML = `
                 <div style="height: 100%; display: flex; flex-direction: column;">
+                    <!-- Заголовок с кнопками импорта -->
+                    <!-- Заголовок с кнопками импорта (Removed) -->
+                    <!-- <div style="padding: 12px 24px; background: var(--white); border-bottom: 1px solid var(--gray-300); display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-shrink: 0;">
+                    </div> -->
 
                     <!-- Трехпанельный интерфейс -->
                     <div style="flex: 1; display: flex; overflow: hidden;">
@@ -746,10 +768,10 @@ const EstimateManager = {
             if (typeof app !== 'undefined' && typeof app.setEstimateRibbonContext === 'function') {
                 app.setEstimateRibbonContext('estimate');
             }
-            
+
             // Инициализируем xeokit viewer
             await this.initializeViewer();
-            
+
             // Добавляем resizable divider
             this.initResizablePanels();
             this.initPropertiesTabs();
@@ -771,7 +793,7 @@ const EstimateManager = {
                     controls.classList.remove('is-visible');
                 }
             }
-            
+
         } catch (error) {
             UI.showNotification('Ошибка загрузки сметы: ' + error.message, 'error');
         }
@@ -781,27 +803,27 @@ const EstimateManager = {
         const divider = document.getElementById('resize-divider');
         const leftPanel = document.getElementById('left-panel');
         const rightPanel = document.getElementById('right-panel-container');
-        
+
         if (!divider || !leftPanel || !rightPanel) return;
-        
+
         let isResizing = false;
-        
+
         divider.addEventListener('mousedown', (e) => {
             // Не позволяем изменять размер если правая панель свернута
             if (rightPanel.classList.contains('collapsed')) return;
-            
+
             isResizing = true;
             document.body.style.cursor = 'col-resize';
             e.preventDefault();
         });
-        
+
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
-            
+
             const container = leftPanel.parentElement;
             const containerRect = container.getBoundingClientRect();
             const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-            
+
             // Ограничиваем ширину от 30% до 80%
             if (newWidth > 30 && newWidth < 80) {
                 leftPanel.style.width = newWidth + '%';
@@ -809,14 +831,14 @@ const EstimateManager = {
                 localStorage.setItem('leftPanelWidth', newWidth);
             }
         });
-        
+
         document.addEventListener('mouseup', () => {
             if (isResizing) {
                 isResizing = false;
                 document.body.style.cursor = '';
             }
         });
-        
+
         // Восстанавливаем сохраненную ширину
         const savedWidth = localStorage.getItem('leftPanelWidth');
         if (savedWidth) {
@@ -898,18 +920,18 @@ const EstimateManager = {
             e.preventDefault();
             e.stopPropagation();
             console.log('Toggle clicked');
-            
+
             container.classList.toggle('collapsed');
             const isCollapsed = container.classList.contains('collapsed');
-            
+
             // Сохраняем состояние
             localStorage.setItem('rightPanelCollapsed', isCollapsed);
-            
+
             // Обновляем title
             if (toggleBtn) {
                 toggleBtn.title = isCollapsed ? 'Развернуть панель' : 'Свернуть панель';
             }
-            
+
             // Обновляем ширину левой панели
             const leftPanel = document.getElementById('left-panel');
             if (leftPanel) {
@@ -925,7 +947,7 @@ const EstimateManager = {
                     leftPanel.style.width = savedWidth;
                 }
             }
-            
+
             // Если панель развернута и есть viewer, обновляем его размер
             if (!isCollapsed && IFCViewerManager?.viewer) {
                 setTimeout(() => {
@@ -943,10 +965,10 @@ const EstimateManager = {
         // Удаляем старые обработчики если есть
         const newToggleBtn = toggleBtn.cloneNode(true);
         toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
-        
+
         newToggleBtn.addEventListener('click', handleToggle);
         console.log('Event listener added to toggle button');
-        
+
         // Обработчик для свернутой вкладки
         if (collapsedTab) {
             collapsedTab.addEventListener('click', handleToggle);
@@ -1182,7 +1204,7 @@ const EstimateManager = {
 
             // Восстанавливаем раскрытые группы
             await this.restoreExpandedEstimateTree();
-            
+
             // Сбрасываем фильтр на "все" после загрузки
             this.currentResourceFilter = 'all';
             const btnReset = document.getElementById('btn-filter-reset');
@@ -1191,7 +1213,7 @@ const EstimateManager = {
             if (btnReset) btnReset.classList.add('active');
             if (btnLinked) btnLinked.classList.remove('active');
             if (btnUnlinked) btnUnlinked.classList.remove('active');
-            
+
         } catch (error) {
             console.error('Error loading estimate structure:', error);
             const container = document.getElementById('estimate-tree-container');
@@ -1229,7 +1251,7 @@ const EstimateManager = {
     async renderStageTree(section) {
         // section = это наш ЭТАП (EstimateSection в БД)
         const stages = await api.getStages(section.id);  // stages = виды работ
-        
+
         // Вычисляем сумму всех видов работ для этого этапа
         let calculatedSectionTotal = 0;
         for (const stage of stages) {
@@ -1241,10 +1263,10 @@ const EstimateManager = {
             }
             calculatedSectionTotal += stageTotal > 0 ? stageTotal : (stage.totalCost || 0);
         }
-        
+
         // Используем вычисленную сумму, если она больше 0
         const displaySectionTotal = calculatedSectionTotal > 0 ? calculatedSectionTotal : (section.totalCost || 0);
-        
+
         let html = `
             <div class="tree-item stage-item" data-stage-id="${section.id}" style="margin-bottom: 6px; background: var(--white); border: 1px solid var(--gray-200); border-radius: 6px; overflow: hidden;">
                 <div class="stage-header" style="display: flex; align-items: center; padding: 10px 12px; background: linear-gradient(to bottom, #f8f9fa, #e9ecef); border-bottom: 1px solid var(--gray-300);">
@@ -1278,7 +1300,7 @@ const EstimateManager = {
                 </div>
             </div>
         `;
-        
+
         // Добавляем обработчик inline редактирования для названия этапа
         setTimeout(() => {
             const nameElement = document.querySelector(`[data-stage-id="${section.id}"].stage-name-editable`);
@@ -1290,7 +1312,7 @@ const EstimateManager = {
                 });
             }
         }, 50);
-        
+
         return html;
     },
 
@@ -1298,19 +1320,19 @@ const EstimateManager = {
         // stage = это наш ВИД РАБОТ (EstimateStage в БД)
         // Получаем ресурсы напрямую для stage (пока через workTypes, но логически это ресурсы)
         const workTypes = await api.getWorkTypes(stage.id);
-        
+
         // WorkTypes здесь - это фактически ресурсы
         let allResources = [];
         let calculatedTotal = 0; // Вычисляем сумму на фронтенде
-        
+
         for (const wt of workTypes) {
             // WorkType тут используется как Resource
             const parsedIfcElements = this.parseIfcElements(wt.ifcElements);
             const resourceTotal = wt.totalCost || 0;
             calculatedTotal += resourceTotal;
-            
+
             const resourceType = ['material', 'labor', 'equipment', 'service'].includes(wt.description) ? wt.description : 'material';
-            
+
             allResources.push({
                 id: wt.id,
                 name: wt.name,
@@ -1324,22 +1346,22 @@ const EstimateManager = {
                 ifcProperties: wt.ifcProperties || null,
             });
         }
-        
+
         // Используем вычисленную сумму, если она больше 0, иначе берем из stage
         const displayTotal = calculatedTotal > 0 ? calculatedTotal : (stage.totalCost || 0);
-        
+
         // Расчёт цены за единицу: сумма / количество
         const stageQuantity = stage.quantity || 0;
         const stageUnitCost = stageQuantity > 0 ? (displayTotal / stageQuantity) : 0;
         const stageUnit = stage.unit || '';
-        
+
         const UNITS = ['шт', 'м', 'м²', 'м³', 'кг', 'т', 'л', 'комплект', 'услуга', 'чел/час'];
-        
+
         // Генерируем options для select
-        const unitOptions = UNITS.map(u => 
+        const unitOptions = UNITS.map(u =>
             `<option value="${u}" ${stageUnit === u ? 'selected' : ''}>${u}</option>`
         ).join('');
-        
+
         let html = `
             <div class="work-type-item" data-worktype-id="${stage.id}" style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; padding: 8px 10px; transition: all 0.2s;">
                 <div class="work-type-header" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -1412,12 +1434,12 @@ const EstimateManager = {
 
         const typeIcon = TYPE_ICONS[resource.type] || '📦';
         const totalCost = (resource.quantity || 0) * (resource.unitCost || 0);
-        
+
         // Проверяем наличие связи с IFC элементами
         const parsedIfcElements = this.parseIfcElements(resource.ifcElements);
         const hasIfcLink = parsedIfcElements.length > 0;
         const ifcElementsJson = JSON.stringify(parsedIfcElements);
-        
+
         // Иконки связи
         const linkIconUnlinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-unlink2-icon lucide-unlink-2"><path d="M15 7h2a5 5 0 0 1 0 10h-2m-6 0H7A5 5 0 0 1 7 7h2"/></svg>`;
         const linkIconLinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>`;
@@ -1473,7 +1495,7 @@ const EstimateManager = {
                         this.linkResourceToIfc(resource.id);
                     }
                 };
-                
+
                 // Hover эффект для кнопки "Связано" -> "Разорвать"
                 if (linkBtn.classList.contains('linked')) {
                     linkBtn.onmouseenter = () => {
@@ -1501,10 +1523,10 @@ const EstimateManager = {
                 typeEl.onclick = async (e) => {
                     e.stopPropagation();
                     if (typeEl.querySelector('select')) return;
-                    
+
                     const select = document.createElement('select');
                     select.style.cssText = 'padding: 2px; border: 2px solid var(--primary); border-radius: 3px; font-size: 14px;';
-                    
+
                     TYPE_NAMES.forEach(type => {
                         const option = document.createElement('option');
                         option.value = type;
@@ -1512,7 +1534,7 @@ const EstimateManager = {
                         if (type === resource.type) option.selected = true;
                         select.appendChild(option);
                     });
-                    
+
                     select.onchange = async () => {
                         const newType = select.value;
                         await api.updateWorkType(resource.id, { description: newType });
@@ -1520,11 +1542,11 @@ const EstimateManager = {
                         typeEl.title = 'Тип: ' + newType;
                         UI.showNotification('Тип ресурса изменен', 'success');
                     };
-                    
+
                     select.onblur = () => {
                         typeEl.innerHTML = TYPE_ICONS[resource.type];
                     };
-                    
+
                     typeEl.innerHTML = '';
                     typeEl.appendChild(select);
                     select.focus();
@@ -1568,7 +1590,7 @@ const EstimateManager = {
                     const parent = quantityEl.closest('.resource-item');
                     const totalEl = parent.querySelector('span[style*="font-weight: 600"]');
                     if (totalEl) totalEl.textContent = UI.formatCurrency(totalCost, this.currentProject?.currency);
-                    
+
                     // Запускаем каскадный пересчет вверх по иерархии
                     await this.recalculateHierarchyFixed(resource.id);
                     // Обновляем суммы в DOM без перезагрузки структуры
@@ -1587,14 +1609,14 @@ const EstimateManager = {
                     const parent = unitCostEl.closest('.resource-item');
                     const totalEl = parent.querySelector('span[style*="font-weight: 600"]');
                     if (totalEl) totalEl.textContent = UI.formatCurrency(totalCost, this.currentProject?.currency);
-                    
+
                     // Запускаем каскадный пересчет вверх по иерархии
                     await this.recalculateHierarchyFixed(resource.id);
                     // Обновляем суммы в DOM без перезагрузки структуры
                     await this.updateHierarchySumsFixed(resource.id);
                 });
             }
-            
+
             // Обработчик клика по чекбоксу
             const checkbox = document.querySelector(`.resource-checkbox[data-resource-id="${resource.id}"]`);
             if (checkbox) {
@@ -1603,13 +1625,13 @@ const EstimateManager = {
                     this.selectResource(resource.id);
                 });
             }
-            
+
             // Обработчик клика по строке ресурса для выбора (Ctrl+Click или обычный клик)
             const resourceItem = document.querySelector(`[data-resource-id="${resource.id}"]`);
             if (resourceItem) {
                 resourceItem.addEventListener('click', (e) => {
                     // Игнорируем клики по чекбоксу и редактируемым элементам
-                    if (e.target.classList.contains('resource-checkbox') || 
+                    if (e.target.classList.contains('resource-checkbox') ||
                         e.target.classList.contains('res-type-editable') ||
                         e.target.classList.contains('res-name-editable') ||
                         e.target.classList.contains('res-unit-editable') ||
@@ -1620,7 +1642,7 @@ const EstimateManager = {
                         e.target.tagName === 'INPUT') {
                         return;
                     }
-                    
+
                     // Ctrl+Click или обычный клик переключает выбор
                     if (e.ctrlKey || e.metaKey || true) {
                         e.stopPropagation();
@@ -1636,7 +1658,7 @@ const EstimateManager = {
     toggleWorkTypeInTree(workTypeId) {
         const element = document.getElementById(`worktype-resources-${workTypeId}`);
         const icon = document.querySelector(`#worktype-resources-${workTypeId}`).previousElementSibling.querySelector('.collapse-icon-wt');
-        
+
         if (element.style.display === 'none') {
             element.style.display = 'block';
             if (icon) icon.textContent = '▼';
@@ -1650,7 +1672,7 @@ const EstimateManager = {
         const element = document.getElementById(`section-${sectionId}`);
         const header = element.previousElementSibling;
         const arrow = header.querySelector('span');
-        
+
         if (element.style.display === 'none') {
             element.style.display = 'block';
             arrow.textContent = '▼';
@@ -1664,7 +1686,7 @@ const EstimateManager = {
         const element = document.getElementById(`stage-tree-${stageId}`);
         const header = element.previousElementSibling;
         const arrow = header.querySelector('span');
-        
+
         if (element.style.display === 'none') {
             element.style.display = 'block';
             arrow.textContent = '▼';
@@ -1678,9 +1700,9 @@ const EstimateManager = {
         try {
             const workType = await api.getWorkType(workTypeId);
             const resources = await api.getResources(workTypeId);
-            
+
             const propertiesPanel = document.getElementById('element-properties');
-            
+
             let html = `
                 <div style="padding: 16px;">
                     <h3 style="margin: 0 0 16px 0; font-size: 16px; color: var(--gray-900);">${workType.name}</h3>
@@ -1741,7 +1763,7 @@ const EstimateManager = {
             `;
 
             propertiesPanel.innerHTML = html;
-            
+
         } catch (error) {
             console.error('Error loading work type details:', error);
         }
@@ -1773,10 +1795,10 @@ const EstimateManager = {
             html += '</tr></thead><tbody>';
 
             for (const section of sections) {
-                const ifcStatus = section.ifcFileUrl 
-                    ? `<span style="color: var(--accent-green); font-weight: 600;">✓ Загружен</span>` 
+                const ifcStatus = section.ifcFileUrl
+                    ? `<span style="color: var(--accent-green); font-weight: 600;">✓ Загружен</span>`
                     : `<span style="color: var(--gray-500);">Не загружен</span>`;
-                
+
                 const ifcButton = section.ifcFileUrl
                     ? `<div style="display: flex; gap: 4px;">
                         <button onclick="EstimateManager.replaceIFC('${section.id}')" class="btn btn-secondary" style="padding: 4px 12px; height: auto;" title="Заменить IFC">
@@ -1802,7 +1824,7 @@ const EstimateManager = {
                         </svg>
                         Загрузить IFC
                     </button>`;
-                
+
                 html += `
                     <tr>
                         <td><strong>${section.code}</strong></td>
@@ -1855,7 +1877,7 @@ const EstimateManager = {
             UI.showNotification('Сначала выберите проект', 'error');
             return;
         }
-        
+
         UI.showCreateBlockModal(this.currentProjectId, async (data) => {
             try {
                 await api.createBlock(data);
@@ -1883,27 +1905,33 @@ const EstimateManager = {
     async editBlock(blockId) {
         try {
             const block = await api.getBlock(blockId);
-            
+
             const content = `
                 <div class="form-group">
                     <label>Название блока *</label>
                     <input type="text" id="block-name" value="${block.name}" required>
                 </div>
                 <div class="form-group">
-                    <label>Количество этажей (надземных) *</label>
-                    <input type="number" id="block-floors" value="${block.floors}" required>
+                    <label>Описание</label>
+                    <textarea id="block-description" placeholder="Описание блока">${block.description || ''}</textarea>
                 </div>
-                <div class="form-group">
-                    <label>Количество подземных этажей</label>
-                    <input type="number" id="block-underground-floors" value="${block.undergroundFloors || 0}" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Площадь (м²)</label>
-                    <input type="number" id="block-area" value="${block.area || ''}" step="0.01">
-                </div>
-                <div class="form-group">
-                    <label>Очередь строительства</label>
-                    <input type="number" id="block-phase" value="${block.constructionPhase || 1}" min="1">
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label>Очередь:</label>
+                        <input type="number" id="block-phase" value="${block.constructionPhase || 1}" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Кол-во этажей (надземные) *</label>
+                        <input type="number" id="block-floors" value="${block.floors}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Количество подземных этажей</label>
+                        <input type="number" id="block-underground-floors" value="${block.undergroundFloors || 0}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Площадь (м²)</label>
+                        <input type="number" id="block-area" value="${block.area || ''}" step="0.01">
+                    </div>
                 </div>
             `;
 
@@ -1918,6 +1946,7 @@ const EstimateManager = {
                 document.getElementById('save-block-btn').addEventListener('click', async () => {
                     const data = {
                         name: document.getElementById('block-name').value.trim(),
+                        description: document.getElementById('block-description').value.trim(),
                         floors: parseInt(document.getElementById('block-floors').value),
                         undergroundFloors: parseInt(document.getElementById('block-underground-floors').value) || 0,
                         area: parseFloat(document.getElementById('block-area').value) || null,
@@ -1964,22 +1993,27 @@ const EstimateManager = {
         console.log('=== openSection called ===');
         console.log('sectionId parameter:', sectionId);
         console.log('currentSectionId before:', this.currentSectionId);
-        
+
         this.currentSectionId = sectionId;
-        
+
         // Сохраняем в глобальную переменную для доступа из любого места
         window.currentSectionId = sectionId;
-        
+
         // Сохраняем в localStorage для восстановления при перезагрузке
         if (sectionId) {
             localStorage.setItem('probim_current_section_id', sectionId);
             console.log('Saved sectionId to localStorage:', sectionId);
         }
-        
+
+        // Добавляем в историю навигации (только если это не восстановление состояния)
+        if (window.app && !this._isRestoring) {
+            window.app.pushNavigationState('section', { sectionId: sectionId });
+        }
+
         console.log('Opening section:', sectionId);
         console.log('EstimateManager.currentSectionId is now:', this.currentSectionId);
         console.log('window.currentSectionId is now:', window.currentSectionId);
-        
+
         // Показываем кнопки раздела в ribbon панели
         if (typeof app !== 'undefined' && typeof app.setEstimateRibbonContext === 'function') {
             console.log('Setting ribbon context to section');
@@ -1997,22 +2031,22 @@ const EstimateManager = {
                 sepAfterSectionActions.classList.remove('hidden');
             }
         }
-        
+
         try {
             const section = await api.getSection(sectionId);
             this.currentSection = section;
-            
+
             const estimate = await api.getEstimate(section.estimateId);
             this.currentEstimateId = section.estimateId;
             this.currentEstimate = estimate;
-            
+
             const block = await api.getBlock(estimate.blockId);
             this.currentBlockId = estimate.blockId;
             this.currentBlock = block;
-            
+
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
-            
+
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
                 <div style="height: 100%; display: flex; flex-direction: column;" data-section-id="${sectionId}">
@@ -2161,18 +2195,18 @@ const EstimateManager = {
             `;
 
             await this.loadStagesTree(sectionId);
-            
+
             // Убеждаемся, что currentSectionId установлен
             if (!this.currentSectionId) {
                 this.currentSectionId = sectionId;
                 console.log('Restored currentSectionId from openSection:', sectionId);
             }
-            
+
             // Финальная проверка
             console.log('=== openSection completed ===');
             console.log('Final currentSectionId:', this.currentSectionId);
             console.log('Final currentSection:', this.currentSection);
-            
+
             // Дополнительная проверка через небольшую задержку
             setTimeout(() => {
                 if (EstimateManager.currentSectionId !== sectionId) {
@@ -2183,10 +2217,10 @@ const EstimateManager = {
                     localStorage.setItem('probim_current_section_id', sectionId);
                 }
             }, 100);
-            
+
         } catch (error) {
             console.error('Error in openSection:', error);
-            
+
             // Если раздел не найден - очищаем его из localStorage
             if (error.message.includes('Failed to fetch section') || error.message.includes('not found')) {
                 console.warn('Section not found, clearing from localStorage');
@@ -2194,7 +2228,7 @@ const EstimateManager = {
                 this.currentSectionId = null;
                 window.currentSectionId = null;
             }
-            
+
             UI.showNotification('Ошибка загрузки раздела: ' + error.message, 'error');
             throw error; // Пробрасываем ошибку дальше для catch в restoreState
         }
@@ -2251,7 +2285,7 @@ const EstimateManager = {
     async toggleStage(stageId) {
         const content = document.getElementById(`stage-${stageId}-content`);
         const icon = document.getElementById(`stage-icon-${stageId}`);
-        
+
         if (content.style.display === 'none') {
             content.style.display = 'block';
             icon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
@@ -2599,7 +2633,7 @@ const EstimateManager = {
                 // Проверяем наличие связи с IFC элементами
                 const parsedIfcElements = this.parseIfcElements(r.ifcElements);
                 const hasIfcLink = parsedIfcElements.length > 0;
-                
+
                 // Иконки связи
                 const linkIconUnlinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-unlink2-icon lucide-unlink-2"><path d="M15 7h2a5 5 0 0 1 0 10h-2m-6 0H7A5 5 0 0 1 7 7h2"/></svg>`;
                 const linkIconLinked = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2-icon lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>`;
@@ -2854,7 +2888,7 @@ const EstimateManager = {
         try {
             const workType = await api.getWorkType(workTypeId);
             const resources = await api.getResources(workTypeId);
-            
+
             const propertiesPanel = document.getElementById('element-properties');
             let html = `
                 <div>
@@ -2917,7 +2951,7 @@ const EstimateManager = {
                     allElements.push(...elements);
                 }
             }
-            
+
             if (allElements.length > 0) {
                 // Убираем дубликаты
                 const uniqueElements = [...new Set(allElements)];
@@ -2956,7 +2990,7 @@ const EstimateManager = {
                 // Получаем элементы из data-атрибута
                 const ifcElementsStr = resourceRow.dataset.ifcElements;
                 const ifcElements = this.parseIfcElements(ifcElementsStr);
-                
+
                 if (ifcElements && ifcElements.length > 0) {
                     this.highlightResourceElements(ifcElements);
                 } else {
@@ -3055,7 +3089,7 @@ const EstimateManager = {
                 // Получаем элементы из data-атрибута
                 const ifcElementsStr = resourceRow.dataset.ifcElements;
                 const ifcElements = this.parseIfcElements(ifcElementsStr);
-                
+
                 if (ifcElements && ifcElements.length > 0) {
                     this.highlightResourceElements(ifcElements);
                 } else {
@@ -3178,23 +3212,23 @@ const EstimateManager = {
 
     async openStage(stageId) {
         this.currentStageId = stageId;
-        
+
         try {
             const stage = await api.getStage(stageId);
             const section = await api.getSection(this.currentSectionId);
             this.currentSection = section;
-            
+
             // Получаем данные для breadcrumb
             if (section && section.estimate) {
                 this.currentEstimate = section.estimate;
                 this.currentEstimateId = section.estimate.id;
-                
+
                 if (section.estimate.block) {
                     this.currentBlock = section.estimate.block;
                     this.currentBlockId = section.estimate.block.id;
                 }
             }
-            
+
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
 
@@ -3220,7 +3254,7 @@ const EstimateManager = {
             `;
 
             await this.loadWorkTypes(stageId);
-            
+
         } catch (error) {
             UI.showNotification('Ошибка загрузки этапа: ' + error.message, 'error');
         }
@@ -3278,27 +3312,27 @@ const EstimateManager = {
 
     async openWorkType(workTypeId) {
         this.currentWorkTypeId = workTypeId; // Сохраняем для последующего использования
-        
+
         try {
             const workType = await api.getWorkType(workTypeId);
             const stage = await api.getStage(this.currentStageId);
-            
+
             // Обновляем данные для breadcrumb
             if (stage && stage.section) {
                 this.currentSection = stage.section;
                 this.currentSectionId = stage.section.id;
-                
+
                 if (stage.section.estimate) {
                     this.currentEstimate = stage.section.estimate;
                     this.currentEstimateId = stage.section.estimate.id;
-                    
+
                     if (stage.section.estimate.block) {
                         this.currentBlock = stage.section.estimate.block;
                         this.currentBlockId = stage.section.estimate.block.id;
                     }
                 }
             }
-            
+
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
 
@@ -3324,7 +3358,7 @@ const EstimateManager = {
             `;
 
             await this.loadResources(workTypeId);
-            
+
         } catch (error) {
             UI.showNotification('Ошибка загрузки вида работ: ' + error.message, 'error');
         }
@@ -3360,7 +3394,7 @@ const EstimateManager = {
                     'labor': 'Труд',
                     'equipment': 'Оборудование'
                 };
-                
+
                 html += `
                     <tr>
                         <td><span style="padding: 4px 8px; background: var(--primary-light); color: var(--primary); border-radius: 4px; font-size: 12px;">${typeLabels[resource.type] || resource.type}</span></td>
@@ -3466,7 +3500,7 @@ const EstimateManager = {
     async editStage(stageId) {
         try {
             const stage = await api.getStage(stageId);
-            
+
             const content = `
                 <div class="form-group">
                     <label>Название этапа *</label>
@@ -3608,7 +3642,7 @@ const EstimateManager = {
     async editWorkType(workTypeId) {
         try {
             const workType = await api.getWorkType(workTypeId);
-            
+
             const content = `
                 <div class="form-group">
                     <label>Название работы *</label>
@@ -3764,7 +3798,7 @@ const EstimateManager = {
                 if (workTypeId) {
                     await this.recalculateHierarchyFixed(workTypeId);
                 }
-                
+
                 UI.showNotification('Ресурс удален', 'success');
                 if (document.getElementById('estimate-tree-container')) {
                     if (workTypeId) {
@@ -3783,7 +3817,7 @@ const EstimateManager = {
     async editResource(resourceId) {
         try {
             const resource = await api.getResource(resourceId);
-            
+
             const content = `
                 <div class="form-group">
                     <label>Тип ресурса *</label>
@@ -3820,13 +3854,13 @@ const EstimateManager = {
 
             setTimeout(() => {
                 document.getElementById('save-resource-btn').addEventListener('click', async () => {
-                const data = {
-                    resourceType: document.getElementById('resource-type').value,
-                    name: document.getElementById('resource-name').value.trim(),
-                    unit: document.getElementById('resource-unit').value.trim(),
-                    quantity: parseFloat(document.getElementById('resource-quantity').value),
-                    unitPrice: parseFloat(document.getElementById('resource-unit-cost').value),
-                };                    if (!data.name || !data.unit) {
+                    const data = {
+                        resourceType: document.getElementById('resource-type').value,
+                        name: document.getElementById('resource-name').value.trim(),
+                        unit: document.getElementById('resource-unit').value.trim(),
+                        quantity: parseFloat(document.getElementById('resource-quantity').value),
+                        unitPrice: parseFloat(document.getElementById('resource-unit-cost').value),
+                    }; if (!data.name || !data.unit) {
                         alert('Заполните обязательные поля');
                         return;
                     }
@@ -3900,16 +3934,16 @@ const EstimateManager = {
                     UI.closeModal();
                     console.log('📦 Начало загрузки IFC...');
                     UI.showLoadingModal('Импорт IFC модели');
-                    
+
                     // Симулируем прогресс загрузки файла
                     UI.updateLoadingProgress(20);
-                    
+
                     console.log('🚀 Отправка файла на сервер...');
                     await api.uploadIFC(sectionId, file);
-                    
+
                     console.log('✅ Файл загружен');
                     UI.updateLoadingProgress(100);
-                    
+
                     setTimeout(() => {
                         UI.closeLoadingModal();
                         UI.showNotification('IFC файл успешно загружен и конвертирован', 'success');
@@ -3968,15 +4002,15 @@ const EstimateManager = {
                     UI.closeModal();
                     console.log('🔄 Начало замены IFC...');
                     UI.showLoadingModal('Замена IFC модели');
-                    
+
                     UI.updateLoadingProgress(20);
-                    
+
                     console.log('🚀 Отправка нового файла...');
                     await api.uploadIFC(sectionId, file);
-                    
+
                     console.log('✅ Файл заменён');
                     UI.updateLoadingProgress(100);
-                    
+
                     setTimeout(() => {
                         UI.closeLoadingModal();
                         UI.showNotification('IFC файл успешно заменён и конвертирован', 'success');
@@ -3995,7 +4029,7 @@ const EstimateManager = {
     async viewIFC(sectionId) {
         try {
             const section = await api.getSection(sectionId);
-            
+
             if (!section.ifcFileUrl) {
                 UI.showNotification('IFC файл не загружен', 'error');
                 return;
@@ -4152,12 +4186,12 @@ const EstimateManager = {
     },
 
     makeEditable(element, currentValue, onSave) {
-        element.onclick = async function(e) {
+        element.onclick = async function (e) {
             e.stopPropagation();
-            
+
             // Если уже редактируется - выходим
             if (element.querySelector('input')) return;
-            
+
             const prevHeight = Math.max(18, element.getBoundingClientRect().height || 18);
             const prevWidth = Math.max(60, element.getBoundingClientRect().width || 60);
 
@@ -4204,11 +4238,11 @@ const EstimateManager = {
     },
 
     makeEditableSelect(element, currentValue, options, onSave) {
-        element.onclick = async function(e) {
+        element.onclick = async function (e) {
             e.stopPropagation();
-            
+
             if (element.querySelector('select')) return;
-            
+
             const prevHeight = Math.max(18, element.getBoundingClientRect().height || 18);
             const prevWidth = Math.max(60, element.getBoundingClientRect().width || 60);
 
@@ -4293,7 +4327,7 @@ const EstimateManager = {
             };
             const newStage = await api.createStage(data);
             UI.showNotification('Вид работ создан', 'success');
-            
+
             // Добавляем новый элемент в DOM без перезагрузки всего дерева
             const treeContainer = document.getElementById(`stage-tree-${sectionId}`);
             if (treeContainer) {
@@ -4303,7 +4337,7 @@ const EstimateManager = {
                     const collapseIcon = treeContainer.previousElementSibling?.querySelector('.collapse-icon');
                     if (collapseIcon) collapseIcon.textContent = '▼';
                 }
-                
+
                 // Находим или создаем контейнер для списка видов работ
                 let workTypesList = treeContainer.querySelector('.work-types-list');
                 if (!workTypesList) {
@@ -4314,7 +4348,7 @@ const EstimateManager = {
                     workTypesList.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
                     treeContainer.appendChild(workTypesList);
                 }
-                
+
                 // Создаем HTML для нового вида работ
                 const newHtml = await this.renderWorkTypeRow(newStage, sectionId);
                 const tempDiv = document.createElement('div');
@@ -4336,12 +4370,12 @@ const EstimateManager = {
                 description: 'material' // используем description для типа
             };
             const newResource = await api.createWorkType(data);
-            
+
             // Каскадный пересчет после создания ресурса (передаем ID нового ресурса)
             await this.recalculateHierarchy(newResource.id);
-            
+
             UI.showNotification('Ресурс создан', 'success');
-            
+
             // Добавляем новый ресурс в DOM без перезагрузки всего дерева
             const resourcesContainer = document.getElementById(`worktype-resources-${stageId}`);
             if (resourcesContainer) {
@@ -4351,13 +4385,13 @@ const EstimateManager = {
                     const collapseIcon = resourcesContainer.previousElementSibling?.querySelector('.collapse-icon-wt');
                     if (collapseIcon) collapseIcon.textContent = '▼';
                 }
-                
+
                 // Убираем сообщение "Ресурсы не добавлены" если оно есть
                 const emptyMsg = resourcesContainer.querySelector('[style*="font-style: italic"]');
                 if (emptyMsg) {
                     emptyMsg.remove();
                 }
-                
+
                 // Создаем HTML для нового ресурса
                 const resource = {
                     id: newResource.id,
@@ -4369,7 +4403,7 @@ const EstimateManager = {
                     unit: newResource.unit || 'шт',
                     type: newResource.description || 'material'
                 };
-                
+
                 const newHtml = this.renderResourceRow(resource);
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = newHtml;
@@ -4383,7 +4417,7 @@ const EstimateManager = {
     // Удаление этапа (Section)
     async deleteStageFromEstimate(sectionId) {
         if (!confirm('Удалить этап и все его виды работ?')) return;
-        
+
         try {
             await api.deleteSection(sectionId);
             UI.showNotification('Этап удален', 'success');
@@ -4396,7 +4430,7 @@ const EstimateManager = {
     // Удаление вида работ (Stage)
     async deleteWorkTypeFromStage(stageId) {
         if (!confirm('Удалить вид работ и все его ресурсы?')) return;
-        
+
         try {
             await api.deleteStage(stageId);
             UI.showNotification('Вид работ удален', 'success');
@@ -4410,40 +4444,40 @@ const EstimateManager = {
     async updateWorkTypeField(stageId, field, value) {
         try {
             const updateData = {};
-            
+
             if (field === 'unit') {
                 updateData.unit = value;
             } else if (field === 'quantity') {
                 updateData.quantity = value ? parseFloat(value) : null;
             }
-            
+
             await api.updateStage(stageId, updateData);
-            
+
             // Пересчитываем цену за единицу после обновления количества
             if (field === 'quantity') {
                 const stage = await api.getStage(stageId);
                 const workTypes = await api.getWorkTypes(stageId);
-                
+
                 // Вычисляем сумму ресурсов
                 let totalCost = 0;
                 for (const wt of workTypes) {
                     totalCost += (wt.totalCost || 0);
                 }
                 if (totalCost === 0) totalCost = stage.totalCost || 0;
-                
+
                 // Обновляем отображение цены за единицу
                 const quantity = parseFloat(value) || 0;
                 const unitCost = quantity > 0 ? (totalCost / quantity) : 0;
-                
+
                 const unitCostEl = document.querySelector(`.wt-unit-cost[data-wt-id="${stageId}"]`);
                 if (unitCostEl) {
                     unitCostEl.textContent = quantity > 0 ? UI.formatNumber(unitCost) : '—';
                 }
-                
+
                 // Сохраняем вычисленную цену в БД
                 await api.updateStage(stageId, { unitCost: unitCost });
             }
-            
+
         } catch (error) {
             console.error('Ошибка обновления вида работ:', error);
             UI.showNotification('Ошибка: ' + error.message, 'error');
@@ -4453,7 +4487,7 @@ const EstimateManager = {
     // Удаление ресурса (WorkType)
     async deleteResourceFromWorkType(workTypeId) {
         if (!confirm('Удалить ресурс?')) return;
-        
+
         try {
             await api.deleteWorkType(workTypeId);
             UI.showNotification('Ресурс удален', 'success');
@@ -4563,7 +4597,7 @@ const EstimateManager = {
     // Удаление этапа с подтверждением
     async deleteStage(stageId) {
         if (!confirm('Удалить этап и все его виды работ?')) return;
-        
+
         try {
             await api.deleteStage(stageId);
             UI.showNotification('Этап удален', 'success');
@@ -4576,7 +4610,7 @@ const EstimateManager = {
     // Удаление вида работ с подтверждением
     async deleteWorkType(workTypeId) {
         if (!confirm('Удалить вид работ и все его ресурсы?')) return;
-        
+
         try {
             await api.deleteWorkType(workTypeId);
             UI.showNotification('Вид работ удален', 'success');
@@ -4589,7 +4623,7 @@ const EstimateManager = {
     // Удаление ресурса с подтверждением
     async deleteResource(resourceId) {
         if (!confirm('Удалить ресурс?')) return;
-        
+
         try {
             const resource = await api.getResource(resourceId);
             await api.deleteResource(resourceId);
@@ -4606,7 +4640,7 @@ const EstimateManager = {
     // ========================================
     // Работа с IFC моделями и xeokit viewer
     // ========================================
-    
+
     viewerInitialized: false,
     viewerInitPromise: null,
     viewerDisplayMode: 'textured',
@@ -4645,16 +4679,16 @@ const EstimateManager = {
         console.log('Выбран элемент IFC:', elementId);
         console.log('Всего выбрано:', selectedElements.length);
         console.log('Свойства:', properties);
-        
+
         // Сохраняем выбранные элементы
         this.selectedIfcElements = selectedElements;
-        
+
         // Обновляем панель свойств
         this.updatePropertiesPanel(properties);
-        
+
         // Обновляем кнопки связать/отвязать
         this.updateLinkButtons();
-        
+
         // Обновляем кнопки изоляции
         this.updateIsolationButtons();
     },
@@ -4784,13 +4818,13 @@ const EstimateManager = {
                     <div style="font-weight: 600; color: var(--gray-800); margin-bottom: 8px;">Габаритные данные</div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
                         ${[
-                            { label: 'Объём', value: dimensionBlock.volume },
-                            { label: 'Площадь', value: dimensionBlock.area },
-                            { label: 'Глубина', value: dimensionBlock.depth },
-                            { label: 'Сторона', value: dimensionBlock.side },
-                            { label: 'Длина', value: dimensionBlock.length },
-                            { label: 'Высота', value: dimensionBlock.height },
-                        ].map(({ label, value }) => `
+                { label: 'Объём', value: dimensionBlock.volume },
+                { label: 'Площадь', value: dimensionBlock.area },
+                { label: 'Глубина', value: dimensionBlock.depth },
+                { label: 'Сторона', value: dimensionBlock.side },
+                { label: 'Длина', value: dimensionBlock.length },
+                { label: 'Высота', value: dimensionBlock.height },
+            ].map(({ label, value }) => `
                             <div style="border: 1px dashed var(--gray-200); border-radius: 6px; padding: 8px 10px;">
                                 <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 4px;">
                                     <span>${label}</span>
@@ -4849,7 +4883,7 @@ const EstimateManager = {
     toggleSpacesVisibility() {
         if (IFCViewerManager.viewer) {
             const areSpacesVisible = IFCViewerManager.toggleSpaces();
-            
+
             // Обновляем стиль кнопки
             const btn = document.getElementById('toggle-spaces-btn');
             if (btn) {
@@ -4927,7 +4961,7 @@ const EstimateManager = {
             this.selectedIfcElements = [];
             this.updateLinkButtons();
             this.updateIsolationButtons();
-            
+
             // Очищаем панель свойств
             const panel = document.getElementById('element-properties');
             if (panel) {
@@ -4955,17 +4989,17 @@ const EstimateManager = {
     updateIsolationButtons() {
         const isolateBtn = document.getElementById('isolate-btn');
         const unisolateBtn = document.getElementById('unisolate-btn');
-        
+
         if (isolateBtn) {
             isolateBtn.disabled = this.selectedIfcElements.length === 0;
         }
-        
+
         if (unisolateBtn) {
             // Кнопка активна когда есть viewer
             unisolateBtn.disabled = !IFCViewerManager.viewer;
         }
     },
-    
+
     // Переменные для хранения выбранных элементов
     selectedResources: [],
     selectedIfcElements: [],
@@ -5051,7 +5085,7 @@ const EstimateManager = {
 
     async unlinkIFC(estimateId, options = {}) {
         const { stayOnList = false } = options;
-        
+
         if (!confirm('Вы уверены, что хотите отвязать IFC файл от этой сметы?')) {
             return;
         }
@@ -5081,14 +5115,14 @@ const EstimateManager = {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.ifc';
-        
+
         input.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             const startTime = Date.now();
             this._showUploadModal(file);
-            
+
             // Таймер
             const timerInterval = setInterval(() => {
                 const elapsed = Date.now() - startTime;
@@ -5102,12 +5136,12 @@ const EstimateManager = {
             const xhr = new XMLHttpRequest();
             const formData = new FormData();
             formData.append('ifc', file);
-            
+
             // Гибридный прогресс: 
             // 0-50%: Реальная загрузка файла на сервер
             // 50-90%: Симуляция обработки/конвертации (калибровка: 32MB ~ 110 сек)
             // 100%: Готово
-            
+
             let simulationStarted = false;
 
             xhr.upload.onprogress = (event) => {
@@ -5115,7 +5149,7 @@ const EstimateManager = {
                     // Масштабируем реальную загрузку в диапазон 0-50%
                     const uploadPercent = (event.loaded / event.total) * 50;
                     this._updateUploadModal(uploadPercent, event.loaded, event.total);
-                    
+
                     // Если загрузка завершена (100% отправлено), запускаем симуляцию конвертации
                     if (event.loaded === event.total && !simulationStarted) {
                         simulationStarted = true;
@@ -5123,17 +5157,17 @@ const EstimateManager = {
                     }
                 }
             };
-            
+
             xhr.onload = async () => {
                 clearInterval(timerInterval);
                 this._stopConversionSimulation();
-                
+
                 if (xhr.status === 200) {
                     const elapsed = Date.now() - startTime;
                     const seconds = Math.floor((elapsed / 1000) % 60);
                     const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
                     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    
+
                     this._updateUploadModal(100, file.size, file.size);
                     setTimeout(() => {
                         this._showUploadSuccess(file, timeString, estimateId, stayOnList);
@@ -5144,7 +5178,7 @@ const EstimateManager = {
                     UI.showNotification('Ошибка загрузки: ' + xhr.statusText, 'error');
                 }
             };
-            
+
             xhr.onerror = () => {
                 clearInterval(timerInterval);
                 this._stopConversionSimulation();
@@ -5152,11 +5186,11 @@ const EstimateManager = {
                 if (overlay) overlay.remove();
                 UI.showNotification('Ошибка сети при загрузке', 'error');
             };
-            
+
             xhr.open('POST', `${API_BASE_URL}/estimates/${estimateId}/upload-ifc`);
             xhr.send(formData);
         };
-        
+
         input.click();
     },
 
@@ -5164,33 +5198,33 @@ const EstimateManager = {
 
     _startConversionSimulation(fileSize) {
         if (this._conversionInterval) clearInterval(this._conversionInterval);
-        
+
         let progress = 50;
         const maxProgress = 90;
         const intervalTime = 500; // Обновление каждые 0.5 сек
-        
+
         // Эвристика на основе данных пользователя: 32 MB = 110 сек (1:50)
         // Скорость обработки ~ 0.29 MB/сек или ~3.5 сек на 1 MB
         const sizeMB = fileSize / (1024 * 1024);
-        const estimatedDurationSec = sizeMB * 3.5; 
-        
+        const estimatedDurationSec = sizeMB * 3.5;
+
         // Минимальное время анимации 5 сек, чтобы не было мгновенных скачков на мелких файлах
         const duration = Math.max(5, estimatedDurationSec);
-        
+
         // Нам нужно пройти 40% (от 50 до 90) за estimatedDurationSec
         // Количество шагов = duration / (intervalTime / 1000)
         const totalSteps = duration / (intervalTime / 1000);
         const step = 40 / totalSteps;
-        
+
         this._conversionInterval = setInterval(() => {
             if (progress < maxProgress) {
                 progress += step;
-                
+
                 // Обновляем UI, но не трогаем размер файла (он уже загружен)
                 const progressBar = document.getElementById('upload-progress-bar');
                 const percentText = document.getElementById('upload-percent');
                 const statusText = document.getElementById('upload-status');
-                
+
                 if (progressBar) progressBar.style.width = `${progress}%`;
                 if (percentText) percentText.textContent = `${Math.round(progress)}%`;
                 if (statusText) statusText.textContent = 'Конвертация...';
@@ -5231,35 +5265,35 @@ const EstimateManager = {
                 </div>
             </div>
         `;
-        
+
         const existing = document.getElementById('upload-modal-overlay');
         if (existing) existing.remove();
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     },
-    
+
     _updateUploadModal(percent, loaded, total) {
         const progressBar = document.getElementById('upload-progress-bar');
         const percentText = document.getElementById('upload-percent');
         const sizeText = document.getElementById('upload-size');
         const statusText = document.getElementById('upload-status');
-        
+
         if (progressBar) progressBar.style.width = `${percent}%`;
         if (percentText) percentText.textContent = `${Math.round(percent)}%`;
         if (sizeText) sizeText.textContent = (loaded / (1024 * 1024)).toFixed(2);
-        
+
         if (percent >= 100 && statusText) {
             statusText.textContent = 'Конвертация...';
         } else if (statusText) {
             statusText.textContent = 'Загрузка...';
         }
     },
-    
+
     _showUploadSuccess(file, timeString, estimateId, stayOnList) {
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
         const body = document.getElementById('upload-modal-body');
         if (!body) return;
-        
+
         body.innerHTML = `
             <div style="text-align: center;">
                 <div style="width: 64px; height: 64px; background: rgba(16,124,16,0.1); color: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -5283,18 +5317,18 @@ const EstimateManager = {
             </div>
         `;
     },
-    
+
     async _closeUploadModalAndRefresh(estimateId, stayOnList) {
         const overlay = document.getElementById('upload-modal-overlay');
         if (overlay) overlay.remove();
-        
+
         try {
-             const estimate = await api.getEstimate(estimateId);
-             if (!stayOnList && estimate.xktFileUrl) {
+            const estimate = await api.getEstimate(estimateId);
+            if (!stayOnList && estimate.xktFileUrl) {
                 const xktPath = estimate.xktFileUrl.startsWith('/') ? estimate.xktFileUrl : `/${estimate.xktFileUrl}`;
                 await this.loadIfcViewer(estimateId, xktPath);
             }
-            
+
             if (stayOnList) {
                 await this.loadEstimates(this.currentBlockId);
             } else {
@@ -5309,7 +5343,7 @@ const EstimateManager = {
     // Загрузка IFC модели в просмотрщик
     async loadIfcViewer(estimateId, xktUrl) {
         this.currentEstimateWithIfc = estimateId;
-        
+
         console.log('🎬 Загрузка IFC viewer для сметы:', estimateId);
         console.log('📦 XKT URL:', xktUrl);
 
@@ -5317,14 +5351,14 @@ const EstimateManager = {
         if (!viewerReady) {
             throw new Error('3D viewer не инициализирован');
         }
-        
+
         try {
             const overlay = document.getElementById('ifc-viewer-overlay');
             const statusText = document.getElementById('ifc-status-text');
             const controls = document.getElementById('viewer-controls');
-            
+
             if (statusText) statusText.textContent = 'Загрузка модели...';
-            
+
             // Если frontend обслуживается отдельно (например, :8000), то /uploads/... нужно грузить с backend (:3001).
             const backendOrigin = (typeof API_BASE_URL === 'string')
                 ? API_BASE_URL.replace(/\/?api\/?$/i, '')
@@ -5341,17 +5375,17 @@ const EstimateManager = {
                 : (shouldUseBackendOrigin && xktUrl.startsWith('/'))
                     ? `${backendOrigin}${xktUrl}`
                     : (xktUrl.startsWith('/') ? xktUrl : `/${xktUrl}`);
-            
+
             // Загружаем модель без модального окна (по требованию пользователя)
             await IFCViewerManager.loadXKT(fullUrl, `estimate-${estimateId}`);
-            
+
             if (overlay) overlay.style.display = 'none';
             if (controls) controls.classList.add('is-visible');
             this.setViewerDisplayMode(this.viewerDisplayMode || 'textured');
-            
+
             UI.showNotification('3D модель загружена', 'success');
             await this.highlightLinkedResources(estimateId);
-            
+
         } catch (error) {
             console.error('Ошибка загрузки IFC:', error);
             const statusText = document.getElementById('ifc-status-text');
@@ -5368,14 +5402,14 @@ const EstimateManager = {
     async highlightLinkedResources(estimateId) {
         try {
             const linkedElements = await this.getAllLinkedElements(estimateId);
-            
+
             if (linkedElements.length > 0) {
                 IFCViewerManager.setPersistentHighlights(linkedElements, [0.1, 0.8, 0.3]);
                 console.log(`✓ Подсвечено ${linkedElements.length} связанных элементов`);
             } else {
                 IFCViewerManager.clearPersistentHighlights();
             }
-            
+
         } catch (error) {
             console.error('Ошибка подсветки связанных элементов:', error);
         }
@@ -5386,7 +5420,7 @@ const EstimateManager = {
         const resourceEl = document.querySelector(`[data-resource-id="${resourceId}"]`);
         const checkbox = document.querySelector(`.resource-checkbox[data-resource-id="${resourceId}"]`);
         if (!resourceEl) return;
-        
+
         // Toggle выбора
         const index = this.selectedResources.indexOf(resourceId);
         if (index > -1) {
@@ -5401,7 +5435,7 @@ const EstimateManager = {
             resourceEl.style.borderWidth = '2px';
             if (checkbox) checkbox.checked = true;
         }
-        
+
         const linkedElements = this.parseIfcElements(resourceEl.dataset?.ifcElements);
         this.highlightResourceElements(linkedElements);
 
@@ -5415,34 +5449,34 @@ const EstimateManager = {
         const btnUnlink = document.getElementById('btn-unlink-resource');
         const linkBtnText = document.getElementById('link-btn-text');
         const unlinkBtnText = document.getElementById('unlink-btn-text');
-        
+
         if (!btnLink || !btnUnlink) return;
-        
+
         const hasResourceSelection = this.selectedResources.length > 0;
         const hasIfcSelection = this.selectedIfcElements.length > 0;
-        
+
         // Обновляем текст кнопок с количеством выбранных элементов
         if (linkBtnText && hasResourceSelection) {
             const resourceText = this.selectedResources.length === 1 ? 'ресурс' : 'ресурсов';
             const ifcText = this.selectedIfcElements.length === 1 ? 'элемент' : 'элементов';
-            linkBtnText.textContent = hasIfcSelection 
+            linkBtnText.textContent = hasIfcSelection
                 ? `Связать (${this.selectedResources.length} ${resourceText} → ${this.selectedIfcElements.length} ${ifcText})`
                 : `Связать (${this.selectedResources.length} ${resourceText})`;
         } else if (linkBtnText) {
             linkBtnText.textContent = 'Связать';
         }
-        
+
         if (unlinkBtnText && hasResourceSelection) {
             unlinkBtnText.textContent = `Отвязать (${this.selectedResources.length})`;
         } else if (unlinkBtnText) {
             unlinkBtnText.textContent = 'Отвязать';
         }
-        
+
         // Показываем кнопки в ribbon
         if (hasResourceSelection) {
             btnLink.style.display = 'flex';
             btnUnlink.style.display = 'flex';
-            
+
             // Активность кнопки "Связать" зависит от наличия выбранных IFC элементов
             btnLink.disabled = !hasIfcSelection;
             if (!hasIfcSelection) {
@@ -5454,7 +5488,7 @@ const EstimateManager = {
                 btnLink.style.cursor = 'pointer';
                 btnLink.title = `Связать ${this.selectedResources.length} ресурсов с ${this.selectedIfcElements.length} IFC элементами`;
             }
-            
+
             btnUnlink.title = `Отвязать ${this.selectedResources.length} выбранных ресурсов от IFC элементов`;
         } else {
             btnLink.style.display = 'none';
@@ -5483,7 +5517,7 @@ const EstimateManager = {
                         if (wtElements.length > 0) {
                             wtElements.forEach(el => linkedElements.add(el));
                         }
-                        
+
                         // Also check resources if they exist separately (though current logic seems to use WorkTypes as resources)
                         // If there are child resources, we should check them too
                         try {
@@ -5508,30 +5542,30 @@ const EstimateManager = {
     // Фильтрация ресурсов по статусу связи с IFC
     async filterResources(filterType) {
         this.currentResourceFilter = filterType;
-        
+
         // Обновляем активность кнопок фильтра
         const btnLinked = document.getElementById('btn-filter-linked');
         const btnUnlinked = document.getElementById('btn-filter-unlinked');
         const btnReset = document.getElementById('btn-filter-reset');
         const filterButtons = [btnLinked, btnUnlinked, btnReset];
-        filterButtons.forEach((btn) => btn?.classList.remove('active')); 
+        filterButtons.forEach((btn) => btn?.classList.remove('active'));
         if (filterType === 'linked') btnLinked?.classList.add('active');
         if (filterType === 'unlinked') btnUnlinked?.classList.add('active');
         if (filterType === 'all') btnReset?.classList.add('active');
-        
+
         // Названия фильтров
         const filterNames = {
             'all': 'Все ресурсы',
             'linked': 'Связанные с IFC',
             'unlinked': 'Не связанные с IFC'
         };
-        
+
         // Получаем актуальные данные о связях с сервера, чтобы избежать проблем с устаревшим DOM
         let linkedIfcElements = [];
         if (this.currentEstimateId) {
             linkedIfcElements = await this.getAllLinkedElements(this.currentEstimateId);
         }
-        
+
         // Также собираем ID из DOM, чтобы учесть только что сделанные изменения, которые могли не успеть попасть в API
         const allResources = document.querySelectorAll('.resource-item');
         allResources.forEach(resourceEl => {
@@ -5541,7 +5575,7 @@ const EstimateManager = {
                 elements.forEach(id => linkedIfcElements.push(id));
             }
         });
-        
+
         const linkedIfcElementsSet = new Set(linkedIfcElements);
         // Обновляем массив уникальными значениями
         linkedIfcElements = Array.from(linkedIfcElementsSet);
@@ -5549,20 +5583,20 @@ const EstimateManager = {
         // Применяем фильтр ко всем ресурсам в списке
         let visibleCount = 0;
         let hiddenCount = 0;
-        
+
         allResources.forEach(resourceEl => {
             // Проверяем, есть ли ID этого ресурса в списке связанных (или используем DOM как fallback)
             // Но лучше доверять DOM для отображения списка, так как он строится из данных
             const hasIfcLink = resourceEl.dataset.hasIfcLink === 'true';
-            
+
             let shouldShow = true;
-            
+
             if (filterType === 'linked') {
                 shouldShow = hasIfcLink;
             } else if (filterType === 'unlinked') {
                 shouldShow = !hasIfcLink;
             }
-            
+
             if (shouldShow) {
                 resourceEl.style.display = '';
                 visibleCount++;
@@ -5571,52 +5605,52 @@ const EstimateManager = {
                 hiddenCount++;
             }
         });
-        
+
         // Логика 3D отображения
         if (IFCViewerManager.viewer) {
             // Сбрасываем постоянную подсветку (зеленую), чтобы она не конфликтовала с фильтром
             IFCViewerManager.clearPersistentHighlights();
 
             const allIds = IFCViewerManager.getAllObjectIds();
-            
+
             if (filterType === 'all') {
                 IFCViewerManager.resetColors();
                 IFCViewerManager.showAllElements();
                 IFCViewerManager.setElementsOpacity(allIds, 1.0);
-                
+
                 // Восстанавливаем подсветку, если нужно (но пользователь просил сброс)
                 // await this.highlightLinkedResources(this.currentEstimateId); 
             } else {
                 const unlinkedIds = allIds.filter(id => !linkedIfcElementsSet.has(id));
-                
+
                 if (filterType === 'linked') {
                     // Linked: Orange & Opaque, Unlinked: Transparent
                     IFCViewerManager.showAllElements();
-                    
+
                     // Unlinked -> Transparent & No Color
                     IFCViewerManager.setElementsOpacity(unlinkedIds, 0.1);
                     IFCViewerManager.setElementsColor(unlinkedIds, null);
-                    
+
                     // Linked -> Opaque & Orange
                     IFCViewerManager.setElementsOpacity(linkedIfcElements, 1.0);
                     IFCViewerManager.setElementsColor(linkedIfcElements, [1.0, 0.6, 0.0]); // Orange
-                    
+
                 } else if (filterType === 'unlinked') {
                     // Unlinked: Linked Hidden, Unlinked Opaque (Solid)
                     // Скрываем связанные
                     IFCViewerManager.hideElements(linkedIfcElements);
                     // Показываем несвязанные
                     IFCViewerManager.showElements(unlinkedIds);
-                    
+
                     // Make unlinked solid and reset color
                     IFCViewerManager.setElementsOpacity(unlinkedIds, 1.0);
                     IFCViewerManager.setElementsColor(unlinkedIds, null);
                 }
             }
         }
-        
+
         UI.showNotification(`${filterNames[filterType]}: ${visibleCount} показано${hiddenCount > 0 ? `, ${hiddenCount} скрыто` : ''}`, 'success');
-        
+
         // Обновляем кнопки изоляции
         this.updateIsolationButtons();
     },
@@ -5632,10 +5666,10 @@ const EstimateManager = {
             // Получаем текущий ресурс
             const resource = await api.getResource(resourceId);
             const currentElements = this.parseIfcElements(resource.ifcElements);
-            
+
             // Объединяем текущие и новые элементы (без дубликатов)
             const newElements = [...new Set([...currentElements, ...this.selectedIfcElements])];
-            
+
             // Обновляем ресурс
             await api.linkIFC(resourceId, newElements);
 
@@ -5646,10 +5680,10 @@ const EstimateManager = {
                 UI.showNotification('Связь установлена', 'success');
                 await this.loadEstimateStructure(this.currentEstimateId);
             }
-            
+
             // Очищаем выбор
             this.clearIfcSelection();
-            
+
         } catch (error) {
             UI.showNotification('Ошибка связывания: ' + error.message, 'error');
         }
@@ -5660,14 +5694,14 @@ const EstimateManager = {
         UI.confirmDelete('Вы уверены, что хотите разорвать связь? (Да/Нет)', async () => {
             try {
                 await api.linkIFC(resourceId, []);
-                
+
                 UI.showNotification('Связь разорвана', 'success');
                 await this.loadEstimateStructure(this.currentEstimateId);
-                
+
                 // Очищаем подсветку
                 IFCViewerManager.clearPersistentHighlights();
                 await this.highlightLinkedResources(this.currentEstimateId);
-                
+
             } catch (error) {
                 UI.showNotification('Ошибка разрыва связи: ' + error.message, 'error');
             }
@@ -5680,7 +5714,7 @@ const EstimateManager = {
         if (!IFCViewerManager.viewer) return;
 
         let count = elementIds.length;
-        
+
         // Получаем реальные данные из модели
         const metrics = IFCViewerManager.getElementsVolumeAndArea(elementIds);
         const totalVolume = metrics.volume;
@@ -5748,9 +5782,9 @@ const EstimateManager = {
         setTimeout(() => {
             document.getElementById('apply-calc-btn').addEventListener('click', async () => {
                 const selectedUnit = document.querySelector('input[name="calc-unit"]:checked').value;
-                
+
                 let newQuantity = 0;
-                
+
                 if (selectedUnit === 'шт') {
                     newQuantity = count;
                 } else if (selectedUnit === 'м3') {
@@ -5772,7 +5806,7 @@ const EstimateManager = {
                         unit: selectedUnit,
                         quantity: newQuantity
                     });
-                    
+
                     UI.closeModal();
                     UI.showNotification('Объем и единица измерения обновлены', 'success');
                     await this.loadEstimateStructure(this.currentEstimateId);
@@ -5871,7 +5905,7 @@ const EstimateManager = {
     // ========================================
     // Новые функции для работы с разделом сметы
     // ========================================
-    
+
     // Импорт сметы
     async importEstimate(sectionId) {
         UI.showNotification('Функция импорта сметы будет доступна в следующей версии', 'info');

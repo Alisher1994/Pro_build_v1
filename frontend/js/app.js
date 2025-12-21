@@ -1,16 +1,16 @@
-        document.querySelectorAll('.viewer-mode-btn').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const mode = btn.dataset.viewerMode;
-                EstimateManager.setViewerDisplayMode(mode);
-            });
-        });
+document.querySelectorAll('.viewer-mode-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        const mode = btn.dataset.viewerMode;
+        EstimateManager.setViewerDisplayMode(mode);
+    });
+});
 
-        document.getElementById('isolate-btn')?.addEventListener('click', () => {
-            EstimateManager.isolateSelected();
-        });
-        document.getElementById('unisolate-btn')?.addEventListener('click', () => {
-            EstimateManager.showAllElements();
-        });
+document.getElementById('isolate-btn')?.addEventListener('click', () => {
+    EstimateManager.isolateSelected();
+});
+document.getElementById('unisolate-btn')?.addEventListener('click', () => {
+    EstimateManager.showAllElements();
+});
 // ========================================
 // ProBIM - Main Application
 // ========================================
@@ -22,18 +22,24 @@ class ProBIMApp {
         this.projects = [];
         this.ribbonCollapsed = false;
         this.sidebarCollapsed = false;
+        this.navigationHistory = []; // История навигации внутри системы
     }
 
     getInitialRibbonTab() {
-        const allowed = new Set(['estimate', 'schedule', 'supply', 'finance', 'analytics', 'settings']);
+        const allowed = new Set(['dashboard', 'estimate', 'schedule', 'supply', 'finance', 'analytics', 'settings']);
 
+        // Очищаем хеш estimate при загрузке (legacy)
         const hash = (window.location.hash || '').replace('#', '').trim();
-        if (hash && allowed.has(hash)) return hash;
+        if (hash === 'estimate') {
+            window.history.replaceState(null, '', window.location.pathname);
+        } else if (hash && allowed.has(hash)) {
+            return hash;
+        }
 
         const saved = (localStorage.getItem('probim_active_ribbon_tab') || '').trim();
         if (saved && allowed.has(saved)) return saved;
 
-        return 'estimate';
+        return 'dashboard';
     }
 
     applyRibbonTabToUI(ribbonName) {
@@ -47,8 +53,12 @@ class ProBIMApp {
             if (panel) panel.classList.add('active');
 
             localStorage.setItem('probim_active_ribbon_tab', ribbonName);
-            // hash сохраняет вкладку даже без localStorage
-            window.location.hash = `#${ribbonName}`;
+            // Обновляем хеш, но для дашборда очищаем
+            if (ribbonName === 'dashboard') {
+                window.history.replaceState(null, '', window.location.pathname);
+            } else {
+                window.location.hash = `#${ribbonName}`;
+            }
         } catch (e) {
             console.warn('applyRibbonTabToUI failed', e);
         }
@@ -61,21 +71,24 @@ class ProBIMApp {
         // чтобы после F5 оставаться на той же странице.
         this.currentRibbonTab = this.getInitialRibbonTab();
         this.applyRibbonTabToUI(this.currentRibbonTab);
-        
+
         // Загрузка проектов
         await this.loadProjects();
 
         // Восстанавливаем состояние интерфейса
         this.restoreRibbonState();
         this.restoreSidebarState();
-        
+
         // Инициализация обработчиков
         this.initEventHandlers();
         this.setEstimateRibbonContext('blocks');
 
         // Повторно применяем UI вкладки (на случай, если обработчики/DOM обновились)
         this.applyRibbonTabToUI(this.currentRibbonTab);
-        
+
+        // Обновляем состояние ribbon
+        this.updateRibbonState();
+
         console.log('✅ ProBIM Application Ready');
     }
 
@@ -85,7 +98,7 @@ class ProBIMApp {
             this.projects = await api.getProjects();
             console.log('Projects loaded:', this.projects);
             this.renderProjectList();
-            
+
             // Пытаемся восстановить последний активный проект
             const lastProjectId = localStorage.getItem('probim_last_project_id');
             const projectToSelect = this.projects.find(p => p.id === lastProjectId) || this.projects[0];
@@ -97,24 +110,25 @@ class ProBIMApp {
         } catch (error) {
             console.error('Error loading projects:', error);
             console.error('Error details:', error.message, error.stack);
-            
+
             // Показываем пустой список при ошибке
             this.projects = [];
             this.renderProjectList();
-            
+
             UI.showNotification('Не удалось подключиться к серверу. Убедитесь, что backend запущен на порту 3001.', 'error');
         }
     }
 
     renderProjectList() {
         const list = document.getElementById('project-list');
-        
+
         if (this.projects.length === 0) {
+            list.classList.add('empty');
             list.innerHTML = `
-                <li style="text-align: center; padding: 20px; color: var(--gray-600);">
+                <li style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; color: var(--gray-600); cursor: default;">
                     <div style="margin-bottom: 12px;">Нет проектов</div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="app.createProject()">
-                        Создать проект
+                    <button class="btn btn-primary" style="min-width: 180px;" onclick="app.createProject()">
+                        Добавить проект
                     </button>
                 </li>
             `;
@@ -133,20 +147,58 @@ class ProBIMApp {
                         <polyline points="9 22 9 12 15 12 15 22"/>
                     </svg>
                     <span>${safeName}</span>
+                    <button class="project-menu-btn" onclick="event.stopPropagation(); app.toggleProjectMenu('${project.id}', event)" title="Меню">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"/>
+                            <circle cx="12" cy="5" r="1"/>
+                            <circle cx="12" cy="19" r="1"/>
+                        </svg>
+                    </button>
+                    <div class="project-menu" id="project-menu-${project.id}">
+                        <button onclick="event.stopPropagation(); app.editProject('${project.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Изменить
+                        </button>
+                        <button onclick="event.stopPropagation(); app.deleteProject('${project.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                            Удалить
+                        </button>
+                    </div>
                 </li>
             `;
         });
 
+        list.classList.remove('empty');
         list.innerHTML = html;
+
+        // Обновляем состояние ribbon
+        this.updateRibbonState();
+    }
+
+    updateRibbonState() {
+        const ribbon = document.getElementById('office-ribbon');
+        if (!ribbon) return;
+
+        if (!this.currentProjectId) {
+            ribbon.classList.add('disabled');
+        } else {
+            ribbon.classList.remove('disabled');
+        }
     }
 
     async selectProject(projectId, isRestoring = false) {
         this.currentProjectId = projectId;
         localStorage.setItem('probim_last_project_id', projectId);
-        
+
         // Обновляем UI
         this.renderProjectList();
-        
+
         // Обновляем название в title bar
         const project = this.projects.find(p => p.id === projectId);
         if (project) {
@@ -175,14 +227,17 @@ class ProBIMApp {
                         <polyline points="9 22 9 12 15 12 15 22"/>
                     </svg>
                     <h2>Добро пожаловать в ProBIM</h2>
-                    <p>Выберите проект из списка слева или создайте новый</p>
-                    <button class="primary-btn" onclick="app.createProject()">Создать первый проект</button>
+                    <p>Выберите проект из списка слева или добавьте новый</p>
+                    <button class="primary-btn" onclick="app.createProject()">Добавить первый проект</button>
                 </div>
             `;
             return;
         }
 
         switch (this.currentRibbonTab) {
+            case 'dashboard':
+                this.loadDashboardTab();
+                break;
             case 'estimate':
                 if (isRestoring && EstimateManager.restoreState) {
                     await EstimateManager.restoreState(this.currentProjectId);
@@ -205,6 +260,9 @@ class ProBIMApp {
             case 'settings':
                 await SettingsManager.showProjectSettings(this.currentProjectId);
                 break;
+            case 'norms-settings':
+                await SettingsManager.showNormsSettings(this.currentProjectId);
+                break;
         }
     }
 
@@ -219,6 +277,31 @@ class ProBIMApp {
             <div style="padding: 24px;">
                 <h2>Снабжение</h2>
                 <p style="margin-top: 16px; color: var(--gray-600);">Функционал в разработке...</p>
+            </div>
+        `;
+    }
+
+    loadDashboardTab() {
+        document.getElementById('content-area').innerHTML = `
+            <div style="padding: 24px;">
+                <h2 style="margin-bottom: 24px;">Дашборд</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div style="background: var(--white); padding: 24px; border-radius: 8px; box-shadow: var(--shadow-sm);">
+                        <h3 style="margin-bottom: 16px; font-size: 18px;">Обзор проекта</h3>
+                        <p style="color: var(--gray-600);">Общая информация о текущем проекте...</p>
+                    </div>
+                    
+                    <div style="background: var(--white); padding: 24px; border-radius: 8px; box-shadow: var(--shadow-sm);">
+                        <h3 style="margin-bottom: 16px; font-size: 18px;">Статистика</h3>
+                        <p style="color: var(--gray-600);">Ключевые показатели проекта...</p>
+                    </div>
+                    
+                    <div style="background: var(--white); padding: 24px; border-radius: 8px; box-shadow: var(--shadow-sm);">
+                        <h3 style="margin-bottom: 16px; font-size: 18px;">Последние действия</h3>
+                        <p style="color: var(--gray-600);">История изменений...</p>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -337,6 +420,13 @@ class ProBIMApp {
             ScheduleManager.clearSchedule();
         });
 
+        // Закрытие меню проектов при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.project-menu') && !e.target.closest('.project-menu-btn')) {
+                this.closeAllProjectMenus();
+            }
+        });
+
         document.getElementById('assign-work-wizard-btn')?.addEventListener('click', () => {
             ScheduleManager.showWorkDistributionWizard();
         });
@@ -382,13 +472,38 @@ class ProBIMApp {
             await EstimateManager.collapseAllTree();
         });
 
-        // Settings button
+        // Settings buttons
         document.getElementById('project-settings-btn')?.addEventListener('click', () => {
             if (!this.currentProjectId) {
                 UI.showNotification('Сначала выберите проект', 'error');
                 return;
             }
             SettingsManager.showProjectSettings(this.currentProjectId);
+        });
+
+        document.getElementById('tolerance-settings-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            InstructionsManager.show();
+        });
+
+        document.getElementById('worktypes-settings-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            WorkTypeGroupsManager.show();
+        });
+
+        document.getElementById('norms-settings-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            this.currentRibbonTab = 'norms-settings';
+            this.loadCurrentTab();
         });
 
         const ribbonToggle = document.getElementById('ribbon-collapse-toggle');
@@ -444,12 +559,14 @@ class ProBIMApp {
     setEstimateRibbonContext(context) {
         const blocksGroup = document.getElementById('ribbon-group-add-block');
         const estimatesGroup = document.getElementById('ribbon-group-add-estimate');
+        const importGroup = document.getElementById('ribbon-group-import');
         const viewGroup = document.getElementById('ribbon-group-view-tools');
         const stageGroup = document.getElementById('ribbon-group-stage-actions');
         const resourceGroup = document.getElementById('ribbon-group-resource-filters');
         const viewerGroup = document.getElementById('ribbon-group-viewer-modes');
         const sepAfterBlocks = document.getElementById('ribbon-separator-after-blocks');
         const sepAfterEstimates = document.getElementById('ribbon-separator-after-estimates');
+        const sepAfterImport = document.getElementById('ribbon-separator-after-import');
         const sepAfterView = document.getElementById('ribbon-separator-after-view');
         const sepAfterStage = document.getElementById('ribbon-separator-after-stage');
         const sepAfterResources = document.getElementById('ribbon-separator-after-resources');
@@ -457,14 +574,14 @@ class ProBIMApp {
         const contexts = {
             blocks: {
                 show: [blocksGroup],
-                hide: [estimatesGroup, viewGroup, stageGroup, resourceGroup, viewerGroup, sepAfterBlocks, sepAfterEstimates, sepAfterView, sepAfterStage, sepAfterResources],
+                hide: [estimatesGroup, importGroup, viewGroup, stageGroup, resourceGroup, viewerGroup, sepAfterBlocks, sepAfterEstimates, sepAfterImport, sepAfterView, sepAfterStage, sepAfterResources],
             },
             block: {
                 show: [estimatesGroup],
-                hide: [blocksGroup, viewGroup, stageGroup, resourceGroup, viewerGroup, sepAfterBlocks, sepAfterEstimates, sepAfterView, sepAfterStage, sepAfterResources],
+                hide: [blocksGroup, importGroup, viewGroup, stageGroup, resourceGroup, viewerGroup, sepAfterBlocks, sepAfterEstimates, sepAfterImport, sepAfterView, sepAfterStage, sepAfterResources],
             },
             estimate: {
-                show: [viewGroup, sepAfterView, stageGroup, sepAfterStage, resourceGroup, sepAfterResources, viewerGroup],
+                show: [importGroup, sepAfterImport, viewGroup, sepAfterView, stageGroup, sepAfterStage, resourceGroup, sepAfterResources, viewerGroup],
                 hide: [blocksGroup, estimatesGroup, sepAfterBlocks, sepAfterEstimates],
             },
         };
@@ -487,15 +604,85 @@ class ProBIMApp {
                 const project = await api.createProject(data);
                 UI.closeModal();
                 UI.showNotification('Проект создан успешно', 'success');
-                
+
                 // Перезагружаем список проектов
                 await this.loadProjects();
-                
+
                 // Выбираем новый проект
                 this.selectProject(project.id);
             } catch (error) {
                 UI.showNotification('Ошибка создания проекта: ' + error.message, 'error');
             }
+        });
+    }
+
+    toggleProjectMenu(projectId, event) {
+        // Закрываем все открытые меню
+        document.querySelectorAll('.project-menu.active').forEach(menu => {
+            if (menu.id !== `project-menu-${projectId}`) {
+                menu.classList.remove('active');
+            }
+        });
+
+        // Переключаем текущее меню
+        const menu = document.getElementById(`project-menu-${projectId}`);
+        if (menu) {
+            menu.classList.toggle('active');
+        }
+    }
+
+    editProject(projectId) {
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        UI.showCreateProjectModal(async (data) => {
+            try {
+                await api.updateProject(projectId, data);
+                UI.closeModal();
+                UI.showNotification('Проект обновлен успешно', 'success');
+
+                // Перезагружаем список проектов
+                await this.loadProjects();
+            } catch (error) {
+                UI.showNotification('Ошибка обновления проекта: ' + error.message, 'error');
+            }
+        }, project);
+
+        // Закрываем меню
+        this.closeAllProjectMenus();
+    }
+
+    async deleteProject(projectId) {
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        if (!confirm(`Вы уверены, что хотите удалить проект "${project.name}"?`)) {
+            return;
+        }
+
+        try {
+            await api.deleteProject(projectId);
+            UI.showNotification('Проект удален успешно', 'success');
+
+            // Если удаляем текущий проект, сбрасываем выбор
+            if (this.currentProjectId === projectId) {
+                this.currentProjectId = null;
+                localStorage.removeItem('probim_last_project_id');
+            }
+
+            // Перезагружаем список проектов
+            await this.loadProjects();
+        } catch (error) {
+            UI.showNotification('Ошибка удаления проекта: ' + error.message, 'error');
+        }
+
+        // Закрываем меню
+        this.closeAllProjectMenus();
+    }
+
+    closeAllProjectMenus() {
+        document.querySelectorAll('.project-menu.active').forEach(menu => {
+            menu.classList.remove('active');
         });
     }
 
@@ -588,10 +775,123 @@ class ProBIMApp {
             }
         }
     }
+
+    // Добавить точку навигации в историю
+    pushNavigationState(type, params = {}) {
+        this.navigationHistory.push({
+            type: type, // 'project', 'block', 'estimate', 'section'
+            params: params,
+            timestamp: Date.now()
+        });
+        // Ограничиваем историю последними 50 шагами
+        if (this.navigationHistory.length > 50) {
+            this.navigationHistory.shift();
+        }
+    }
+
+    // Вернуться назад в навигации
+    async goBack() {
+        // Если истории нет или только один элемент, используем логику на основе текущего состояния
+        if (this.navigationHistory.length <= 1) {
+            return await this.goBackFromCurrentState();
+        }
+
+        // Удаляем текущее состояние из истории
+        this.navigationHistory.pop();
+
+        // Получаем предыдущее состояние
+        const previousState = this.navigationHistory[this.navigationHistory.length - 1];
+
+        if (!previousState) {
+            // Если истории больше нет, возвращаемся к списку проектов
+            if (this.currentProjectId && this.currentRibbonTab === 'estimate') {
+                EstimateManager._isRestoring = true; // Помечаем как восстановление, чтобы не добавлять в историю
+                await EstimateManager.renderEstimateTree(this.currentProjectId);
+                EstimateManager._isRestoring = false;
+                return;
+            }
+            return;
+        }
+
+        // Восстанавливаем предыдущее состояние (не добавляем в историю)
+        EstimateManager._isRestoring = true;
+        await this.restoreNavigationState(previousState);
+        EstimateManager._isRestoring = false;
+    }
+
+    // Вернуться назад на основе текущего состояния
+    async goBackFromCurrentState() {
+        if (this.currentRibbonTab !== 'estimate') {
+            // Если не на вкладке сметы, просто возвращаемся к списку проектов
+            if (this.currentProjectId) {
+                this.currentRibbonTab = 'estimate';
+                this.applyRibbonTabToUI('estimate');
+                EstimateManager._isRestoring = true;
+                await EstimateManager.renderEstimateTree(this.currentProjectId);
+                EstimateManager._isRestoring = false;
+            }
+            return;
+        }
+
+        // Проверяем текущий уровень в EstimateManager
+        EstimateManager._isRestoring = true; // Помечаем как восстановление
+
+        if (EstimateManager.currentSectionId) {
+            // Находимся в разделе -> возвращаемся к смете
+            if (EstimateManager.currentEstimateId) {
+                await EstimateManager.openEstimate(EstimateManager.currentEstimateId);
+            }
+        } else if (EstimateManager.currentEstimateId) {
+            // Находимся в смете -> возвращаемся к блоку
+            if (EstimateManager.currentBlockId) {
+                await EstimateManager.openBlock(EstimateManager.currentBlockId);
+            }
+        } else if (EstimateManager.currentBlockId) {
+            // Находимся в блоке -> возвращаемся к списку блоков
+            if (EstimateManager.currentProjectId) {
+                await EstimateManager.renderEstimateTree(EstimateManager.currentProjectId);
+            }
+        }
+
+        EstimateManager._isRestoring = false;
+    }
+
+    // Восстановить состояние навигации
+    async restoreNavigationState(state) {
+        if (this.currentRibbonTab !== 'estimate') {
+            // Если не на вкладке сметы, переключаемся на неё
+            this.currentRibbonTab = 'estimate';
+            this.applyRibbonTabToUI('estimate');
+        }
+
+        switch (state.type) {
+            case 'project':
+                if (state.params.projectId) {
+                    await EstimateManager.renderEstimateTree(state.params.projectId);
+                }
+                break;
+            case 'block':
+                if (state.params.blockId) {
+                    await EstimateManager.openBlock(state.params.blockId);
+                }
+                break;
+            case 'estimate':
+                if (state.params.estimateId) {
+                    await EstimateManager.openEstimate(state.params.estimateId);
+                }
+                break;
+            case 'section':
+                if (state.params.sectionId) {
+                    await EstimateManager.openSection(state.params.sectionId);
+                }
+                break;
+        }
+    }
 }
 
 // Инициализация приложения
 const app = new ProBIMApp();
+window.app = app; // Делаем доступным глобально для других модулей
 
 // Запуск при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {

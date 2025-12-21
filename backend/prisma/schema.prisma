@@ -20,11 +20,20 @@ model Project {
   name        String
   description String?
   address     String?
+  latitude    Float?   // Широта для Яндекс.Карты
+  longitude   Float?   // Долгота для Яндекс.Карты
+  photo       String?  // Base64 фото проекта (для обратной совместимости)
+  genplan     String?  // Base64 генплан объекта
+  render      String?  // Base64 рендер проекта
   client      String?
+  manager     String?
+  deputy      String?
+  customer    String?
+  contractor  String?
   currency    String   @default("RUB") // RUB, UZS, USD, EUR, KGS, KZT, etc.
   startDate   DateTime?
   endDate     DateTime?
-  status      String   @default("planning") // planning, in_progress, completed, on_hold
+  status      String   @default("active") // active, paused, closed, exploitation
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -431,5 +440,69 @@ model GanttLink {
 
   @@index([source])
   @@index([target])
+}
+
+// ========================================
+// 15. СПРАВОЧНИК "ВИДЫ РАБОТ" (для настроек)
+// ========================================
+
+// Группа работ
+model WorkTypeGroup {
+  id          String   @id @default(uuid())
+  name        String   // Название группы (например: "Земляные работы", "Бетонные работы")
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  workTypeItems WorkTypeItem[]
+}
+
+// Вид работ (внутри группы)
+model WorkTypeItem {
+  id          String   @id @default(uuid())
+  groupId     String
+  name        String   // Наименование вида работ
+  unit        String   // Единица измерения (м, м², м³, шт, т, км, л, комплект, маш.-ч, чел.-ч)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  group       WorkTypeGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  instructions InstructionWorkType[]
+  
+  @@index([groupId])
+}
+
+// ========================================
+// 16. СПРАВОЧНИК "ИНСТРУКЦИИ"
+// ========================================
+
+// Инструкция
+model Instruction {
+  id          String   @id @default(uuid())
+  code        String   // Код инструкции
+  name        String   // Название инструкции
+  text        String   // Текст инструкции (до 20 000 символов)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи (many-to-many с видами работ)
+  workTypes   InstructionWorkType[]
+}
+
+// Связь между инструкциями и видами работ (many-to-many)
+model InstructionWorkType {
+  id             String   @id @default(uuid())
+  instructionId  String
+  workTypeItemId String
+  
+  instruction    Instruction  @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  workTypeItem   WorkTypeItem @relation(fields: [workTypeItemId], references: [id], onDelete: Cascade)
+  
+  @@unique([instructionId, workTypeItemId])
+  @@index([instructionId])
+  @@index([workTypeItemId])
 }
 

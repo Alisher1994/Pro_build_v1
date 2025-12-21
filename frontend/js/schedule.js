@@ -1862,14 +1862,22 @@ const ScheduleManager = {
             <div class="wizard-step">
                 <p>Выберите способ формирования структуры графика:</p>
                 
-                <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('manual')">
+                <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('manual', false)">
                     <h4>🏗️ Вручную (по параметрам блока)</h4>
                     <p>Структура этажей будет создана на основе количества этажей, указанных в свойствах блока.</p>
                 </div>
 
-                <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('bim')">
+                <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('bim', false)">
                     <h4>🏢 Из BIM модели (IFC)</h4>
                     <p>Структура будет взята из IFC файла (IfcBuildingStorey). Требуется загруженная модель.</p>
+                </div>
+
+                <div class="generation-option" onclick="ScheduleManager.selectGenerationModeWithAI()">
+                    <h4>🤖 С ИИ ассистентом</h4>
+                    <p>ИИ сопоставит виды работ из сметы с нормативной базой и автоматически рассчитает длительность задач.</p>
+                    <div style="margin-top: 8px; padding: 8px; background: #f0f9ff; border-radius: 4px; font-size: 12px; color: #0369a1;">
+                        ⚡ Работает только при наличии нормативов в нормативной базе
+                    </div>
                 </div>
             </div>
         `;
@@ -1899,7 +1907,24 @@ const ScheduleManager = {
         UI.showModal('Мастер генерации графика', content, '<button class="btn btn-secondary" onclick="UI.closeModal()">Отмена</button>');
     },
 
-    async selectGenerationMode(mode) {
+    selectGenerationModeWithAI() {
+        const content = `
+            <div style="margin-bottom: 16px;">
+                <p>Выберите источник структуры графика:</p>
+            </div>
+            <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('manual', true)" style="margin-bottom: 12px;">
+                <h4>🏗️ Вручную + ИИ ассистент</h4>
+                <p>Структура создается по параметрам блока, нормативы применяются через ИИ</p>
+            </div>
+            <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('bim', true)">
+                <h4>🏢 Из BIM + ИИ ассистент</h4>
+                <p>Структура из IFC модели, нормативы применяются через ИИ</p>
+            </div>
+        `;
+        UI.showModal('Генерация с ИИ ассистентом', content, '<button class="btn btn-secondary" onclick="ScheduleManager.showGenerationWizard()">Назад</button>');
+    },
+
+    async selectGenerationMode(mode, useAI = false) {
         UI.closeModal();
         
         if (!confirm('Внимание! Текущий график будет полностью перезаписан. Продолжить?')) {
@@ -1908,9 +1933,15 @@ const ScheduleManager = {
 
         try {
             UI.showLoading(true);
-            await api.generateGanttSchedule(this.currentProjectId, mode);
+            const options = { mode, useAI };
+            await api.generateGanttSchedule(this.currentProjectId, mode, useAI);
             await this.loadData();
-            UI.showNotification('График успешно сформирован', 'success');
+            UI.showNotification(
+                useAI 
+                    ? 'График успешно сформирован с применением нормативов через ИИ ассистента' 
+                    : 'График успешно сформирован', 
+                'success'
+            );
         } catch (error) {
             console.error('Error generating schedule:', error);
             UI.showNotification('Ошибка генерации графика: ' + error.message, 'error');

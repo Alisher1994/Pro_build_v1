@@ -110,7 +110,7 @@ const rollupAncestors = async (projectId: string, startId: string | null) => {
 router.post('/generate/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { mode } = req.body;
+    const { mode, useAI } = req.body;
 
     const safeJsonArray = (value: any): string[] => {
       if (value === null || value === undefined || value === '') return [];
@@ -315,7 +315,7 @@ router.post('/generate/:projectId', async (req, res) => {
       tasksToCreate.push({
         id: phaseTaskId,
         projectId,
-        text: `Очередь строительства ${phaseNum}`,
+        text: `Очередь: ${phaseNum}`,
         start_date: new Date(), // Default date
         duration: 1,
         progress: 0,
@@ -782,7 +782,7 @@ router.post('/assign-worktype', async (req, res) => {
 
     const workType = await prisma.workType.findUnique({
       where: { id: workTypeId },
-      select: { id: true, name: true, unit: true }
+      select: { id: true, name: true, unit: true, description: true }
     });
 
     if (!workType) {
@@ -790,7 +790,24 @@ router.post('/assign-worktype', async (req, res) => {
     }
 
     const qty = Number.isFinite(Number(quantity)) ? Number(quantity) : 0;
-    const productionRate = 10; // Заглушка нормы: 10 ед/день
+    
+    // Получаем норматив из описания вида работ или используем значение по умолчанию
+    let productionRate = 10; // Значение по умолчанию
+    try {
+      // Пытаемся извлечь норматив из description (формат: "productionRate:12.5")
+      if (workType.description) {
+        const match = workType.description.match(/productionRate[:\s=]+([\d.]+)/i);
+        if (match && match[1]) {
+          productionRate = parseFloat(match[1]);
+        }
+      }
+    } catch (e) {
+      // Используем значение по умолчанию при ошибке
+    }
+    
+    // TODO: Если useAI=true, здесь можно добавить вызов ИИ для сопоставления с нормативной базой
+    // Пока используем норматив из description или значение по умолчанию
+    
     const op: 'set' | 'add' = operation === 'add' ? 'add' : 'set';
 
     const taskId = `worktype-${workType.id}-${floorTaskId}`;

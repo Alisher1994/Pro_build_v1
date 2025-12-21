@@ -15,6 +15,9 @@ import scheduleRoutes from './routes/schedules';
 import supplyRoutes from './routes/supplies';
 import financeRoutes from './routes/finances';
 import ganttRoutes from './routes/gantt';
+import instructionRoutes from './routes/instructions';
+import normsRoutes from './routes/norms';
+import workTypeGroupRoutes from './routes/workTypeGroups';
 
 dotenv.config();
 
@@ -23,8 +26,8 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static files (для загруженных IFC/XKT файлов)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -47,6 +50,9 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/supplies', supplyRoutes);
 app.use('/api/finances', financeRoutes);
 app.use('/api/gantt', ganttRoutes);
+app.use('/api/instructions', instructionRoutes);
+app.use('/api/norms', normsRoutes);
+app.use('/api/work-type-groups', workTypeGroupRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -299,11 +299,11 @@ class ApiService {
     // ========================================
     // Gantt Schedule
     // ========================================
-    async generateGanttSchedule(projectId, mode = 'manual') {
+    async generateGanttSchedule(projectId, mode = 'manual', useAI = false) {
         const response = await fetch(`${API_BASE_URL}/gantt/generate/${projectId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mode }),
+            body: JSON.stringify({ mode, useAI }),
         });
         if (!response.ok) throw new Error('Failed to generate schedule');
         return await response.json();
@@ -312,6 +312,23 @@ class ApiService {
     async getGanttData(projectId) {
         const response = await fetch(`${API_BASE_URL}/gantt/${projectId}`);
         if (!response.ok) throw new Error('Failed to fetch gantt data');
+        return await response.json();
+    }
+
+    // ========================================
+    // Instructions AI Generation
+    // ========================================
+    async generateInstructionExcerpt(worktypeNames, instructionName, code) {
+        const response = await fetch(`${API_BASE_URL}/instructions/generate-excerpt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                worktypeNames: worktypeNames,
+                instructionName: instructionName,
+                code: code
+            }),
+        });
+        if (!response.ok) throw new Error('Failed to generate excerpt');
         return await response.json();
     }
 

@@ -615,9 +615,12 @@ const UI = {
     },
 
     // Форматирование числа (1 000 000)
-    formatNumber(num) {
+    formatNumber(num, fractionDigits) {
         if (num === null || num === undefined) return '';
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        const parsed = Number(num);
+        if (!Number.isFinite(parsed)) return '';
+        const fixed = typeof fractionDigits === 'number' ? parsed.toFixed(fractionDigits) : parsed.toString();
+        return fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     },
 
     // Форматирование валюты с символом

@@ -44,6 +44,7 @@ model Project {
   supplies    Supply[]
   finances    Finance[]
   ganttTasks  GanttTask[]
+  subcontractors Subcontractor[]
 }
 
 // ========================================
@@ -360,6 +361,36 @@ model Finance {
   @@index([projectId])
   @@index([type])
   @@index([date])
+}
+
+// ========================================
+// 13. СУБПОДРЯДЧИКИ
+// ========================================
+model Subcontractor {
+  id            String   @id @default(uuid())
+  projectId     String
+  company       String
+  lastName      String
+  firstName     String
+  middleName    String?
+  phone         String
+  email         String?
+  password      String
+  status        String   @default("active") // active / inactive
+  mfo           String?
+  inn           String?
+  bankName      String?
+  account       String?
+  address       String?
+  companyPhoto  String?
+  directorPhoto String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
 }
 
 // ========================================

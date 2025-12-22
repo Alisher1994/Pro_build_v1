@@ -11,6 +11,33 @@ const ImportManager = {
     sectionId: null,
     hadSectionAtStart: false,
 
+    // Подгружаем XLSX с CDN, если по какой-то причине глобал не инициализировался
+    async ensureXLSXLoaded() {
+        if (typeof window !== 'undefined' && window.XLSX) return;
+
+        await new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[data-import="xlsx"]');
+
+            if (existing) {
+                existing.addEventListener('load', () => resolve(), { once: true });
+                existing.addEventListener('error', () => reject(new Error('Не удалось загрузить библиотеку XLSX')), { once: true });
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
+            script.async = true;
+            script.dataset.import = 'xlsx';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Не удалось загрузить библиотеку XLSX'));
+            document.head.appendChild(script);
+        });
+
+        if (!window.XLSX) {
+            throw new Error('Библиотека XLSX недоступна после загрузки');
+        }
+    },
+
     mapResourceType(value) {
         const raw = (value ?? '').toString().trim();
         if (!raw) return 'material';
@@ -168,9 +195,9 @@ const ImportManager = {
                             <div class="file-size" id="file-size"></div>
                         </div>
                         <button class="btn-icon" onclick="ImportManager.removeFile()" title="Удалить файл">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
                             </svg>
                         </button>
                     </div>
@@ -303,9 +330,9 @@ const ImportManager = {
 
             html += `<tr class="${rowClass}" data-index="${index}">`;
             html += `<td><button class="btn-icon btn-delete" onclick="ImportManager.deleteRow(${index})" title="Удалить строку">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
                 </svg>
             </button></td>`;
             html += `<td><span class="type-badge">${typeLabel}</span></td>`;
@@ -412,7 +439,8 @@ const ImportManager = {
 
     // Обновление индикатора шагов
     updateStepIndicator() {
-        document.querySelectorAll('.step-item').forEach((item, index) => {
+        const steps = document.querySelectorAll('.step-item');
+        steps.forEach((item, index) => {
             const stepNum = index + 1;
             if (stepNum < this.currentStep) {
                 item.classList.add('completed');
@@ -422,6 +450,16 @@ const ImportManager = {
                 item.classList.remove('completed');
             } else {
                 item.classList.remove('active', 'completed');
+            }
+        });
+
+        const connectors = document.querySelectorAll('.step-connector');
+        connectors.forEach((conn, idx) => {
+            conn.classList.remove('active', 'completed');
+            if (this.currentStep - 1 > idx + 1) {
+                conn.classList.add('completed');
+            } else if (this.currentStep - 1 === idx + 1) {
+                conn.classList.add('active');
             }
         });
     },
@@ -447,6 +485,8 @@ const ImportManager = {
 
     // Парсинг файла
     async parseFile() {
+        await this.ensureXLSXLoaded();
+
         return new Promise((resolve, reject) => {
             const fileExtension = this.selectedFile.name.split('.').pop().toLowerCase();
             

@@ -390,12 +390,14 @@ const EstimateManager = {
                                 <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
                                     <span style="width: 32px; height: 32px; border-radius: 50%; background: ${hasIfc ? 'rgba(16,124,16,0.12)' : 'rgba(96,94,92,0.15)'}; display: flex; align-items: center; justify-content: center;">
                                         ${hasIfc ? `
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M20 6L9 17l-5-5" />
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                                                <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                                                <line x1="8" x2="16" y1="12" y2="12" />
                                             </svg>
                                         ` : `
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-500)" stroke-width="2" stroke-linecap="round">
-                                                <circle cx="12" cy="12" r="9" />
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M15 7h2a5 5 0 0 1 0 10h-2m-6 0H7A5 5 0 0 1 7 7h2" />
                                             </svg>
                                         `}
                                     </span>
@@ -418,10 +420,19 @@ const EstimateManager = {
                                         </svg>
                                     </button>
                                     ${hasIfc ? `
-                                    <button onclick="event.stopPropagation(); EstimateManager.unlinkIFC('${estimate.id}', { stayOnList: true })" class="btn btn-danger" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="Отвязать IFC" aria-label="Отвязать IFC">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    <button onclick="event.stopPropagation(); EstimateManager.unlinkIFC('${estimate.id}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="Отвязать IFC" aria-label="Отвязать IFC"
+                                        onmouseenter="const d=this.querySelector('.unlink-default'); const h=this.querySelector('.unlink-hover'); if(d&&h){d.style.display='none';h.style.display='block';}"
+                                        onmouseleave="const d=this.querySelector('.unlink-default'); const h=this.querySelector('.unlink-hover'); if(d&&h){d.style.display='block';h.style.display='none';}">
+                                        <svg class="unlink-default" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                                            <path d="M15 7h2a5 5 0 0 1 0 10h-2" />
+                                            <line x1="8" x2="16" y1="12" y2="12" />
+                                        </svg>
+                                        <svg class="unlink-hover" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                                            <path d="M9 17H7A5 5 0 0 1 7 7" />
+                                            <path d="M15 7h2a5 5 0 0 1 4 8" />
+                                            <line x1="8" x2="12" y1="12" y2="12" />
+                                            <line x1="2" x2="22" y1="2" y2="22" />
                                         </svg>
                                     </button>
                                     ` : ''}
@@ -1177,7 +1188,7 @@ const EstimateManager = {
             for (const stage of allStages) {
                 html += `
                     <div class="tree-node" style="margin-bottom: 8px;">
-                        <div onclick="EstimateManager.toggleStage('${stage.id}')" style="padding: 8px 12px; background: var(--gray-50); border-left: 3px solid var(--primary); cursor: pointer; border-radius: 4px;">
+                        <div onclick="EstimateManager.toggleStage('${stage.id}')" style="padding: 8px 12px; background: #F0F9F9; border-left: 3px solid var(--primary); cursor: pointer; border-radius: 4px;">
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                                     <svg id="stage-icon-${stage.id}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1377,11 +1388,12 @@ const EstimateManager = {
                     <!-- Кол-во -->
                     <input type="number" class="wt-quantity-input" data-wt-id="${stage.id}" value="${stageQuantity || ''}" placeholder="Кол-во" onchange="EstimateManager.updateWorkTypeField('${stage.id}', 'quantity', this.value)" style="width: 70px; height: 24px; font-size: 11px; padding: 2px 6px; border: 1px solid var(--gray-300); border-radius: 3px; text-align: right;" title="Количество" step="any" min="0">
                     
-                    <!-- Цена (авто-расчёт) -->
-                    <span class="wt-unit-cost" data-wt-id="${stage.id}" style="width: 80px; height: 24px; font-size: 11px; padding: 2px 6px; border: 1px solid var(--gray-200); border-radius: 3px; background: var(--gray-100); color: var(--gray-700); text-align: right; display: inline-flex; align-items: center; justify-content: flex-end;" title="Цена за единицу (авто)">${stageQuantity > 0 ? UI.formatNumber(stageUnitCost) : '—'}</span>
-                    
-                    <!-- Сумма -->
-                    <span class="wt-total-cost" style="font-size: 11px; color: var(--primary); font-weight: 600; min-width: 90px; text-align: right;">${UI.formatCurrency(displayTotal, this.currentProject?.currency)}</span>
+                    <!-- Цена и сумма -->
+                    <span class="wt-unit-cost" data-wt-id="${stage.id}" style="height: 24px; font-size: 11px; padding: 2px 6px; border: 1px solid var(--gray-200); border-radius: 3px; background: var(--gray-100); color: var(--gray-700); text-align: right; display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px;" title="Цена за единицу (авто)">
+                        ${stageQuantity > 0 ? UI.formatNumber(stageUnitCost) : '—'}
+                        <span style="color: var(--gray-500);">=</span>
+                        <span class="wt-total-cost" style="color: var(--primary); font-weight: 600; min-width: 90px; text-align: right;">${UI.formatCurrency(displayTotal, this.currentProject?.currency)}</span>
+                    </span>
                     
                     <button onclick="EstimateManager.createResourceForStage('${stage.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--primary); background: var(--white); color: var(--primary); cursor: pointer; font-size: 14px; font-weight: bold;" title="Добавить ресурс">+</button>
                     <button onclick="EstimateManager.deleteWorkTypeFromStage('${stage.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--red-500); background: var(--white); color: var(--red-500); cursor: pointer; font-size: 16px;" title="Удалить вид работ">×</button>
@@ -1473,8 +1485,10 @@ const EstimateManager = {
                     ${linkButtonHtml}
                     <span class="res-unit-editable" data-res-id="${resource.id}" style="cursor: pointer; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 30px; text-align: center;">${resource.unit}</span>
                     <span class="res-quantity-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 40px; text-align: right;">${UI.formatNumber(resource.quantity)}</span>
+                    ×
                     <span class="res-unitcost-editable" data-res-id="${resource.id}" style="cursor: text; padding: 2px 4px; background: var(--gray-100); border-radius: 2px; min-width: 60px; text-align: right;">${UI.formatCurrency(resource.unitCost, this.currentProject?.currency)}</span>
-                    <span style="font-weight: 600; color: var(--primary); min-width: 70px; text-align: right;">${UI.formatCurrency(totalCost, this.currentProject?.currency)}</span>
+                    <span style="color: var(--gray-500);">=</span>
+                    <span style="font-weight: 600; color: var(--primary); min-width: 80px; text-align: right;">${UI.formatCurrency(totalCost, this.currentProject?.currency)}</span>
                     <button onclick="EstimateManager.deleteResourceFromWorkType('${resource.id}'); event.stopPropagation();" class="btn-icon-tiny" style="width: 18px; height: 18px; border-radius: 2px; border: 1px solid var(--red-400); background: var(--white); color: var(--red-500); cursor: pointer; font-size: 14px;" title="Удалить ресурс">×</button>
                 </div>
             </div>
@@ -2345,6 +2359,41 @@ const EstimateManager = {
         }
     },
 
+    async expandToWorkTypes() {
+        const stageIds = this.getVisibleStageIdsFromDom();
+        if (!stageIds.length) return;
+
+        for (const stageId of stageIds) {
+            const content = document.getElementById(`stage-${stageId}-content`);
+            const icon = document.getElementById(`stage-icon-${stageId}`);
+            if (!content) continue;
+
+            content.style.display = 'block';
+            if (icon) icon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            this.expandedStageIds.add(stageId);
+
+            // Render work types, but do not expand resources
+            await this.loadWorkTypesTree(stageId);
+
+            // Ensure all resource lists stay collapsed
+            const stageContainer = document.getElementById(`stage-${stageId}-content`);
+            if (!stageContainer) continue;
+
+            const resourceBlocks = stageContainer.querySelectorAll('[id^="worktype-"][id$="-resources"]');
+            for (const rb of resourceBlocks) {
+                rb.style.display = 'none';
+            }
+
+            const resourceIcons = stageContainer.querySelectorAll('[id^="worktype-icon-"]');
+            for (const ic of resourceIcons) {
+                ic.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+            }
+        }
+
+        // Clear any previously stored expanded work types to reflect the collapsed resources state
+        this.expandedWorkTypeIds.clear();
+    },
+
     async collapseAllTree() {
         // Clear state
         this.expandedStageIds.clear();
@@ -2402,7 +2451,20 @@ const EstimateManager = {
                 const displayNo = this.escapeHtml(workTypeNoRaw);
 
                 const wtQty = typeof workType.quantity === 'number' ? workType.quantity : 0;
-                const wtTotal = typeof workType.totalCost === 'number' ? workType.totalCost : 0;
+                let wtTotal = typeof workType.totalCost === 'number' ? workType.totalCost : 0;
+
+                // Если сумма не пришла или равна нулю, пробуем посчитать по ресурсам (чтобы показать даже в свернутом виде)
+                if (!wtTotal) {
+                    try {
+                        const resForTotal = await api.getResources(workType.id);
+                        wtTotal = resForTotal.reduce((sum, r) => sum + ((r.totalCost !== null && r.totalCost !== undefined)
+                            ? r.totalCost
+                            : (Number(r.quantity) || 0) * (Number(r.unitPrice) || 0)), 0);
+                    } catch (err) {
+                        console.warn('Не удалось получить ресурсы для суммы вида работ', workType.id, err);
+                    }
+                }
+
                 const wtUnitCostAuto = wtQty > 0 ? wtTotal / wtQty : 0;
 
                 const expander = hasResources
@@ -2429,14 +2491,15 @@ const EstimateManager = {
                                                 <span class="worktype-quantity-inline" data-worktype-id="${workType.id}" style="cursor: text; padding: 1px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(workType.quantity ?? 0)}</span>
                                                 <span class="worktype-unit-inline" data-worktype-id="${workType.id}" style="cursor: text; padding: 1px 4px; border-radius: 3px;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(workType.unit ?? '')}</span>
                                                 ×
-                                                <span class="worktype-unitcost-inline" data-worktype-id="${workType.id}" style="padding: 1px 4px; border-radius: 3px;">${UI.formatNumber(wtUnitCostAuto)}</span>
+                                                <span class="worktype-unitcost-inline" data-worktype-id="${workType.id}" style="padding: 1px 4px; border-radius: 3px;">${UI.formatNumber(wtUnitCostAuto, 2)}</span>
+                                                =
+                                                <span data-worktype-total-for="${workType.id}" style="padding: 1px 4px; border-radius: 3px; color: var(--primary); font-weight: 600;">${UI.formatCurrency(wtTotal, this.currentProject?.currency)}</span>
                                             </div>
                                         </div>
                                     </div>
                                     ${hasResources ? `<span style=\"font-size: 11px; color: var(--gray-500);\">(${resourcesCount})</span>` : ''}
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                    <span data-worktype-total-for="${workType.id}" style="color: var(--primary); font-weight: 600;">${UI.formatCurrency(workType.totalCost || 0, this.currentProject?.currency)}</span>
                                     <button onclick="EstimateManager.createResource('${workType.id}'); event.stopPropagation();" class="btn btn-secondary btn-sm" title="Добавить ресурс" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">+</button>
                                     <button onclick="EstimateManager.deleteWorkType('${workType.id}'); event.stopPropagation();" class="btn btn-danger btn-sm" title="Удалить вид работ" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">×</button>
                                 </div>
@@ -2545,7 +2608,7 @@ const EstimateManager = {
             const total = typeof workType.totalCost === 'number' ? workType.totalCost : 0;
             const unitCostAuto = qty > 0 ? total / qty : 0;
             document.querySelectorAll(`.worktype-unitcost-inline[data-worktype-id="${workTypeId}"]`).forEach((el) => {
-                el.textContent = UI.formatNumber(unitCostAuto);
+                el.textContent = UI.formatNumber(unitCostAuto, 2);
             });
 
             if (stageId) {
@@ -2610,6 +2673,8 @@ const EstimateManager = {
                 return;
             }
 
+            let resourcesTotal = 0;
+
             const typeLabels = {
                 material: 'Материал',
                 labor: 'Труд',
@@ -2629,6 +2694,11 @@ const EstimateManager = {
 
                 const metricsColor = this.getResourceMetricsColor(r.resourceType);
                 const metricsStyle = metricsColor ? `color: ${metricsColor};` : '';
+
+                const totalCost = typeof r.totalCost === 'number'
+                    ? r.totalCost
+                    : (r.quantity ?? 0) * (r.unitPrice ?? 0);
+                resourcesTotal += totalCost;
 
                 // Проверяем наличие связи с IFC элементами
                 const parsedIfcElements = this.parseIfcElements(r.ifcElements);
@@ -2677,13 +2747,14 @@ const EstimateManager = {
                                             <span class="resource-quantity-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(r.quantity ?? 0)}</span>
                                             <span class="resource-unit-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${this.escapeHtml(r.unit ?? '')}</span>
                                             ×
-                                            <span class="resource-unitprice-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(r.unitPrice ?? 0)}</span>
+                                            <span class="resource-unitprice-inline" data-resource-id="${r.id}" data-worktype-id="${workTypeId}" style="cursor: text; padding: 1px 4px; border-radius: 3px; ${metricsStyle}" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">${UI.formatNumber(r.unitPrice ?? 0, 2)}</span>
+                                            =
+                                            <span style="padding: 1px 4px; border-radius: 3px; ${metricsStyle || 'color: var(--primary);'} font-weight: 600;">${UI.formatCurrency(totalCost, this.currentProject?.currency)}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                <div style="${metricsStyle} font-weight: 600; white-space: nowrap;">${UI.formatCurrency(r.totalCost || 0, this.currentProject?.currency)}</div>
                                 ${linkButtonHtml}
                                 <button onclick="EstimateManager.deleteResource('${r.id}'); event.stopPropagation();" class="btn btn-danger btn-sm" title="Удалить ресурс" style="width: 26px; height: 26px; padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;">×</button>
                             </div>
@@ -2692,6 +2763,19 @@ const EstimateManager = {
                 `;
             }
             container.innerHTML = html;
+
+            // Обновляем сумму вида работ после загрузки ресурсов
+            const totalSpans = document.querySelectorAll(`[data-worktype-total-for="${workTypeId}"]`);
+            totalSpans.forEach((el) => {
+                el.textContent = UI.formatCurrency(resourcesTotal, this.currentProject?.currency);
+                el.style.color = this.getResourceMetricsColor(workType?.resourceType) || 'var(--primary)';
+            });
+
+            // Авто-цена за единицу для вида работ, если есть количество
+            const unitCostEl = document.querySelector(`.worktype-unitcost-inline[data-worktype-id="${workTypeId}"]`);
+            if (unitCostEl && typeof workType?.quantity === 'number' && workType.quantity > 0) {
+                unitCostEl.textContent = UI.formatNumber(resourcesTotal / workType.quantity, 2);
+            }
 
             // Add event listeners for link buttons
             container.querySelectorAll('.link-btn').forEach(btn => {

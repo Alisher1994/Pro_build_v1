@@ -4,6 +4,7 @@
 
 const SettingsManager = {
     currentProjectId: null,
+    subcontractors: null,
 
     async showToleranceSettings(projectId) {
         this.currentProjectId = projectId;
@@ -33,6 +34,384 @@ const SettingsManager = {
         `;
     },
 
+    async showSubcontractors(projectId) {
+        this.currentProjectId = projectId;
+        this.subcontractors = this.subcontractors || [];
+
+        const contentArea = document.getElementById('content-area');
+
+        const setLoading = () => {
+            contentArea.innerHTML = `
+                <div style="padding: 32px 40px; max-width: 1320px; margin: 0 auto; width: 100%;">
+                    <div style="height: 120px; border: 1px solid var(--gray-200); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gray-500);">
+                        Загрузка...
+                    </div>
+                </div>
+            `;
+        };
+
+        const fetchSubcontractors = async () => {
+            try {
+                const res = await fetch(`/api/subcontractors?projectId=${encodeURIComponent(this.currentProjectId)}`);
+                if (!res.ok) throw new Error('Не удалось получить список');
+                this.subcontractors = await res.json();
+            } catch (err) {
+                console.error(err);
+                UI.showNotification('Ошибка загрузки субподрядчиков', 'error');
+                this.subcontractors = [];
+            }
+        };
+
+        const renderTable = () => {
+            const rows = this.subcontractors.map((item) => {
+                const fio = [item.lastName, item.firstName, item.middleName].filter(Boolean).join(' ');
+                const statusLabel = item.status === 'active' ? 'Активен' : 'Неактивен';
+
+                const initialsSource = (item.company || fio || '').trim();
+                const initials = initialsSource
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((p) => (p && p[0] ? p[0].toUpperCase() : ''))
+                    .join('') || '•';
+
+                const avatar = item.companyPhoto
+                    ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #eef2f7; background-image: url(${item.companyPhoto}); background-size: cover; background-position: center;"></div>`
+                    : `<div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #e0f2fe, #dbeafe); color: #1f2937; display: grid; place-items: center; font-weight: 700; font-size: 14px;">${initials}</div>`;
+
+                return `
+                    <tr data-id="${item.id}">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${avatar}
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <span style="font-weight: 600; color: var(--gray-900);">${item.company || ''}</span>
+                                    <span style="color: var(--gray-500); font-size: 12px;">${fio || ''}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${fio || ''}</td>
+                        <td>${item.phone || ''}</td>
+                        <td>${item.email || ''}</td>
+                        <td>${statusLabel}</td>
+                        <td style="white-space: nowrap; display: flex; gap: 8px; align-items: center;">
+                            <button class="btn btn-secondary subcontractor-edit" title="Изменить" aria-label="Изменить" data-id="${item.id}" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 20h9" />
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                </svg>
+                            </button>
+                            <button class="btn btn-danger subcontractor-delete" title="Удалить" aria-label="Удалить" data-id="${item.id}" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                    <path d="M3 6h18" />
+                                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            contentArea.innerHTML = `
+                <div style="padding: 32px 40px; max-width: 1320px; margin: 0 auto; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="14" rx="2" ry="2" />
+                                <path d="M8 10h8M8 14h5" />
+                                <circle cx="9" cy="18" r="1.2" />
+                            </svg>
+                            <div>
+                                <h1 style="margin: 0; font-size: 24px; color: var(--gray-900);">Субподрядчики</h1>
+                                <p style="margin: 4px 0 0; color: var(--gray-600); font-size: 13px;">Управление данными субподрядчиков и контактами</p>
+                            </div>
+                        </div>
+                        <button id="subcontractor-add-btn" class="btn btn-primary" style="padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14" />
+                                <path d="M5 12h14" />
+                            </svg>
+                            Добавить
+                        </button>
+                    </div>
+
+                    <div class="data-table" style="background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; box-shadow: var(--shadow-sm); width: 100%; overflow: hidden;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 24%;">Компания</th>
+                                    <th style="width: 24%;">Контактное лицо</th>
+                                    <th style="width: 14%;">Телефон</th>
+                                    <th style="width: 18%;">Почта</th>
+                                    <th style="width: 8%;">Статус</th>
+                                    <th style="width: 12%; text-align: left;">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows || '<tr><td colspan="6" style="text-align:center; color: var(--gray-500); padding: 16px;">Нет субподрядчиков</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            bindTableActions();
+        };
+
+        const closeModal = (overlay) => {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        };
+
+        const toBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const openModal = (mode, data = {}) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal" style="max-width: 1040px; width: calc(100% - 80px);">
+                    <div class="modal-header">
+                        <h3>${mode === 'edit' ? 'Изменить субподрядчика' : 'Добавить субподрядчика'}</h3>
+                        <button class="modal-close" aria-label="Закрыть">&times;</button>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow: hidden;">
+                        <div style="display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: stretch;">
+                            <form id="subcontractor-form" class="form-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px;">
+                                <div class="form-group" style="grid-column: 1 / span 3;">
+                                    <label>Название *</label>
+                                    <input type="text" id="sc-company" value="${data.company || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Фамилия *</label>
+                                    <input type="text" id="sc-last" value="${data.lastName || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Имя *</label>
+                                    <input type="text" id="sc-first" value="${data.firstName || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Отчество</label>
+                                    <input type="text" id="sc-middle" value="${data.middleName || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Телефон *</label>
+                                    <input type="text" id="sc-phone" value="${data.phone || ''}" placeholder="+998 (__) ___-__-__" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Почта</label>
+                                    <input type="email" id="sc-email" value="${data.email || ''}" placeholder="example@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>Пароль *</label>
+                                    <input type="text" id="sc-password" value="${data.password || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Статус</label>
+                                    <select id="sc-status">
+                                        <option value="active" ${data.status !== 'inactive' ? 'selected' : ''}>Активен</option>
+                                        <option value="inactive" ${data.status === 'inactive' ? 'selected' : ''}>Неактивен</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>МФО</label>
+                                    <input type="text" id="sc-mfo" value="${data.mfo || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label>ИНН</label>
+                                    <input type="text" id="sc-inn" value="${data.inn || ''}">
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / span 2;">
+                                    <label>Название банка</label>
+                                    <input type="text" id="sc-bank" value="${data.bankName || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Р/с</label>
+                                    <input type="text" id="sc-account" value="${data.account || ''}">
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / span 3;">
+                                    <label>Адрес</label>
+                                    <input type="text" id="sc-address" value="${data.address || ''}">
+                                </div>
+                            </form>
+
+                            <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; justify-content: space-between;">
+                                <div>
+                                    <label>Фото фирмы</label>
+                                    <div id="sc-company-photo-preview" style="position: relative; aspect-ratio: 1 / 1; min-height: 140px; border: 1px dashed var(--gray-300); border-radius: 12px; background: linear-gradient(135deg, var(--gray-50), #f8fafc); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; ${data.companyPhoto ? `background-image: url(${data.companyPhoto}); background-size: cover; background-position: center;` : ''}">
+                                        ${data.companyPhoto ? '' : '<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color: var(--gray-500); font-size: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.6;"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><path d="M4 15l4-4 3 3 2-2 5 5"/></svg><span>Нажмите, чтобы загрузить</span></div>'}
+                                    </div>
+                                    <input type="file" id="sc-company-photo" accept="image/*" style="display: none;">
+                                </div>
+                                <div>
+                                    <label>Фото директора</label>
+                                    <div id="sc-director-photo-preview" style="position: relative; aspect-ratio: 1 / 1; min-height: 140px; border: 1px dashed var(--gray-300); border-radius: 12px; background: linear-gradient(135deg, var(--gray-50), #f8fafc); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; ${data.directorPhoto ? `background-image: url(${data.directorPhoto}); background-size: cover; background-position: center;` : ''}">
+                                        ${data.directorPhoto ? '' : '<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color: var(--gray-500); font-size: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.6;"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><path d="M4 15l4-4 3 3 2-2 5 5"/></svg><span>Нажмите, чтобы загрузить</span></div>'}
+                                    </div>
+                                    <input type="file" id="sc-director-photo" accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-secondary" id="sc-cancel" type="button">Отмена</button>
+                        <button class="btn btn-primary" id="sc-save" type="button">Сохранить</button>
+                    </div>
+                </div>
+            `;
+
+            const companyPhotoPreview = overlay.querySelector('#sc-company-photo-preview');
+            const directorPhotoPreview = overlay.querySelector('#sc-director-photo-preview');
+            const companyPhotoInput = overlay.querySelector('#sc-company-photo');
+            const directorPhotoInput = overlay.querySelector('#sc-director-photo');
+            let companyPhotoData = data.companyPhoto || null;
+            let directorPhotoData = data.directorPhoto || null;
+
+            const placeholder = '<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color: var(--gray-500); font-size: 12px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.6;"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><path d="M4 15l4-4 3 3 2-2 5 5"/></svg><span>Нажмите, чтобы загрузить</span></div>';
+
+            const updatePreview = (el, value) => {
+                if (!el) return;
+                if (value) {
+                    el.style.backgroundImage = `url(${value})`;
+                    el.style.backgroundSize = 'cover';
+                    el.style.backgroundPosition = 'center';
+                    el.innerHTML = '';
+                    el.style.borderColor = 'transparent';
+                } else {
+                    el.style.backgroundImage = '';
+                    el.innerHTML = placeholder;
+                    el.style.borderColor = 'var(--gray-300)';
+                }
+            };
+
+            updatePreview(companyPhotoPreview, companyPhotoData);
+            updatePreview(directorPhotoPreview, directorPhotoData);
+
+            overlay.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
+            overlay.querySelector('#sc-cancel').addEventListener('click', () => closeModal(overlay));
+
+            companyPhotoPreview?.addEventListener('click', () => companyPhotoInput?.click());
+            directorPhotoPreview?.addEventListener('click', () => directorPhotoInput?.click());
+
+            companyPhotoInput?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    companyPhotoData = await toBase64(file);
+                    updatePreview(companyPhotoPreview, companyPhotoData);
+                }
+            });
+
+            directorPhotoInput?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    directorPhotoData = await toBase64(file);
+                    updatePreview(directorPhotoPreview, directorPhotoData);
+                }
+            });
+
+            overlay.querySelector('#sc-save').addEventListener('click', async () => {
+                const company = overlay.querySelector('#sc-company').value.trim();
+                const lastName = overlay.querySelector('#sc-last').value.trim();
+                const firstName = overlay.querySelector('#sc-first').value.trim();
+                const middleName = overlay.querySelector('#sc-middle').value.trim();
+                const phone = overlay.querySelector('#sc-phone').value.trim();
+                const email = overlay.querySelector('#sc-email').value.trim();
+                const password = overlay.querySelector('#sc-password').value.trim();
+                const status = overlay.querySelector('#sc-status').value;
+                const mfo = overlay.querySelector('#sc-mfo').value.trim();
+                const inn = overlay.querySelector('#sc-inn').value.trim();
+                const bankName = overlay.querySelector('#sc-bank').value.trim();
+                const account = overlay.querySelector('#sc-account').value.trim();
+                const address = overlay.querySelector('#sc-address').value.trim();
+
+                if (!company || !firstName || !lastName || !phone || !password) {
+                    UI.showNotification('Заполните обязательные поля: Название, Фамилия, Имя, Телефон, Пароль', 'error');
+                    return;
+                }
+
+                const payload = {
+                    projectId: this.currentProjectId,
+                    company,
+                    lastName,
+                    firstName,
+                    middleName,
+                    phone,
+                    email,
+                    password,
+                    status,
+                    mfo,
+                    inn,
+                    bankName,
+                    account,
+                    address,
+                    companyPhoto: companyPhotoData,
+                    directorPhoto: directorPhotoData
+                };
+
+                try {
+                    const endpoint = mode === 'edit' ? `/api/subcontractors/${data.id}` : '/api/subcontractors';
+                    const method = mode === 'edit' ? 'PUT' : 'POST';
+
+                    const res = await fetch(endpoint, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        throw new Error(errText || 'Ошибка сохранения');
+                    }
+
+                    await fetchSubcontractors();
+                    UI.showNotification(mode === 'edit' ? 'Субподрядчик обновлён' : 'Субподрядчик добавлен', 'success');
+                    closeModal(overlay);
+                    renderTable();
+                } catch (err) {
+                    console.error(err);
+                    UI.showNotification('Не удалось сохранить субподрядчика', 'error');
+                }
+            });
+
+            document.getElementById('modal-container').appendChild(overlay);
+        };
+
+        const bindTableActions = () => {
+            document.getElementById('subcontractor-add-btn')?.addEventListener('click', () => openModal('create'));
+            contentArea.querySelectorAll('.subcontractor-edit').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const item = this.subcontractors.find((s) => s.id === id);
+                    if (item) openModal('edit', item);
+                });
+            });
+            contentArea.querySelectorAll('.subcontractor-delete').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    try {
+                        const res = await fetch(`/api/subcontractors/${id}`, { method: 'DELETE' });
+                        if (!res.ok) throw new Error('Delete failed');
+                        await fetchSubcontractors();
+                        renderTable();
+                        UI.showNotification('Субподрядчик удалён', 'success');
+                    } catch (err) {
+                        console.error(err);
+                        UI.showNotification('Не удалось удалить субподрядчика', 'error');
+                    }
+                });
+            });
+        };
+
+        setLoading();
+        await fetchSubcontractors();
+        renderTable();
+    },
+
     async showProjectSettings(projectId) {
         this.currentProjectId = projectId;
 
@@ -44,9 +423,9 @@ const SettingsManager = {
             contentArea.innerHTML = `
                 <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
                     <h1 style="margin-bottom: 32px; color: var(--gray-900); font-size: 28px;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 12px;">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 12px;">
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.52.27 1.14 0 1.66a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                         </svg>
                         Настройки проекта
                     </h1>

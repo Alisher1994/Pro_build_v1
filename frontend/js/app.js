@@ -271,6 +271,7 @@ class ProBIMApp {
                 break;
             case 'settings':
                 await SettingsManager.showProjectSettings(this.currentProjectId);
+                this.setSettingsActive('project');
                 break;
             case 'norms-settings':
                 await SettingsManager.showNormsSettings(this.currentProjectId);
@@ -378,6 +379,17 @@ class ProBIMApp {
             instructions: document.getElementById('tolerance-settings-btn'),
             worktypes: document.getElementById('worktypes-settings-btn'),
             permit: document.getElementById('permit-board-btn')
+        };
+        Object.entries(map).forEach(([key, btn]) => {
+            if (!btn) return;
+            btn.classList.toggle('active', key === mode);
+        });
+    }
+
+    setSettingsActive(mode) {
+        const map = {
+            project: document.getElementById('project-settings-btn'),
+            subcontractors: document.getElementById('subcontractors-btn')
         };
         Object.entries(map).forEach(([key, btn]) => {
             if (!btn) return;
@@ -956,12 +968,23 @@ class ProBIMApp {
             await EstimateManager.collapseAllTree();
         });
 
+        document.getElementById('expand-worktypes-btn')?.addEventListener('click', async () => {
+            if (!EstimateManager.currentEstimateId && !EstimateManager.currentSectionId) {
+                UI.showNotification('Сначала откройте смету', 'error');
+                return;
+            }
+            await EstimateManager.expandToWorkTypes();
+        });
+
         // Settings buttons
         document.getElementById('project-settings-btn')?.addEventListener('click', () => {
             if (!this.currentProjectId) {
                 UI.showNotification('Сначала выберите проект', 'error');
                 return;
             }
+            this.currentRibbonTab = 'settings';
+            this.applyRibbonTabToUI('settings');
+            this.setSettingsActive('project');
             SettingsManager.showProjectSettings(this.currentProjectId);
         });
 
@@ -981,6 +1004,17 @@ class ProBIMApp {
             }
             this.setOTiTBActive('worktypes');
             WorkTypeGroupsManager.show();
+        });
+
+        document.getElementById('subcontractors-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            this.currentRibbonTab = 'settings';
+            this.applyRibbonTabToUI('settings');
+            this.setSettingsActive('subcontractors');
+            SettingsManager.showSubcontractors(this.currentProjectId);
         });
 
         document.getElementById('permit-board-btn')?.addEventListener('click', () => {

@@ -23,10 +23,11 @@ class ProBIMApp {
         this.ribbonCollapsed = false;
         this.sidebarCollapsed = false;
         this.navigationHistory = []; // История навигации внутри системы
+        this.otitbActive = null;
     }
 
     getInitialRibbonTab() {
-        const allowed = new Set(['dashboard', 'estimate', 'schedule', 'supply', 'finance', 'analytics', 'settings']);
+        const allowed = new Set(['dashboard', 'estimate', 'schedule', 'supply', 'finance', 'analytics', 'otitb', 'settings']);
 
         // Очищаем хеш estimate при загрузке (legacy)
         const hash = (window.location.hash || '').replace('#', '').trim();
@@ -51,6 +52,13 @@ class ProBIMApp {
             const panel = document.querySelector(`[data-panel="${ribbonName}"]`);
             if (tabBtn) tabBtn.classList.add('active');
             if (panel) panel.classList.add('active');
+
+            if (ribbonName !== 'otitb') {
+                ['tolerance-settings-btn', 'worktypes-settings-btn', 'permit-board-btn'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.classList.remove('active');
+                });
+            }
 
             localStorage.setItem('probim_active_ribbon_tab', ribbonName);
             // Обновляем хеш, но для дашборда очищаем
@@ -257,6 +265,10 @@ class ProBIMApp {
             case 'analytics':
                 this.loadAnalyticsTab();
                 break;
+            case 'otitb':
+                this.setOTiTBActive('instructions');
+                InstructionsManager.show();
+                break;
             case 'settings':
                 await SettingsManager.showProjectSettings(this.currentProjectId);
                 break;
@@ -358,6 +370,478 @@ class ProBIMApp {
                 <p style="margin-top: 16px; color: var(--gray-600);">Функционал аналитики в разработке...</p>
             </div>
         `;
+    }
+
+    setOTiTBActive(mode) {
+        this.otitbActive = mode;
+        const map = {
+            instructions: document.getElementById('tolerance-settings-btn'),
+            worktypes: document.getElementById('worktypes-settings-btn'),
+            permit: document.getElementById('permit-board-btn')
+        };
+        Object.entries(map).forEach(([key, btn]) => {
+            if (!btn) return;
+            btn.classList.toggle('active', key === mode);
+        });
+    }
+
+    showPermitBoard() {
+        this.setOTiTBActive('permit');
+        if (this.permitResizeHandler) {
+            window.removeEventListener('resize', this.permitResizeHandler);
+        }
+
+        const columns = [
+            { key: 'new', title: 'Новые', canAdd: true },
+            { key: 'pending', title: 'В ожидании' },
+            { key: 'issued', title: 'Выдано' },
+            { key: 'expired', title: 'Срок истек' },
+            { key: 'revoked', title: 'Отозвано' }
+        ];
+
+        if (!this.permitFilters) {
+            this.permitFilters = {};
+        }
+        if (!this.permitFilterOpen) {
+            this.permitFilterOpen = {};
+        }
+        if (this.permitCountdownInterval) {
+            clearInterval(this.permitCountdownInterval);
+        }
+
+        if (!this.permitCards) {
+            this.permitCards = [
+                {
+                    id: 'permit-001',
+                    title: 'Монтаж конструкций фасада',
+                    code: 'НД-001',
+                    date: '22.12',
+                    issueId: 'НД-001',
+                    issuedAt: '22.12.2025',
+                    contractor: 'ООО Субподрядчик',
+                    workName: 'Монтаж конструкций фасада',
+                    issuedBy: 'Иванов И.И.',
+                    position: 'Инженер ОТ и ТБ',
+                    queue: '1',
+                    section: 'Блок Б',
+                    floor: '12',
+                    validFrom: '22.12.2025',
+                    validTo: '26.12.2025',
+                    status: 'new'
+                },
+                {
+                    id: 'permit-002',
+                    title: 'Сварка в машинном отделении',
+                    code: 'НД-002',
+                    date: '22.12',
+                    issueId: 'НД-002',
+                    issuedAt: '21.12.2025',
+                    contractor: 'ООО Субподрядчик',
+                    workName: 'Сварка трубопроводов',
+                    issuedBy: 'Петров П.П.',
+                    position: 'Главный инженер',
+                    queue: '2',
+                    section: 'Секция 4',
+                    floor: '3',
+                    validFrom: '21.12.2025',
+                    validTo: '24.12.2025',
+                    status: 'pending'
+                },
+                {
+                    id: 'permit-003',
+                    title: 'Горячие работы в цехе 3',
+                    code: 'НД-003',
+                    date: '21.12',
+                    issueId: 'НД-003',
+                    issuedAt: '21.12.2025',
+                    contractor: 'ООО Субподрядчик',
+                    workName: 'Пайка медных труб',
+                    issuedBy: 'Сидоров С.С.',
+                    position: 'Мастер участка',
+                    queue: '1',
+                    section: 'Линия 2',
+                    floor: '1',
+                    validFrom: '21.12.2025',
+                    validTo: '22.12.2025',
+                    status: 'issued'
+                },
+                {
+                    id: 'permit-004',
+                    title: 'Работы в замкнутом пространстве',
+                    code: 'НД-004',
+                    date: '21.12',
+                    issueId: 'НД-004',
+                    issuedAt: '20.12.2025',
+                    contractor: 'ООО Субподрядчик',
+                    workName: 'Обслуживание резервуара',
+                    issuedBy: 'Кузнецов К.К.',
+                    position: 'Инженер по безопасности',
+                    queue: '3',
+                    section: 'Секция 2',
+                    floor: '-1',
+                    validFrom: '20.12.2025',
+                    validTo: '23.12.2025',
+                    status: 'pending'
+                },
+                {
+                    id: 'permit-005',
+                    title: 'Высотные работы с люльки',
+                    code: 'НД-005',
+                    date: '20.12',
+                    issueId: 'НД-005',
+                    issuedAt: '18.12.2025',
+                    contractor: 'ООО Субподрядчик',
+                    workName: 'Мойка фасада',
+                    issuedBy: 'Федоров Ф.Ф.',
+                    position: 'Прораб',
+                    queue: '1',
+                    section: 'Секция 1',
+                    floor: '20',
+                    validFrom: '18.12.2025',
+                    validTo: '20.12.2025',
+                    status: 'expired'
+                },
+                {
+                    id: 'permit-006',
+                    title: 'Работа с люльки в сложных условиях',
+                    code: 'НД-006',
+                    date: '20.12',
+                    issueId: 'НД-006',
+                    issuedAt: '17.12.2025',
+                    contractor: 'ООО Субподрядчик',
+                    workName: 'Монтаж витражей',
+                    issuedBy: 'Лебедев Л.Л.',
+                    position: 'Инженер проекта',
+                    queue: '1',
+                    section: 'Секция 3',
+                    floor: '15',
+                    validFrom: '17.12.2025',
+                    validTo: '19.12.2025',
+                    status: 'revoked'
+                }
+            ];
+        }
+
+        const toEndOfDay = (dateStr) => {
+            if (!dateStr) return null;
+            const parts = dateStr.split('.').map(p => parseInt(p, 10));
+            if (parts.length !== 3 || parts.some(isNaN)) return null;
+            const [day, month, year] = parts;
+            return new Date(year, month - 1, day, 23, 59, 59, 999);
+        };
+
+        const pad2 = (value) => String(value).padStart(2, '0');
+
+        const formatCountdownText = (card) => {
+            const end = toEndOfDay(card.validTo);
+            if (!end) return '';
+            const diff = end.getTime() - Date.now();
+            if (diff <= 0) return 'Срок истек';
+            const totalSeconds = Math.floor(diff / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `Осталось ${days} дн ${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+        };
+
+        const applyExpiryTransition = () => {
+            const now = Date.now();
+            this.permitCards = this.permitCards.map(card => {
+                if (card.status === 'issued') {
+                    const end = toEndOfDay(card.validTo);
+                    if (end && end.getTime() < now) {
+                        return { ...card, status: 'expired' };
+                    }
+                }
+                return card;
+            });
+        };
+
+        applyExpiryTransition();
+
+        const statusCounts = columns.reduce((acc, col) => {
+            acc[col.key] = this.permitCards.filter(c => c.status === col.key).length;
+            return acc;
+        }, {});
+
+        const statusLabel = {
+            new: 'Новый',
+            pending: 'В ожидании',
+            issued: 'Выдано',
+            expired: 'Срок истек',
+            revoked: 'Отозвано'
+        };
+
+        const filterCards = (cards, status) => {
+            const f = this.permitFilters[status] || {};
+            const qTitle = (f.title || '').toLowerCase();
+            const qId = (f.issueId || '').toLowerCase();
+            const qContractor = (f.contractor || '').toLowerCase();
+            const qDate = (f.date || '').toLowerCase();
+            const qIssuer = (f.issuer || '').toLowerCase();
+            return cards.filter(card => {
+                if (qTitle && !card.title.toLowerCase().includes(qTitle)) return false;
+                if (qId && !card.issueId.toLowerCase().includes(qId)) return false;
+                if (qContractor && !card.contractor.toLowerCase().includes(qContractor)) return false;
+                if (qDate && !card.issuedAt.toLowerCase().includes(qDate)) return false;
+                if (qIssuer && !card.issuedBy.toLowerCase().includes(qIssuer)) return false;
+                return true;
+            });
+        };
+
+        const actionIcons = {
+            download: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12" /><path d="M6 11l6 6 6-6" /><path d="M5 19h14" /></svg>',
+            confirm: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 13 4 4L19 7" /><path d="M5 7h7" /></svg>',
+            edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>',
+            delete: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>'
+        };
+
+        const cardHtml = (card) => {
+            const sectionDisplay = (card.section || '').replace(/^(?:Блок|Линия|Секция)\s+/i, '') || card.section;
+            return `
+            <div class="permit-card" draggable="true" data-card-id="${card.id}">
+                <div class="permit-card-top">
+                    <div class="permit-logo">PB</div>
+                    <div class="permit-card-top-text">
+                        <div class="permit-card-contract">${card.contractor}</div>
+                        <div class="permit-card-field">Выдан: ${card.issuedBy}</div>
+                        <div class="permit-card-field">Должность: ${card.position}</div>
+                        <div class="permit-card-meta-line">${card.issueId}</div>
+                    </div>
+                </div>
+                <div class="permit-card-title">${card.title}</div>
+                <div class="permit-pill-row">
+                    <span class="permit-pill">Очередь ${card.queue}</span>
+                    <span class="permit-pill">Секция ${sectionDisplay}</span>
+                    <span class="permit-pill">Этаж ${card.floor}</span>
+                </div>
+                <div class="permit-card-field">Срок действия: ${card.validFrom} — ${card.validTo}</div>
+                <div class="permit-card-field permit-countdown" data-card-id="${card.id}" data-valid-to="${card.validTo}">${formatCountdownText(card)}</div>
+                <div class="permit-card-footer">
+                    <span class="permit-card-status status-${card.status}">${statusLabel[card.status] || ''}</span>
+                    <div class="permit-card-actions">
+                        <button class="permit-action-btn" data-action="confirm" data-card-id="${card.id}" title="Подтвердить">${actionIcons.confirm}</button>
+                        <button class="permit-action-btn" data-action="download" data-card-id="${card.id}" title="Скачать">${actionIcons.download}</button>
+                        <button class="permit-action-btn" data-action="edit" data-card-id="${card.id}" title="Изменить">${actionIcons.edit}</button>
+                        <button class="permit-action-btn danger" data-action="delete" data-card-id="${card.id}" title="Удалить">${actionIcons.delete}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        };
+
+        const content = `
+            <div class="permit-board" id="permit-board">
+                ${columns.map(col => `
+                    <div class="permit-column" data-status="${col.key}">
+                        <div class="permit-column-header">
+                            <div class="permit-column-title">
+                                <span class="permit-status-dot status-${col.key}"></span>
+                                    <span>${col.title} - ${statusCounts[col.key] ?? 0}</span>
+                            </div>
+                            <div class="permit-column-actions">
+                                <button class="permit-filter-btn" data-status="${col.key}" title="Фильтр">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l-6 8v6l-4-2v-4z" /></svg>
+                                </button>
+                                ${col.canAdd ? '<button class="permit-add-btn" id="add-permit-btn" title="Добавить">\n                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14" /><path d="M5 12h14" /></svg>\n                                </button>' : ''}
+                            </div>
+                        </div>
+                        <div class="permit-filter-panel ${this.permitFilterOpen[col.key] ? 'open' : ''}" data-status="${col.key}">
+                            <div class="permit-filter-row"><input type="text" placeholder="Название" data-filter-field="title" data-status="${col.key}" value="${(this.permitFilters[col.key]?.title || '').replace(/"/g,'&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="НД номер" data-filter-field="issueId" data-status="${col.key}" value="${(this.permitFilters[col.key]?.issueId || '').replace(/"/g,'&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="Субподрядчик" data-filter-field="contractor" data-status="${col.key}" value="${(this.permitFilters[col.key]?.contractor || '').replace(/"/g,'&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="Дата выдачи" data-filter-field="date" data-status="${col.key}" value="${(this.permitFilters[col.key]?.date || '').replace(/"/g,'&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="ФИО" data-filter-field="issuer" data-status="${col.key}" value="${(this.permitFilters[col.key]?.issuer || '').replace(/"/g,'&quot;')}"></div>
+                        </div>
+                        <div class="permit-column-cards">
+                            ${filterCards(this.permitCards.filter(c => c.status === col.key), col.key).map(cardHtml).join('') || '<div class="permit-empty">Нет записей</div>'}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = content;
+
+        const updateCountdowns = () => {
+            const now = Date.now();
+            let moved = false;
+            contentArea.querySelectorAll('.permit-countdown').forEach(el => {
+                const validTo = el.dataset.validTo;
+                const cardId = el.dataset.cardId;
+                const card = this.permitCards.find(c => c.id === cardId);
+                const end = toEndOfDay(validTo);
+                if (!end) {
+                    el.textContent = '';
+                    el.classList.remove('expired');
+                    return;
+                }
+                const diff = end.getTime() - now;
+                if (diff <= 0) {
+                    el.textContent = 'Срок истек';
+                    el.classList.add('expired');
+                    if (card && card.status === 'issued') {
+                        card.status = 'expired';
+                        moved = true;
+                    }
+                    return;
+                }
+                const totalSeconds = Math.floor(diff / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                el.textContent = `Осталось ${days} дн ${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+                el.classList.remove('expired');
+            });
+
+            if (moved) {
+                this.showPermitBoard();
+            }
+        };
+
+        updateCountdowns();
+        this.permitCountdownInterval = setInterval(updateCountdowns, 1000);
+
+        this.permitResizeHandler = () => this.updatePermitBoardHeight();
+        window.addEventListener('resize', this.permitResizeHandler);
+        this.updatePermitBoardHeight();
+
+        // Filter toggles
+        contentArea.querySelectorAll('.permit-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const status = btn.dataset.status;
+                this.permitFilterOpen[status] = !this.permitFilterOpen[status];
+                this.showPermitBoard();
+            });
+        });
+
+        // Filter inputs
+        contentArea.querySelectorAll('.permit-filter-panel input').forEach(input => {
+            input.addEventListener('input', () => {
+                const status = input.dataset.status;
+                const field = input.dataset.filterField;
+                if (!this.permitFilters[status]) this.permitFilters[status] = {};
+                this.permitFilters[status][field] = input.value;
+                this.showPermitBoard();
+            });
+        });
+
+        // Drag & drop
+        const cards = contentArea.querySelectorAll('.permit-card');
+        cards.forEach(cardEl => {
+            cardEl.addEventListener('dragstart', (e) => {
+                e.dataTransfer?.setData('text/plain', cardEl.dataset.cardId);
+                cardEl.classList.add('dragging');
+            });
+            cardEl.addEventListener('dragend', () => {
+                cardEl.classList.remove('dragging');
+            });
+        });
+
+        const columnsEls = contentArea.querySelectorAll('.permit-column');
+        columnsEls.forEach(colEl => {
+            colEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                colEl.classList.add('drag-over');
+            });
+            colEl.addEventListener('dragleave', () => {
+                colEl.classList.remove('drag-over');
+            });
+            colEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                colEl.classList.remove('drag-over');
+                const cardId = e.dataTransfer?.getData('text/plain');
+                if (cardId) {
+                    this.movePermitCard(cardId, colEl.dataset.status);
+                }
+            });
+        });
+
+        // Actions
+        contentArea.querySelectorAll('.permit-action-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                const cardId = btn.dataset.cardId;
+                if (action === 'delete') {
+                    this.deletePermitCard(cardId);
+                } else if (action === 'edit') {
+                    console.log('Edit permit', cardId);
+                } else if (action === 'download') {
+                    console.log('Download permit', cardId);
+                } else if (action === 'confirm') {
+                    console.log('Confirm permit', cardId);
+                }
+            });
+        });
+
+        const addBtn = document.getElementById('add-permit-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.addPermitCard());
+        }
+    }
+
+    updatePermitBoardHeight() {
+        const contentArea = document.getElementById('content-area');
+        const boardEl = document.getElementById('permit-board');
+        if (!contentArea || !boardEl) return;
+
+        const styles = window.getComputedStyle(contentArea);
+        const paddingTop = parseFloat(styles.paddingTop) || 0;
+        const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+        const availableHeight = contentArea.clientHeight - paddingTop - paddingBottom;
+
+        if (availableHeight > 0) {
+            boardEl.style.setProperty('--permit-board-height', `${availableHeight}px`);
+        } else {
+            boardEl.style.removeProperty('--permit-board-height');
+        }
+    }
+
+    movePermitCard(cardId, targetStatus) {
+        if (!this.permitCards) return;
+        const card = this.permitCards.find(c => c.id === cardId);
+        if (!card || card.status === targetStatus) return;
+        card.status = targetStatus;
+        this.showPermitBoard();
+    }
+
+    deletePermitCard(cardId) {
+        if (!this.permitCards) return;
+        this.permitCards = this.permitCards.filter(c => c.id !== cardId);
+        this.showPermitBoard();
+    }
+
+    addPermitCard() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const shortDate = `${dd}.${mm}`;
+        const fullDate = `${dd}.${mm}.${yyyy}`;
+        const idSuffix = Math.floor(Math.random() * 900 + 100);
+        const newCard = {
+            id: `permit-${Date.now()}`,
+            title: 'Новый наряд-допуск',
+            code: `НД-${idSuffix}`,
+            date: shortDate,
+            issueId: `НД-${idSuffix}`,
+            issuedAt: fullDate,
+            contractor: 'ООО Субподрядчик',
+            workName: 'Укажите работы',
+            issuedBy: 'ФИО ответственного',
+            position: 'Должность',
+            queue: '-',
+            section: '-',
+            floor: '-',
+            validFrom: fullDate,
+            validTo: fullDate,
+            status: 'new'
+        };
+        this.permitCards = [newCard, ...(this.permitCards || [])];
+        this.showPermitBoard();
     }
 
     initEventHandlers() {
@@ -486,6 +970,7 @@ class ProBIMApp {
                 UI.showNotification('Сначала выберите проект', 'error');
                 return;
             }
+            this.setOTiTBActive('instructions');
             InstructionsManager.show();
         });
 
@@ -494,7 +979,17 @@ class ProBIMApp {
                 UI.showNotification('Сначала выберите проект', 'error');
                 return;
             }
+            this.setOTiTBActive('worktypes');
             WorkTypeGroupsManager.show();
+        });
+
+        document.getElementById('permit-board-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            this.setOTiTBActive('permit');
+            this.showPermitBoard();
         });
 
         document.getElementById('norms-settings-btn')?.addEventListener('click', () => {

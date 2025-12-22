@@ -116,6 +116,7 @@
                     <button class="ribbon-tab" data-ribbon="supply">Снабжение</button>
                     <button class="ribbon-tab" data-ribbon="finance">Финансы</button>
                     <button class="ribbon-tab" data-ribbon="analytics">Аналитика</button>
+                    <button class="ribbon-tab" data-ribbon="otitb">ОТиТБ</button>
                     <button class="ribbon-tab" data-ribbon="settings">Настройки</button>
                 </div>
                 <button class="ribbon-toggle" id="ribbon-collapse-toggle" aria-expanded="true"
@@ -524,7 +525,10 @@
                         </div>
                         <span class="ribbon-group-label">Проект</span>
                     </div>
-                    <div class="ribbon-separator"></div>
+                </div>
+
+                <!-- OT и ТБ Ribbon Panel -->
+                <div class="ribbon-panel" data-panel="otitb">
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
                             <button id="tolerance-settings-btn" class="ribbon-btn large">
@@ -555,7 +559,21 @@
                         </div>
                         <span class="ribbon-group-label">Справочники</span>
                     </div>
-
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="permit-board-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+                                    <path d="M8 9h8M8 13h5" />
+                                    <circle cx="9" cy="17" r="1.2" />
+                                </svg>
+                                <span>Наряд-<br>допуск</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Наряд-допуск</span>
+                    </div>
                 </div>
             </div>
         </div>

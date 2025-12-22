@@ -1001,6 +1001,13 @@ body {
     color: var(--primary);
 }
 
+.ribbon-btn.active {
+    background: var(--primary-lighter);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary-light);
+}
+
 .ribbon-btn svg {
     flex-shrink: 0;
 }
@@ -1071,6 +1078,398 @@ body {
     background: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+}
+
+/* ========================================
+   PERMIT BOARD
+   ======================================== */
+.permit-board {
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 16px;
+    align-items: stretch;
+    height: var(--permit-board-height, auto);
+}
+
+.permit-column {
+    background: #f8f9fb;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    height: 100%;
+    position: relative;
+}
+
+.permit-column.drag-over {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.permit-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--gray-900);
+    flex-shrink: 0;
+}
+
+.permit-column-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.permit-column-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.permit-filter-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.permit-filter-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+    color: var(--primary);
+}
+
+.permit-filter-panel {
+    position: absolute;
+    top: 52px;
+    right: 12px;
+    width: 220px;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    padding: 10px;
+    display: none;
+    z-index: 10;
+}
+
+.permit-filter-panel.open {
+    display: block;
+}
+
+.permit-filter-row {
+    margin-bottom: 8px;
+}
+
+.permit-filter-row:last-child {
+    margin-bottom: 0;
+}
+
+.permit-filter-panel input {
+    width: 100%;
+    height: 30px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 0 8px;
+    font-size: 12px;
+    background: var(--gray-50);
+    outline: none;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.permit-filter-panel input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+    background: var(--white);
+}
+
+/* Add button now icon-only; align size/shape with filter button but keep primary fill */
+.permit-add-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: var(--white);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: var(--shadow-sm);
+}
+.permit-add-btn:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.permit-add-btn:hover {
+    background: var(--primary-hover);
+}
+
+.permit-add-btn:active {
+    box-shadow: none;
+}
+
+.permit-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-400);
+}
+
+.permit-status-dot.status-new { background: #2563eb; }
+.permit-status-dot.status-pending { background: #f59e0b; }
+.permit-status-dot.status-issued { background: #22c55e; }
+.permit-status-dot.status-expired { background: #9ca3af; }
+.permit-status-dot.status-revoked { background: #ef4444; }
+
+.permit-column-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-400) transparent;
+}
+
+.permit-column-cards::-webkit-scrollbar {
+    width: 10px;
+}
+
+.permit-column-cards::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.permit-column-cards::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 8px;
+    border: 2px solid #f8f9fb;
+}
+
+.permit-column-cards::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+.permit-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    user-select: none;
+}
+
+.permit-card.dragging {
+    opacity: 0.7;
+    box-shadow: var(--shadow-md);
+}
+
+.permit-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.permit-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.permit-card-top-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.permit-card-top + .permit-card-title {
+    margin-top: 6px;
+}
+
+.permit-pill-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+}
+
+.permit-pill {
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--gray-800);
+    background: var(--white);
+    box-shadow: 0 0 0 1px var(--gray-100) inset;
+}
+
+.permit-section-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-800);
+    padding: 4px 0;
+}
+
+.permit-card-meta-line {
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.permit-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.permit-action-btn {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.permit-action-btn:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-300);
+    color: var(--primary);
+}
+
+.permit-action-btn.danger:hover {
+    color: var(--accent-red);
+}
+
+.permit-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.permit-card-title {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.permit-card-date {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+.permit-card-code {
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.permit-card-contract {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.permit-card-status {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    border: 1px solid var(--gray-200);
+    line-height: 1;
+}
+
+.permit-card-status.status-issued {
+    color: var(--accent-green);
+    background: #e8f8ec;
+    border-color: #d1f2dc;
+}
+
+.permit-card-status.status-expired {
+    color: var(--gray-700);
+    background: #f3f4f6;
+    border-color: var(--gray-300);
+}
+
+.permit-card-status.status-revoked {
+    color: var(--accent-red);
+    background: #fdecec;
+    border-color: #fbd2d2;
+}
+
+.permit-card-status.status-pending {
+    color: var(--accent-orange);
+    background: #fff4e8;
+    border-color: #ffe1c2;
+}
+
+.permit-card-status.status-new {
+    color: var(--accent-blue);
+    background: #e6f2ff;
+    border-color: #cde4ff;
+}
+
+.permit-card-field {
+    font-size: 12px;
+    color: var(--gray-700);
+}
+
+.permit-countdown {
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.permit-countdown.expired {
+    color: var(--accent-red);
+}
+
+.permit-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--gray-700);
+    margin-top: 6px;
+}
+
+.permit-empty {
+    color: var(--gray-500);
+    font-size: 13px;
 }
 
 /* ========================================

@@ -526,6 +526,15 @@ class ApiService {
     }
 
     // ========================================
+    // Subcontractors
+    // ========================================
+    async getSubcontractors(projectId) {
+        const response = await fetch(`${API_BASE_URL}/subcontractors?projectId=${projectId}`);
+        if (!response.ok) throw new Error('Failed to fetch subcontractors');
+        return await response.json();
+    }
+
+    // ========================================
     // Recalculate totals (cascade up the hierarchy)
     // ========================================
     async recalculateWorkType(workTypeId) {

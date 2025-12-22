@@ -45,6 +45,7 @@ model Project {
   finances    Finance[]
   ganttTasks  GanttTask[]
   subcontractors Subcontractor[]
+  tenders     Tender[]
 }
 
 // ========================================
@@ -388,6 +389,8 @@ model Subcontractor {
   updatedAt     DateTime @updatedAt
 
   project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenderInvites TenderInvite[]
+  tenderBids    TenderBid[]
 
   @@index([projectId])
   @@index([status])
@@ -537,3 +540,79 @@ model InstructionWorkType {
   @@index([workTypeItemId])
 }
 
+// ========================================
+// 17. ТЕНДЕРЫ (ЛОТЫ)
+// ========================================
+
+// Лот (тендер)
+model Tender {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String   // Название лота
+  description String?  // Описание
+  blockIds    String   // JSON массив ID блоков ["block1", "block2"]
+  sectionIds  String   // JSON массив ID разделов ["АР", "КЖ"]
+  startDate   DateTime // Дата начала приема откликов
+  deadline    DateTime // Дедлайн подачи откликов
+  status      String   @default("open") // open, closed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Связи
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invites     TenderInvite[]
+  bids        TenderBid[]
+  
+  @@index([projectId])
+  @@index([status])
+}
+
+// Приглашение в тендер
+model TenderInvite {
+  id              String   @id @default(uuid())
+  tenderId        String
+  subcontractorId String
+  token           String   @unique // Уникальный токен для доступа
+  expiresAt       DateTime // Срок действия приглашения
+  status          String   @default("pending") // pending, accepted, expired
+  createdAt       DateTime @default(now())
+  
+  // Связи
+  tender          Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  bid             TenderBid?
+  
+  @@index([tenderId])
+  @@index([subcontractorId])
+  @@index([token])
+}
+
+// Отклик (оферта) на тендер
+model TenderBid {
+  id              String   @id @default(uuid())
+  inviteId        String   @unique
+  tenderId        String
+  subcontractorId String
+  status          String   @default("parsed") // uploaded, parsing, parsed, failed, winner, contract
+  priceTotal      Float    // Общая сумма
+  completionDate  String?  // Срок выполнения (дата в формате строки)
+  score           Int?     // Баллы (рассчитываются автоматически)
+  items           String   // JSON массив с детализацией по блокам/разделам
+  files           String   // JSON массив загруженных файлов
+  blocked         Boolean  @default(false)
+  blockReason     String?
+  blockDate       DateTime?
+  contractNumber  String?  // Номер договора (если выбран победитель)
+  contractDate    DateTime? // Дата создания договора
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Связи
+  invite          TenderInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  tender          Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  
+  @@index([tenderId])
+  @@index([subcontractorId])
+  @@index([status])
+}

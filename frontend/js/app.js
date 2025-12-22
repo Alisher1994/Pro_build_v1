@@ -27,7 +27,7 @@ class ProBIMApp {
     }
 
     getInitialRibbonTab() {
-        const allowed = new Set(['dashboard', 'estimate', 'schedule', 'supply', 'finance', 'analytics', 'otitb', 'settings']);
+        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'analytics', 'otitb', 'settings']);
 
         // Очищаем хеш estimate при загрузке (legacy)
         const hash = (window.location.hash || '').replace('#', '').trim();
@@ -242,6 +242,10 @@ class ProBIMApp {
             return;
         }
 
+        const contentArea = document.getElementById('content-area');
+        // Reset padding by default (restore CSS value)
+        contentArea.style.padding = '';
+
         switch (this.currentRibbonTab) {
             case 'dashboard':
                 this.loadDashboardTab();
@@ -252,6 +256,11 @@ class ProBIMApp {
                 } else {
                     await EstimateManager.renderEstimateTree(this.currentProjectId);
                 }
+                break;
+            case 'tender':
+                // Remove padding for tender tab so iframe can be full width
+                contentArea.style.padding = '0';
+                this.loadTenderTab();
                 break;
             case 'schedule':
                 this.loadScheduleTab();
@@ -283,6 +292,27 @@ class ProBIMApp {
         if (this.currentProjectId) {
             ScheduleManager.init(this.currentProjectId);
         }
+    }
+
+    loadTenderTab() {
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = `
+            <iframe id="tender-frame" src="tender-prototype.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        `;
+        
+        const iframe = document.getElementById('tender-frame');
+        iframe.onload = () => {
+            if (iframe.contentWindow.initApi) {
+                iframe.contentWindow.initApi({
+                    getBlocks: () => api.getBlocks(this.currentProjectId),
+                    getEstimates: (blockId) => api.getEstimates(this.currentProjectId, blockId),
+                    getSections: (estimateId) => api.getSections(estimateId),
+                    getStages: (sectionId) => api.getStages(sectionId),
+                    getWorkTypes: (stageId) => api.getWorkTypes(stageId),
+                    getSubcontractors: () => api.getSubcontractors(this.currentProjectId)
+                });
+            }
+        };
     }
 
     loadSupplyTab() {

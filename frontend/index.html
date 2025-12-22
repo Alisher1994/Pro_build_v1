@@ -14,6 +14,79 @@
     <link rel="stylesheet" href="css/gantt-colors.css">
     <!-- Yandex Maps API (без API ключа для разработки) -->
     <script src="https://api-maps.yandex.ru/2.1/?apikey=&lang=ru_RU" type="text/javascript"></script>
+    <style>
+        /* Hide scrollbar for content area but allow scrolling */
+        .content-area {
+            scrollbar-width: none;
+        }
+        .content-area::-webkit-scrollbar {
+            display: none;
+        }
+        /* Custom modal for block reason */
+        #block-reason-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 9000;
+        }
+        #block-reason-modal.hidden {
+            display: none;
+        }
+        .block-reason-dialog {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            width: min(460px, 100%);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .block-reason-dialog h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .block-reason-dialog textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .block-reason-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .block-reason-note {
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+        #block-reason-save {
+            background: #2B7A78;
+            border-color: #2B7A78;
+            color: #fff;
+        }
+        .block-reason-row td {
+            padding: 10px;
+            border-top: none;
+        }
+        .block-reason-row .block-reason-banner {
+            margin: 0;
+            padding: 12px;
+        }
+        .table thead th {
+            background: #DEF2F1;
+            color: var(--gray-800);
+        }
+    </style>
 </head>
 
 <body>
@@ -112,6 +185,7 @@
                 <div class="ribbon-tabs">
                     <button class="ribbon-tab active" data-ribbon="dashboard">Дашборд</button>
                     <button class="ribbon-tab" data-ribbon="estimate">Смета</button>
+                    <button class="ribbon-tab" data-ribbon="tender">Тендер</button>
                     <button class="ribbon-tab" data-ribbon="schedule">График</button>
                     <button class="ribbon-tab" data-ribbon="supply">Снабжение</button>
                     <button class="ribbon-tab" data-ribbon="finance">Финансы</button>
@@ -344,6 +418,34 @@
                             </button>
                         </div>
                         <span class="ribbon-group-label">3D режим</span>
+                    </div>
+                </div>
+
+                <!-- Tender Ribbon Panel -->
+                <div class="ribbon-panel" data-panel="tender">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large" onclick="const frame = document.getElementById('tender-frame'); if(frame && frame.contentWindow.createNewLot) frame.contentWindow.createNewLot();">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14" />
+                                    <path d="M5 12h14" />
+                                </svg>
+                                <span>Создать<br>лот</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Создание</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large" onclick="const frame = document.getElementById('tender-frame'); if(frame && frame.contentWindow.refreshMockData) frame.contentWindow.refreshMockData(); else if(frame) frame.contentWindow.location.reload();">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                </svg>
+                                <span>Обновить</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Действия</span>
                     </div>
                 </div>
 
@@ -629,6 +731,59 @@
 
     <!-- Modals будут добавлены через JavaScript -->
     <div id="modal-container"></div>
+    <div id="block-reason-modal" class="hidden" role="dialog" aria-modal="true">
+        <div class="block-reason-dialog">
+            <h3>Причина блокировки</h3>
+            <p class="block-reason-note">Опишите, почему субподрядчик не может участвовать — текст будет отображён полностью ниже.</p>
+            <textarea id="block-reason-input" placeholder="Напишите причину"></textarea>
+            <div class="block-reason-actions">
+                <button class="btn secondary" id="block-reason-cancel">Отмена</button>
+                <button class="btn" id="block-reason-save">Сохранить</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const modal = document.getElementById('block-reason-modal');
+            const input = document.getElementById('block-reason-input');
+            const cancelBtn = document.getElementById('block-reason-cancel');
+            const saveBtn = document.getElementById('block-reason-save');
+            let resolver = null;
+
+            const closeModal = (result = null) => {
+                modal.classList.add('hidden');
+                if (resolver) {
+                    resolver(result);
+                    resolver = null;
+                }
+            };
+
+            cancelBtn.addEventListener('click', () => closeModal(null));
+            saveBtn.addEventListener('click', () => {
+                const value = input.value.trim();
+                if (!value) {
+                    input.focus();
+                    return;
+                }
+                closeModal(value);
+            });
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal(null);
+                }
+            });
+
+            window.requestBlockReason = () => {
+                return new Promise(resolve => {
+                    resolver = resolve;
+                    input.value = '';
+                    modal.classList.remove('hidden');
+                    setTimeout(() => input.focus(), 10);
+                });
+            };
+        })();
+    </script>
 
     <!-- XLSX Library for Excel/CSV parsing -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>

@@ -1,9 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
+import multer from 'multer';
 
 const router = Router();
 const prisma = new PrismaClient();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ==========================================
 // GET /api/tenders?projectId=X
@@ -28,7 +30,8 @@ router.get('/', async (req: Request, res: Response) => {
         },
         bids: {
           include: {
-            subcontractor: true
+            subcontractor: true,
+            invite: true
           }
         }
       },
@@ -62,7 +65,8 @@ router.get('/:id', async (req: Request, res: Response) => {
         },
         bids: {
           include: {
-            subcontractor: true
+            subcontractor: true,
+            invite: true
           }
         }
       }
@@ -159,12 +163,16 @@ router.post('/:id/invites', async (req: Request, res: Response) => {
     // Генерируем уникальный токен
     const token = crypto.randomBytes(32).toString('hex');
 
+    // Генерируем 4-значный цифровой код
+    const inviteCode = Math.floor(1000 + Math.random() * 9000).toString();
+
     // Создаем приглашение
     const invite = await prisma.tenderInvite.create({
       data: {
         tenderId,
         subcontractorId,
         token,
+        inviteCode,
         expiresAt: tender.deadline, // Приглашение действует до дедлайна
         status: 'pending'
       },
@@ -177,6 +185,72 @@ router.post('/:id/invites', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error creating invite:', error);
     res.status(500).json({ error: 'Failed to create invite' });
+  }
+});
+
+/**
+ * GET /api/tenders/:id/share-link
+ * Генерирует общую ссылку на лот
+ */
+router.get('/:id/share-link', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // В реальном проекте здесь может быть домен из конфига
+    const baseUrl = 'http://localhost:8000';
+    const url = `${baseUrl}/subcontractor-portal.html?tenderId=${id}`;
+    res.json({ url });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate link' });
+  }
+});
+
+/**
+ * POST /api/tenders/auth
+ * Универсальный вход: ID тендера + 4-значный код
+ */
+router.post('/auth', async (req: Request, res: Response) => {
+  try {
+    const { tenderId, code } = req.body;
+    if (!tenderId || !code) return res.status(400).json({ error: 'Missing tenderId or code' });
+
+    const invite = await prisma.tenderInvite.findFirst({
+      where: {
+        tenderId,
+        inviteCode: code
+      },
+      include: {
+        subcontractor: true
+      }
+    });
+
+    if (!invite) return res.status(401).json({ error: 'Invalid code for this lot' });
+    res.json({ token: invite.token, subcontractor: invite.subcontractor });
+  } catch (error) {
+    res.status(500).json({ error: 'Auth failed' });
+  }
+});
+
+/**
+ * POST /api/tenders/invites/:token/auth
+ * Вход по прямой ссылке: Токен + 4-значный код
+ */
+router.post('/invites/:token/auth', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { code } = req.body;
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token },
+      include: { subcontractor: true }
+    });
+
+    if (!invite || invite.inviteCode !== code) {
+      return res.status(401).json({ error: 'Invalid code' });
+    }
+
+    res.json({ token: invite.token, subcontractor: invite.subcontractor });
+  } catch (error) {
+    res.status(500).json({ error: 'Auth failed' });
   }
 });
 
@@ -469,6 +543,325 @@ router.post('/bids/:id/cancel-contract', async (req: Request, res: Response) => 
   } catch (error) {
     console.error('Error canceling contract:', error);
     res.status(500).json({ error: 'Failed to cancel contract' });
+  }
+});
+
+// ==========================================
+// Subcontractor Portal Routes
+// ==========================================
+
+// GET /api/tenders/invites/:token
+// Get basic invite/tender info (for login screen)
+router.get('/invites/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token },
+      include: {
+        tender: {
+          include: { project: true }
+        },
+        subcontractor: true,
+        bid: true
+      }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+
+    // Check if expired
+    if (new Date() > invite.expiresAt) {
+      return res.status(400).json({ error: 'Invite expired' });
+    }
+
+    res.json({
+      tenderName: invite.tender.name,
+      projectName: invite.tender.project.name,
+      subcontractorName: invite.subcontractor.company,
+      startDate: invite.tender.startDate,
+      deadline: invite.tender.deadline,
+      status: invite.tender.status,
+      bidStatus: invite.bid?.status || 'none'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/tenders/invites/:token/auth
+// Verify 4-digit code (via token)
+router.post('/invites/:token/auth', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { code } = req.body;
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.inviteCode !== code) return res.status(401).json({ error: 'Invalid code' });
+
+    res.json({ success: true, token: invite.token });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/tenders/auth
+// Verify 4-digit code via tenderId (general link)
+router.post('/auth', async (req: Request, res: Response) => {
+  try {
+    const { tenderId, code } = req.body;
+
+    const invite = await prisma.tenderInvite.findFirst({
+      where: { tenderId, inviteCode: code }
+    });
+
+    if (!invite) return res.status(401).json({ error: 'Invalid code or tender ID' });
+
+    res.json({ success: true, token: invite.token });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/tenders/invites/:token/details
+// Get full details after auth
+router.get('/invites/:token/details', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { code } = req.query; // Code should be provided for basic security
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token },
+      include: {
+        tender: {
+          include: { project: true }
+        },
+        subcontractor: true,
+        bid: true
+      }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Parse items and sectionIds
+    const tenderItems = JSON.parse(invite.tender.items || '[]');
+    const sectionIds = JSON.parse(invite.tender.sectionIds || '[]');
+
+    // Fetch full details for the work types included in the tender
+    const workTypeIds = tenderItems.map((it: any) => it.workTypeId).filter(Boolean);
+    const workTypes = await prisma.workType.findMany({
+      where: { id: { in: workTypeIds } },
+      include: { resources: true, stage: true }
+    });
+
+    res.json({
+      tender: invite.tender,
+      subcontractor: invite.subcontractor,
+      bid: invite.bid,
+      items: tenderItems,
+      workTypes: workTypes, // Include full work types with resources
+      selectedSections: sectionIds
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/tenders/invites/:token/bid
+// Create or update bid
+router.post('/invites/:token/bid', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { code, priceTotal, completionDate, items, status } = req.body;
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
+
+    const bidData = {
+      priceTotal: parseFloat(priceTotal),
+      completionDate: String(completionDate),
+      items: JSON.stringify(items || []),
+      status: status || 'parsing', // 'parsed' if finished
+      files: '[]',
+      tenderId: invite.tenderId,
+      subcontractorId: invite.subcontractorId,
+      inviteId: invite.id
+    };
+
+    const existingBid = await prisma.tenderBid.findUnique({
+      where: { inviteId: invite.id }
+    });
+
+    let bid;
+    if (existingBid) {
+      bid = await prisma.tenderBid.update({
+        where: { id: existingBid.id },
+        data: bidData
+      });
+    } else {
+      bid = await prisma.tenderBid.create({
+        data: bidData
+      });
+    }
+
+    res.json(bid);
+  } catch (error) {
+    console.error('Bid error:', error);
+    res.status(500).json({ error: 'Failed to save bid' });
+  }
+});
+
+// GET /api/tenders/invites/:token/export-csv/:estimateId
+// Export CSV for an estimate including resources
+router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: Response) => {
+  try {
+    const { token, estimateId } = req.params;
+    const { code } = req.query;
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token },
+      include: { tender: true }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
+
+    const tenderItems = JSON.parse(invite.tender.items || '[]');
+    // Filter items belonging to this estimate
+    const estimateWorks = tenderItems.filter((i: any) => i.estimateId === estimateId);
+
+    if (estimateWorks.length === 0) {
+      return res.status(404).json({ error: 'No works found for this estimate in the tender' });
+    }
+
+    // Fetch resources for these work types
+    const workTypeIds = estimateWorks.map((i: any) => i.workTypeId);
+    const workTypesWithResources = await prisma.workType.findMany({
+      where: { id: { in: workTypeIds } },
+      include: { resources: true, stage: true },
+      orderBy: { orderIndex: 'asc' }
+    });
+
+    // Build CSV Content
+    // №	Тип ресурса	Название	Ед.изм	Кол-во	Цена
+    let csv = '\uFEFF'; // UTF-8 BOM
+    csv += '№\tТип ресурса\tНазвание\tЕд.изм\tКол-во\tЦена\n';
+
+    // Group by Stage
+    const stagesMap = new Map();
+    workTypesWithResources.forEach(wt => {
+      if (!stagesMap.has(wt.stageId)) {
+        stagesMap.set(wt.stageId, { name: wt.stage.name, works: [] });
+      }
+      stagesMap.get(wt.stageId).works.push(wt);
+    });
+
+    let counter = 1;
+    stagesMap.forEach((stage, stageId) => {
+      // Format stage as and empty row with stage name in the middle
+      csv += `\t${stage.name.toUpperCase()}\t\t\t\t\n`;
+      stage.works.forEach((wt: any) => {
+        csv += `${counter}\tРабота\t${wt.name}\t${wt.unit || 'ед.'}\t${wt.quantity || 0}\t0\n`;
+        // Resources
+        (wt.resources || []).forEach((res: any, idx: number) => {
+          csv += `${counter}.${idx + 1}\t${res.resourceType}\t${res.name}\t${res.unit || ''}\t${res.quantity || 0}\t0\n`;
+        });
+        counter++;
+      });
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="estimate_${estimateId}.csv"`);
+    res.send(csv);
+
+  } catch (error) {
+    console.error('CSV Export error:', error);
+    res.status(500).json({ error: 'Failed to export CSV' });
+  }
+});
+
+// POST /api/tenders/invites/:token/upload-csv
+// Upload and parse offer CSV
+router.post('/invites/:token/upload-csv', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { code } = req.body;
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const csvContent = req.file.buffer.toString('utf-8');
+    const lines = csvContent.split('\n');
+    let totalPrice = 0;
+    const parsedItems: any[] = [];
+
+    // Skip header (line 0)
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const cols = line.split('\t');
+      if (cols.length < 6) continue;
+
+      const name = cols[2];
+      const quantity = parseFloat(cols[4]) || 0;
+      const price = parseFloat(cols[5]) || 0;
+
+      if (price > 0) {
+        totalPrice += (quantity * price);
+        parsedItems.push({
+          name,
+          quantity,
+          price,
+          total: quantity * price
+        });
+      }
+    }
+
+    // Update or create bid
+    const bidData = {
+      priceTotal: totalPrice,
+      items: JSON.stringify(parsedItems),
+      status: 'parsing',
+      tenderId: invite.tenderId,
+      subcontractorId: invite.subcontractorId,
+      inviteId: invite.id,
+      files: '[]'
+    };
+
+    const existingBid = await prisma.tenderBid.findUnique({
+      where: { inviteId: invite.id }
+    });
+
+    if (existingBid) {
+      await prisma.tenderBid.update({
+        where: { id: existingBid.id },
+        data: bidData
+      });
+    } else {
+      await prisma.tenderBid.create({
+        data: bidData
+      });
+    }
+
+    res.json({ success: true, totalPrice, itemCount: parsedItems.length });
+
+  } catch (error) {
+    console.error('CSV Upload error:', error);
+    res.status(500).json({ error: 'Failed to process CSV' });
   }
 });
 

@@ -19,9 +19,11 @@
         .content-area {
             scrollbar-width: none;
         }
+
         .content-area::-webkit-scrollbar {
             display: none;
         }
+
         /* Custom modal for block reason */
         #block-reason-modal {
             position: fixed;
@@ -33,9 +35,11 @@
             padding: 16px;
             z-index: 9000;
         }
+
         #block-reason-modal.hidden {
             display: none;
         }
+
         .block-reason-dialog {
             background: var(--white);
             border-radius: 12px;
@@ -46,10 +50,12 @@
             flex-direction: column;
             gap: 16px;
         }
+
         .block-reason-dialog h3 {
             margin: 0;
             font-size: 18px;
         }
+
         .block-reason-dialog textarea {
             width: 100%;
             min-height: 120px;
@@ -60,28 +66,34 @@
             font-family: inherit;
             font-size: 14px;
         }
+
         .block-reason-actions {
             display: flex;
             justify-content: flex-end;
             gap: 12px;
         }
+
         .block-reason-note {
             font-size: 12px;
             color: var(--gray-600);
         }
+
         #block-reason-save {
             background: #2B7A78;
             border-color: #2B7A78;
             color: #fff;
         }
+
         .block-reason-row td {
             padding: 10px;
             border-top: none;
         }
+
         .block-reason-row .block-reason-banner {
             margin: 0;
             padding: 12px;
         }
+
         .table thead th {
             background: #DEF2F1;
             color: var(--gray-800);
@@ -425,22 +437,27 @@
                 <div class="ribbon-panel" data-panel="tender">
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button class="ribbon-btn large" onclick="const frame = document.getElementById('tender-frame'); if(frame && frame.contentWindow.createNewLot) frame.contentWindow.createNewLot();">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <button class="ribbon-btn large"
+                                onclick="const frame = document.getElementById('tender-frame'); if(frame && frame.contentWindow.createNewLot) frame.contentWindow.createNewLot();">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M12 5v14" />
                                     <path d="M5 12h14" />
                                 </svg>
-                                <span>Создать<br>лот</span>
+                                <span>Добавить<br>лот</span>
                             </button>
                         </div>
-                        <span class="ribbon-group-label">Создание</span>
+                        <span class="ribbon-group-label">Добавление</span>
                     </div>
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button class="ribbon-btn large" onclick="const frame = document.getElementById('tender-frame'); if(frame && frame.contentWindow.refreshMockData) frame.contentWindow.refreshMockData(); else if(frame) frame.contentWindow.location.reload();">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                            <button class="ribbon-btn large"
+                                onclick="const frame = document.getElementById('tender-frame'); if(frame && frame.contentWindow.refreshMockData) frame.contentWindow.refreshMockData(); else if(frame) frame.contentWindow.location.reload();">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                                 </svg>
                                 <span>Обновить</span>
                             </button>
@@ -625,7 +642,9 @@
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
                             <button id="project-settings-btn" class="ribbon-btn large">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2b7a78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="#2b7a78" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <path d="M11 10.27 7 3.34" />
                                     <path d="m11 13.73-4 6.93" />
                                     <path d="M12 22v-2" />
@@ -734,7 +753,8 @@
     <div id="block-reason-modal" class="hidden" role="dialog" aria-modal="true">
         <div class="block-reason-dialog">
             <h3>Причина блокировки</h3>
-            <p class="block-reason-note">Опишите, почему субподрядчик не может участвовать — текст будет отображён полностью ниже.</p>
+            <p class="block-reason-note">Опишите, почему субподрядчик не может участвовать — текст будет отображён
+                полностью ниже.</p>
             <textarea id="block-reason-input" placeholder="Напишите причину"></textarea>
             <div class="block-reason-actions">
                 <button class="btn secondary" id="block-reason-cancel">Отмена</button>

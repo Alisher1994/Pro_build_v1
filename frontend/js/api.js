@@ -194,7 +194,7 @@ class ApiService {
     async uploadIFC(sectionId, file) {
         const formData = new FormData();
         formData.append('file', file);  // Backend ожидает 'file'
-        
+
         const response = await fetch(`${API_BASE_URL}/sections/${sectionId}/upload-ifc`, {
             method: 'POST',
             body: formData,
@@ -576,6 +576,77 @@ class ApiService {
         if (stageId) await this.recalculateStage(stageId);
         if (sectionId) await this.recalculateSection(sectionId);
         if (estimateId) await this.recalculateEstimate(estimateId);
+    }
+
+    // ========================================
+    // Tenders
+    // ========================================
+    async getTenders(projectId) {
+        const response = await fetch(`${API_BASE_URL}/tenders?projectId=${projectId}`);
+        if (!response.ok) throw new Error('Failed to fetch tenders');
+        return await response.json();
+    }
+
+    async createTender(data) {
+        const response = await fetch(`${API_BASE_URL}/tenders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to create tender');
+        return await response.json();
+    }
+
+    async createTenderInvite(tenderId, subcontractorId) {
+        const response = await fetch(`${API_BASE_URL}/tenders/${tenderId}/invites`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subcontractorId }),
+        });
+        if (!response.ok) throw new Error('Failed to create invite');
+        return await response.json();
+    }
+
+    async toggleBidBlock(bidId, blocked, reason = '') {
+        const response = await fetch(`${API_BASE_URL}/tenders/bids/${bidId}/block`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blocked, blockReason: reason }),
+        });
+        if (!response.ok) throw new Error('Failed to toggle block status');
+        return await response.json();
+    }
+
+    async selectWinner(bidId) {
+        const response = await fetch(`${API_BASE_URL}/tenders/bids/${bidId}/select-winner`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error('Failed to select winner');
+        return await response.json();
+    }
+
+    async createContract(bidId) {
+        const response = await fetch(`${API_BASE_URL}/tenders/bids/${bidId}/create-contract`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error('Failed to create contract');
+        return await response.json();
+    }
+
+    async cancelContract(bidId) {
+        const response = await fetch(`${API_BASE_URL}/tenders/bids/${bidId}/cancel-contract`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error('Failed to cancel contract');
+        return await response.json();
+    }
+
+    async deleteTender(id) {
+        const response = await fetch(`${API_BASE_URL}/tenders/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete tender');
+        return await response.json();
     }
 }
 

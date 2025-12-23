@@ -614,6 +614,9 @@ const EstimateManager = {
             // Обновляем breadcrumb
             await this.updateBreadcrumb();
 
+            const sections = await api.getSections(estimateId);
+            const defaultSectionId = sections?.[0]?.id;
+
             const hasIfc = Boolean(estimate.xktFileUrl);
             const ifcFileName = estimate.ifcFileUrl ? estimate.ifcFileUrl.split('/').pop() : null;
 
@@ -630,8 +633,9 @@ const EstimateManager = {
                     <div style="flex: 1; display: flex; overflow: hidden;">
                         <!-- Левая панель: Структура сметы -->
                         <div id="left-panel" style="width: 60%; background: var(--white); border-right: 1px solid var(--gray-300); display: flex; flex-direction: column; overflow: hidden;">
-                            <div style="padding: 12px 16px; background: var(--gray-50); border-bottom: 1px solid var(--gray-300);">
+                            <div style="padding: 12px 16px; background: var(--gray-50); border-bottom: 1px solid var(--gray-300); display: flex; justify-content: space-between; align-items: center;">
                                 <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--gray-700);">Структура сметы</h3>
+                                ${defaultSectionId ? `<button onclick=\"EstimateManager.createStage('${defaultSectionId}')\" class=\"btn btn-primary btn-sm\">Добавить этап</button>` : ''}
                             </div>
                             <div id="estimate-tree-container" style="flex: 1; overflow-y: auto; padding: 16px;">
                                 <div style="text-align: center; padding: 40px; color: var(--gray-600);">
@@ -1180,9 +1184,6 @@ const EstimateManager = {
             }
 
             let html = `
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-                    ${defaultSectionId ? `<button onclick=\"EstimateManager.createStage('${defaultSectionId}')\" class=\"btn btn-primary btn-sm\">Добавить этап</button>` : ''}
-                </div>
                 <div class="tree-structure">
             `;
             for (const stage of allStages) {

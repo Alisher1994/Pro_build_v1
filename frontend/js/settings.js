@@ -5,6 +5,18 @@
 const SettingsManager = {
     currentProjectId: null,
     subcontractors: null,
+    workTypesList: [
+        "Земельные работы",
+        "Разработка котлована",
+        "Устройство фундамента",
+        "Возведение стен",
+        "Монтаж перекрытий",
+        "Устройство крыши",
+        "Отделочные работы",
+        "Инженерные сети",
+        "Фасадные работы",
+        "Благоустройство"
+    ],
 
     async showToleranceSettings(projectId) {
         this.currentProjectId = projectId;
@@ -78,6 +90,14 @@ const SettingsManager = {
                     ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #eef2f7; background-image: url(${item.companyPhoto}); background-size: cover; background-position: center;"></div>`
                     : `<div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #e0f2fe, #dbeafe); color: #1f2937; display: grid; place-items: center; font-weight: 700; font-size: 14px;">${initials}</div>`;
 
+                const workTypes = item.workTypes ? item.workTypes.split(',') : [];
+                let workTypesDisplay = '—';
+                if (workTypes.length === 1) {
+                    workTypesDisplay = workTypes[0];
+                } else if (workTypes.length > 1) {
+                    workTypesDisplay = `<button class="btn btn-secondary sc-view-work-types" data-id="${item.id}" style="padding: 4px 8px; font-size: 11px; height: 24px; min-width: 80px;">Просмотр</button>`;
+                }
+
                 return `
                     <tr data-id="${item.id}">
                         <td>
@@ -90,6 +110,7 @@ const SettingsManager = {
                             </div>
                         </td>
                         <td>${fio || ''}</td>
+                        <td style="font-size: 12px; color: var(--gray-700);">${workTypesDisplay}</td>
                         <td>${item.phone || ''}</td>
                         <td>${item.email || ''}</td>
                         <td>${statusLabel}</td>
@@ -139,12 +160,13 @@ const SettingsManager = {
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 24%;">Компания</th>
-                                    <th style="width: 24%;">Контактное лицо</th>
-                                    <th style="width: 14%;">Телефон</th>
-                                    <th style="width: 18%;">Почта</th>
-                                    <th style="width: 8%;">Статус</th>
-                                    <th style="width: 12%; text-align: left;">Действия</th>
+                                    <th style="width: 22%;">Компания</th>
+                                    <th style="width: 20%;">Контактное лицо</th>
+                                    <th style="width: 15%;">Вид работ</th>
+                                    <th style="width: 12%;">Телефон</th>
+                                    <th style="width: 15%;">Почта</th>
+                                    <th style="width: 6%;">Статус</th>
+                                    <th style="width: 10%; text-align: left;">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -180,9 +202,9 @@ const SettingsManager = {
                         <h3>${mode === 'edit' ? 'Изменить субподрядчика' : 'Добавить субподрядчика'}</h3>
                         <button class="modal-close" aria-label="Закрыть">&times;</button>
                     </div>
-                    <div class="modal-body" style="max-height: 70vh; overflow: hidden;">
+                    <div class="modal-body" style="overflow: visible; position: relative; z-index: 100;">
                         <div style="display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: stretch;">
-                            <form id="subcontractor-form" class="form-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px;">
+                            <form id="subcontractor-form" class="form-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; padding-bottom: 20px; position: relative; z-index: 90;">
                                 <div class="form-group" style="grid-column: 1 / span 3;">
                                     <label>Название *</label>
                                     <input type="text" id="sc-company" value="${data.company || ''}" required>
@@ -233,6 +255,27 @@ const SettingsManager = {
                                 <div class="form-group">
                                     <label>Р/с</label>
                                     <input type="text" id="sc-account" value="${data.account || ''}">
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / span 3; position: relative; z-index: 1000;">
+                                    <label>Вид работ</label>
+                                    <div id="sc-work-types-dropdown" style="width: 100%; min-height: 40px; padding: 6px 12px; border: 1px solid var(--gray-300); border-radius: 8px; background: #fff; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; position: relative;">
+                                        <div id="sc-selected-work-types" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                            <span style="color: var(--gray-400); font-size: 14px;">Выберите виды работ...</span>
+                                        </div>
+                                        <div style="margin-left: auto;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                                        </div>
+                                        <div id="sc-work-types-list" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid var(--gray-300); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 9999; max-height: 200px; overflow-y: auto; padding: 8px 0;">
+                                            ${this.workTypesList.map(type => `
+                                                <div class="work-type-option" data-value="${type}" style="padding: 8px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s;">
+                                                    <div class="checkbox-box" style="width: 18px; height: 18px; border: 2px solid var(--gray-300); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" style="display: none;"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    </div>
+                                                    <span style="font-size: 14px; color: var(--gray-700);">${type}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group" style="grid-column: 1 / span 3;">
                                     <label>Адрес</label>
@@ -295,6 +338,72 @@ const SettingsManager = {
             overlay.querySelector('.modal-close').addEventListener('click', () => closeModal(overlay));
             overlay.querySelector('#sc-cancel').addEventListener('click', () => closeModal(overlay));
 
+            // Work types logic
+            const dropdown = overlay.querySelector('#sc-work-types-dropdown');
+            const list = overlay.querySelector('#sc-work-types-list');
+            const selectedContainer = overlay.querySelector('#sc-selected-work-types');
+            let selectedWorkTypes = data.workTypes ? data.workTypes.split(',') : [];
+
+            const updateSelectedUI = () => {
+                if (selectedWorkTypes.length === 0) {
+                    selectedContainer.innerHTML = '<span style="color: var(--gray-400); font-size: 14px;">Выберите виды работ...</span>';
+                } else {
+                    selectedContainer.innerHTML = selectedWorkTypes.map(type => `
+                        <div style="background: #2B7A78; color: #fff; padding: 2px 10px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                            ${type}
+                            <span class="remove-work-type" data-value="${type}" style="cursor: pointer; font-size: 14px; line-height: 1;">&times;</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Update options checkmarks
+                overlay.querySelectorAll('.work-type-option').forEach(opt => {
+                    const val = opt.dataset.value;
+                    const checkbox = opt.querySelector('.checkbox-box');
+                    const check = checkbox.querySelector('svg');
+                    if (selectedWorkTypes.includes(val)) {
+                        checkbox.style.background = '#2B7A78';
+                        checkbox.style.borderColor = '#2B7A78';
+                        check.style.display = 'block';
+                    } else {
+                        checkbox.style.background = 'transparent';
+                        checkbox.style.borderColor = 'var(--gray-300)';
+                        check.style.display = 'none';
+                    }
+                });
+            };
+
+            updateSelectedUI();
+
+            dropdown.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-work-type')) {
+                    const val = e.target.dataset.value;
+                    selectedWorkTypes = selectedWorkTypes.filter(t => t !== val);
+                    updateSelectedUI();
+                    return;
+                }
+                list.style.display = list.style.display === 'none' ? 'block' : 'none';
+            });
+
+            overlay.querySelectorAll('.work-type-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const val = opt.dataset.value;
+                    if (selectedWorkTypes.includes(val)) {
+                        selectedWorkTypes = selectedWorkTypes.filter(t => t !== val);
+                    } else {
+                        selectedWorkTypes.push(val);
+                    }
+                    updateSelectedUI();
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    list.style.display = 'none';
+                }
+            }, { once: true }); // Need to be careful with global listeners in modals
+
             companyPhotoPreview?.addEventListener('click', () => companyPhotoInput?.click());
             directorPhotoPreview?.addEventListener('click', () => directorPhotoInput?.click());
 
@@ -348,6 +457,7 @@ const SettingsManager = {
                     inn,
                     bankName,
                     account,
+                    workTypes: selectedWorkTypes.join(','),
                     address,
                     companyPhoto: companyPhotoData,
                     directorPhoto: directorPhotoData
@@ -393,6 +503,7 @@ const SettingsManager = {
             contentArea.querySelectorAll('.subcontractor-delete').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const id = btn.dataset.id;
+                    if (!confirm('Вы уверены, что хотите удалить субподрядчика?')) return;
                     try {
                         const res = await fetch(`/api/subcontractors/${id}`, { method: 'DELETE' });
                         if (!res.ok) throw new Error('Delete failed');
@@ -402,6 +513,17 @@ const SettingsManager = {
                     } catch (err) {
                         console.error(err);
                         UI.showNotification('Не удалось удалить субподрядчика', 'error');
+                    }
+                });
+            });
+
+            contentArea.querySelectorAll('.sc-view-work-types').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.dataset.id;
+                    const item = this.subcontractors.find((s) => s.id === id);
+                    if (item && item.workTypes) {
+                        const types = item.workTypes.split(',');
+                        alert(`Виды работ для ${item.company}:\n\n${types.join('\n')}`);
                     }
                 });
             });

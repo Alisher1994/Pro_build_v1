@@ -299,7 +299,7 @@ class ProBIMApp {
         contentArea.innerHTML = `
             <iframe id="tender-frame" src="tender-prototype.html" style="width: 100%; height: 100%; border: none;"></iframe>
         `;
-        
+
         const iframe = document.getElementById('tender-frame');
         iframe.onload = () => {
             if (iframe.contentWindow.initApi) {
@@ -309,7 +309,15 @@ class ProBIMApp {
                     getSections: (estimateId) => api.getSections(estimateId),
                     getStages: (sectionId) => api.getStages(sectionId),
                     getWorkTypes: (stageId) => api.getWorkTypes(stageId),
-                    getSubcontractors: () => api.getSubcontractors(this.currentProjectId)
+                    getSubcontractors: () => api.getSubcontractors(this.currentProjectId),
+                    getTenders: () => api.getTenders(this.currentProjectId),
+                    createTender: (data) => api.createTender({ ...data, projectId: this.currentProjectId }),
+                    createTenderInvite: (tenderId, subcontractorId) => api.createTenderInvite(tenderId, subcontractorId),
+                    toggleBidBlock: (bidId, blocked, reason) => api.toggleBidBlock(bidId, blocked, reason),
+                    selectWinner: (bidId) => api.selectWinner(bidId),
+                    createContract: (bidId) => api.createContract(bidId),
+                    cancelContract: (bidId) => api.cancelContract(bidId),
+                    deleteTender: (id) => api.deleteTender(id)
                 });
             }
         };
@@ -690,11 +698,11 @@ class ProBIMApp {
                             </div>
                         </div>
                         <div class="permit-filter-panel ${this.permitFilterOpen[col.key] ? 'open' : ''}" data-status="${col.key}">
-                            <div class="permit-filter-row"><input type="text" placeholder="Название" data-filter-field="title" data-status="${col.key}" value="${(this.permitFilters[col.key]?.title || '').replace(/"/g,'&quot;')}"></div>
-                            <div class="permit-filter-row"><input type="text" placeholder="НД номер" data-filter-field="issueId" data-status="${col.key}" value="${(this.permitFilters[col.key]?.issueId || '').replace(/"/g,'&quot;')}"></div>
-                            <div class="permit-filter-row"><input type="text" placeholder="Субподрядчик" data-filter-field="contractor" data-status="${col.key}" value="${(this.permitFilters[col.key]?.contractor || '').replace(/"/g,'&quot;')}"></div>
-                            <div class="permit-filter-row"><input type="text" placeholder="Дата выдачи" data-filter-field="date" data-status="${col.key}" value="${(this.permitFilters[col.key]?.date || '').replace(/"/g,'&quot;')}"></div>
-                            <div class="permit-filter-row"><input type="text" placeholder="ФИО" data-filter-field="issuer" data-status="${col.key}" value="${(this.permitFilters[col.key]?.issuer || '').replace(/"/g,'&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="Название" data-filter-field="title" data-status="${col.key}" value="${(this.permitFilters[col.key]?.title || '').replace(/"/g, '&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="НД номер" data-filter-field="issueId" data-status="${col.key}" value="${(this.permitFilters[col.key]?.issueId || '').replace(/"/g, '&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="Субподрядчик" data-filter-field="contractor" data-status="${col.key}" value="${(this.permitFilters[col.key]?.contractor || '').replace(/"/g, '&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="Дата выдачи" data-filter-field="date" data-status="${col.key}" value="${(this.permitFilters[col.key]?.date || '').replace(/"/g, '&quot;')}"></div>
+                            <div class="permit-filter-row"><input type="text" placeholder="ФИО" data-filter-field="issuer" data-status="${col.key}" value="${(this.permitFilters[col.key]?.issuer || '').replace(/"/g, '&quot;')}"></div>
                         </div>
                         <div class="permit-column-cards">
                             ${filterCards(this.permitCards.filter(c => c.status === col.key), col.key).map(cardHtml).join('') || '<div class="permit-empty">Нет записей</div>'}

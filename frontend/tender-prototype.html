@@ -277,18 +277,48 @@
       background: var(--primary);
       color: #fff;
       border-radius: 8px;
-      padding: 6px 12px;
+      padding: 6px 16px;
       font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--primary-hover);
       box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .btn:disabled {
+      background: var(--gray-200);
+      border-color: var(--gray-300);
+      color: var(--gray-500);
+      cursor: not-allowed;
+      box-shadow: none;
     }
 
     .btn.secondary {
       background: #fff;
-      color: var(--primary);
-      border-color: var(--primary);
+      color: var(--gray-700);
+      border-color: var(--gray-300);
       box-shadow: none;
+    }
+
+    .btn.secondary:hover:not(:disabled) {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+      color: var(--gray-900);
     }
 
     .btn:active {
@@ -451,11 +481,10 @@
 
     .lot-summary-right {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 10px;
       font-size: 12px;
       flex-shrink: 0;
-      margin-top: -6px;
     }
 
     .countdown {
@@ -1036,6 +1065,83 @@
       stroke: var(--gray-700);
     }
 
+    .lot-share-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lot-share-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+
+    .lot-share-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--gray-700);
+    }
+
+    .lot-share-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lot-share-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+
+    .lot-share-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--gray-700);
+    }
+
+    .offer-title-box {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .offer-code-badge {
+      font-size: 11px;
+      color: var(--primary);
+      background: rgba(43, 122, 120, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+      font-weight: 600;
+      border: 1px solid rgba(43, 122, 120, 0.2);
+    }
+
+    .offer-code-badge:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
     .delete-lot-btn {
       width: 32px;
       height: 32px;
@@ -1104,14 +1210,264 @@
 
     .share-link-copy {
       margin-top: 8px;
-      width: 100%;
     }
 
-    @media (max-width: 980px) {
-      .main {
-        grid-template-columns: 1fr;
-        padding: 8px 12px 32px;
+    /* Subcontractor Modal Styles */
+    .modal.wide {
+      max-width: 900px;
+      width: 90%;
+    }
+
+    .sub-grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+      height: 60vh;
+      min-height: 400px;
+    }
+
+    .sub-left-panel,
+    .sub-right-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .sub-panel-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--gray-200);
+      background: #fff;
+    }
+
+    .sub-filter-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sub-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--gray-800);
+      transition: all 0.2s;
+      background: #fff;
+    }
+
+    .sub-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(43, 122, 120, 0.15);
+    }
+
+    .sub-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .sub-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      background: #fff;
+    }
+
+    .sub-item-row {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.2s;
+    }
+
+    .sub-item-row:hover {
+      background: var(--gray-50);
+    }
+
+    .sub-item-row.selected {
+      background: var(--primary-lighter);
+    }
+
+    .sub-item-row.active {
+      border-left: 3px solid var(--primary);
+      background: var(--gray-50);
+    }
+
+    .sub-item-photo {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      background: var(--gray-200);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .sub-item-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .sub-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sub-item-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sub-item-inn {
+      font-size: 11px;
+      color: var(--gray-500);
+    }
+
+    .sub-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+
+    .sub-tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .sub-tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .sub-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .sub-work-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+
+    .sub-work-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .sub-work-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sub-tab-pane {
+      display: none;
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .sub-tab-pane.active {
+      display: block;
+    }
+
+    .sub-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--gray-400);
+      font-size: 13px;
+    }
+
+    .sub-item-row.existing {
+      background: #fdfdfd;
+      cursor: pointer;
+    }
+
+    .sub-item-row.existing:hover {
+      background: var(--gray-50);
+    }
+
+    .existing-badge {
+      font-size: 10px;
+      color: var(--accent-green);
+      background: #eefdf3;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: auto;
+      border: 1px solid rgba(16, 124, 16, 0.1);
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
       }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .doc-icon-btn {
+      display: flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      color: var(--gray-400);
+      cursor: default;
+      transition: all 0.2s;
+    }
+
+    .doc-icon-btn.active {
+      color: #107C10;
+      background: #E8F5E9;
+      border-color: rgba(16, 124, 16, 0.2);
+      cursor: pointer;
+    }
+
+    .doc-icon-btn.active:hover {
+      background: #C8E6C9;
+    }
+
+    .modal-footer {
+      padding-top: 16px;
+      margin-top: 16px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
     }
   </style>
 </head>
@@ -1131,12 +1487,15 @@
 
   <div class="modal-backdrop" id="modal">
     <div class="modal" role="dialog" aria-modal="true">
-      <div class="row" style="justify-content: space-between; align-items: center;">
-        <h3 id="modal-title">Отклик</h3>
-        <button class="btn secondary" id="modal-close">Закрыть</button>
+      <div class="header" id="modal-header-standard">
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <h3 id="modal-title">Отклик</h3>
+          <button class="btn secondary" id="modal-close">Закрыть</button>
+        </div>
       </div>
       <div class="meta" id="modal-meta"></div>
       <div id="modal-body" class="list"></div>
+      <div id="modal-footer" class="modal-footer" style="display: none;"></div>
     </div>
   </div>
 
@@ -1207,6 +1566,63 @@
       </svg>
     `;
 
+    function copyToClipboard(text, el) {
+      if (!text || text === '—') return;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = el.innerHTML;
+        el.innerHTML = 'Код скопирован!';
+        el.style.background = 'var(--accent-blue)';
+        el.style.color = '#fff';
+        setTimeout(() => {
+          el.innerHTML = originalText;
+          el.style.background = '';
+          el.style.color = '';
+        }, 1500);
+      }).catch(err => {
+        console.error('Copy failed', err);
+      });
+    }
+
+    async function shareLot(lotId) {
+      try {
+        const response = await fetch(`/api/tenders/${lotId}/share-link`);
+        if (!response.ok) throw new Error('Failed to get share link');
+        const { url } = await response.json();
+
+        resetModalStructure();
+        const inner = modal.querySelector('.modal');
+        inner.classList.add('narrow');
+        modalTitle.textContent = "Поделиться лотом";
+        modalMeta.textContent = `ID: ${lotId}`;
+        modalBody.innerHTML = `
+              <div class="share-link-box">
+                  <label style="display: block; margin-bottom: 8px; font-size: 13px; color: var(--gray-700); font-weight: 600;">Универсальная ссылка для субподрядчиков:</label>
+                  <div style="position: relative;">
+                    <input type="text" class="share-link-input" value="${url}" readonly id="share-lot-url-input" style="width: 100%; padding: 10px; padding-right: 40px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 13px;">
+                    <button id="copy-lot-url" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--primary);">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                  </div>
+                  <div style="margin-top: 12px; font-size: 12px; color: var(--gray-500); line-height: 1.4;">
+                    Передайте эту ссылку субподрядчикам вместе с их 4-значным кодом доступа.
+                  </div>
+              </div>
+          `;
+        modal.style.display = "flex";
+
+        document.getElementById("copy-lot-url").addEventListener("click", () => {
+          const input = document.getElementById("share-lot-url-input");
+          input.select();
+          navigator.clipboard.writeText(url).then(() => {
+            alert("Ссылка скопирована!");
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        alert('Ошибка при создании ссылки: ' + err.message);
+      }
+    }
+
     const formatMoney = (value) => {
       if (value === undefined || value === null || Number.isNaN(value)) return "—";
       return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 0 }).format(value);
@@ -1229,20 +1645,17 @@
       // map status to step index
       // map status to step index
       const stateIndex = {
-        invited: -1, // Special case: nothing done yet
+        invited: -1,
         uploaded: 0,
         parsing: 1,
         parsed: 1,
         winner: 2,
-        contract: 3,
-        failed: 1,
-        open: 0,
-        closed: 1
+        contract: 3
       };
-      const current = stateIndex[status] ?? 0;
+      const current = stateIndex[status] ?? -1;
       const failed = status === "failed";
       const winner = status === "winner";
-      const invited = status === "invited";
+      const invited = status === "invited" || current === -1;
 
       const html = steps.map((step, i) => {
         const isLast = i === steps.length - 1;
@@ -1261,8 +1674,8 @@
         // Step logic
         let stepClass = "status-step";
         if (failed && i === 2) stepClass += " failed";
-        else if (winner && i === 4) stepClass += " winner";
-        else if (i <= current) stepClass += " done";
+        else if (winner && i === 2) stepClass += " winner";
+        else if (!invited && i <= current) stepClass += " done";
 
         // Special case for invited: first step is active (waiting for upload)
         if (invited && i === 0) stepClass = "status-step active";
@@ -1270,10 +1683,10 @@
         // Label logic
         let labelClass = "step-label";
         if (failed && i === 2) labelClass += " failed";
-        else if (winner && i === 4) labelClass += " winner";
-        else if (i <= current) labelClass += " done";
+        else if (winner && i === 2) labelClass += " winner";
+        else if (!invited && i <= current) labelClass += " done";
 
-        if (invited && i === 0) labelClass = "step-label"; // Default color
+        if (invited && i === 0) labelClass = "step-label active";
 
         let labelText = step.label;
         if (failed && i === 2) labelText = "Ошибка";
@@ -1387,27 +1800,42 @@
 
     function resetModalStructure() {
       const inner = modal.querySelector('.modal');
+      const footer = document.getElementById("modal-footer");
+      const headerStd = document.getElementById("modal-header-standard");
+
+      if (footer) {
+        footer.style.display = "none";
+        footer.innerHTML = "";
+      }
+      if (headerStd) headerStd.style.display = "block";
+      const closeBtnHeader = document.getElementById("modal-close");
+      if (closeBtnHeader) closeBtnHeader.style.visibility = "visible";
+
       // Check if standard structure exists
       if (!inner.querySelector("#modal-title") || !inner.querySelector("#modal-body")) {
         inner.innerHTML = `
-              <div class="row" style="justify-content: space-between; align-items: center;">
-                <h3 id="modal-title"></h3>
-                <button class="modal-close-btn" id="modal-close" title="Закрыть">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+              <div class="header" id="modal-header-standard">
+                <div class="row" style="justify-content: space-between; align-items: center;">
+                  <h3 id="modal-title"></h3>
+                  <button class="modal-close-btn" id="modal-close" title="Закрыть">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div class="meta" id="modal-meta"></div>
               <div id="modal-body" class="list"></div>
+              <div id="modal-footer" class="modal-footer" style="display: none;"></div>
             `;
-        document.getElementById("modal-close").addEventListener("click", closeModal);
-
-        // Update references
+        // Update references if they changed due to innerHTML
         modalTitle = document.getElementById("modal-title");
         modalMeta = document.getElementById("modal-meta");
         modalBody = document.getElementById("modal-body");
+
+        const closeBtn = document.getElementById("modal-close");
+        if (closeBtn) closeBtn.addEventListener("click", closeModal);
       }
     }
 
@@ -1432,59 +1860,257 @@
     // --- Add Subcontractor Logic ---
     async function openAddSubModal(lotId) {
       resetModalStructure();
-      modalTitle.textContent = "Добавить субподрядчика";
-      modalMeta.textContent = "Выберите из списка";
+      const inner = modal.querySelector('.modal');
+      inner.classList.remove('narrow', 'medium');
+      inner.classList.add('wide');
+      modalTitle.textContent = "Добавить участников в лот";
+      modalMeta.textContent = "Выберите субподрядчиков из списка";
+
       modalBody.innerHTML = `
-            <div style="padding: 16px;">
-                <input type="text" id="sub-search" placeholder="Поиск..." style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 6px; margin-bottom: 16px;">
-                <div id="sub-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 6px;">
-                    <div class="muted" style="padding: 16px; text-align: center;">Загрузка...</div>
+        <div class="sub-grid">
+            <!-- Left Side -->
+            <div class="sub-left-panel">
+                <div class="sub-panel-header">
+                    <div class="sub-filter-row">
+                        <input type="text" id="sub-search" class="sub-input" placeholder="Поиск по названию или ИНН...">
+                        <select id="sub-work-filter" class="sub-input">
+                            <option value="">Все виды работ</option>
+                            <!-- populated by js -->
+                        </select>
+                    </div>
+                </div>
+                <div id="sub-modal-list" class="sub-list-scroll">
+                    <div class="sub-empty-state">Загрузка данных...</div>
                 </div>
             </div>
-        `;
+
+            <!-- Right Side -->
+            <div class="sub-right-panel" id="sub-details-panel">
+                <div class="sub-empty-state" style="opacity: 0.6;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <div style="font-size: 13px;">Выберите организацию для просмотра деталей</div>
+                </div>
+            </div>
+        </div>
+      `;
+
+      // Setup Footer
+      const footer = document.getElementById("modal-footer");
+      footer.style.display = "flex";
+      footer.innerHTML = `
+        <button class="btn secondary" id="modal-close-footer" style="min-width: 100px;">Закрыть</button>
+        <button class="btn" id="confirm-selection" disabled style="min-width: 160px;">Пригласить (0)</button>
+      `;
+      document.getElementById("modal-close-footer").addEventListener("click", closeModal);
+
+      // Hide header close button to emphasize footer buttons
+      const closeBtn = document.getElementById("modal-close");
+      if (closeBtn) closeBtn.style.visibility = "hidden";
       modal.style.display = "flex";
 
       try {
         const subs = await window.probimApi.getSubcontractors(CURRENT_PROJECT_ID);
-        const listContainer = document.getElementById("sub-list");
+        const listContainer = document.getElementById("sub-modal-list");
+        const workFilter = document.getElementById("sub-work-filter");
         const searchInput = document.getElementById("sub-search");
+        const confirmBtn = document.getElementById("confirm-selection");
+        const detailsPanel = document.getElementById("sub-details-panel");
 
-        const renderSubs = (filterText = "") => {
+        let selectedSubs = new Set();
+        let currentFocusedSubId = null;
+
+        // Find already added subcontractors in this lot
+        const lot = lots.find(l => l.id === lotId);
+        const existingSubIds = new Set();
+        if (lot && lot.uploads) {
+          lot.uploads.forEach(u => {
+            const sId = u._rawData?.subcontractor?.id || u._rawData?.subcontractorId;
+            if (sId) existingSubIds.add(sId);
+          });
+        }
+
+        // Collect all work types
+        const allWorkTypes = new Set();
+        subs.forEach(s => {
+          if (s.workTypes) {
+            try {
+              const types = Array.isArray(s.workTypes) ? s.workTypes : JSON.parse(s.workTypes);
+              types.forEach(t => allWorkTypes.add(t));
+            } catch (e) {
+              s.workTypes.split(',').map(t => t.trim()).forEach(t => { if (t) allWorkTypes.add(t); });
+            }
+          }
+        });
+
+        workFilter.innerHTML += Array.from(allWorkTypes).sort().map(tw => `<option value="${tw}">${tw}</option>`).join('');
+
+        const renderSubs = () => {
+          const searchText = searchInput.value.toLowerCase();
+          const selectedWork = workFilter.value;
+
           const filtered = subs.filter(s => {
-            const text = (s.company + " " + s.firstName + " " + s.lastName).toLowerCase();
-            return text.includes(filterText.toLowerCase());
+            const matchesSearch = (s.company || "").toLowerCase().includes(searchText) || String(s.inn || "").includes(searchText);
+
+            let matchesWorks = true;
+            if (selectedWork) {
+              const subWorks = [];
+              if (s.workTypes) {
+                try {
+                  const parsed = Array.isArray(s.workTypes) ? s.workTypes : JSON.parse(s.workTypes);
+                  subWorks.push(...parsed);
+                } catch (e) { subWorks.push(...s.workTypes.split(',').map(t => t.trim())); }
+              }
+              matchesWorks = subWorks.includes(selectedWork);
+            }
+
+            return matchesSearch && matchesWorks;
           }).sort((a, b) => (a.company || "").localeCompare(b.company || ""));
 
           if (filtered.length === 0) {
-            listContainer.innerHTML = `<div class="muted" style="padding: 16px; text-align: center;">Ничего не найдено</div>`;
+            listContainer.innerHTML = `<div class="sub-empty-state">Ничего не найдено</div>`;
             return;
           }
 
-          listContainer.innerHTML = filtered.map(s => `
-                    <div class="sub-item" data-id="${s.id}" style="padding: 10px; border-bottom: 1px solid var(--gray-100); cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                        <div style="font-weight: 600;">${s.company || "Без названия"}</div>
-                        <div class="muted" style="font-size: 12px;">${s.firstName || ""} ${s.lastName || ""}</div>
-                    </div>
-                `).join("");
+          listContainer.innerHTML = filtered.map(s => {
+            const isExisting = existingSubIds.has(s.id);
+            return `
+            <div class="sub-item-row ${s.id === currentFocusedSubId ? 'active' : ''} ${selectedSubs.has(s.id) ? 'selected' : ''} ${isExisting ? 'existing' : ''}" data-id="${s.id}">
+                ${isExisting ?
+                '<div style="width:18px; display:flex; align-items:center; justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>' :
+                `<input type="checkbox" class="sub-checkbox" ${selectedSubs.has(s.id) ? 'checked' : ''} data-id="${s.id}">`
+              }
+                <div class="sub-item-photo">
+                    ${s.companyPhoto ? `<img src="${s.companyPhoto}" alt="">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'}
+                </div>
+                <div class="sub-item-info">
+                    <div class="sub-item-name">${s.company || "Без названия"}</div>
+                    <div class="sub-item-inn">ИНН: ${s.inn || "—"}</div>
+                </div>
+                ${isExisting ? '<span class="existing-badge">В лоте</span>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;"><polyline points="9 18 15 12 9 6"></polyline></svg>'}
+            </div>
+          `}).join('');
 
-          listContainer.querySelectorAll(".sub-item").forEach(item => {
-            item.addEventListener("click", () => {
-              const subId = item.getAttribute("data-id");
-              const sub = subs.find(s => s.id === subId);
-              addSubcontractorToLot(lotId, sub);
+          listContainer.querySelectorAll(".sub-item-row").forEach(row => {
+            const id = row.dataset.id;
+            const sub = subs.find(s => s.id === id);
+
+            row.addEventListener('click', (e) => {
+              if (e.target.classList.contains('sub-checkbox')) return;
+              showSubDetails(sub);
+              currentFocusedSubId = id;
+              listContainer.querySelectorAll('.sub-item-row').forEach(r => r.classList.remove('active'));
+              row.classList.add('active');
+            });
+
+            const checkbox = row.querySelector('.sub-checkbox');
+            if (checkbox) {
+              checkbox.addEventListener('change', () => {
+                if (checkbox.checked) selectedSubs.add(id);
+                else selectedSubs.delete(id);
+                row.classList.toggle('selected', checkbox.checked);
+                confirmBtn.disabled = selectedSubs.size === 0;
+                confirmBtn.textContent = `Пригласить (${selectedSubs.size})`;
+              });
+            }
+          });
+        };
+
+        const showSubDetails = async (sub) => {
+          detailsPanel.innerHTML = `
+            <div class="sub-panel-header" style="padding-bottom: 2px;">
+                <div style="font-weight: 700; font-size: 15px; color: var(--primary);">${sub.company}</div>
+                <div style="font-size: 12px; color: var(--gray-600); margin-top: 4px;">${sub.lastName} ${sub.firstName} · ${sub.phone}</div>
+            </div>
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" data-tab="works">Виды работ</button>
+                <button class="sub-tab-btn" data-tab="history">Успешные лоты</button>
+            </div>
+            <div class="sub-tab-pane active" id="tab-works">
+                <div class="sub-work-list">
+                    ${renderWorkList(sub.workTypes)}
+                </div>
+            </div>
+            <div class="sub-tab-pane" id="tab-history">
+                <div class="sub-empty-state">Загрузка истории...</div>
+            </div>
+          `;
+
+          // Handle tab switching
+          detailsPanel.querySelectorAll('.sub-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              detailsPanel.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+              detailsPanel.querySelectorAll('.sub-tab-pane').forEach(p => p.classList.remove('active'));
+              btn.classList.add('active');
+              detailsPanel.querySelector(`#tab-${btn.dataset.tab}`).classList.add('active');
             });
           });
+
+          // Load history
+          loadSubHistory(sub.id);
+        };
+
+        const renderWorkList = (workTypes) => {
+          let types = [];
+          if (workTypes) {
+            try {
+              types = Array.isArray(workTypes) ? workTypes : JSON.parse(workTypes);
+            } catch (e) { types = workTypes.split(',').map(t => t.trim()); }
+          }
+          if (types.length === 0) return '<div class="muted" style="font-size:12px;">Виды работ не указаны</div>';
+          return types.map(t => `
+            <div class="sub-work-list-item">
+                <div class="sub-work-dot"></div>
+                <span>${t}</span>
+            </div>
+          `).join('');
+        };
+
+        const loadSubHistory = async (subId) => {
+          const historyPane = document.getElementById('tab-history');
+          try {
+            // Find lots where this sub was a winner
+            const successfulLots = lots.filter(l => l.uploads.some(u => u._rawData?.subcontractorId === subId && (u.status === 'winner' || u.status === 'contract')));
+
+            if (successfulLots.length === 0) {
+              historyPane.innerHTML = '<div class="sub-empty-state">Успешных проектов пока нет</div>';
+              return;
+            }
+
+            historyPane.innerHTML = successfulLots.map(l => `
+                <div style="padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 8px; background: #fff;">
+                    <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">${l.title}</div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-600);">
+                        <span>${l.objectName}</span>
+                        <span style="color: var(--accent-green); font-weight: 600;">Выполнено</span>
+                    </div>
+                </div>
+            `).join('');
+          } catch (e) {
+            historyPane.innerHTML = '<div class="muted">Ошибка загрузки истории</div>';
+          }
         };
 
         renderSubs();
 
-        searchInput.addEventListener("input", (e) => {
-          renderSubs(e.target.value);
+        searchInput.addEventListener("input", renderSubs);
+        workFilter.addEventListener("change", renderSubs);
+
+        confirmBtn.addEventListener('click', async () => {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Обработка...';
+
+          for (let subId of selectedSubs) {
+            const sub = subs.find(s => s.id === subId);
+            await addSubcontractorToLot(lotId, sub, true); // silent mode
+          }
+
+          await loadTenders();
+          closeModal();
         });
 
       } catch (e) {
         console.error(e);
-        const listContainer = document.getElementById("sub-list");
+        const listContainer = document.getElementById("sub-modal-list");
         if (listContainer) listContainer.innerHTML = `<div style="color: red; padding: 16px; text-align: center;">Ошибка загрузки: ${e.message}</div>`;
       }
     }
@@ -1691,58 +2317,40 @@
       });
     }
 
-    async function addSubcontractorToLot(lotId, sub) {
+    async function addSubcontractorToLot(lotId, sub, silent = false) {
       const lot = lots.find(l => l.id === lotId);
       if (!lot) {
-        closeModal();
+        if (!silent) closeModal();
         return;
       }
 
-      // Get the real tender ID from the raw data
       const tenderId = lot._rawData?.id;
       if (!tenderId) {
-        console.error('Cannot find tender ID for lot', lotId);
-        alert('Ошибка: не найден ID тендера');
-        closeModal();
+        if (!silent) {
+          alert('Ошибка: не найден ID тендера');
+          closeModal();
+        }
         return;
       }
 
       const subName = sub.company || `${sub.firstName} ${sub.lastName}`;
-
-      // Check if already invited (by checking uploads/bids)
       if (lot.uploads.some(u => u.subcontractor === subName)) {
-        alert("Этот субподрядчик уже добавлен");
-        closeModal();
+        if (!silent) {
+          alert(`Субподрядчик "${subName}" уже добавлен`);
+          closeModal();
+        }
         return;
       }
 
       try {
-        // Call API to invite subcontractor
-        // Note: We need subcontractor ID, but the mock data only has name
-        // For now, we'll assume 'sub' has an 'id' field
-        const subcontractorId = sub.id;
-        if (!subcontractorId) {
-          alert('Ошибка: не найден ID субподрядчика');
-          closeModal();
-          return;
-        }
-
-        await apiInviteSubcontractor(tenderId, subcontractorId);
-        closeModal();
-        await loadTenders(); // Reload data
-      } catch (error) {
-        // Backend returns 400 with message "Subcontractor already invited" — покажем мягкое уведомление
-        const message = (error && error.message) || 'Неизвестная ошибка';
-        const alreadyInvited = message.toLowerCase().includes('already invited');
-        if (alreadyInvited) {
-          alert('Этот субподрядчик уже приглашен в этот лот');
-          closeModal();
+        await apiInviteSubcontractor(tenderId, sub.id);
+        if (!silent) {
           await loadTenders();
-          return;
+          closeModal();
         }
+      } catch (error) {
         console.error('Failed to invite subcontractor:', error);
-        alert('Ошибка при приглашении субподрядчика: ' + message);
-        closeModal();
+        if (!silent) alert('Ошибка при добавлении: ' + error.message);
       }
     }
 
@@ -1827,12 +2435,15 @@
           return `
             <div class="offer-card ${cardClass}" data-offer-id="${u.uploadId}" data-lot-id="${lot.id}">
               <div class="offer-header">
-                <div class="offer-title">${u.subcontractor}</div>
+                <div class="offer-title-box">
+                  <div class="offer-title">${u.subcontractor}</div>
+                  <div class="offer-code-badge" onclick="copyToClipboard('${u.inviteCode}', this)" title="Нажмите, чтобы скопировать">
+                    Код: ${u.inviteCode || '—'}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; opacity: 0.6;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </div>
+                </div>
                 <div class="offer-header-actions">
                   ${viewContractBtn}
-                  <button class="share-btn" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" title="Поделиться">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg>
-                  </button>
                   <button class="block-btn ${u.blocked ? 'blocked' : ''}" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" title="${u.blocked ? 'Разблокировать' : 'Заблокировать'}" ${u.status === 'invited' ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
                     ${u.blocked ?
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>' :
@@ -1845,8 +2456,36 @@
               <div class="offer-status">${statusStepper(u.status)}</div>
               <div class="offer-row"><span class="offer-label">Срок</span><span>${u.completionDate || "—"}</span></div>
               <div class="offer-row"><span class="offer-label">Сумма</span><span class="offer-sum">${sumLabel}</span></div>
-              <div class="offer-row"><span class="offer-label">Баллы</span><div class="progress-wrap"><div class="progress"><div class="progress-bar" style="width:${Math.max(0, Math.min(100, scoreVal))}%;"></div></div><span class="progress-value">${u.score ?? '—'}</span></div></div>
+              <div class="offer-row" style="margin: 4px 0;">
+                <span class="offer-label">Документы</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <div class="doc-icon-btn ${u.certificatePhoto ? 'active' : ''}" 
+                       onclick="event.stopPropagation(); ${u.certificatePhoto ? `viewDoc('Сертификат (Гувохнома)', '${u.certificatePhoto}')` : ''}" 
+                       title="${u.certificatePhoto ? 'Просмотреть Сертификат' : 'Сертификат не загружен'}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <span style="font-size: 10px; margin-left: 4px;">Сертификат</span>
+                  </div>
+                  <div class="doc-icon-btn ${u.licensePhoto ? 'active' : ''}" 
+                       onclick="event.stopPropagation(); ${u.licensePhoto ? `viewDoc('Лицензия', '${u.licensePhoto}')` : ''}" 
+                       title="${u.licensePhoto ? 'Просмотреть Лицензию' : 'Лицензия не загружена'}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span style="font-size: 10px; margin-left: 4px;">Лицензия</span>
+                  </div>
+                </div>
+              </div>
+              <div class="offer-row"><span class="offer-label">Баллы</span><div class="progress-wrap"><div class="progress"><div class="progress-bar" style="width:${Math.max(0, Math.min(100, (u.ratingPoints || 0) * 20))}%;"></div></div><span class="progress-value">${u.ratingPoints ?? '—'}</span></div></div>
               <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
+              <div class="offer-row">
+                <span class="offer-label">Рейтинг (mc.uz)</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="tag" style="background: ${u.rating ? 'var(--primary-lighter)' : 'var(--gray-100)'}; color: ${u.rating ? 'var(--primary)' : 'var(--gray-500)'}; font-weight: 700; padding: 2px 8px;">
+                    ${u.rating || '—'}
+                  </span>
+                  <button class="btn-refresh-rating" data-sub-id="${u.subcontractorId || (u._rawData?.subcontractor?.id)}" data-inn="${u.inn || (u._rawData?.subcontractor?.inn)}" title="Обновить рейтинг" style="background:transparent; border:none; padding:0; cursor:pointer; color:var(--primary); display:flex; align-items:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                  </button>
+                </div>
+              </div>
               <div class="offer-actions">
                 <button class="btn secondary btn-view-file" data-url="${fileUrl}" ${u.status === 'invited' ? 'disabled style="opacity:0.5;"' : ''}>Просмотр файла</button>
                 <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) || u.status === 'invited' ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Составить договор' : 'Выбрать')}</button>
@@ -1874,6 +2513,9 @@
                 <div class="lot-lines">
                   <div class="lot-line">
                     ${statusBadge(lot.status)}
+                    <button class="lot-share-btn" data-lot-id="${lot._rawData?.id}" title="Поделиться лотом" onclick="event.stopPropagation(); shareLot('${lot._rawData?.id}')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg>
+                    </button>
                     <span class="lot-id">${lot.id}</span>
                     <span class="lot-title">${lotName}</span>
                   </div>
@@ -2046,6 +2688,68 @@
           if (lotId) await deleteLot(lotId);
         });
       });
+
+      // Refresh rating buttons
+      container.querySelectorAll(".btn-refresh-rating").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const subId = btn.getAttribute("data-sub-id");
+          const inn = btn.getAttribute("data-inn");
+          if (!subId) return;
+
+          btn.style.animation = "spin 1s linear infinite";
+          try {
+            await refreshSubcontractorRating(subId, inn);
+          } finally {
+            btn.style.animation = "";
+          }
+        });
+      });
+    }
+
+    function viewDoc(title, src) {
+      if (!src) return;
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.9)';
+      overlay.style.zIndex = '10000';
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.padding = '40px';
+      overlay.style.backdropFilter = 'blur(5px)';
+      overlay.innerHTML = `
+        <div style="position:absolute; top:20px; right:30px; color:#fff; font-size:40px; cursor:pointer; line-height:1;" onclick="this.parentElement.remove()">&times;</div>
+        <div style="color:#fff; margin-bottom:20px; font-weight:600; font-size:20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${title}</div>
+        <img src="${src}" style="max-width:95%; max-height:85vh; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.8); object-fit:contain; border: 1px solid rgba(255,255,255,0.1);">
+      `;
+      document.body.appendChild(overlay);
+    }
+    window.viewDoc = viewDoc;
+
+    async function refreshSubcontractorRating(subId, inn) {
+      if (!inn) {
+        alert("У субподрядчика не указан ИНН");
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/subcontractors/${subId}/refresh-rating`, {
+          method: 'POST'
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+
+        // Refresh local data and re-render
+        await loadTenders();
+      } catch (error) {
+        console.error('Failed to refresh rating:', error);
+        alert('Ошибка при обновлении рейтинга: ' + error.message);
+      }
     }
 
     document.querySelectorAll(".chip[data-filter]").forEach(chip => {
@@ -2083,15 +2787,15 @@
       // New Layout Structure
       innerModal.innerHTML = `
         <div class="row" style="justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); margin-bottom: 12px;">
-          <h3 style="margin:0;">Создание нового лота</h3>
+          <h3 style="margin:0;">Добавление нового лота</h3>
           <div style="display:flex; gap:12px; align-items:center;">
-            <input type="date" id="new-lot-deadline" value="${today}" style="padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; width: 140px; font-family:inherit; font-size:13px;">
+            <input type="date" id="new-lot-deadline" value="${today}" min="${today}" style="padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; width: 140px; font-family:inherit; font-size:13px;">
             <button class="btn" id="btn-create-lot-save">Сохранить</button>
             <button class="btn secondary" id="btn-create-lot-close">Закрыть</button>
           </div>
         </div>
         <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px;">
-          <label for="new-lot-name" style="font-size:13px; color:var(--gray-700); min-width:120px;">Название лота</label>
+          <label for="new-lot-name" style="font-size:13px; color:var(--gray-700); min-width:120px;">Название лота <span style="color:red;">*</span></label>
           <input type="text" id="new-lot-name" placeholder="Например: Секция 2 - ОВ" style="flex:1; min-width:220px; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
         </div>
         <div class="meta" style="margin-bottom:12px; color:var(--gray-600); font-size:12px;">${objectFilter || "Выберите параметры лота"}</div>
@@ -2128,6 +2832,7 @@
             .nav-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--gray-200); font-size: 12px; color: var(--gray-700); transition: background 0.1s; }
             .nav-item:hover { background: var(--gray-100); color: var(--gray-900); }
             .nav-item.active { background: var(--primary-lighter); color: var(--primary); font-weight: 500; }
+            .nav-item.disabled { opacity: 0.5; cursor: not-allowed !important; background: var(--gray-50); color: var(--gray-400); pointer-events: none; }
 
             .tree-grid-header { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: 1fr 40px 50px; column-gap: 8px; padding: 8px 12px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--gray-500); }
             .tree-stage { padding: 0 12px; }
@@ -2141,7 +2846,16 @@
             .tree-wt-volume, .tree-wt-unit { font-size: 12px; color: var(--gray-700); }
             .wt-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             
+            .tree-wt-row.disabled { opacity: 0.5; background: var(--gray-50); cursor: not-allowed; }
+            .tree-wt-row.disabled label { cursor: not-allowed; }
+            .tree-wt-row.disabled .wt-badge { 
+              font-size: 10px; color: var(--accent-orange); background: #fff8f0; 
+              padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(202, 80, 16, 0.1);
+              margin-left: auto; white-space: nowrap;
+            }
+            
             input[type="checkbox"] { accent-color: #2B7A78; width: 16px; height: 16px; }
+            input[type="checkbox"]:disabled { cursor: not-allowed; }
         </style>
 
         <div class="modal-content-wrapper" id="lot-creation-body">
@@ -2161,6 +2875,14 @@
 
       // Selection State: Map<wtId, { wtName, stageId, stageName, estimateId, estimateName, blockId, blockName }>
       const selectedWorkTypes = new Map();
+
+      // Collect all work type IDs already used in existing tenders
+      const usedWorkTypeIds = new Set();
+      lots.forEach(lot => {
+        (lot.items || []).forEach(it => {
+          if (it.workTypeId) usedWorkTypeIds.add(it.workTypeId);
+        });
+      });
 
       // Elements
       const bodyContainer = document.getElementById('lot-creation-body');
@@ -2183,7 +2905,7 @@
 
                 <!-- Column 2: Estimates -->
                 <div class="col-panel">
-                    <div class="col-header">2. Сметы</div>
+                    <div class="col-header">2. Разделы смет</div>
                     <div class="col-content" id="col-estimates">
                         <div class="muted" style="padding:12px; text-align:center;">Выберите блок</div>
                     </div>
@@ -2191,9 +2913,9 @@
 
                 <!-- Column 3: Tree -->
                 <div class="col-panel">
-                    <div class="col-header">3. Состав работ</div>
+                    <div class="col-header" id="col-tree-header">3. Состав работ</div>
                     <div class="col-content" id="col-tree">
-                        <div class="muted" style="padding:12px; text-align:center;">Выберите смету</div>
+                        <div class="muted" style="padding:12px; text-align:center;">Выберите разрез сметы</div>
                     </div>
                 </div>
             </div>
@@ -2223,7 +2945,8 @@
 
         const estContainer = document.getElementById('col-estimates');
         estContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Загрузка...</div>';
-        document.getElementById('col-tree').innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Выберите смету</div>';
+        document.getElementById('col-tree-header').textContent = "3. Состав работ";
+        document.getElementById('col-tree').innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Выберите разрез сметы</div>';
 
         try {
           const estimates = await window.probimApi.getEstimates(id);
@@ -2236,18 +2959,29 @@
       function renderEstimatesList(estimates) {
         const container = document.getElementById('col-estimates');
         if (estimates.length === 0) {
-          container.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Нет смет</div>';
+          container.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Нет разделов</div>';
           return;
         }
 
-        container.innerHTML = estimates.map(e => `
-              <div class="nav-item ${e.id === activeEstimateId ? 'active' : ''}" data-id="${e.id}" data-name="${e.name}">
+        // Sort alphabetically by name
+        const sorted = [...estimates].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+        container.innerHTML = sorted.map(e => {
+          // If the backend provides section count, we can use it as a basic check
+          const isEmpty = e._count && e._count.sections === 0;
+          return `
+              <div class="nav-item ${e.id === activeEstimateId ? 'active' : ''} ${isEmpty ? 'disabled' : ''}" 
+                   data-id="${e.id}" data-name="${e.name}"
+                   ${isEmpty ? 'title="Раздел не содержит данных"' : ''}>
                   ${e.name}
               </div>
-          `).join('');
+          `;
+        }).join('');
 
         container.querySelectorAll('.nav-item').forEach(el => {
-          el.addEventListener('click', () => selectEstimate(el.dataset.id, el.dataset.name));
+          if (!el.classList.contains('disabled')) {
+            el.addEventListener('click', () => selectEstimate(el.dataset.id, el.dataset.name));
+          }
         });
       }
 
@@ -2296,7 +3030,12 @@
 
       function renderTree(stages, estimateId, estimateName) {
         const container = document.getElementById('col-tree');
+        const header = document.getElementById('col-tree-header');
         const blockName = blocksData.find(b => b.id == activeBlockId)?.name;
+
+        if (header && estimateName) {
+          header.textContent = `3. Состав работ раздела ${estimateName}`;
+        }
 
         let html = '<div class="tree-grid-header"><span>Вид работ</span><span>Объем</span><span>Ед. изм.</span></div>';
         stages.forEach(stage => {
@@ -2304,21 +3043,25 @@
 
           const wtItems = stage.wts.map(wt => {
             const isChecked = selectedWorkTypes.has(wt.id);
+            const isUsed = usedWorkTypeIds.has(wt.id);
             const volume = wt.volume ?? wt.qty ?? wt.quantity ?? '—';
             const unit = wt.unit ?? wt.uom ?? wt.measure ?? '—';
+
             return `
-                    <div class="tree-wt-row">
+                    <div class="tree-wt-row ${isUsed ? 'disabled' : ''}">
                       <label class="tree-wt-item">
                         <input type="checkbox" class="wt-cb" 
                           value="${wt.id}" 
                           ${isChecked ? 'checked' : ''}
+                          ${isUsed ? 'disabled' : ''}
                           data-name="${wt.name}"
                           data-stage-id="${stage.id}"
                           data-stage-name="${stage.name}"
                           data-unit="${unit}"
                           data-volume="${volume}"
                         >
-                        <span class="wt-name">${wt.name}</span>
+                        <span class="wt-name" title="${wt.name}">${wt.name}</span>
+                        ${isUsed ? '<span class="wt-badge">В другом лоте</span>' : ''}
                       </label>
                       <span class="tree-wt-volume">${volume}</span>
                       <span class="tree-wt-unit">${unit}</span>
@@ -2326,11 +3069,13 @@
                   `;
           }).join('');
 
+          const isAllUsed = stage.wts.every(wt => usedWorkTypeIds.has(wt.id));
+
           html += `
                   <div class="tree-stage">
                       <div class="tree-stage-header">
-                          <input type="checkbox" class="stage-cb" data-stage-id="${stage.id}">
-                          <strong>${stage.name}</strong>
+                          <input type="checkbox" class="stage-cb" data-stage-id="${stage.id}" ${isAllUsed ? 'disabled' : ''}>
+                          <strong ${isAllUsed ? 'style="opacity:0.5;"' : ''}>${stage.name}</strong>
                       </div>
                           <div class="tree-wt-list" id="wt-list-${stage.id}">
                             ${wtItems}
@@ -2382,7 +3127,7 @@
             if (!wtList) return;
 
             const stageChecked = stageCb.checked;
-            wtList.querySelectorAll('.wt-cb').forEach(wtCb => {
+            wtList.querySelectorAll('.wt-cb:not(:disabled)').forEach(wtCb => {
               if (wtCb.checked !== stageChecked) {
                 wtCb.checked = stageChecked;
                 handleWorkTypeChange(wtCb, false);
@@ -2400,10 +3145,13 @@
           const stageCb = container.querySelector(`.stage-cb[data-stage-id="${stageId}"]`);
           if (!stageCb) return;
 
-          const all = list.querySelectorAll('.wt-cb');
-          const checked = list.querySelectorAll('.wt-cb:checked');
+          const all = list.querySelectorAll('.wt-cb:not(:disabled)');
+          const checked = list.querySelectorAll('.wt-cb:not(:disabled):checked');
 
-          if (all.length === 0) return;
+          if (all.length === 0) {
+            // If all are disabled, the state depends on nothing (already handled by disabling stageCb)
+            return;
+          }
 
           stageCb.checked = (all.length === checked.length);
           stageCb.indeterminate = (checked.length > 0 && checked.length < all.length);
@@ -2419,6 +3167,12 @@
 
         const deadline = document.getElementById("new-lot-deadline").value;
         const manualTitle = document.getElementById("new-lot-name").value.trim();
+
+        if (!manualTitle) {
+          alert("Введите название лота");
+          document.getElementById("new-lot-name").focus();
+          return;
+        }
 
         // Generate Title & Description
         // Group by Block -> Estimate -> Stage
@@ -2436,6 +3190,7 @@
         try {
           // Prepare items for backend
           const itemsPayload = items.map(i => ({
+            workTypeId: i.id, // Save the original ID for tracking
             section: i.stageName, // Using stageName as section for now
             name: i.name,
             unit: i.unit || "ед.", // Use selected unit
@@ -2464,9 +3219,65 @@
       });
     };
 
+    function getRatingPoints(ratingBase) {
+      if (!ratingBase) return 0;
+      const ratingMap = {
+        'AAA': 5.0, 'AA': 4.6, 'A': 4.2,
+        'BBB': 3.8, 'BB': 3.4, 'B': 3.0,
+        'CCC': 2.6, 'CC': 2.2, 'C': 1.8,
+        'DDD': 1.4, 'DD': 1.0, 'D': 0.6
+      };
+      let cleanRating = ratingBase.replace('+', '').trim();
+      let pts = ratingMap[cleanRating] || 0;
+      if (ratingBase.includes('+')) pts += 0.2;
+      return parseFloat(Math.min(5.0, pts).toFixed(1));
+    }
+
     // ===========================================
     // API Integration Functions
     // ===========================================
+
+    function calculateBidScore(bid, allBids, targetDeadline) {
+      // 1. mc.uz Rating (max 5 points)
+      let score = getRatingPoints(bid.subcontractor?.rating || bid.rating);
+
+      // 2. Documents (max 1 point)
+      if (bid.subcontractor?.certificatePhoto) score += 0.5;
+      if (bid.subcontractor?.licensePhoto) score += 0.5;
+
+      // 3. Price Competitiveness (max 3 points)
+      if (allBids && allBids.length > 0) {
+        const prices = allBids.map(b => b.priceTotal).filter(p => p > 0);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        if (maxPrice > minPrice && bid.priceTotal > 0) {
+          score += 3 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
+        } else if (bid.priceTotal > 0) {
+          score += 3;
+        }
+      }
+
+      // 4. Deadline Competitiveness (max 1 point)
+      if (targetDeadline && bid.completionDate) {
+        const target = new Date(targetDeadline);
+        const bidDate = new Date(bid.completionDate);
+        if (!isNaN(target) && !isNaN(bidDate)) {
+          // If bid is before or on target, full point
+          if (bidDate <= target) {
+            score += 1.0;
+          } else {
+            // If bid is after target, deduct 0.1 per day, min 0
+            const dayDiff = Math.ceil((bidDate - target) / (1000 * 60 * 60 * 24));
+            score += Math.max(0, 1.0 - (dayDiff * 0.1));
+          }
+        }
+      } else {
+        // Flat bonus if no deadline data but we want to reach 10
+        score += 0.5;
+      }
+
+      return parseFloat(Math.min(10, score).toFixed(1));
+    }
 
     /**
      * Загрузить тендеры с сервера
@@ -2499,14 +3310,21 @@
               status: bid.status,
               files: files,
               total: bid.priceTotal,
-              score: bid.score || 0,
+              score: calculateBidScore(bid, tender.bids, tender.deadline),
               completionDate: bid.completionDate,
               contractNumber: bid.contractNumber,
               items: items,
+              ratingPoints: getRatingPoints(bid.subcontractor?.rating),
+              rating: bid.subcontractor?.rating || null,
+              certificatePhoto: bid.subcontractor?.certificatePhoto || null,
+              licensePhoto: bid.subcontractor?.licensePhoto || null,
+              inn: bid.subcontractor?.inn || null,
+              subcontractorId: bid.subcontractor?.id,
               errors: [],
               blocked: bid.blocked,
               blockReason: bid.blockReason,
               blockDate: bid.blockDate,
+              inviteCode: bid.invite?.inviteCode,
               _rawData: bid
             };
           });
@@ -2527,10 +3345,17 @@
                 completionDate: null,
                 contractNumber: null,
                 items: [],
+                ratingPoints: getRatingPoints(invite.subcontractor?.rating),
+                rating: invite.subcontractor?.rating || null,
+                certificatePhoto: invite.subcontractor?.certificatePhoto || null,
+                licensePhoto: invite.subcontractor?.licensePhoto || null,
+                inn: invite.subcontractor?.inn || null,
+                subcontractorId: invite.subcontractor?.id,
                 errors: [],
                 blocked: false,
                 blockReason: null,
                 blockDate: null,
+                inviteCode: invite.inviteCode,
                 _rawData: invite
               };
             });

@@ -382,9 +382,13 @@ model Subcontractor {
   inn           String?
   bankName      String?
   account       String?
+  workTypes     String?
   address       String?
-  companyPhoto  String?
-  directorPhoto String?
+  companyPhoto   String?
+  directorPhoto  String?
+  certificatePhoto String?
+  licensePhoto     String?
+  rating         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -576,6 +580,7 @@ model TenderInvite {
   token           String   @unique // Уникальный токен для доступа
   expiresAt       DateTime // Срок действия приглашения
   status          String   @default("pending") // pending, accepted, expired
+  inviteCode      String?  // 4-digit code for the subcontractor
   createdAt       DateTime @default(now())
   
   // Связи

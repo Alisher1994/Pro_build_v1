@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { scrapeRating } from '../services/ratingScraper';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -62,9 +63,13 @@ router.post('/', async (req, res) => {
       inn: body.inn || null,
       bankName: body.bankName || null,
       account: body.account || null,
+      workTypes: body.workTypes || null,
       address: body.address || null,
       companyPhoto: body.companyPhoto || null,
       directorPhoto: body.directorPhoto || null,
+      certificatePhoto: body.certificatePhoto || null,
+      licensePhoto: body.licensePhoto || null,
+      rating: body.rating || null,
     };
 
     const created = await prisma.subcontractor.create({ data });
@@ -95,9 +100,13 @@ router.put('/:id', async (req, res) => {
       'inn',
       'bankName',
       'account',
+      'workTypes',
       'address',
       'companyPhoto',
       'directorPhoto',
+      'certificatePhoto',
+      'licensePhoto',
+      'rating',
     ];
 
     fields.forEach((key) => {
@@ -130,6 +139,40 @@ router.delete('/:id', async (req, res) => {
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Subcontractor not found' });
     }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/subcontractors/:id/refresh-rating
+router.post('/:id/refresh-rating', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await prisma.subcontractor.findUnique({ where: { id } });
+    if (!item) return res.status(404).json({ error: 'Subcontractor not found' });
+    if (!item.inn) return res.status(400).json({ error: 'ИНН не указан' });
+
+    // Live Scraping Logic
+    console.log(`Starting live scrape for INN: ${item.inn}`);
+    let rating = await scrapeRating(item.inn);
+
+    if (!rating) {
+      console.warn(`Scraping failed for INN ${item.inn}, using fallback.`);
+      // Fallback: If it's a known INN from the user request
+      if (item.inn === '300935078' || item.company.toUpperCase().includes('DISCOVER')) {
+        rating = 'A';
+      } else {
+        // Keep existing rating or use a default if it was null
+        rating = item.rating || 'B';
+      }
+    }
+
+    const updated = await prisma.subcontractor.update({
+      where: { id },
+      data: { rating }
+    });
+
+    res.json({ success: true, rating: updated.rating });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
   <meta charset="UTF-8">
   <title>Тендер · Демо (без бэка)</title>
@@ -17,6 +18,7 @@
       font-family: var(--font-family);
       -webkit-font-smoothing: antialiased;
     }
+
     .topbar {
       flex: 0 0 auto;
       width: 100%;
@@ -32,14 +34,65 @@
       justify-content: space-between;
       box-shadow: var(--shadow-md);
     }
-    .title { font-size: 18px; font-weight: 400; color: var(--gray-800); }
-    .pill { padding: 6px 10px; border-radius: 10px; background: var(--primary-lighter); color: var(--primary); font-size: 12px; font-weight: 400; }
-    .main { flex: 1; width: 100%; box-sizing: border-box; padding: 24px; display: block; overflow: hidden; }
-    .sidebar { display: none; }
-    .sidebar h3 { margin: 0 0 10px; font-size: 14px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 400; }
-    .nav-item { display: block; padding: 8px 12px; border-radius: 6px; color: var(--gray-700); cursor: pointer; font-size: 13px; margin-bottom: 2px; transition: background 0.1s; }
-    .nav-item:hover { background: var(--gray-100); }
-    .nav-item.active { background: var(--primary-lighter); color: var(--primary); font-weight: 500; }
+
+    .title {
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--gray-800);
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: var(--primary-lighter);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .main {
+      flex: 1;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 24px;
+      display: block;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      display: none;
+    }
+
+    .sidebar h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 400;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: var(--gray-700);
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 2px;
+      transition: background 0.1s;
+    }
+
+    .nav-item:hover {
+      background: var(--gray-100);
+    }
+
+    .nav-item.active {
+      background: var(--primary-lighter);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
     .card {
       height: 100%;
       overflow-y: auto;
@@ -51,162 +104,1018 @@
       box-sizing: border-box;
       scrollbar-width: none;
     }
-    .card::-webkit-scrollbar { display: none; }
-    .card h2 { margin: 0 0 6px; font-size: 15px; color: var(--gray-800); font-weight: 400; }
-    .sub { color: var(--gray-600); font-size: 12px; }
-    .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; }
-    .chip { padding: 5px 10px; border-radius: 8px; font-size: 12px; background: var(--gray-200); color: var(--gray-800); cursor: pointer; border: 1px solid var(--gray-300); }
-    .chip.active { background: var(--primary-lighter); border-color: var(--primary); color: var(--primary); font-weight: 400; }
-    .table { width: 100%; border-collapse: collapse; }
-    .table th, .table td { border-bottom: 1px solid var(--gray-200); padding: 8px 6px; text-align: left; font-size: 13px; }
-    .table th { color: var(--gray-700); font-weight: 400; background: var(--gray-50); }
-    .badge { display: inline-block; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 400; color: #fff; min-width: 86px; text-align: center; }
-    .b-open { background: var(--primary); }
-    .b-closed { background: var(--gray-600); }
-    .b-parsed { background: var(--accent-green); }
-    .b-parsing { background: var(--accent-blue); }
-    .b-uploaded { background: var(--gray-700); }
-    .b-failed { background: var(--accent-red); }
-    .muted { color: var(--gray-600); font-size: 12px; }
-    details { border: 1px solid var(--gray-200); border-radius: 4px; padding: 10px 12px; background: var(--gray-50); }
-    details summary { cursor: pointer; font-weight: 400; display: flex; gap: 8px; align-items: center; }
-    details summary::-webkit-details-marker { display: none; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .kv { font-size: 13px; color: var(--gray-700); }
-    .kv strong { color: var(--gray-900); font-weight: 400; }
-    .log-list { display: grid; gap: 8px; margin-top: 6px; }
-    .log-item { border: 1px solid var(--gray-200); border-radius: 10px; padding: 10px; background: var(--white); box-shadow: var(--shadow-sm); }
-    .log-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
-    .log-msg { margin: 4px 0; font-size: 13px; }
-    .log-meta { color: var(--gray-600); font-size: 12px; }
-    .btn { border: 1px solid var(--gray-300); background: var(--primary); color: #fff; border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; transition: transform 0.1s ease, box-shadow 0.2s ease; box-shadow: var(--shadow-md); }
-    .btn.secondary { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: none; }
-    .btn:active { transform: translateY(1px); box-shadow: none; }
-    .download-btn { padding: 6px 10px; }
-    .card + .card { margin-top: 0; }
-    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 8px; background: var(--primary-lighter); color: var(--primary); font-size: 12px; }
-    .files a { color: var(--accent-blue); text-decoration: none; }
-    .files a:hover { text-decoration: underline; }
-    .actions-inline { display: flex; gap: 8px; align-items: center; }
-    .stack { display: grid; gap: 10px; }
-    .lot-list { display: flex; flex-direction: column; gap: 12px; }
-    .lot-entry { border: 1px solid var(--gray-200); border-radius: 12px; background: var(--white); overflow: hidden; }
-    .lot-entry summary { display: flex; cursor: pointer; padding: 16px 20px; justify-content: space-between; align-items: center; gap: 18px; }
-    .lot-entry summary::marker { display: none; }
-    .lot-entry summary:hover { background: #F0F9F9; }
-    .lot-entry[open] summary { background: #F0F9F9; }
-    .lot-summary-left { display: flex; align-items: center; gap: 32px; min-width: 0; flex: 1; }
-    .lot-icon { width: 52px; height: 52px; border-radius: 10px; background: linear-gradient(135deg, rgba(43,122,120,0.18), rgba(43,122,120,0.06)); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }
-    .lot-icon svg { width: 32px; height: 32px; }
-    .lot-lines { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-    .lot-line { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 12px; color: var(--gray-700); }
-    .lot-line strong { color: var(--gray-900); }
-    .lot-line .lot-title { font-size: 15px; font-weight: 600; color: var(--gray-900); margin: 0; }
-    .lot-line .lot-id { color: var(--gray-600); font-weight: 500; }
-    .lot-line .lot-timer { color: var(--accent-blue); font-weight: 600; }
-    .lot-meta-chip { padding: 0; border-radius: 0; background: transparent; color: var(--gray-700); font-size: 12px; }
-    .lot-view-link { color: var(--accent-blue); text-decoration: none; font-weight: 600; }
-    .lot-view-link:hover { text-decoration: underline; }
-    .lot-summary-right { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; flex-shrink: 0; margin-top: -6px; }
-    .countdown { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
-    .cd-block { display: grid; grid-template-rows: auto auto; gap: 4px; align-items: center; text-align: center; }
-    .cd-digits { display: flex; gap: 4px; }
-    .cd-box { width: 34px; height: 44px; background: linear-gradient(180deg, #9aa0aa 0%, #6f7683 100%); color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2); position: relative; }
-    .cd-box::after { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 1px; background: rgba(255,255,255,0.25); }
-    .cd-label { font-size: 11px; color: var(--gray-700); font-weight: 600; text-transform: lowercase; }
-    .cd-sep { font-weight: 900; color: var(--gray-700); padding: 0 2px; }
-    .works-modal { display: flex; flex-direction: column; gap: 10px; }
-    .works-header { display: grid; grid-template-columns: 1fr 100px 90px; gap: 8px; padding: 10px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 6px; font-size: 11px; text-transform: uppercase; color: var(--gray-500); letter-spacing: 0.3px; }
-    .works-stage { border: 1px solid var(--gray-200); border-radius: 6px; padding: 10px 12px; background: #fff; }
-    .works-stage + .works-stage { margin-top: 4px; }
-    .works-stage-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; font-size: 12px; }
-    .works-stage-title input { accent-color: #2B7A78; }
-    .works-list { display: flex; flex-direction: column; gap: 6px; }
-    .works-row { display: grid; grid-template-columns: 1fr 100px 90px; gap: 8px; align-items: center; font-size: 12px; color: var(--gray-800); padding: 10px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 6px; }
-    .works-row input { accent-color: #2B7A78; }
-    .works-name { font-weight: 500; color: var(--gray-900); }
-    .works-volume, .works-unit { text-align: right; color: var(--gray-700); font-weight: 600; }
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 5000; }
-    .modal { background: var(--white); border-radius: 12px; border: 1px solid var(--gray-300); max-width: 1400px; width: 100%; padding: 16px; box-shadow: var(--shadow-lg); }
-    .modal.narrow { max-width: 520px; }
-    .modal h3 { margin: 0 0 10px; font-weight: 400; }
-    .modal .meta { color: var(--gray-600); font-size: 12px; margin-bottom: 10px; }
-    .modal .list { display: grid; gap: 8px; }
-    .modal-close-btn { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--gray-300); background: var(--white); border-radius: 6px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
-    .modal-close-btn:hover { background: var(--gray-100); border-color: var(--gray-400); }
-    .modal-close-btn svg { width: 16px; height: 16px; stroke: var(--gray-700); }
-    .pill-small { padding: 4px 8px; border-radius: 6px; background: var(--gray-200); color: var(--gray-700); font-size: 12px; }
-    .status-steps { display: flex; align-items: flex-start; font-size: 10px; color: var(--gray-700); width: fit-content; gap: 3px; }
-    .step-item { display: flex; flex-direction: column; align-items: center; width: 46px; position: relative; }
-    .status-step { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--gray-300); background: var(--gray-100); display: flex; align-items: center; justify-content: center; color: var(--gray-600); z-index: 2; }
-    .status-step.done { border-color: var(--accent-green); color: var(--accent-green); background: #e8f7ed; }
-    .status-step.active { border-color: var(--gray-500); color: var(--gray-700); background: var(--gray-200); }
-    .status-step.failed { border-color: var(--gray-500); color: var(--gray-700); background: var(--gray-200); }
-    .status-step.winner { border-color: var(--accent-orange); color: var(--accent-orange); background: #fff7ed; animation: radar 2s infinite; }
-    @keyframes radar {
-      0% { box-shadow: 0 0 0 0 rgba(202, 80, 16, 0.4); }
-      70% { box-shadow: 0 0 0 6px rgba(202, 80, 16, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(202, 80, 16, 0); }
+
+    .card::-webkit-scrollbar {
+      display: none;
     }
-    .status-line { width: 10px; flex: none; height: 2px; background: var(--gray-300); margin-top: 10px; }
-    .status-line.done { background: var(--accent-green); }
-    .status-line.active { background: var(--gray-400); }
-    .status-line.failed { background: var(--gray-400); }
-    .status-line.winner { background: var(--accent-orange); }
-    .step-label { margin-top: 3px; font-size: 9px; text-align: center; line-height: 1.2; }
-    .step-label.active { color: var(--gray-800); font-weight: 400; }
-    .step-label.done { color: var(--accent-green); font-weight: 400; }
-    .step-label.failed { color: var(--gray-700); font-weight: 400; }
-    .step-label.winner { color: var(--accent-orange); font-weight: 400; }
-    .file-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: var(--gray-800);
+      font-weight: 400;
+    }
+
+    .sub {
+      color: var(--gray-600);
+      font-size: 12px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 6px 0 10px;
+    }
+
+    .chip {
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      background: var(--gray-200);
+      color: var(--gray-800);
+      cursor: pointer;
+      border: 1px solid var(--gray-300);
+    }
+
+    .chip.active {
+      background: var(--primary-lighter);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 400;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      border-bottom: 1px solid var(--gray-200);
+      padding: 8px 6px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .table th {
+      color: var(--gray-700);
+      font-weight: 400;
+      background: var(--gray-50);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 400;
+      color: #fff;
+      min-width: 86px;
+      text-align: center;
+    }
+
+    .b-open {
+      background: var(--primary);
+    }
+
+    .b-closed {
+      background: var(--gray-600);
+    }
+
+    .b-parsed {
+      background: var(--accent-green);
+    }
+
+    .b-parsing {
+      background: var(--accent-blue);
+    }
+
+    .b-uploaded {
+      background: var(--gray-700);
+    }
+
+    .b-failed {
+      background: var(--accent-red);
+    }
+
+    .muted {
+      color: var(--gray-600);
+      font-size: 12px;
+    }
+
+    details {
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 10px 12px;
+      background: var(--gray-50);
+    }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 400;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .kv {
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+
+    .kv strong {
+      color: var(--gray-900);
+      font-weight: 400;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .log-item {
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 10px;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .log-head {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .log-msg {
+      margin: 4px 0;
+      font-size: 13px;
+    }
+
+    .log-meta {
+      color: var(--gray-600);
+      font-size: 12px;
+    }
+
+    .btn {
+      border: 1px solid var(--gray-300);
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn.secondary {
+      background: #fff;
+      color: var(--primary);
+      border-color: var(--primary);
+      box-shadow: none;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .download-btn {
+      padding: 6px 10px;
+    }
+
+    .card+.card {
+      margin-top: 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: var(--primary-lighter);
+      color: var(--primary);
+      font-size: 12px;
+    }
+
+    .files a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .files a:hover {
+      text-decoration: underline;
+    }
+
+    .actions-inline {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .lot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .lot-entry {
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      background: var(--white);
+      overflow: hidden;
+    }
+
+    .lot-entry summary {
+      display: flex;
+      cursor: pointer;
+      padding: 16px 20px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .lot-entry summary::marker {
+      display: none;
+    }
+
+    .lot-entry summary:hover {
+      background: #F0F9F9;
+    }
+
+    .lot-entry[open] summary {
+      background: #F0F9F9;
+    }
+
+    .lot-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .lot-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(43, 122, 120, 0.18), rgba(43, 122, 120, 0.06));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .lot-icon svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .lot-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .lot-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .lot-line strong {
+      color: var(--gray-900);
+    }
+
+    .lot-line .lot-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0;
+    }
+
+    .lot-line .lot-id {
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+
+    .lot-line .lot-timer {
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    .lot-meta-chip {
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--gray-700);
+      font-size: 12px;
+    }
+
+    .lot-view-link {
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .lot-view-link:hover {
+      text-decoration: underline;
+    }
+
+    .lot-summary-right {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: -6px;
+    }
+
+    .countdown {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+    }
+
+    .cd-block {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 4px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .cd-digits {
+      display: flex;
+      gap: 4px;
+    }
+
+    .cd-box {
+      width: 34px;
+      height: 44px;
+      background: linear-gradient(180deg, #9aa0aa 0%, #6f7683 100%);
+      color: #fff;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .cd-box::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      top: 50%;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .cd-label {
+      font-size: 11px;
+      color: var(--gray-700);
+      font-weight: 600;
+      text-transform: lowercase;
+    }
+
+    .cd-sep {
+      font-weight: 900;
+      color: var(--gray-700);
+      padding: 0 2px;
+    }
+
+    .works-modal {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .works-header {
+      display: grid;
+      grid-template-columns: 1fr 100px 90px;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      letter-spacing: 0.3px;
+    }
+
+    .works-stage {
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .works-stage+.works-stage {
+      margin-top: 4px;
+    }
+
+    .works-stage-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .works-stage-title input {
+      accent-color: #2B7A78;
+    }
+
+    .works-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .works-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 90px;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--gray-800);
+      padding: 10px 12px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+    }
+
+    .works-row input {
+      accent-color: #2B7A78;
+    }
+
+    .works-name {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .works-volume,
+    .works-unit {
+      text-align: right;
+      color: var(--gray-700);
+      font-weight: 600;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 5000;
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--gray-300);
+      max-width: 1400px;
+      width: 100%;
+      padding: 16px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal.narrow {
+      max-width: 520px;
+    }
+
+    .modal h3 {
+      margin: 0 0 10px;
+      font-weight: 400;
+    }
+
+    .modal .meta {
+      color: var(--gray-600);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .modal .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .modal-close-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .modal-close-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+
+    .modal-close-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--gray-700);
+    }
+
+    .pill-small {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--gray-200);
+      color: var(--gray-700);
+      font-size: 12px;
+    }
+
+    .status-steps {
+      display: flex;
+      align-items: flex-start;
+      font-size: 10px;
+      color: var(--gray-700);
+      width: fit-content;
+      gap: 3px;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 46px;
+      position: relative;
+    }
+
+    .status-step {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--gray-300);
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-600);
+      z-index: 2;
+    }
+
+    .status-step.done {
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      background: #e8f7ed;
+    }
+
+    .status-step.active {
+      border-color: var(--gray-500);
+      color: var(--gray-700);
+      background: var(--gray-200);
+    }
+
+    .status-step.failed {
+      border-color: var(--gray-500);
+      color: var(--gray-700);
+      background: var(--gray-200);
+    }
+
+    .status-step.winner {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+      background: #fff7ed;
+      animation: radar 2s infinite;
+    }
+
+    @keyframes radar {
+      0% {
+        box-shadow: 0 0 0 0 rgba(202, 80, 16, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px rgba(202, 80, 16, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(202, 80, 16, 0);
+      }
+    }
+
+    .status-line {
+      width: 10px;
+      flex: none;
+      height: 2px;
+      background: var(--gray-300);
+      margin-top: 10px;
+    }
+
+    .status-line.done {
+      background: var(--accent-green);
+    }
+
+    .status-line.active {
+      background: var(--gray-400);
+    }
+
+    .status-line.failed {
+      background: var(--gray-400);
+    }
+
+    .status-line.winner {
+      background: var(--accent-orange);
+    }
+
+    .step-label {
+      margin-top: 3px;
+      font-size: 9px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .step-label.active {
+      color: var(--gray-800);
+      font-weight: 400;
+    }
+
+    .step-label.done {
+      color: var(--accent-green);
+      font-weight: 400;
+    }
+
+    .step-label.failed {
+      color: var(--gray-700);
+      font-weight: 400;
+    }
+
+    .step-label.winner {
+      color: var(--accent-orange);
+      font-weight: 400;
+    }
+
+    .file-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     /* Legacy rows removed; using card grid for offers */
-    .offers-toolbar { display: flex; gap: 8px; padding: 8px 0 12px; align-items: center; flex-wrap: wrap; }
-    .sort-switch { display: inline-flex; border: 1px solid var(--gray-200); border-radius: 8px; overflow: hidden; background: #fff; }
-    .sort-switch button { border: none; background: transparent; padding: 8px 12px; font-size: 12px; color: var(--gray-700); cursor: pointer; }
-    .sort-switch button.active { background: var(--primary-lighter); color: var(--primary); font-weight: 600; }
-    .offers-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-    .offer-card { border: 1px solid var(--gray-200); border-radius: 10px; padding: 12px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
-    .offer-card.invite-card { justify-content: center; align-items: center; text-align: center; border: 1px dashed var(--gray-300); color: var(--primary); cursor: pointer; min-height: 180px; transition: border-color 0.15s ease, background 0.15s ease; }
-    .offer-card.invite-card:hover { border-color: var(--primary); background: var(--primary-lighter); }
-    .invite-cta { font-weight: 600; font-size: 13px; padding: 8px 12px; border-radius: 8px; }
-    .offer-card.is-blocked { background: #FFE5E5; border-color: #FFCCCC; }
-    .offer-card.non-winner { background: #f5f5f5; opacity: 0.7; }
-    .offer-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .offer-header-actions { display: flex; gap: 6px; }
-    .offer-title { font-weight: 600; font-size: 14px; color: var(--gray-900); flex: 1; min-width: 0; }
-    .offer-meta { display: grid; row-gap: 6px; font-size: 12px; color: var(--gray-700); }
-    .offer-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .offer-label { color: var(--gray-600); font-size: 12px; }
-    .offer-sum { font-weight: 600; color: var(--gray-900); }
-    .progress { position: relative; background: var(--gray-100); border-radius: 999px; height: 8px; flex: 1; }
-    .progress-bar { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.2s ease; }
-    .progress-wrap { display: flex; align-items: center; gap: 8px; width: 100%; }
-    .progress-value { font-size: 12px; color: var(--gray-700); min-width: 24px; text-align: right; }
-    .offer-actions { display: flex; gap: 8px; justify-content: space-between; flex-wrap: nowrap; }
-    .offer-actions .btn { flex: 1; }
-    .offer-status { padding: 4px 0; }
-    .block-banner-inline { margin-top: 4px; font-size: 12px; color: var(--gray-800); }
+    .offers-toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 0 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .sort-switch {
+      display: inline-flex;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .sort-switch button {
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .sort-switch button.active {
+      background: var(--primary-lighter);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .offers-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .offer-card {
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .offer-card.invite-card {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border: 1px dashed var(--gray-300);
+      color: var(--primary);
+      cursor: pointer;
+      min-height: 180px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .offer-card.invite-card:hover {
+      border-color: var(--primary);
+      background: var(--primary-lighter);
+    }
+
+    .invite-cta {
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .offer-card.is-blocked {
+      background: #FFE5E5;
+      border-color: #FFCCCC;
+    }
+
+    .offer-card.non-winner {
+      background: #f5f5f5;
+      opacity: 0.7;
+    }
+
+    .offer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .offer-header-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .offer-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--gray-900);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .offer-meta {
+      display: grid;
+      row-gap: 6px;
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .offer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .offer-label {
+      color: var(--gray-600);
+      font-size: 12px;
+    }
+
+    .offer-sum {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .progress {
+      position: relative;
+      background: var(--gray-100);
+      border-radius: 999px;
+      height: 8px;
+      flex: 1;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .progress-value {
+      font-size: 12px;
+      color: var(--gray-700);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .offer-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+    }
+
+    .offer-actions .btn {
+      flex: 1;
+    }
+
+    .offer-status {
+      padding: 4px 0;
+    }
+
+    .block-banner-inline {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--gray-800);
+    }
+
     /* Block button */
-    .block-btn { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--gray-300); background: var(--white); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-    .block-btn:hover { background: var(--gray-100); border-color: var(--gray-400); }
-    .block-btn.blocked { background: var(--accent-red); border-color: var(--accent-red); }
-    .block-btn.blocked:hover { background: #B02D31; }
-    .block-btn svg { width: 16px; height: 16px; stroke: var(--gray-700); }
-    .block-btn.blocked svg { stroke: white; }
-    .share-btn { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--gray-300); background: var(--white); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-    .share-btn:hover { background: var(--gray-100); border-color: var(--gray-400); }
-    .share-btn svg { width: 16px; height: 16px; stroke: var(--gray-700); }
+    .block-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .block-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+
+    .block-btn.blocked {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+
+    .block-btn.blocked:hover {
+      background: #B02D31;
+    }
+
+    .block-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--gray-700);
+    }
+
+    .block-btn.blocked svg {
+      stroke: white;
+    }
+
+    .share-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .share-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+
+    .share-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--gray-700);
+    }
+
+    .delete-lot-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .delete-lot-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+
+    .delete-lot-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--gray-700);
+    }
+
     /* Blocked row state */
-    .sub-row.blocked { background: var(--gray-200); }
-    .sub-row.blocked:hover { background: var(--gray-300); }
-    .block-reason-banner { background: #FFE5E5; border: 1px solid #FFCCCC; border-radius: 6px; padding: 12px; font-size: 12px; color: var(--gray-800); }
-    .block-reason-banner strong { color: var(--accent-red); font-weight: 600; }
-    .share-link-box { background: var(--gray-50); border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px; margin-top: 12px; }
-    .share-link-input { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-family: monospace; font-size: 12px; background: #fff; }
-    .share-link-copy { margin-top: 8px; width: 100%; }
-    @media (max-width: 980px) { .main { grid-template-columns: 1fr; padding: 8px 12px 32px; } }
+    .sub-row.blocked {
+      background: var(--gray-200);
+    }
+
+    .sub-row.blocked:hover {
+      background: var(--gray-300);
+    }
+
+    .block-reason-banner {
+      background: #FFE5E5;
+      border: 1px solid #FFCCCC;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12px;
+      color: var(--gray-800);
+    }
+
+    .block-reason-banner strong {
+      color: var(--accent-red);
+      font-weight: 600;
+    }
+
+    .share-link-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .share-link-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .share-link-copy {
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    @media (max-width: 980px) {
+      .main {
+        grid-template-columns: 1fr;
+        padding: 8px 12px 32px;
+      }
+    }
   </style>
 </head>
+
 <body>
   <div class="main">
     <section class="card" aria-label="Лоты">
@@ -236,10 +1145,10 @@
   <script>
     // Create global reference for probimApi
     window.probimApi = api;
-    
+
     // State
     const CURRENT_PROJECT_ID = '902eeb62-5a34-4e69-933e-784ea2127910'; // TODO: Получать из URL или глобального состояния
-    
+
     // Import API functions with aliases to avoid name collisions
     const apiGetTenders = getTenders;
     const apiGetTender = getTender;
@@ -249,7 +1158,7 @@
     const apiSelectWinner = selectWinner;
     const apiCreateContract = createContract;
     const apiCancelContract = cancelContract;
-    
+
     let lots = [];
 
     let lotFilter = "all";
@@ -318,7 +1227,9 @@
         { key: "contract", label: "Договор", icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' }
       ];
       // map status to step index
+      // map status to step index
       const stateIndex = {
+        invited: -1, // Special case: nothing done yet
         uploaded: 0,
         parsing: 1,
         parsed: 1,
@@ -331,19 +1242,20 @@
       const current = stateIndex[status] ?? 0;
       const failed = status === "failed";
       const winner = status === "winner";
-      
+      const invited = status === "invited";
+
       const html = steps.map((step, i) => {
         const isLast = i === steps.length - 1;
-        
+
         // Line logic
         let lineHtml = "";
         if (!isLast) {
-            let lineClass = "status-line";
-            if (failed && i === 1) lineClass += " failed";
-            else if (i < current) lineClass += " done";
-            else if (i === current) lineClass += " active";
-            
-            lineHtml = `<div class="${lineClass}"></div>`;
+          let lineClass = "status-line";
+          if (failed && i === 1) lineClass += " failed";
+          else if (i < current) lineClass += " done";
+          else if (i === current && !invited) lineClass += " active";
+
+          lineHtml = `<div class="${lineClass}"></div>`;
         }
 
         // Step logic
@@ -351,13 +1263,18 @@
         if (failed && i === 2) stepClass += " failed";
         else if (winner && i === 4) stepClass += " winner";
         else if (i <= current) stepClass += " done";
-        
+
+        // Special case for invited: first step is active (waiting for upload)
+        if (invited && i === 0) stepClass = "status-step active";
+
         // Label logic
         let labelClass = "step-label";
         if (failed && i === 2) labelClass += " failed";
         else if (winner && i === 4) labelClass += " winner";
         else if (i <= current) labelClass += " done";
-        
+
+        if (invited && i === 0) labelClass = "step-label"; // Default color
+
         let labelText = step.label;
         if (failed && i === 2) labelText = "Ошибка";
 
@@ -469,10 +1386,10 @@
     let modalBody = document.getElementById("modal-body");
 
     function resetModalStructure() {
-        const inner = modal.querySelector('.modal');
-        // Check if standard structure exists
-        if (!inner.querySelector("#modal-title") || !inner.querySelector("#modal-body")) {
-             inner.innerHTML = `
+      const inner = modal.querySelector('.modal');
+      // Check if standard structure exists
+      if (!inner.querySelector("#modal-title") || !inner.querySelector("#modal-body")) {
+        inner.innerHTML = `
               <div class="row" style="justify-content: space-between; align-items: center;">
                 <h3 id="modal-title"></h3>
                 <button class="modal-close-btn" id="modal-close" title="Закрыть">
@@ -485,13 +1402,13 @@
               <div class="meta" id="modal-meta"></div>
               <div id="modal-body" class="list"></div>
             `;
-            document.getElementById("modal-close").addEventListener("click", closeModal);
-            
-            // Update references
-            modalTitle = document.getElementById("modal-title");
-            modalMeta = document.getElementById("modal-meta");
-            modalBody = document.getElementById("modal-body");
-        }
+        document.getElementById("modal-close").addEventListener("click", closeModal);
+
+        // Update references
+        modalTitle = document.getElementById("modal-title");
+        modalMeta = document.getElementById("modal-meta");
+        modalBody = document.getElementById("modal-body");
+      }
     }
 
     function openResponse(upload, lot) {
@@ -514,10 +1431,10 @@
 
     // --- Add Subcontractor Logic ---
     async function openAddSubModal(lotId) {
-        resetModalStructure();
-        modalTitle.textContent = "Добавить субподрядчика";
-        modalMeta.textContent = "Выберите из списка";
-        modalBody.innerHTML = `
+      resetModalStructure();
+      modalTitle.textContent = "Добавить субподрядчика";
+      modalMeta.textContent = "Выберите из списка";
+      modalBody.innerHTML = `
             <div style="padding: 16px;">
                 <input type="text" id="sub-search" placeholder="Поиск..." style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 6px; margin-bottom: 16px;">
                 <div id="sub-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 6px;">
@@ -525,52 +1442,58 @@
                 </div>
             </div>
         `;
-        modal.style.display = "flex";
+      modal.style.display = "flex";
 
-        try {
-          const subs = await window.probimApi.getSubcontractors(CURRENT_PROJECT_ID);
-            const listContainer = document.getElementById("sub-list");
-            const searchInput = document.getElementById("sub-search");
+      try {
+        const subs = await window.probimApi.getSubcontractors(CURRENT_PROJECT_ID);
+        const listContainer = document.getElementById("sub-list");
+        const searchInput = document.getElementById("sub-search");
 
-            const renderSubs = (filterText = "") => {
-                const filtered = subs.filter(s => {
-                    const text = (s.company + " " + s.firstName + " " + s.lastName).toLowerCase();
-                    return text.includes(filterText.toLowerCase());
-                }).sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+        const renderSubs = (filterText = "") => {
+          const filtered = subs.filter(s => {
+            const text = (s.company + " " + s.firstName + " " + s.lastName).toLowerCase();
+            return text.includes(filterText.toLowerCase());
+          }).sort((a, b) => (a.company || "").localeCompare(b.company || ""));
 
-                if (filtered.length === 0) {
-                    listContainer.innerHTML = `<div class="muted" style="padding: 16px; text-align: center;">Ничего не найдено</div>`;
-                    return;
-                }
+          if (filtered.length === 0) {
+            listContainer.innerHTML = `<div class="muted" style="padding: 16px; text-align: center;">Ничего не найдено</div>`;
+            return;
+          }
 
-                listContainer.innerHTML = filtered.map(s => `
+          listContainer.innerHTML = filtered.map(s => `
                     <div class="sub-item" data-id="${s.id}" style="padding: 10px; border-bottom: 1px solid var(--gray-100); cursor: pointer; display: flex; align-items: center; gap: 10px;">
                         <div style="font-weight: 600;">${s.company || "Без названия"}</div>
                         <div class="muted" style="font-size: 12px;">${s.firstName || ""} ${s.lastName || ""}</div>
                     </div>
                 `).join("");
 
-                listContainer.querySelectorAll(".sub-item").forEach(item => {
-                    item.addEventListener("click", () => {
-                        const subId = item.getAttribute("data-id");
-                        const sub = subs.find(s => s.id === subId);
-                        addSubcontractorToLot(lotId, sub);
-                    });
-                });
-            };
-
-            renderSubs();
-
-            searchInput.addEventListener("input", (e) => {
-                renderSubs(e.target.value);
+          listContainer.querySelectorAll(".sub-item").forEach(item => {
+            item.addEventListener("click", () => {
+              const subId = item.getAttribute("data-id");
+              const sub = subs.find(s => s.id === subId);
+              addSubcontractorToLot(lotId, sub);
             });
+          });
+        };
 
-        } catch (e) {
-            console.error(e);
-            const listContainer = document.getElementById("sub-list");
-            if(listContainer) listContainer.innerHTML = `<div style="color: red; padding: 16px; text-align: center;">Ошибка загрузки: ${e.message}</div>`;
-        }
+        renderSubs();
+
+        searchInput.addEventListener("input", (e) => {
+          renderSubs(e.target.value);
+        });
+
+      } catch (e) {
+        console.error(e);
+        const listContainer = document.getElementById("sub-list");
+        if (listContainer) listContainer.innerHTML = `<div style="color: red; padding: 16px; text-align: center;">Ошибка загрузки: ${e.message}</div>`;
+      }
     }
+
+    // Explicitly expose handlers to global scope for HTML onclick attributes if any (though we usually use addEventListener)
+    // Checking renderLots to see how these are called. They are passed as onclick strings in some places or attached via JS.
+    // If attached via JS, we need to update the attachment points.
+    // If onclick attributes are used, we need to update them.
+    // Let's check renderLots.
 
     function openLotWorksModal(lotId) {
       const lot = lots.find(l => String(l.id) === String(lotId));
@@ -581,7 +1504,9 @@
       modalMeta.textContent = `${lot.id}${lot.objectName ? ' · ' + lot.objectName : ''}`;
 
       const blocksLabel = (lot.blocks && lot.blocks.length) ? lot.blocks.join(', ') : '—';
-      const items = (lot.uploads || []).flatMap(u => u.items || []);
+
+      // Use stored items if available, otherwise look in uploads
+      const items = (lot.items && lot.items.length) ? lot.items : (lot.uploads || []).flatMap(u => u.items || []);
       const grouped = new Map();
 
       if (items.length) {
@@ -636,86 +1561,86 @@
     }
 
     async function toggleBlockSubcontractor(lotId, uploadId) {
-        const lot = lots.find(l => l.id === lotId);
-        if (!lot) return;
-        
-        const upload = lot.uploads.find(u => u.uploadId === uploadId);
-        if (!upload) return;
-        
-        // Get the real bid ID from the raw data
-        const bidId = upload._rawData?.id;
-        if (!bidId) {
-            console.error('Cannot find bid ID for upload', uploadId);
-            return;
-        }
+      const lot = lots.find(l => l.id === lotId);
+      if (!lot) return;
 
-        try {
-            if (upload.blocked) {
-                // Unblock
-                await apiToggleBidBlock(bidId, false, null);
-                await loadTenders(); // Reload data
-            } else {
-                // Block - ask for reason
-                let reason = null;
-                if (window.parent && typeof window.parent.requestBlockReason === "function") {
-                    reason = await window.parent.requestBlockReason();
-                } else {
-                    reason = prompt("Напишите причину блокировки:");
-                }
-                
-                if (reason && reason.trim()) {
-                    await apiToggleBidBlock(bidId, true, reason.trim());
-                    await loadTenders(); // Reload data
-                }
-            }
-        } catch (error) {
-            console.error('Failed to toggle block:', error);
-            alert('Ошибка при блокировке/разблокировке: ' + error.message);
+      const upload = lot.uploads.find(u => u.uploadId === uploadId);
+      if (!upload) return;
+
+      // Get the real bid ID from the raw data
+      const bidId = upload._rawData?.id;
+      if (!bidId) {
+        console.error('Cannot find bid ID for upload', uploadId);
+        return;
+      }
+
+      try {
+        if (upload.blocked) {
+          // Unblock
+          await apiToggleBidBlock(bidId, false, null);
+          await loadTenders(); // Reload data
+        } else {
+          // Block - ask for reason
+          let reason = null;
+          if (window.parent && typeof window.parent.requestBlockReason === "function") {
+            reason = await window.parent.requestBlockReason();
+          } else {
+            reason = prompt("Напишите причину блокировки:");
+          }
+
+          if (reason && reason.trim()) {
+            await apiToggleBidBlock(bidId, true, reason.trim());
+            await loadTenders(); // Reload data
+          }
         }
+      } catch (error) {
+        console.error('Failed to toggle block:', error);
+        alert('Ошибка при блокировке/разблокировке: ' + error.message);
+      }
     }
 
-    async function selectWinner(lotId, uploadId) {
-        try {
-            await apiSelectWinner(uploadId); // API call
-            await loadTenders(); // Reload data
-        } catch (error) {
-            console.error('Failed to select winner:', error);
-            alert('Не удалось выбрать победителя');
-        }
+    async function handleSelectWinner(lotId, uploadId) {
+      try {
+        await apiSelectWinner(uploadId); // API call
+        await loadTenders(); // Reload data
+      } catch (error) {
+        console.error('Failed to select winner:', error);
+        alert('Не удалось выбрать победителя: ' + error.message);
+      }
     }
 
-    async function createContract(lotId, uploadId) {
-        try {
-            await apiCreateContract(uploadId); // API call
-            await loadTenders(); // Reload data
-        } catch (error) {
-            console.error('Failed to create contract:', error);
-            alert('Не удалось создать договор');
-        }
+    async function handleCreateContract(lotId, uploadId) {
+      try {
+        await apiCreateContract(uploadId); // API call
+        await loadTenders(); // Reload data
+      } catch (error) {
+        console.error('Failed to create contract:', error);
+        alert('Не удалось создать договор: ' + error.message);
+      }
     }
 
-    async function cancelContract(lotId, uploadId) {
-        try {
-            await apiCancelContract(uploadId); // API call
-            await loadTenders(); // Reload data
-        } catch (error) {
-            console.error('Failed to cancel contract:', error);
-            alert('Не удалось отменить договор');
-        }
+    async function handleCancelContract(lotId, uploadId) {
+      try {
+        await apiCancelContract(uploadId); // API call
+        await loadTenders(); // Reload data
+      } catch (error) {
+        console.error('Failed to cancel contract:', error);
+        alert('Не удалось отменить договор: ' + error.message);
+      }
     }
 
     function viewContract(lotId, uploadId) {
-        const lot = lots.find(l => l.id === lotId);
-        if (!lot) return;
-        const upload = lot.uploads.find(u => u.uploadId === uploadId);
-        if (!upload || !upload.contractNumber) return;
+      const lot = lots.find(l => l.id === lotId);
+      if (!lot) return;
+      const upload = lot.uploads.find(u => u.uploadId === uploadId);
+      if (!upload || !upload.contractNumber) return;
 
-        resetModalStructure();
-        const inner = modal.querySelector('.modal');
-        inner.classList.add('narrow');
-        modalTitle.textContent = "Договор";
-        modalMeta.textContent = `${upload.subcontractor} · ${lot.id}`;
-        modalBody.innerHTML = `
+      resetModalStructure();
+      const inner = modal.querySelector('.modal');
+      inner.classList.add('narrow');
+      modalTitle.textContent = "Договор";
+      modalMeta.textContent = `${upload.subcontractor} · ${lot.id}`;
+      modalBody.innerHTML = `
             <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
                 <div style="margin-bottom: 12px;"><strong>№ договора:</strong> ${upload.contractNumber}</div>
                 <div style="margin-bottom: 12px;"><strong>Субподрядчик:</strong> ${upload.subcontractor}</div>
@@ -724,100 +1649,143 @@
                 <div style="color: var(--gray-600); font-size: 12px; margin-top: 16px;">Дата составления: ${new Date().toLocaleDateString('ru-RU')}</div>
             </div>
         `;
-        modal.style.display = "flex";
+      modal.style.display = "flex";
     }
 
     function shareOffer(lotId, uploadId) {
-        const lot = lots.find(l => l.id === lotId);
-        if (!lot) return;
-        const upload = lot.uploads.find(u => u.uploadId === uploadId);
-        if (!upload) return;
+      const lot = lots.find(l => l.id === lotId);
+      if (!lot) return;
+      const upload = lot.uploads.find(u => u.uploadId === uploadId);
+      if (!upload) return;
 
-        const url = `${window.location.origin}${window.location.pathname}?lot=${encodeURIComponent(lotId)}&offer=${encodeURIComponent(uploadId)}`;
-        
-        resetModalStructure();
-        const inner = modal.querySelector('.modal');
-        inner.classList.add('narrow');
-        modalTitle.textContent = "Поделиться предложением";
-        modalMeta.textContent = `${upload.subcontractor} · ${lot.id}`;
-        modalBody.innerHTML = `
+      const url = `${window.location.origin}${window.location.pathname}?lot=${encodeURIComponent(lotId)}&offer=${encodeURIComponent(uploadId)}`;
+
+      resetModalStructure();
+      const inner = modal.querySelector('.modal');
+      inner.classList.add('narrow');
+      modalTitle.textContent = "Поделиться предложением";
+      modalMeta.textContent = `${upload.subcontractor} · ${lot.id}`;
+      modalBody.innerHTML = `
             <div class="share-link-box">
                 <label style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--gray-700); font-weight: 600;">Ссылка на предложение:</label>
                 <input type="text" class="share-link-input" value="${url}" readonly id="share-url-input">
                 <button class="btn share-link-copy" id="copy-share-link">Скопировать ссылку</button>
             </div>
         `;
-        modal.style.display = "flex";
+      modal.style.display = "flex";
 
-        document.getElementById("copy-share-link").addEventListener("click", () => {
-            const input = document.getElementById("share-url-input");
-            input.select();
-            input.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(url).then(() => {
-                const btn = document.getElementById("copy-share-link");
-                const originalText = btn.textContent;
-                btn.textContent = "Скопировано!";
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            }).catch(err => {
-                alert("Не удалось скопировать ссылку: " + err);
-            });
+      document.getElementById("copy-share-link").addEventListener("click", () => {
+        const input = document.getElementById("share-url-input");
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(url).then(() => {
+          const btn = document.getElementById("copy-share-link");
+          const originalText = btn.textContent;
+          btn.textContent = "Скопировано!";
+          setTimeout(() => {
+            btn.textContent = originalText;
+          }, 2000);
+        }).catch(err => {
+          alert("Не удалось скопировать ссылку: " + err);
         });
+      });
     }
 
     async function addSubcontractorToLot(lotId, sub) {
-        const lot = lots.find(l => l.id === lotId);
-        if (!lot) return;
-        
-        // Get the real tender ID from the raw data
-        const tenderId = lot._rawData?.id;
-        if (!tenderId) {
-            console.error('Cannot find tender ID for lot', lotId);
-            alert('Ошибка: не найден ID тендера');
-            return;
+      const lot = lots.find(l => l.id === lotId);
+      if (!lot) {
+        closeModal();
+        return;
+      }
+
+      // Get the real tender ID from the raw data
+      const tenderId = lot._rawData?.id;
+      if (!tenderId) {
+        console.error('Cannot find tender ID for lot', lotId);
+        alert('Ошибка: не найден ID тендера');
+        closeModal();
+        return;
+      }
+
+      const subName = sub.company || `${sub.firstName} ${sub.lastName}`;
+
+      // Check if already invited (by checking uploads/bids)
+      if (lot.uploads.some(u => u.subcontractor === subName)) {
+        alert("Этот субподрядчик уже добавлен");
+        closeModal();
+        return;
+      }
+
+      try {
+        // Call API to invite subcontractor
+        // Note: We need subcontractor ID, but the mock data only has name
+        // For now, we'll assume 'sub' has an 'id' field
+        const subcontractorId = sub.id;
+        if (!subcontractorId) {
+          alert('Ошибка: не найден ID субподрядчика');
+          closeModal();
+          return;
         }
 
-        const subName = sub.company || `${sub.firstName} ${sub.lastName}`;
-
-        // Check if already invited (by checking uploads/bids)
-        if (lot.uploads.some(u => u.subcontractor === subName)) {
-            alert("Этот субподрядчик уже добавлен");
-            return;
+        await apiInviteSubcontractor(tenderId, subcontractorId);
+        closeModal();
+        await loadTenders(); // Reload data
+      } catch (error) {
+        // Backend returns 400 with message "Subcontractor already invited" — покажем мягкое уведомление
+        const message = (error && error.message) || 'Неизвестная ошибка';
+        const alreadyInvited = message.toLowerCase().includes('already invited');
+        if (alreadyInvited) {
+          alert('Этот субподрядчик уже приглашен в этот лот');
+          closeModal();
+          await loadTenders();
+          return;
         }
+        console.error('Failed to invite subcontractor:', error);
+        alert('Ошибка при приглашении субподрядчика: ' + message);
+        closeModal();
+      }
+    }
 
-        try {
-            // Call API to invite subcontractor
-            // Note: We need subcontractor ID, but the mock data only has name
-            // For now, we'll assume 'sub' has an 'id' field
-            const subcontractorId = sub.id;
-            if (!subcontractorId) {
-                alert('Ошибка: не найден ID субподрядчика');
-                return;
-            }
-            
-            await apiInviteSubcontractor(tenderId, subcontractorId);
-            await loadTenders(); // Reload data
-            closeModal();
-          } catch (error) {
-            // Backend returns 400 with message "Subcontractor already invited" — покажем мягкое уведомление
-            const message = (error && error.message) || 'Неизвестная ошибка';
-            const alreadyInvited = message.toLowerCase().includes('already invited');
-            if (alreadyInvited) {
-              alert('Этот субподрядчик уже приглашен в этот лот');
-              await loadTenders();
-              closeModal();
-              return;
-            }
-            console.error('Failed to invite subcontractor:', error);
-            alert('Ошибка при приглашении субподрядчика: ' + message);
+    async function deleteLot(lotId) {
+      const lot = lots.find(l => l.id === lotId);
+      if (!lot) return;
+
+      const lotName = lot.title || `Лот ${lot.id}`;
+      if (!confirm(`Вы уверены, что хотите удалить "${lotName}"?`)) {
+        return;
+      }
+
+      // Get the real tender ID from the raw data
+      const tenderId = lot._rawData?.id;
+      if (!tenderId) {
+        console.error('Cannot find tender ID for lot', lotId);
+        alert('Ошибка: не найден ID тендера');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/tenders/${tenderId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
           }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete tender');
+        }
+
+        await loadTenders(); // Reload data
+      } catch (error) {
+        console.error('Failed to delete tender:', error);
+        alert('Ошибка при удалении лота: ' + (error.message || 'Неизвестная ошибка'));
+      }
     }
 
     function renderLots() {
       const container = document.getElementById("lot-list");
       const openLotIds = Array.from(container.querySelectorAll('details.lot-entry[open]')).map(d => d.getAttribute('data-lot-id'));
-      const filtered = lots.filter(lot => 
+      const filtered = lots.filter(lot =>
         (lotFilter === "all" || lot.status === lotFilter) &&
         (objectFilter === null || lot.objectName === objectFilter)
       );
@@ -848,14 +1816,14 @@
           const isWinner = u.status === 'winner';
           const hasOwnContract = u.status === 'contract';
           const cardClass = u.blocked ? 'is-blocked' : ((hasWinner && !isWinner) || (hasContract && !hasOwnContract) ? 'non-winner' : '');
-          
+
           // View contract button if contract exists
           const viewContractBtn = u.contractNumber ? `
             <button class="share-btn" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" data-action="view-contract" title="Просмотр договора">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             </button>
           ` : '';
-          
+
           return `
             <div class="offer-card ${cardClass}" data-offer-id="${u.uploadId}" data-lot-id="${lot.id}">
               <div class="offer-header">
@@ -865,11 +1833,11 @@
                   <button class="share-btn" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" title="Поделиться">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg>
                   </button>
-                  <button class="block-btn ${u.blocked ? 'blocked' : ''}" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" title="${u.blocked ? 'Разблокировать' : 'Заблокировать'}">
-                    ${u.blocked ? 
-                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>' :
-                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>'
-                    }
+                  <button class="block-btn ${u.blocked ? 'blocked' : ''}" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" title="${u.blocked ? 'Разблокировать' : 'Заблокировать'}" ${u.status === 'invited' ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
+                    ${u.blocked ?
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>' :
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>'
+            }
                   </button>
                 </div>
               </div>
@@ -880,8 +1848,8 @@
               <div class="offer-row"><span class="offer-label">Баллы</span><div class="progress-wrap"><div class="progress"><div class="progress-bar" style="width:${Math.max(0, Math.min(100, scoreVal))}%;"></div></div><span class="progress-value">${u.score ?? '—'}</span></div></div>
               <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
               <div class="offer-actions">
-                <button class="btn secondary btn-view-file" data-url="${fileUrl}">Просмотр файла</button>
-                <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Составить договор' : 'Выбрать')}</button>
+                <button class="btn secondary btn-view-file" data-url="${fileUrl}" ${u.status === 'invited' ? 'disabled style="opacity:0.5;"' : ''}>Просмотр файла</button>
+                <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) || u.status === 'invited' ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Составить договор' : 'Выбрать')}</button>
               </div>
             </div>
           `;
@@ -921,6 +1889,12 @@
               </div>
               <div class="lot-summary-right">
                 ${countdownMarkup(lot.deadline)}
+                <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
               </div>
             </summary>
             <div class="offers-toolbar">
@@ -1015,20 +1989,37 @@
           e.stopPropagation();
           const uploadId = btn.getAttribute("data-upload-id");
           const lotId = btn.getAttribute("data-lot-id");
-          
+
           // Find the upload to check its status
           const lot = lots.find(l => l.id === lotId);
           if (!lot) return;
           const upload = lot.uploads.find(u => u.uploadId === uploadId);
           if (!upload) return;
-          
+
           if (upload.status === 'contract') {
-            cancelContract(lotId, uploadId);
+            handleCancelContract(lotId, uploadId);
           } else if (upload.status === 'winner') {
-            createContract(lotId, uploadId);
+            handleCreateContract(lotId, uploadId);
           } else {
-            selectWinner(lotId, uploadId);
+            handleSelectWinner(lotId, uploadId);
           }
+        });
+      });
+
+      // View contract button (dynamic content, need delegation or re-attach)
+      // Since innerHTML wipes logic, we re-attach here.
+      // But above we attached to .share-btn which handles 'view-contract' action if not separate.
+      // Actually we have a separate viewContractBtn HTML.
+      // Let's add listener for it.
+      container.querySelectorAll('button[data-action="view-contract"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const lotId = btn.getAttribute("data-lot-id");
+          const uploadId = btn.getAttribute("data-upload-id");
+          // Assuming viewContract is just a modal or similar?
+          // We have viewContract function in script, let's verify if it needs renaming.
+          // It was not in the original renaming list, but let's check.
+          viewContract(lotId, uploadId);
         });
       });
 
@@ -1044,6 +2035,16 @@
 
       container.querySelectorAll("button[data-open]").forEach(btn => {
         // ... (removed old modal logic listeners if any remain, but I replaced the whole block so it's fine)
+      });
+
+      // Delete lot buttons
+      container.querySelectorAll(".delete-lot-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const lotId = btn.getAttribute("data-lot-id");
+          if (lotId) await deleteLot(lotId);
+        });
       });
     }
 
@@ -1063,24 +2064,24 @@
 
     // API Bridge
     window.probimApi = {
-        getBlocks: async () => [],
-        getEstimates: async (blockId) => [],
-        getSections: async (estimateId) => [],
-        getStages: async (sectionId) => [],
-        getWorkTypes: async (stageId) => []
+      getBlocks: async () => [],
+      getEstimates: async (blockId) => [],
+      getSections: async (estimateId) => [],
+      getStages: async (sectionId) => [],
+      getWorkTypes: async (stageId) => []
     };
 
     window.initApi = (apiImpl) => {
-        window.probimApi = apiImpl;
-        console.log("Tender API initialized");
+      window.probimApi = apiImpl;
+      console.log("Tender API initialized");
     };
 
     window.createNewLot = async () => {
       const innerModal = modal.querySelector('.modal');
       const today = new Date().toISOString().split('T')[0];
-      
+
       // New Layout Structure
-        innerModal.innerHTML = `
+      innerModal.innerHTML = `
         <div class="row" style="justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); margin-bottom: 12px;">
           <h3 style="margin:0;">Создание нового лота</h3>
           <div style="display:flex; gap:12px; align-items:center;">
@@ -1149,15 +2150,15 @@
       `;
 
       modal.style.display = "flex";
-      
+
       // Bind Header Events
       document.getElementById('btn-create-lot-close').addEventListener('click', closeModal);
-      
+
       // State
       let blocksData = [];
       let activeBlockId = null;
       let activeEstimateId = null;
-      
+
       // Selection State: Map<wtId, { wtName, stageId, stageName, estimateId, estimateName, blockId, blockName }>
       const selectedWorkTypes = new Map();
 
@@ -1165,14 +2166,14 @@
       const bodyContainer = document.getElementById('lot-creation-body');
 
       try {
-          blocksData = await window.probimApi.getBlocks();
-          renderLayout();
+        blocksData = await window.probimApi.getBlocks();
+        renderLayout();
       } catch (e) {
-          bodyContainer.innerHTML = `<div style="color:red; text-align:center;">Ошибка: ${e.message}</div>`;
+        bodyContainer.innerHTML = `<div style="color:red; text-align:center;">Ошибка: ${e.message}</div>`;
       }
 
       function renderLayout() {
-          bodyContainer.innerHTML = `
+        bodyContainer.innerHTML = `
             <div class="modal-grid-3">
                 <!-- Column 1: Blocks -->
                 <div class="col-panel">
@@ -1197,115 +2198,115 @@
                 </div>
             </div>
           `;
-          renderBlocksList();
+        renderBlocksList();
       }
 
       function renderBlocksList() {
-          const container = document.getElementById('col-blocks');
-          container.innerHTML = blocksData.map(b => `
+        const container = document.getElementById('col-blocks');
+        container.innerHTML = blocksData.map(b => `
               <div class="nav-item ${b.id === activeBlockId ? 'active' : ''}" data-id="${b.id}">
                   ${b.name}
               </div>
           `).join('');
 
-          container.querySelectorAll('.nav-item').forEach(el => {
-              el.addEventListener('click', () => selectBlock(el.dataset.id));
-          });
+        container.querySelectorAll('.nav-item').forEach(el => {
+          el.addEventListener('click', () => selectBlock(el.dataset.id));
+        });
       }
 
       async function selectBlock(id) {
-          if (activeBlockId === id) return;
-          activeBlockId = id;
-          activeEstimateId = null;
-          
-          renderBlocksList(); // Update active state
-          
-          const estContainer = document.getElementById('col-estimates');
-          estContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Загрузка...</div>';
-          document.getElementById('col-tree').innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Выберите смету</div>';
+        if (activeBlockId === id) return;
+        activeBlockId = id;
+        activeEstimateId = null;
 
-          try {
-              const estimates = await window.probimApi.getEstimates(id);
-              renderEstimatesList(estimates);
-          } catch (e) {
-              estContainer.innerHTML = '<div style="color:red; padding:12px;">Ошибка загрузки смет</div>';
-          }
+        renderBlocksList(); // Update active state
+
+        const estContainer = document.getElementById('col-estimates');
+        estContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Загрузка...</div>';
+        document.getElementById('col-tree').innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Выберите смету</div>';
+
+        try {
+          const estimates = await window.probimApi.getEstimates(id);
+          renderEstimatesList(estimates);
+        } catch (e) {
+          estContainer.innerHTML = '<div style="color:red; padding:12px;">Ошибка загрузки смет</div>';
+        }
       }
 
       function renderEstimatesList(estimates) {
-          const container = document.getElementById('col-estimates');
-          if (estimates.length === 0) {
-              container.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Нет смет</div>';
-              return;
-          }
+        const container = document.getElementById('col-estimates');
+        if (estimates.length === 0) {
+          container.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Нет смет</div>';
+          return;
+        }
 
-          container.innerHTML = estimates.map(e => `
+        container.innerHTML = estimates.map(e => `
               <div class="nav-item ${e.id === activeEstimateId ? 'active' : ''}" data-id="${e.id}" data-name="${e.name}">
                   ${e.name}
               </div>
           `).join('');
 
-          container.querySelectorAll('.nav-item').forEach(el => {
-              el.addEventListener('click', () => selectEstimate(el.dataset.id, el.dataset.name));
-          });
+        container.querySelectorAll('.nav-item').forEach(el => {
+          el.addEventListener('click', () => selectEstimate(el.dataset.id, el.dataset.name));
+        });
       }
 
       async function selectEstimate(id, name) {
-          if (activeEstimateId === id) return;
-          activeEstimateId = id;
-          
-          // Update active class in estimates list
-          const estContainer = document.getElementById('col-estimates');
-          estContainer.querySelectorAll('.nav-item').forEach(el => {
-              if (el.dataset.id === id) el.classList.add('active');
-              else el.classList.remove('active');
-          });
+        if (activeEstimateId === id) return;
+        activeEstimateId = id;
 
-          const treeContainer = document.getElementById('col-tree');
-          treeContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Загрузка этапов...</div>';
+        // Update active class in estimates list
+        const estContainer = document.getElementById('col-estimates');
+        estContainer.querySelectorAll('.nav-item').forEach(el => {
+          if (el.dataset.id === id) el.classList.add('active');
+          else el.classList.remove('active');
+        });
 
-          try {
-              // Fetch Tree Data
-              const sections = await window.probimApi.getSections(id);
-              // Flatten stages from all sections
-              let allStages = [];
-              for (const sec of sections) {
-                  const stages = await window.probimApi.getStages(sec.id);
-                  allStages = allStages.concat(stages);
-              }
+        const treeContainer = document.getElementById('col-tree');
+        treeContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Загрузка этапов...</div>';
 
-              if (allStages.length === 0) {
-                  treeContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Нет этапов</div>';
-                  return;
-              }
-
-              // Fetch Work Types for all stages
-              const stagesWithWt = await Promise.all(allStages.map(async (stage) => {
-                  const wts = await window.probimApi.getWorkTypes(stage.id);
-                  return { ...stage, wts };
-              }));
-
-              renderTree(stagesWithWt, id, name);
-
-          } catch (e) {
-              console.error(e);
-              treeContainer.innerHTML = '<div style="color:red; padding:12px;">Ошибка загрузки дерева</div>';
+        try {
+          // Fetch Tree Data
+          const sections = await window.probimApi.getSections(id);
+          // Flatten stages from all sections
+          let allStages = [];
+          for (const sec of sections) {
+            const stages = await window.probimApi.getStages(sec.id);
+            allStages = allStages.concat(stages);
           }
+
+          if (allStages.length === 0) {
+            treeContainer.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Нет этапов</div>';
+            return;
+          }
+
+          // Fetch Work Types for all stages
+          const stagesWithWt = await Promise.all(allStages.map(async (stage) => {
+            const wts = await window.probimApi.getWorkTypes(stage.id);
+            return { ...stage, wts };
+          }));
+
+          renderTree(stagesWithWt, id, name);
+
+        } catch (e) {
+          console.error(e);
+          treeContainer.innerHTML = '<div style="color:red; padding:12px;">Ошибка загрузки дерева</div>';
+        }
       }
 
       function renderTree(stages, estimateId, estimateName) {
-          const container = document.getElementById('col-tree');
-          const blockName = blocksData.find(b => b.id == activeBlockId)?.name;
+        const container = document.getElementById('col-tree');
+        const blockName = blocksData.find(b => b.id == activeBlockId)?.name;
 
-            let html = '<div class="tree-grid-header"><span>Вид работ</span><span>Объем</span><span>Ед. изм.</span></div>';
-          stages.forEach(stage => {
-              if (!stage.wts || stage.wts.length === 0) return;
+        let html = '<div class="tree-grid-header"><span>Вид работ</span><span>Объем</span><span>Ед. изм.</span></div>';
+        stages.forEach(stage => {
+          if (!stage.wts || stage.wts.length === 0) return;
 
-                const wtItems = stage.wts.map(wt => {
-                  const isChecked = selectedWorkTypes.has(wt.id);
-                  const volume = wt.volume ?? wt.qty ?? wt.quantity ?? '—';
-                  const unit = wt.unit ?? wt.uom ?? wt.measure ?? '—';
-                  return `
+          const wtItems = stage.wts.map(wt => {
+            const isChecked = selectedWorkTypes.has(wt.id);
+            const volume = wt.volume ?? wt.qty ?? wt.quantity ?? '—';
+            const unit = wt.unit ?? wt.uom ?? wt.measure ?? '—';
+            return `
                     <div class="tree-wt-row">
                       <label class="tree-wt-item">
                         <input type="checkbox" class="wt-cb" 
@@ -1314,6 +2315,8 @@
                           data-name="${wt.name}"
                           data-stage-id="${stage.id}"
                           data-stage-name="${stage.name}"
+                          data-unit="${unit}"
+                          data-volume="${volume}"
                         >
                         <span class="wt-name">${wt.name}</span>
                       </label>
@@ -1321,9 +2324,9 @@
                       <span class="tree-wt-unit">${unit}</span>
                     </div>
                   `;
-                }).join('');
+          }).join('');
 
-              html += `
+          html += `
                   <div class="tree-stage">
                       <div class="tree-stage-header">
                           <input type="checkbox" class="stage-cb" data-stage-id="${stage.id}">
@@ -1334,144 +2337,161 @@
                           </div>
                   </div>
               `;
-          });
+        });
 
-          container.innerHTML = html || '<div class="muted" style="padding:12px; text-align:center;">Нет видов работ</div>';
+        container.innerHTML = html || '<div class="muted" style="padding:12px; text-align:center;">Нет видов работ</div>';
 
-          // Bind Events
-          bindTreeEvents(container, estimateId, estimateName, blockName);
-          updateStageCheckboxes(container);
+        // Bind Events
+        bindTreeEvents(container, estimateId, estimateName, blockName);
+        updateStageCheckboxes(container);
       }
 
-        function bindTreeEvents(container, estimateId, estimateName, blockName) {
-          const handleWorkTypeChange = (cb, notifyStage = true) => {
-            const wtId = cb.value;
-            if (cb.checked) {
-              selectedWorkTypes.set(wtId, {
-                id: wtId,
-                name: cb.dataset.name,
-                stageId: cb.dataset.stageId,
-                stageName: cb.dataset.stageName,
-                estimateId: estimateId,
-                estimateName: estimateName,
-                blockId: activeBlockId,
-                blockName: blockName
-              });
-            } else {
-              selectedWorkTypes.delete(wtId);
-            }
-            if (notifyStage) {
-              updateStageCheckboxes(container);
-            }
-          };
-
-          container.querySelectorAll('.wt-cb').forEach(cb => {
-            cb.addEventListener('change', () => handleWorkTypeChange(cb));
-          });
-
-          container.querySelectorAll('.stage-cb').forEach(stageCb => {
-            stageCb.addEventListener('change', () => {
-              const stageRow = stageCb.closest('.tree-stage');
-              if (!stageRow) return;
-              const wtList = stageRow.querySelector('.tree-wt-list');
-              if (!wtList) return;
-
-              const stageChecked = stageCb.checked;
-              wtList.querySelectorAll('.wt-cb').forEach(wtCb => {
-                if (wtCb.checked !== stageChecked) {
-                  wtCb.checked = stageChecked;
-                  handleWorkTypeChange(wtCb, false);
-                }
-              });
-
-              updateStageCheckboxes(container);
+      function bindTreeEvents(container, estimateId, estimateName, blockName) {
+        const handleWorkTypeChange = (cb, notifyStage = true) => {
+          const wtId = cb.value;
+          if (cb.checked) {
+            selectedWorkTypes.set(wtId, {
+              id: wtId,
+              name: cb.dataset.name,
+              stageId: cb.dataset.stageId,
+              stageName: cb.dataset.stageName,
+              estimateId: estimateId,
+              estimateName: estimateName,
+              blockId: activeBlockId,
+              blockName: blockName,
+              unit: cb.dataset.unit,
+              volume: cb.dataset.volume
             });
+          } else {
+            selectedWorkTypes.delete(wtId);
+          }
+          if (notifyStage) {
+            updateStageCheckboxes(container);
+          }
+        };
+
+        container.querySelectorAll('.wt-cb').forEach(cb => {
+          cb.addEventListener('change', () => handleWorkTypeChange(cb));
+        });
+
+        container.querySelectorAll('.stage-cb').forEach(stageCb => {
+          stageCb.addEventListener('change', () => {
+            const stageRow = stageCb.closest('.tree-stage');
+            if (!stageRow) return;
+            const wtList = stageRow.querySelector('.tree-wt-list');
+            if (!wtList) return;
+
+            const stageChecked = stageCb.checked;
+            wtList.querySelectorAll('.wt-cb').forEach(wtCb => {
+              if (wtCb.checked !== stageChecked) {
+                wtCb.checked = stageChecked;
+                handleWorkTypeChange(wtCb, false);
+              }
+            });
+
+            updateStageCheckboxes(container);
           });
-        }
+        });
+      }
 
       function updateStageCheckboxes(container) {
-          container.querySelectorAll('.tree-wt-list').forEach(list => {
-              const stageId = list.id.replace('wt-list-', '');
-              const stageCb = container.querySelector(`.stage-cb[data-stage-id="${stageId}"]`);
-              if (!stageCb) return;
+        container.querySelectorAll('.tree-wt-list').forEach(list => {
+          const stageId = list.id.replace('wt-list-', '');
+          const stageCb = container.querySelector(`.stage-cb[data-stage-id="${stageId}"]`);
+          if (!stageCb) return;
 
-              const all = list.querySelectorAll('.wt-cb');
-              const checked = list.querySelectorAll('.wt-cb:checked');
+          const all = list.querySelectorAll('.wt-cb');
+          const checked = list.querySelectorAll('.wt-cb:checked');
 
-              if (all.length === 0) return;
+          if (all.length === 0) return;
 
-              stageCb.checked = (all.length === checked.length);
-              stageCb.indeterminate = (checked.length > 0 && checked.length < all.length);
-          });
+          stageCb.checked = (all.length === checked.length);
+          stageCb.indeterminate = (checked.length > 0 && checked.length < all.length);
+        });
       }
 
       // Save Handler
-      document.getElementById('btn-create-lot-save').addEventListener('click', () => {
-          if (selectedWorkTypes.size === 0) {
-              alert("Выберите хотя бы один вид работ");
-              return;
-          }
+      document.getElementById('btn-create-lot-save').addEventListener('click', async () => {
+        if (selectedWorkTypes.size === 0) {
+          alert("Выберите хотя бы один вид работ");
+          return;
+        }
 
-          const deadline = document.getElementById("new-lot-deadline").value;
-          const manualTitle = document.getElementById("new-lot-name").value.trim();
-          
-          // Generate Title & Description
-          // Group by Block -> Estimate -> Stage
-          const items = Array.from(selectedWorkTypes.values());
-          const firstItem = items[0];
-          
-          // Simple title generation
-          const uniqueBlocks = [...new Set(items.map(i => i.blockName))];
-          const uniqueStages = [...new Set(items.map(i => i.stageName))];
-          
-          const autoTitle = `${uniqueStages[0]}${uniqueStages.length > 1 ? ' и др.' : ''} (${uniqueBlocks.join(', ')})`;
-          const finalTitle = manualTitle || autoTitle;
-          let description = items.map(i => i.name).join(', ');
-          if (description.length > 100) description = description.substring(0, 100) + '...';
+        const deadline = document.getElementById("new-lot-deadline").value;
+        const manualTitle = document.getElementById("new-lot-name").value.trim();
 
-          const newLot = {
-              id: `LOT-${String(lots.length + 1).padStart(3, '0')}`,
-              objectName: objectFilter || "Текущий объект",
-            title: finalTitle,
-              startDate: today,
-              description: description,
-              status: "open",
-              deadline: deadline,
-              allowAllBlocks: false,
-              allowAllSections: false,
-              blocks: uniqueBlocks,
-              sections: [], // Can be derived
-              invites: 0,
-              uploads: []
-          };
+        // Generate Title & Description
+        // Group by Block -> Estimate -> Stage
+        const items = Array.from(selectedWorkTypes.values());
 
-          lots.unshift(newLot);
-          renderLots();
+        // Simple title generation
+        const uniqueBlocks = [...new Set(items.map(i => i.blockName))];
+        const uniqueStages = [...new Set(items.map(i => i.stageName))];
+
+        const autoTitle = `${uniqueStages[0]}${uniqueStages.length > 1 ? ' и др.' : ''} (${uniqueBlocks.join(', ')})`;
+        const finalTitle = manualTitle || autoTitle;
+        let description = items.map(i => i.name).join(', ');
+        if (description.length > 100) description = description.substring(0, 100) + '...';
+
+        try {
+          // Prepare items for backend
+          const itemsPayload = items.map(i => ({
+            section: i.stageName, // Using stageName as section for now
+            name: i.name,
+            unit: i.unit || "ед.", // Use selected unit
+            quantity: parseFloat(i.volume) || 1, // Use selected volume/quantity
+            volume: i.volume || "—"
+          }));
+
+          // Call API to create tender
+          await apiCreateTender({
+            projectId: CURRENT_PROJECT_ID,
+            name: finalTitle,
+            description: description,
+            startDate: new Date().toISOString(),
+            deadline: deadline,
+            blockIds: uniqueBlocks,
+            sectionIds: [],
+            items: itemsPayload // Send items to backend
+          });
+
           closeModal();
+          await loadTenders(); // Reload from server
+        } catch (error) {
+          console.error('Failed to create tender:', error);
+          alert('Ошибка при создании лота: ' + error.message);
+        }
       });
     };
 
     // ===========================================
     // API Integration Functions
     // ===========================================
-    
+
     /**
      * Загрузить тендеры с сервера
      */
     async function loadTenders() {
       try {
         const tenders = await apiGetTenders(CURRENT_PROJECT_ID);
-        
+
         // Преобразуем данные с сервера в формат для UI
-        lots = tenders.map(tender => {
+        lots = tenders.map((tender, index) => {
           const blockIds = JSON.parse(tender.blockIds || '[]');
           const sectionIds = JSON.parse(tender.sectionIds || '[]');
-          
-          // Преобразуем bids в uploads для совместимости с текущим UI
-          const uploads = tender.bids.map(bid => {
+          const tenderItems = JSON.parse(tender.items || '[]');
+
+          // Generate Display ID based on order (assuming sorted by newest first)
+          // Total count is tenders.length. Newest is index 0.
+          // ID = Total - index
+          const displayIdNumber = tenders.length - index;
+          const displayId = `LOT-${String(displayIdNumber).padStart(3, '0')}`;
+
+          // Преобразуем bids в uploads
+          const bidUploads = tender.bids.map(bid => {
             const items = JSON.parse(bid.items || '[]');
             const files = JSON.parse(bid.files || '[]');
-            
+
             return {
               uploadId: bid.id,
               subcontractor: bid.subcontractor.company,
@@ -1487,12 +2507,38 @@
               blocked: bid.blocked,
               blockReason: bid.blockReason,
               blockDate: bid.blockDate,
-              _rawData: bid // Сохраняем оригинальные данные bid
+              _rawData: bid
             };
           });
-          
+
+          // Преобразуем invites в uploads (для тех, кто еще не подал оффер)
+          // Фильтруем те, у которых уже есть bid (они попадут в bidUploads)
+          const inviteUploads = (tender.invites || [])
+            .filter(invite => !invite.bid)
+            .map(invite => {
+              return {
+                uploadId: `invite-${invite.id}`,
+                subcontractor: invite.subcontractor.company,
+                coverage: `${blockIds.join(', ')}: ${sectionIds.join(', ')}`,
+                status: 'invited', // Специальный статус для приглашенных
+                files: [],
+                total: null,
+                score: null,
+                completionDate: null,
+                contractNumber: null,
+                items: [],
+                errors: [],
+                blocked: false,
+                blockReason: null,
+                blockDate: null,
+                _rawData: invite
+              };
+            });
+
+          const uploads = [...bidUploads, ...inviteUploads];
+
           return {
-            id: tender.id, // сохраняем реальный ID тендера
+            id: displayId, // Use generated ID for display
             objectName: tender.project?.name || 'Проект',
             title: tender.name,
             startDate: new Date(tender.startDate).toISOString().split('T')[0],
@@ -1502,12 +2548,13 @@
             allowAllSections: true,
             blocks: blockIds,
             sections: sectionIds,
+            items: tenderItems, // Store items
             invites: tender.invites?.length || 0,
             uploads: uploads,
             _rawData: tender // Сохраняем оригинальные данные
           };
         });
-        
+
         renderLots();
       } catch (error) {
         console.error('Failed to load tenders:', error);
@@ -1520,4 +2567,5 @@
     loadTenders(); // Загружаем данные с сервера
   </script>
 </body>
+
 </html>

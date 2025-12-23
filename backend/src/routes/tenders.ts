@@ -110,7 +110,8 @@ router.post('/', async (req: Request, res: Response) => {
         sectionIds: JSON.stringify(sectionIds),
         startDate: new Date(startDate),
         deadline: new Date(deadline),
-        status: 'open'
+        status: 'open',
+        items: req.body.items ? JSON.stringify(req.body.items) : '[]'
       }
     });
 
@@ -341,6 +342,130 @@ router.post('/bids/:id/cancel-contract', async (req: Request, res: Response) => 
     });
 
     res.json(updatedBid);
+  } catch (error) {
+    console.error('Error canceling contract:', error);
+    res.status(500).json({ error: 'Failed to cancel contract' });
+  }
+});
+
+// ==========================================
+// DELETE /api/tenders/:id
+// Удалить лот
+// ==========================================
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Check if tender exists
+    const tender = await prisma.tender.findUnique({
+      where: { id }
+    });
+
+    if (!tender) {
+      return res.status(404).json({ error: 'Tender not found' });
+    }
+
+    // Delete tender (cascading will delete related invites and bids)
+    await prisma.tender.delete({
+      where: { id }
+    });
+
+    res.json({ message: 'Tender deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting tender:', error);
+    res.status(500).json({ error: 'Failed to delete tender' });
+  }
+});
+
+// ==========================================
+// POST /api/tenders/bids/:id/block
+// Заблокировать/разблокировать
+// ==========================================
+router.post('/bids/:id/block', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { blocked, blockReason } = req.body;
+
+    await prisma.tenderBid.update({
+      where: { id },
+      data: {
+        blocked,
+        blockReason: blocked ? blockReason : null,
+        blockDate: blocked ? new Date() : null
+      }
+    });
+
+    res.json({ message: 'Bid block status updated' });
+  } catch (error) {
+    console.error('Error blocking bid:', error);
+    res.status(500).json({ error: 'Failed to update bid block status' });
+  }
+});
+
+// ==========================================
+// POST /api/tenders/bids/:id/select-winner
+// Выбрать победителя
+// ==========================================
+router.post('/bids/:id/select-winner', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Optional: Unselect other winners for this tender?
+    // For now, simple update
+    await prisma.tenderBid.update({
+      where: { id },
+      data: { status: 'winner' }
+    });
+
+    res.json({ message: 'Winner selected' });
+  } catch (error) {
+    console.error('Error selecting winner:', error);
+    res.status(500).json({ error: 'Failed to select winner' });
+  }
+});
+
+// ==========================================
+// POST /api/tenders/bids/:id/create-contract
+// Создать договор
+// ==========================================
+router.post('/bids/:id/create-contract', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.tenderBid.update({
+      where: { id },
+      data: {
+        status: 'contract',
+        contractNumber: 'Д-' + Math.floor(Math.random() * 10000), // Random demo contract number
+        contractDate: new Date()
+      }
+    });
+
+    res.json({ message: 'Contract created' });
+  } catch (error) {
+    console.error('Error creating contract:', error);
+    res.status(500).json({ error: 'Failed to create contract' });
+  }
+});
+
+// ==========================================
+// POST /api/tenders/bids/:id/cancel-contract
+// Отменить договор
+// ==========================================
+router.post('/bids/:id/cancel-contract', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.tenderBid.update({
+      where: { id },
+      data: {
+        status: 'winner', // Revert to winner
+        contractNumber: null,
+        contractDate: null
+      }
+    });
+
+    res.json({ message: 'Contract canceled' });
   } catch (error) {
     console.error('Error canceling contract:', error);
     res.status(500).json({ error: 'Failed to cancel contract' });

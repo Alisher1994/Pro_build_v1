@@ -980,6 +980,26 @@
       text-align: right;
     }
 
+    /* Rating cubes styles */
+    .rating-cubes {
+      display: flex;
+      gap: 3px;
+      flex: 1;
+    }
+
+    .rating-cube {
+      flex: 1;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+
+    .rating-cube.active {
+      background: var(--primary);
+    }
+
+
     .offer-actions {
       display: flex;
       gap: 8px;
@@ -2473,7 +2493,15 @@
                   </div>
                 </div>
               </div>
-              <div class="offer-row"><span class="offer-label">Баллы</span><div class="progress-wrap"><div class="progress"><div class="progress-bar" style="width:${Math.max(0, Math.min(100, (u.ratingPoints || 0) * 20))}%;"></div></div><span class="progress-value">${u.ratingPoints ?? '—'}</span></div></div>
+              <div class="offer-row">
+                <span class="offer-label">Баллы</span>
+                <div class="progress-wrap">
+                  <div class="rating-cubes">
+                    ${Array.from({ length: 10 }, (_, i) => `<div class="rating-cube ${(u.ratingPoints || 0) > i ? 'active' : ''}"></div>`).join('')}
+                  </div>
+                  <span class="progress-value">${u.ratingPoints ?? '—'}</span>
+                </div>
+              </div>
               <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
               <div class="offer-row">
                 <span class="offer-label">Рейтинг (mc.uz)</span>
@@ -2741,11 +2769,26 @@
         const response = await fetch(`${API_BASE_URL}/subcontractors/${subId}/refresh-rating`, {
           method: 'POST'
         });
+
+        if (!response.ok) {
+          const text = await response.text();
+          let errorMsg = `Ошибка сервера (${response.status})`;
+          try {
+            const json = JSON.parse(text);
+            errorMsg = json.error || errorMsg;
+          } catch (e) {
+            // If not JSON, use the status text or HTML content hint
+            if (text.includes('Cannot POST')) errorMsg = "Маршрут не найден на сервере (404). Возможно, требуется перезагрузка бэкенда.";
+          }
+          throw new Error(errorMsg);
+        }
+
         const result = await response.json();
         if (result.error) throw new Error(result.error);
 
         // Refresh local data and re-render
         await loadTenders();
+        alert('Рейтинг успешно обновлен: ' + (result.rating || '—'));
       } catch (error) {
         console.error('Failed to refresh rating:', error);
         alert('Ошибка при обновлении рейтинга: ' + error.message);
@@ -3222,15 +3265,15 @@
     function getRatingPoints(ratingBase) {
       if (!ratingBase) return 0;
       const ratingMap = {
-        'AAA': 5.0, 'AA': 4.6, 'A': 4.2,
-        'BBB': 3.8, 'BB': 3.4, 'B': 3.0,
-        'CCC': 2.6, 'CC': 2.2, 'C': 1.8,
-        'DDD': 1.4, 'DD': 1.0, 'D': 0.6
+        'AAA': 10.0, 'AA': 9.2, 'A': 8.4,
+        'BBB': 7.6, 'BB': 6.8, 'B': 6.0,
+        'CCC': 5.2, 'CC': 4.4, 'C': 3.6,
+        'DDD': 2.8, 'DD': 2.0, 'D': 1.2
       };
       let cleanRating = ratingBase.replace('+', '').trim();
       let pts = ratingMap[cleanRating] || 0;
-      if (ratingBase.includes('+')) pts += 0.2;
-      return parseFloat(Math.min(5.0, pts).toFixed(1));
+      if (ratingBase.includes('+')) pts += 0.4;
+      return parseFloat(Math.min(10.0, pts).toFixed(1));
     }
 
     // ===========================================
@@ -3238,7 +3281,7 @@
     // ===========================================
 
     function calculateBidScore(bid, allBids, targetDeadline) {
-      // 1. mc.uz Rating (max 5 points)
+      // 1. mc.uz Rating (max 10 points)
       let score = getRatingPoints(bid.subcontractor?.rating || bid.rating);
 
       // 2. Documents (max 1 point)
@@ -3248,8 +3291,8 @@
       // 3. Price Competitiveness (max 3 points)
       if (allBids && allBids.length > 0) {
         const prices = allBids.map(b => b.priceTotal).filter(p => p > 0);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
+        const minPrice = prices.length ? Math.min(...prices) : 0;
+        const maxPrice = prices.length ? Math.max(...prices) : 0;
         if (maxPrice > minPrice && bid.priceTotal > 0) {
           score += 3 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
         } else if (bid.priceTotal > 0) {
@@ -3261,7 +3304,7 @@
       if (targetDeadline && bid.completionDate) {
         const target = new Date(targetDeadline);
         const bidDate = new Date(bid.completionDate);
-        if (!isNaN(target) && !isNaN(bidDate)) {
+        if (!isNaN(target.getTime()) && !isNaN(bidDate.getTime())) {
           // If bid is before or on target, full point
           if (bidDate <= target) {
             score += 1.0;
@@ -3272,11 +3315,10 @@
           }
         }
       } else {
-        // Flat bonus if no deadline data but we want to reach 10
         score += 0.5;
       }
 
-      return parseFloat(Math.min(10, score).toFixed(1));
+      return parseFloat(Math.min(15, score).toFixed(1));
     }
 
     /**

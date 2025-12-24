@@ -380,11 +380,13 @@ const EstimateManager = {
             for (const estimate of estimates) {
                 const hasIfc = Boolean(estimate.xktFileUrl);
                 const fileName = estimate.ifcFileUrl ? estimate.ifcFileUrl.split('/').pop() : '';
+                const estimateId = estimate.id;
+
                 html += `
-                    <tr style="cursor: pointer;" onclick="EstimateManager.openEstimate('${estimate.id}')">
-                        <td><strong>${estimate.name}</strong></td>
-                        <td>${estimate.description || '-'}</td>
-                        <td style="font-weight: 600; color: var(--primary);">${UI.formatCurrency(estimate.totalCost, this.currentProject?.currency)}</td>
+                    <tr style="cursor: pointer;" onclick="EstimateManager.openEstimate('${estimateId}')">
+                        <td><strong>${this.escapeHtml(estimate.name)}</strong></td>
+                        <td>${this.escapeHtml(estimate.description || '-')}</td>
+                        <td id="estimate-total-${estimateId}" style="font-weight: 600; color: var(--primary);">${UI.formatCurrency(estimate.totalCost || 0, this.currentProject?.currency)}</td>
                         <td>
                             <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                                 <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
@@ -411,7 +413,7 @@ const EstimateManager = {
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
-                                    <button onclick="event.stopPropagation(); EstimateManager.uploadIFCForEstimate('${estimate.id}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}" aria-label="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}">
+                                    <button onclick="event.stopPropagation(); EstimateManager.uploadIFCForEstimate('${estimateId}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}" aria-label="${hasIfc ? 'Обновить IFC' : 'Загрузить IFC'}">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polyline points="23 4 23 10 17 10" />
                                             <polyline points="1 20 1 14 7 14" />
@@ -420,7 +422,7 @@ const EstimateManager = {
                                         </svg>
                                     </button>
                                     ${hasIfc ? `
-                                    <button onclick="event.stopPropagation(); EstimateManager.unlinkIFC('${estimate.id}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="Отвязать IFC" aria-label="Отвязать IFC"
+                                    <button onclick="event.stopPropagation(); EstimateManager.unlinkIFC('${estimateId}', { stayOnList: true })" class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" title="Отвязать IFC" aria-label="Отвязать IFC"
                                         onmouseenter="const d=this.querySelector('.unlink-default'); const h=this.querySelector('.unlink-hover'); if(d&&h){d.style.display='none';h.style.display='block';}"
                                         onmouseleave="const d=this.querySelector('.unlink-default'); const h=this.querySelector('.unlink-hover'); if(d&&h){d.style.display='block';h.style.display='none';}">
                                         <svg class="unlink-default" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3d3d3d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -462,8 +464,42 @@ const EstimateManager = {
             html += '</tbody></table></div>';
             container.innerHTML = html;
 
+            // Запускаем фоновый расчет итогов для каждой сметы
+            for (const estimate of estimates) {
+                this.updateEstimateTotalOnList(estimate.id);
+            }
+
         } catch (error) {
             UI.showNotification('Ошибка загрузки смет: ' + error.message, 'error');
+        }
+    },
+
+    async updateEstimateTotalOnList(estimateId) {
+        try {
+            const sections = await api.getSections(estimateId);
+            let total = 0;
+            for (const section of sections) {
+                const stages = await api.getStages(section.id);
+                for (const stage of stages) {
+                    let stageTotal = stage.totalCost || 0;
+                    if (stageTotal === 0) {
+                        try {
+                            const workTypes = await api.getWorkTypes(stage.id);
+                            stageTotal = workTypes.reduce((sum, wt) => sum + (wt.totalCost || 0), 0);
+                        } catch (e) {
+                            console.warn('Error fetching workTypes for stage total calculation:', stage.id, e);
+                        }
+                    }
+                    total += stageTotal;
+                }
+            }
+
+            const totalEl = document.getElementById(`estimate-total-${estimateId}`);
+            if (totalEl) {
+                totalEl.textContent = UI.formatCurrency(total, this.currentProject?.currency);
+            }
+        } catch (e) {
+            console.warn('Failed to calculate estimate total for list:', estimateId, e);
         }
     },
 

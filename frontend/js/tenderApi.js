@@ -2,7 +2,13 @@
 // Tender API Module
 // ===========================================
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = (() => {
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (isLocalHost && window.location.port === '8000') {
+    return 'http://localhost:3001/api';
+  }
+  return '/api';
+})();
 
 /**
  * Получить список тендеров проекта

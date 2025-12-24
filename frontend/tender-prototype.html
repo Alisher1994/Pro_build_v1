@@ -1908,14 +1908,16 @@
     const CURRENT_PROJECT_ID = '902eeb62-5a34-4e69-933e-784ea2127910'; // TODO: Получать из URL или глобального состояния
 
     // Import API functions with aliases to avoid name collisions
-    const apiGetTenders = getTenders;
-    const apiGetTender = getTender;
-    const apiCreateTender = createTender;
-    const apiInviteSubcontractor = inviteSubcontractor;
-    const apiToggleBidBlock = toggleBidBlock;
-    const apiSelectWinner = selectWinner;
-    const apiCreateContract = createContract;
-    const apiCancelContract = cancelContract;
+    // Dynamic API proxies that use window.probimApi if initialized, otherwise fallback to global functions
+    const apiGetTenders = (...args) => (window.probimApi?.getTenders ? window.probimApi.getTenders(...args) : getTenders(...args));
+    const apiGetTender = (...args) => (window.probimApi?.getTender ? window.probimApi.getTender(...args) : getTender(...args));
+    const apiCreateTender = (...args) => (window.probimApi?.createTender ? window.probimApi.createTender(...args) : createTender(...args));
+    const apiInviteSubcontractor = (...args) => (window.probimApi?.createTenderInvite ? window.probimApi.createTenderInvite(...args) : inviteSubcontractor(...args));
+    const apiToggleBidBlock = (...args) => (window.probimApi?.toggleBidBlock ? window.probimApi.toggleBidBlock(...args) : toggleBidBlock(...args));
+    const apiSelectWinner = (...args) => (window.probimApi?.selectWinner ? window.probimApi.selectWinner(...args) : selectWinner(...args));
+    const apiCreateContract = (...args) => (window.probimApi?.createContract ? window.probimApi.createContract(...args) : createContract(...args));
+    const apiCancelContract = (...args) => (window.probimApi?.cancelContract ? window.probimApi.cancelContract(...args) : cancelContract(...args));
+    const apiDeleteTender = (...args) => (window.probimApi?.deleteTender ? window.probimApi.deleteTender(...args) : deleteTender(...args));
 
     let lots = [];
     let PROJECT_CURRENCY = 'UZS';
@@ -3879,7 +3881,6 @@
 
           // Call API to create tender
           await apiCreateTender({
-            projectId: CURRENT_PROJECT_ID,
             name: finalTitle,
             description: description,
             startDate: new Date().toISOString(),
@@ -3969,7 +3970,7 @@
      */
     async function loadTenders() {
       try {
-        const tenders = await apiGetTenders(CURRENT_PROJECT_ID);
+        const tenders = await apiGetTenders();
 
         if (tenders && tenders.length > 0 && tenders[0].project) {
           PROJECT_CURRENCY = tenders[0].project.currency || 'UZS';

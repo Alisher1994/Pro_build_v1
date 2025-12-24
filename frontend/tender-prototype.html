@@ -3073,9 +3073,9 @@
                 <span class="offer-label">Баллы</span>
                 <div class="progress-wrap">
                   <div class="rating-cubes">
-                    ${Array.from({ length: 10 }, (_, i) => `<div class="rating-cube ${(u.ratingPoints || 0) > i ? 'active' : ''}"></div>`).join('')}
+                    ${Array.from({ length: 10 }, (_, i) => `<div class="rating-cube ${(u.score || 0) > i ? 'active' : ''}"></div>`).join('')}
                   </div>
-                  <span class="progress-value">${u.ratingPoints ?? '—'}</span>
+                  <span class="progress-value">${u.score ?? '—'}</span>
                 </div>
               </div>
               <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
@@ -3898,12 +3898,12 @@
       // 1. mc.uz Rating (max 5.0 points)
       let score = getRatingPoints(bid.subcontractor?.rating || bid.rating);
 
-      // 2. Documents (max 1.0 point)
-      // +0.5 each for Certificate and License
-      if (bid.subcontractor?.certificatePhoto || bid.certificatePhoto) score += 0.5;
-      if (bid.subcontractor?.licensePhoto || bid.licensePhoto) score += 0.5;
+      // 2. Documents (max 2.0 points)
+      // +1.0 each for Certificate and License
+      if (bid.subcontractor?.certificatePhoto || bid.certificatePhoto) score += 1.0;
+      if (bid.subcontractor?.licensePhoto || bid.licensePhoto) score += 1.0;
 
-      // 3. Price Competitiveness (max 2.5 points)
+      // 3. Price Competitiveness (max 2.0 points)
       // Lower price is better. Comparison with other bids.
       if (allBids && allBids.length > 0) {
         const prices = allBids.map(b => b.priceTotal).filter(p => p > 0);
@@ -3911,32 +3911,32 @@
         const maxPrice = prices.length ? Math.max(...prices) : 0;
 
         if (maxPrice > minPrice && bid.priceTotal > 0) {
-          // If multiple bids, lowest gets 2.5, highest gets 0 (among distributed)
-          score += 2.5 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
+          // If multiple bids, lowest gets full 2.0, highest gets 0
+          score += 2.0 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
         } else if (bid.priceTotal > 0) {
-          // If only one bid or all same, full 2.5 points
-          score += 2.5;
+          // If only one bid or all same, full 2.0 points
+          score += 2.0;
         }
       }
 
-      // 4. Deadline Competitiveness (max 1.5 points)
+      // 4. Deadline Competitiveness (max 1.0 point)
       // Sooner date is better. Comparison with target lot deadline.
       if (targetDeadline && bid.completionDate) {
         const target = new Date(targetDeadline);
         const bidDate = new Date(bid.completionDate);
         if (!isNaN(target.getTime()) && !isNaN(bidDate.getTime())) {
-          // If bid is before or on target, full points (1.5)
+          // If bid is before or on target, full points (1.0)
           if (bidDate <= target) {
-            score += 1.5;
+            score += 1.0;
           } else {
-            // If bid is after target, deduct 0.15 per day delay, min 0
+            // If bid is after target, deduct 0.1 per day delay, min 0
             const dayDiff = Math.ceil((bidDate - target) / (1000 * 60 * 60 * 24));
-            score += Math.max(0, 1.5 - (dayDiff * 0.15));
+            score += Math.max(0, 1.0 - (dayDiff * 0.1));
           }
         }
       } else {
         // Flat small bonus if no deadline data provided
-        score += 0.5;
+        score += 0.3;
       }
 
       return parseFloat(Math.min(10, score).toFixed(1));

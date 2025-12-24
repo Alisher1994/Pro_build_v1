@@ -257,19 +257,27 @@ router.post('/auth', async (req: Request, res: Response) => {
     const { tenderId, code } = req.body;
     if (!tenderId || !code) return res.status(400).json({ error: 'Missing tenderId or code' });
 
+    const trimmedTenderId = String(tenderId).trim();
+    const trimmedCode = String(code).trim();
+
     const invite = await prisma.tenderInvite.findFirst({
       where: {
-        tenderId,
-        inviteCode: code
+        tenderId: trimmedTenderId,
+        inviteCode: trimmedCode
       },
       include: {
         subcontractor: true
       }
     });
 
-    if (!invite) return res.status(401).json({ error: 'Invalid code for this lot' });
+    if (!invite) {
+      console.warn(`Auth failed: Tender ${trimmedTenderId}, Code ${trimmedCode}`);
+      return res.status(401).json({ error: 'Invalid code for this lot' });
+    }
+
     res.json({ token: invite.token, subcontractor: invite.subcontractor });
   } catch (error) {
+    console.error('Auth endpoint error:', error);
     res.status(500).json({ error: 'Auth failed' });
   }
 });

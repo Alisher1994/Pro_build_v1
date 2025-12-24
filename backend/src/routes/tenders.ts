@@ -236,8 +236,11 @@ router.post('/:id/invites', async (req: Request, res: Response) => {
 router.get('/:id/share-link', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // В реальном проекте здесь может быть домен из конфига
-    const baseUrl = 'http://localhost:8000';
+    // Determine baseUrl dynamically from request headers
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['host'];
+    const baseUrl = `${protocol}://${host}`;
+
     const url = `${baseUrl}/subcontractor-portal.html?tenderId=${id}`;
     res.json({ url });
   } catch (error) {

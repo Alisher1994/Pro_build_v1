@@ -1104,7 +1104,13 @@
 
     <script>
         // API Configuration
-        const API_BASE_URL = 'http://localhost:3001';
+        const API_BASE_URL = (() => {
+            const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            if (isLocalHost && window.location.port === '8000') {
+                return 'http://localhost:3001';
+            }
+            return window.location.origin;
+        })();
 
         // State
         const urlParams = new URLSearchParams(window.location.search);

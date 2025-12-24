@@ -4,7 +4,6 @@ import crypto from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { parse } from 'csv-parse';
 import { scrapeRating } from '../services/ratingScraper';
 
 const router = Router();

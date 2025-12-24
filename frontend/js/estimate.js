@@ -1164,6 +1164,25 @@ const EstimateManager = {
             for (const section of sections) {
                 const stages = await api.getStages(section.id);
                 for (const s of stages) {
+                    // Если сумма этапа в БД равна 0, пробуем её вычислить на лету по видам работ
+                    if (!s.totalCost || s.totalCost === 0) {
+                        try {
+                            const workTypes = await api.getWorkTypes(s.id);
+                            let calculatedStageTotal = 0;
+                            for (const wt of workTypes) {
+                                let wtTotal = wt.totalCost || 0;
+                                // Если у вида работ сумма тоже 0 (бывает при импорте без сумм), заглянем в ресурсы
+                                if (!wtTotal || wtTotal === 0) {
+                                    const resources = await api.getResources(wt.id);
+                                    wtTotal = resources.reduce((sum, r) => sum + (r.totalCost || (r.quantity * r.unitPrice) || 0), 0);
+                                }
+                                calculatedStageTotal += wtTotal;
+                            }
+                            s.totalCost = calculatedStageTotal;
+                        } catch (e) {
+                            console.warn('Error pre-calculating stage total:', s.id, e);
+                        }
+                    }
                     allStages.push({ ...s, __sectionId: section.id });
                 }
             }
@@ -2441,6 +2460,8 @@ const EstimateManager = {
             }
 
             let html = '';
+            let stageCalculatedTotal = 0; // Add variable for stage total sum
+
             for (let index = 0; index < workTypes.length; index++) {
                 const workType = workTypes[index];
                 const resourcesCount = workType?._count?.resources ?? 0;
@@ -2465,6 +2486,9 @@ const EstimateManager = {
                         console.warn('Не удалось получить ресурсы для суммы вида работ', workType.id, err);
                     }
                 }
+
+                // Add to stage total
+                stageCalculatedTotal += wtTotal;
 
                 const wtUnitCostAuto = wtQty > 0 ? wtTotal / wtQty : 0;
 
@@ -2511,6 +2535,12 @@ const EstimateManager = {
                 `;
             }
             container.innerHTML = html;
+
+            // Обновляем сумму этапа в заголовке на основе суммы всех видов работ
+            const stageTotalEl = document.querySelector(`[data-stage-total-for="${stageId}"]`);
+            if (stageTotalEl) {
+                stageTotalEl.textContent = UI.formatCurrency(stageCalculatedTotal, this.currentProject?.currency);
+            }
 
             this.bindWorkTypesTreeInlineEdits(container, stageId);
 
@@ -2613,10 +2643,22 @@ const EstimateManager = {
             });
 
             if (stageId) {
-                const stage = await api.getStage(stageId);
+                let stage = await api.getStage(stageId);
+                let stageTotal = stage.totalCost || 0;
+
+                // Если в базе 0, пробуем посчитать по видам работ (UI "Виды работ")
+                if (stageTotal === 0) {
+                    try {
+                        const workTypes = await api.getWorkTypes(stageId);
+                        stageTotal = workTypes.reduce((sum, wt) => sum + (wt.totalCost || 0), 0);
+                    } catch (e) {
+                        console.warn('Error calculating stage total in refresh:', e);
+                    }
+                }
+
                 const stageTotalEl = document.querySelector(`[data-stage-total-for="${stageId}"]`);
                 if (stageTotalEl) {
-                    stageTotalEl.textContent = UI.formatCurrency(stage.totalCost || 0, this.currentProject?.currency);
+                    stageTotalEl.textContent = UI.formatCurrency(stageTotal, this.currentProject?.currency);
                 }
             }
         } catch (error) {

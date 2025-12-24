@@ -3398,7 +3398,8 @@
       getEstimates: async (blockId) => [],
       getSections: async (estimateId) => [],
       getStages: async (sectionId) => [],
-      getWorkTypes: async (stageId) => []
+      getWorkTypes: async (stageId) => [],
+      getResources: async (workTypeId) => []
     };
 
     window.initApi = (apiImpl) => {
@@ -3646,6 +3647,27 @@
           // Fetch Work Types for all stages
           const stagesWithWt = await Promise.all(allStages.map(async (stage) => {
             const wts = await window.probimApi.getWorkTypes(stage.id);
+            if (wts && wts.length > 0) {
+              for (const wt of wts) {
+                if (!wt.totalCost || wt.totalCost === 0) {
+                  try {
+                    const resForTotal = await window.probimApi.getResources(wt.id);
+                    if (resForTotal && resForTotal.length > 0) {
+                      const total = resForTotal.reduce((sum, r) => sum + (r.totalCost || ((Number(r.quantity) || 0) * (Number(r.unitPrice) || 0))), 0);
+                      wt.totalCost = total;
+
+                      // Also calculate unitCost if missing
+                      const qty = Number(wt.quantity || wt.qty || wt.volume || 0);
+                      if (qty > 0 && (!wt.unitCost || wt.unitCost === 0)) {
+                        wt.unitCost = total / qty;
+                      }
+                    }
+                  } catch (err) {
+                    console.warn('Failed to fetch resources for WT sum calc', wt.id, err);
+                  }
+                }
+              }
+            }
             return { ...stage, wts };
           }));
 

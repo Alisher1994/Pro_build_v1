@@ -309,6 +309,7 @@ class ProBIMApp {
                     getSections: (estimateId) => api.getSections(estimateId),
                     getStages: (sectionId) => api.getStages(sectionId),
                     getWorkTypes: (stageId) => api.getWorkTypes(stageId),
+                    getResources: (workTypeId) => api.getResources(workTypeId),
                     getSubcontractors: () => api.getSubcontractors(this.currentProjectId),
                     getTenders: () => api.getTenders(this.currentProjectId),
                     createTender: (data) => api.createTender({ ...data, projectId: this.currentProjectId }),

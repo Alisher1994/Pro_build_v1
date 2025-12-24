@@ -844,11 +844,15 @@ router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: R
     if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
 
     const tenderItems = JSON.parse(invite.tender.items || '[]');
-    // Filter items belonging to this estimate
-    const estimateWorks = tenderItems.filter((i: any) => i.estimateId === estimateId);
+    // Filter items belonging to this estimate - try both ID and Name matching
+    const estimateWorks = tenderItems.filter((i: any) =>
+      String(i.estimateId) === estimateId ||
+      String(i.estimateName) === estimateId
+    );
 
     if (estimateWorks.length === 0) {
-      return res.status(404).json({ error: 'No works found for this estimate in the tender' });
+      console.log('Available items in tender:', tenderItems.map((it: any) => ({ id: it.estimateId, name: it.estimateName })));
+      return res.status(404).json({ error: `No works found for estimate "${estimateId}"` });
     }
 
     // Fetch resources for these work types
@@ -860,9 +864,9 @@ router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: R
     });
 
     // Build CSV Content
-    // №	Тип ресурса	Название	Ед.изм	Кол-во	Цена
+    // №;Тип ресурса;Название;Ед.изм;Кол-во;Цена
     let csv = '\uFEFF'; // UTF-8 BOM
-    csv += '№\tТип ресурса\tНазвание\tЕд.изм\tКол-во\tЦена\n';
+    csv += '№;Тип ресурса;Название;Ед.изм;Кол-во;Цена\n';
 
     // Group by Stage
     const stagesMap = new Map();
@@ -875,20 +879,21 @@ router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: R
 
     let counter = 1;
     stagesMap.forEach((stage, stageId) => {
-      // Format stage as and empty row with stage name in the middle
-      csv += `\t${stage.name.toUpperCase()}\t\t\t\t\n`;
+      // Format stage as an empty row with stage name in the middle
+      csv += `;${stage.name.toUpperCase()};;;;\n`;
       stage.works.forEach((wt: any) => {
-        csv += `${counter}\tРабота\t${wt.name}\t${wt.unit || 'ед.'}\t${wt.quantity || 0}\t0\n`;
+        csv += `${counter};Работа;${wt.name};${wt.unit || 'ед.'};${wt.quantity || 0};0\n`;
         // Resources
         (wt.resources || []).forEach((res: any, idx: number) => {
-          csv += `${counter}.${idx + 1}\t${res.resourceType}\t${res.name}\t${res.unit || ''}\t${res.quantity || 0}\t0\n`;
+          csv += `${counter}.${idx + 1};${res.resourceType};${res.name};${res.unit || ''};${res.quantity || 0};0\n`;
         });
         counter++;
       });
     });
 
+    const fileName = `${estimateWorks[0]?.blockName || 'estimate'}_${estimateWorks[0]?.estimateName || estimateId}`;
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="estimate_${estimateId}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}.csv"`);
     res.send(csv);
 
   } catch (error) {
@@ -913,8 +918,9 @@ router.post('/invites/:token/upload-csv', upload.single('file'), async (req: Req
 
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    const csvContent = req.file.buffer.toString('utf-8');
-    const lines = csvContent.split('\n');
+    // Read from disk instead of buffer
+    const csvContent = fs.readFileSync(req.file.path, 'utf-8');
+    const lines = csvContent.split(/\r?\n/);
     let totalPrice = 0;
     const parsedItems: any[] = [];
 
@@ -923,14 +929,23 @@ router.post('/invites/:token/upload-csv', upload.single('file'), async (req: Req
       const line = lines[i].trim();
       if (!line) continue;
 
-      const cols = line.split('\t');
+      // Try semicolon first as it's our export format
+      let cols = line.split(';');
+      if (cols.length < 6) {
+        // Fallback to tabs
+        cols = line.split('\t');
+      }
+
       if (cols.length < 6) continue;
 
-      const name = cols[2];
-      const quantity = parseFloat(cols[4]) || 0;
-      const price = parseFloat(cols[5]) || 0;
+      const type = cols[1]; // 'Работа' or resource type
+      if (!type || type.includes('Тип ресурса')) continue; // Skip header or subheaders
 
-      if (price > 0) {
+      const name = cols[2];
+      const quantity = parseFloat(cols[4].replace(',', '.')) || 0;
+      const price = parseFloat(cols[5].replace(',', '.')) || 0;
+
+      if (price > 0 && name) {
         totalPrice += (quantity * price);
         parsedItems.push({
           name,

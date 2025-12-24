@@ -1085,7 +1085,7 @@
                             Загрузить оферту (CSV)
                         </button>
                         <input type="file" id="file-upload" accept=".csv" style="display: none;"
-                            onchange="uploadFile(this)">
+                            onchange="handleFiles(this.files)">
                     </div>
                 </div>
                 <div class="panel-body" id="details-view"
@@ -1643,10 +1643,6 @@
             }
         };
 
-        window.downloadEstimate = () => {
-            if (!activeEstimateId) return;
-            window.location.href = `/api/tenders/invites/${token}/export-csv/${activeEstimateId}?code=${authCode}`;
-        };
 
         function formatDate(d) {
             if (!d) return '—';
@@ -1757,7 +1753,9 @@
             formData.append('code', authCode);
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/upload-csv`, {
+                // Ensure we use the correct API base
+                const uploadUrl = `${API_BASE_URL}/api/tenders/invites/${token}/upload-csv`;
+                const response = await fetch(uploadUrl, {
                     method: 'POST',
                     body: formData
                 });
@@ -1779,6 +1777,47 @@
                 console.error(err);
                 fileStatus.textContent = `Ошибка: ${err.message}`;
                 fileStatus.style.color = '#E11D48';
+            }
+        }
+
+        // Download estimate as CSV
+        async function downloadEstimate() {
+            if (!activeEstimateId) {
+                showToast('Пожалуйста, выберите смету');
+                return;
+            }
+
+            // Find estimateId for the selected estimateName
+            const itemWithId = tenderData.items.find(i => i.estimateName === activeEstimateId);
+            const estimateId = itemWithId ? (itemWithId.estimateId || activeEstimateId) : activeEstimateId;
+
+
+            try {
+                showToast('Подготовка файла...');
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/export-csv/${encodeURIComponent(estimateId)}?code=${authCode}`);
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Export failed');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fileName = `${activeBlockName}_${activeEstimateId}`.replace(/[<>:"/\\|?*]/g, '_');
+                a.download = `${fileName}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+
+                showToast('CSV файл скачан');
+            } catch (err) {
+                console.error('Export error:', err);
+                showToast(`Ошибка экспорта: ${err.message}`);
             }
         }
 

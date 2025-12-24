@@ -999,6 +999,31 @@
                         </svg>
                         <span>Лицензия</span>
                     </label>
+                    <label class="doc-upload-btn" id="mtb-upload-btn">
+                        <input type="file" id="mtb-file" accept="image/*,.pdf" onchange="uploadDocument('mtb', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="7.5 4.21 12 6.81 16.5 4.21" />
+                            <polyline points="7.5 19.79 7.5 14.63 3 12" />
+                            <polyline points="21 12 16.5 14.63 16.5 19.79" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                        <span>МТБ</span>
+                    </label>
+                    <label class="doc-upload-btn" id="tr-upload-btn">
+                        <input type="file" id="tr-file" accept="image/*,.pdf" onchange="uploadDocument('tr', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span>Трудовые ресурсы</span>
+                    </label>
                 </div>
             </div>
 
@@ -1234,7 +1259,9 @@
             formData.append('token', token);
             formData.append('code', authCode);
 
-            const btn = document.getElementById(`${docType === 'certificate' ? 'cert' : 'license'}-upload-btn`);
+            let btnId = `${docType}-upload-btn`;
+            if (docType === 'certificate') btnId = 'cert-upload-btn';
+            const btn = document.getElementById(btnId);
 
             try {
                 btn.classList.add('uploading');
@@ -1245,7 +1272,8 @@
 
                 if (response.ok) {
                     btn.classList.add('uploaded');
-                    showToast(`${docType === 'certificate' ? 'Сертификат' : 'Лицензия'} загружен успешно!`);
+                    const labelMap = { certificate: 'Сертификат', license: 'Лицензия', mtb: 'МТБ', tr: 'Трудовые ресурсы' };
+                    showToast(`${labelMap[docType] || docType} загружен успешно!`);
                     // Reload data to sync
                     loadPortal();
                 } else {
@@ -1266,13 +1294,13 @@
             const bid = tenderData.bid;
             const certBtn = document.getElementById('cert-upload-btn');
             const licenseBtn = document.getElementById('license-upload-btn');
+            const mtbBtn = document.getElementById('mtb-upload-btn');
+            const trBtn = document.getElementById('tr-upload-btn');
 
-            if (bid.certificatePhoto) {
-                certBtn.classList.add('uploaded');
-            }
-            if (bid.licensePhoto) {
-                licenseBtn.classList.add('uploaded');
-            }
+            if (bid.certificatePhoto) certBtn.classList.add('uploaded');
+            if (bid.licensePhoto) licenseBtn.classList.add('uploaded');
+            if (bid.mtbPhoto) mtbBtn.classList.add('uploaded');
+            if (bid.trPhoto) trBtn.classList.add('uploaded');
         }
 
         // OTP Input Logic

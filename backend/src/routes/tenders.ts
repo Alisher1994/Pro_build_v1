@@ -821,6 +821,10 @@ router.post('/invites/:token/upload-doc', upload.single('file'), async (req: Req
       updateData.certificatePhoto = `/uploads/${file.filename}`;
     } else if (docType === 'license') {
       updateData.licensePhoto = `/uploads/${file.filename}`;
+    } else if (docType === 'mtb') {
+      updateData.mtbPhoto = `/uploads/${file.filename}`;
+    } else if (docType === 'tr') {
+      updateData.trPhoto = `/uploads/${file.filename}`;
     } else {
       return res.status(400).json({ error: 'Invalid document type' });
     }

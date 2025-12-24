@@ -388,7 +388,9 @@ model Subcontractor {
   directorPhoto  String?
   certificatePhoto String?
   licensePhoto     String?
-  rating         String?
+  mtbPhoto         String?
+  trPhoto          String?
+  rating           String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -612,6 +614,8 @@ model TenderBid {
   contractDate    DateTime? // Дата создания договора
   certificatePhoto String?  // Путь к файлу сертификата
   licensePhoto     String?  // Путь к файлу лицензии
+  mtbPhoto         String?  // Путь к файлу МТБ
+  trPhoto          String?  // Путь к файлу трудовых ресурсов
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   

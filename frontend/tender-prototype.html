@@ -2088,7 +2088,7 @@
       if (status !== 'invited' && current < 0) current = 0;
 
       // If documents are present, mark docs step as active/done
-      if ((bid.certificatePhoto || bid.licensePhoto || bid.rating) && current < 1) current = 1;
+      if ((bid.certificatePhoto || bid.licensePhoto || bid.mtbPhoto || bid.trPhoto || bid.rating) && current < 1) current = 1;
 
       // If there is a price or date, mark as uploaded
       if ((parseFloat(bid.priceTotal) > 0 || bid.completionDate) && current < 2) current = 2;
@@ -3087,6 +3087,18 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                     <span style="font-size: 10px; margin-left: 4px;">Лицензия</span>
                   </div>
+                  <div class="doc-icon-btn ${u.mtbPhoto ? 'active' : ''}" 
+                       onclick="event.stopPropagation(); ${u.mtbPhoto ? `viewDoc('МТБ', '${u.mtbPhoto}')` : ''}" 
+                       title="${u.mtbPhoto ? 'Просмотреть МТБ' : 'МТБ не загружена'}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.63 3 12"/><polyline points="21 12 16.5 14.63 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    <span style="font-size: 10px; margin-left: 4px;">МТБ</span>
+                  </div>
+                  <div class="doc-icon-btn ${u.trPhoto ? 'active' : ''}" 
+                       onclick="event.stopPropagation(); ${u.trPhoto ? `viewDoc('Трудовые ресурсы', '${u.trPhoto}')` : ''}" 
+                       title="${u.trPhoto ? 'Просмотреть ТР' : 'ТР не загружена'}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span style="font-size: 10px; margin-left: 4px;">ТР</span>
+                  </div>
                 </div>
               </div>
               <div class="offer-row">
@@ -3941,9 +3953,11 @@
       let score = getRatingPoints(bid.subcontractor?.rating || bid.rating);
 
       // 2. Documents (max 2.0 points)
-      // +1.0 each for Certificate and License
-      if (bid.subcontractor?.certificatePhoto || bid.certificatePhoto) score += 1.0;
-      if (bid.subcontractor?.licensePhoto || bid.licensePhoto) score += 1.0;
+      // +0.5 each for License, Certificate, MTB, TR
+      if (bid.subcontractor?.certificatePhoto || bid.certificatePhoto) score += 0.5;
+      if (bid.subcontractor?.licensePhoto || bid.licensePhoto) score += 0.5;
+      if (bid.subcontractor?.mtbPhoto || bid.mtbPhoto) score += 0.5;
+      if (bid.subcontractor?.trPhoto || bid.trPhoto) score += 0.5;
 
       // 3. Price Competitiveness (max 2.0 points)
       // Lower price is better. Comparison with other bids.
@@ -4027,6 +4041,8 @@
               rating: bid.subcontractor?.rating || null,
               certificatePhoto: bid.certificatePhoto || bid.subcontractor?.certificatePhoto || null,
               licensePhoto: bid.licensePhoto || bid.subcontractor?.licensePhoto || null,
+              mtbPhoto: bid.mtbPhoto || bid.subcontractor?.mtbPhoto || null,
+              trPhoto: bid.trPhoto || bid.subcontractor?.trPhoto || null,
               inn: bid.subcontractor?.inn || null,
               subcontractorId: bid.subcontractor?.id,
               errors: [],
@@ -4065,6 +4081,8 @@
                 rating: invite.subcontractor?.rating || null,
                 certificatePhoto: invite.subcontractor?.certificatePhoto || null,
                 licensePhoto: invite.subcontractor?.licensePhoto || null,
+                mtbPhoto: invite.subcontractor?.mtbPhoto || null,
+                trPhoto: invite.subcontractor?.trPhoto || null,
                 inn: invite.subcontractor?.inn || null,
                 subcontractorId: invite.subcontractor?.id,
                 errors: [],

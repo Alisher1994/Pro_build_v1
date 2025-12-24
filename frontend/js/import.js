@@ -797,60 +797,67 @@ const ImportManager = {
         let currentStage = null;
         let currentWork = null;
 
+        let stageCounter = 0;
+        let workCounter = 0;
+        let resourceCounter = 0;
+
         console.log('=== Structuring data, total rows:', data.length);
 
         data.forEach((row, index) => {
-            console.log(`Row ${index}: type=${row.type}, name=${row.name}, stage=${row.stage}`);
-
             if (row.type === 'stage') {
                 currentStage = {
-                    name: row.stage || 'Без названия', // Для этапа берем из row.stage!
+                    name: row.stage || 'Без названия',
+                    orderIndex: stageCounter++,
                     works: []
                 };
                 stages.push(currentStage);
+                workCounter = 0;
             } else if (row.type === 'work') {
                 if (!currentStage) {
                     currentStage = {
                         name: 'Основной этап',
+                        orderIndex: stageCounter++,
                         works: []
                     };
                     stages.push(currentStage);
+                    workCounter = 0;
                 }
                 currentWork = {
                     code: row.code || row.number || '',
                     name: row.name || 'Без названия',
                     unit: row.unit,
                     quantity: row.quantity,
+                    orderIndex: workCounter++,
                     resources: []
                 };
                 currentStage.works.push(currentWork);
+                resourceCounter = 0;
             } else if (row.type === 'resource') {
                 if (!currentWork) {
                     if (!currentStage) {
                         currentStage = {
                             name: 'Основной этап',
+                            orderIndex: stageCounter++,
                             works: []
                         };
                         stages.push(currentStage);
+                        workCounter = 0;
                     }
                     currentWork = {
                         name: 'Прочие работы',
                         unit: 'шт',
                         quantity: 1,
+                        orderIndex: workCounter++,
                         resources: []
                     };
                     currentStage.works.push(currentWork);
+                    resourceCounter = 0;
                 }
+
+                // Добавляем индекс порядка ресурсу
+                row.orderIndex = resourceCounter++;
                 currentWork.resources.push(row);
             }
-        });
-
-        console.log('=== Final structured data:');
-        stages.forEach((stage, si) => {
-            console.log(`Stage ${si}: ${stage.name}, works: ${stage.works.length}`);
-            stage.works.forEach((work, wi) => {
-                console.log(`  Work ${wi}: ${work.name}, resources: ${work.resources.length}`);
-            });
         });
 
         return stages;

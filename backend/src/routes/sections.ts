@@ -278,22 +278,23 @@ router.post('/:id/bulk-import', async (req, res) => {
     const result = await prisma.$transaction(async (tx) => {
       const createdStages = [];
 
-      for (const stageData of stages) {
+      for (let i = 0; i < stages.length; i++) {
+        const stageData = stages[i];
         const stage = await tx.estimateStage.create({
           data: {
             sectionId,
             name: stageData.name,
             description: stageData.description || '',
-            orderIndex: stageData.orderIndex || 0,
+            orderIndex: stageData.orderIndex !== undefined ? stageData.orderIndex : i,
             workTypes: {
-              create: (stageData.works || []).map((work: any) => ({
+              create: (stageData.works || []).map((work: any, workIdx: number) => ({
                 code: work.code || null,
                 name: work.name,
                 unit: work.unit || 'шт',
                 quantity: parseFloat(work.quantity) || 0,
-                orderIndex: work.orderIndex || 0,
+                orderIndex: work.orderIndex !== undefined ? work.orderIndex : workIdx,
                 resources: {
-                  create: (work.resources || []).map((resource: any) => {
+                  create: (work.resources || []).map((resource: any, resIdx: number) => {
                     const quantity = parseFloat(resource.quantity) || 0;
                     const price = parseFloat(resource.price) || parseFloat(resource.unitPrice) || 0;
                     return {
@@ -303,7 +304,8 @@ router.post('/:id/bulk-import', async (req, res) => {
                       quantity,
                       unitPrice: price,
                       totalCost: quantity * price,
-                      resourceType: resource.resourceType || 'material'
+                      resourceType: resource.resourceType || 'material',
+                      orderIndex: resource.orderIndex !== undefined ? resource.orderIndex : resIdx
                     };
                   })
                 }

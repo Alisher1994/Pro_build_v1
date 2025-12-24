@@ -223,7 +223,7 @@ const ImportManager = {
         this.documentType = type;
         document.getElementById('doc-type-' + type).checked = true;
         document.getElementById('file-upload-section').style.display = 'block';
-        
+
         // Обновляем кнопку "Далее"
         this.updateNavigationButtons();
     },
@@ -242,7 +242,7 @@ const ImportManager = {
         }
 
         this.selectedFile = file;
-        
+
         // Показываем информацию о файле
         document.getElementById('file-upload-area').style.display = 'none';
         document.getElementById('file-info').style.display = 'flex';
@@ -273,7 +273,7 @@ const ImportManager = {
     // Рендер Шаг 2: Форматирование данных
     renderStep2() {
         const stats = this.getDataStats();
-        
+
         return `
             <div class="import-step-2">
                 <div class="step2-header">
@@ -301,7 +301,7 @@ const ImportManager = {
         }
 
         let html = '<table class="preview-table"><thead><tr>';
-        
+
         // Заголовки в зависимости от типа документа
         if (this.documentType === 1) {
             html += '<th>Действие</th><th>Тип</th><th>№</th><th>Тип ресурса</th><th>Название</th><th>Ед.изм</th><th>Кол-во</th><th>Цена</th><th>Сумма</th>';
@@ -316,7 +316,7 @@ const ImportManager = {
 
             let rowClass = '';
             let typeLabel = '';
-            
+
             if (row.type === 'stage') {
                 rowClass = 'row-stage';
                 typeLabel = 'Этап';
@@ -338,11 +338,11 @@ const ImportManager = {
             html += `<td><span class="type-badge">${typeLabel}</span></td>`;
             html += `<td>${row.number || ''}</td>`;
             html += `<td>${row.resourceType || ''}</td>`;
-            
+
             if (this.documentType === 2) {
                 html += `<td>${row.code || ''}</td>`;
             }
-            
+
             html += `<td>${row.name || ''}</td>`;
             html += `<td>${row.unit || ''}</td>`;
             html += `<td>${row.quantity || ''}</td>`;
@@ -423,7 +423,7 @@ const ImportManager = {
     // Отрисовка текущего шага
     renderCurrentStep() {
         let content = '';
-        
+
         if (this.currentStep === 1) {
             content = this.renderStep1();
         } else if (this.currentStep === 2) {
@@ -489,34 +489,34 @@ const ImportManager = {
 
         return new Promise((resolve, reject) => {
             const fileExtension = this.selectedFile.name.split('.').pop().toLowerCase();
-            
+
             // Для CSV файлов читаем как текст с UTF-8
             if (fileExtension === 'csv') {
                 const reader = new FileReader();
-                
+
                 reader.onload = (e) => {
                     try {
                         const text = e.target.result;
-                        const workbook = XLSX.read(text, { 
+                        const workbook = XLSX.read(text, {
                             type: 'string',
                             raw: false,
                             codepage: 65001 // UTF-8
                         });
-                        
+
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
-                            header: 1, 
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                            header: 1,
                             defval: '',
                             raw: false
                         });
-                        
+
                         if (!jsonData || jsonData.length === 0) {
                             reject(new Error('Файл пуст или не содержит данных'));
                             return;
                         }
 
                         this.parsedData = this.processRawData(jsonData);
-                        
+
                         if (this.parsedData.length === 0) {
                             reject(new Error('Не удалось распознать данные в файле. Проверьте формат файла.'));
                             return;
@@ -528,36 +528,36 @@ const ImportManager = {
                         reject(new Error('Ошибка при чтении файла: ' + error.message));
                     }
                 };
-                
+
                 reader.onerror = (error) => reject(new Error('Ошибка при чтении файла'));
                 reader.readAsText(this.selectedFile, 'UTF-8');
-                
+
             } else {
                 // Для Excel файлов (XLS, XLSX)
                 const reader = new FileReader();
-                
+
                 reader.onload = (e) => {
                     try {
                         const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { 
+                        const workbook = XLSX.read(data, {
                             type: 'array',
                             codepage: 65001 // UTF-8
                         });
-                        
+
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
-                            header: 1, 
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                            header: 1,
                             defval: '',
                             raw: false
                         });
-                        
+
                         if (!jsonData || jsonData.length === 0) {
                             reject(new Error('Файл пуст или не содержит данных'));
                             return;
                         }
 
                         this.parsedData = this.processRawData(jsonData);
-                        
+
                         if (this.parsedData.length === 0) {
                             reject(new Error('Не удалось распознать данные в файле. Проверьте формат файла.'));
                             return;
@@ -569,7 +569,7 @@ const ImportManager = {
                         reject(new Error('Ошибка при чтении файла: ' + error.message));
                     }
                 };
-                
+
                 reader.onerror = (error) => reject(new Error('Ошибка при чтении файла'));
                 reader.readAsArrayBuffer(this.selectedFile);
             }
@@ -587,16 +587,16 @@ const ImportManager = {
             if (row.length === 0 || row.every(cell => !cell || String(cell).trim() === '')) return;
 
             const firstCell = String(row[0] || '').trim();
-            
+
             // Пропускаем строку заголовков (первая ячейка содержит "№", "Номер" и т.д.)
             if (index === 0 && (firstCell === '№' || firstCell === 'Номер' || firstCell.toLowerCase() === 'number')) {
                 console.log('Skipping header row:', row);
                 return;
             }
-            
+
             // Определяем тип строки
             let rowType = 'unknown';
-            
+
             // Ресурс - число с точкой (1.1, 2.3) или начинается с точки (.1, .2)
             if (firstCell.startsWith('.') || firstCell.startsWith(',') || /^\d+\.\d+$/.test(firstCell)) {
                 rowType = 'resource';
@@ -641,7 +641,7 @@ const ImportManager = {
                     }
                 }
 
-                rowData.total = rowData.quantity && rowData.price ? 
+                rowData.total = rowData.quantity && rowData.price ?
                     (parseFloat(rowData.quantity) * parseFloat(rowData.price)).toFixed(2) : '';
             } else {
                 // Тип 2: № Тип ресурса Код ресурса Название Ед.изм Кол-во Цена
@@ -651,7 +651,7 @@ const ImportManager = {
                 rowData.unit = row[4] || '';
                 rowData.quantity = row[5] || '';
                 rowData.price = row[6] || '';
-                rowData.total = rowData.quantity && rowData.price ? 
+                rowData.total = rowData.quantity && rowData.price ?
                     (parseFloat(rowData.quantity) * parseFloat(rowData.price)).toFixed(2) : '';
             }
 
@@ -670,7 +670,7 @@ const ImportManager = {
 
         // Получаем актуальный sectionId напрямую из EstimateManager
         let sectionId = EstimateManager?.currentSectionId || window.currentSectionId;
-        
+
         console.log('=== Import Debug Info ===');
         console.log('EstimateManager:', EstimateManager);
         console.log('EstimateManager.currentSectionId:', EstimateManager?.currentSectionId);
@@ -681,7 +681,7 @@ const ImportManager = {
         console.log('Type of sectionId:', typeof sectionId);
         console.log('Boolean check !sectionId:', !sectionId);
         console.log('EstimateManager.currentEstimateId:', EstimateManager?.currentEstimateId);
-        
+
         // Если раздел не выбран: сначала пытаемся использовать существующий раздел сметы,
         // чтобы не плодить "раздел внутри раздела".
         if (!sectionId || sectionId === 'null' || sectionId === 'undefined') {
@@ -726,7 +726,7 @@ const ImportManager = {
                 return;
             }
         }
-        
+
         // Сохраняем для использования в методе
         this.sectionId = sectionId;
 
@@ -739,84 +739,51 @@ const ImportManager = {
 
         // Группируем данные по этапам и видам работ
         const structured = this.structureData(dataToImport);
-        
+
         console.log('Structured data:', structured);
 
         try {
-            for (const stageData of structured) {
-                // Создаем этап
-                this.addLog(`Создание этапа: ${stageData.name}...`, 'info');
-                
-                const stagePayload = {
-                    sectionId: this.sectionId,
-                    name: stageData.name,
-                    description: '',
-                    orderIndex: 0
-                };
-                
-                console.log('Creating stage with payload:', stagePayload);
-                
-                const stage = await api.createStage(stagePayload);
+            // Группируем данные для массового импорта
+            const structured = this.structureData(dataToImport);
 
-                this.addLog(`✓ Создан этап: ${stageData.name}`, 'success');
-
-                for (const workData of stageData.works) {
-                    // Создаем вид работ
-                    const workType = await api.createWorkType({
-                        stageId: stage.id,
-                        code: workData.code || undefined,
-                        name: workData.name,
-                        unit: workData.unit || 'шт',
-                        quantity: parseFloat(workData.quantity) || 0,
-                        orderIndex: 0
+            // Подготавливаем ресурсы (мапим типы)
+            structured.forEach(stage => {
+                stage.works.forEach(work => {
+                    work.resources.forEach(res => {
+                        res.resourceType = this.mapResourceType(res.resourceType);
                     });
+                });
+            });
 
-                    this.addLog(`  ✓ Создан вид работ: ${workData.name}`, 'success');
+            this.addLog('Отправка данных на сервер (массовый импорт)...', 'info');
 
-                    // Создаем ресурсы
-                    console.log(`Creating ${workData.resources.length} resources for work: ${workData.name}`);
-                    for (const resourceData of workData.resources) {
-                        console.log('Creating resource:', resourceData);
-                        await api.createResource({
-                            workTypeId: workType.id,
-                            resourceType: this.mapResourceType(resourceData.resourceType),
-                            name: resourceData.name,
-                            unit: resourceData.unit || 'шт',
-                            quantity: parseFloat(resourceData.quantity) || 0,
-                            unitPrice: parseFloat(resourceData.price) || 0,
-                            code: resourceData.code || resourceData.number || null
-                        });
-                        
-                        this.addLog(`    ✓ Ресурс: ${resourceData.name}`, 'success');
+            const importResult = await api.bulkImport(this.sectionId, {
+                stages: structured
+            });
 
-                        processed++;
-                        const progress = Math.round((processed / total) * 100);
-                        progressFill.style.width = progress + '%';
-                        progressText.textContent = progress + '%';
-                    }
-                }
-            }
+            this.addLog('✓ Данные успешно загружены и обработаны сервером', 'success');
 
+            progressFill.style.width = '100%';
+            progressText.textContent = '100%';
             statusText.textContent = 'Импорт завершен успешно!';
-            this.addLog(`\n✓ Импортировано ${processed} записей`, 'success');
+
+            this.addLog(`\n✓ Импорт завершен!`, 'success');
 
             // Обновляем данные в интерфейсе
             setTimeout(() => {
                 this.closeModal();
-                // Если импорт запускали внутри открытого раздела — возвращаемся в него.
-                // Если импорт запускали с экрана сметы (раздел не был открыт) — остаемся на экране сметы.
                 if (this.hadSectionAtStart && EstimateManager.currentSectionId) {
                     EstimateManager.openSection(EstimateManager.currentSectionId);
                 } else if (EstimateManager.currentEstimateId) {
                     EstimateManager.openEstimate(EstimateManager.currentEstimateId);
                 }
-            }, 2000);
+            }, 1500);
 
         } catch (error) {
             statusText.textContent = 'Ошибка при импорте';
             this.addLog(`✗ Ошибка: ${error.message}`, 'error');
             console.error('Import error:', error);
-            
+
             // Показываем детальное сообщение пользователю
             setTimeout(() => {
                 alert(`Ошибка импорта: ${error.message}\n\nПроверьте:\n1. Открыт ли раздел сметы\n2. Правильность формата файла\n3. Консоль браузера для деталей`);
@@ -831,10 +798,10 @@ const ImportManager = {
         let currentWork = null;
 
         console.log('=== Structuring data, total rows:', data.length);
-        
+
         data.forEach((row, index) => {
             console.log(`Row ${index}: type=${row.type}, name=${row.name}, stage=${row.stage}`);
-            
+
             if (row.type === 'stage') {
                 currentStage = {
                     name: row.stage || 'Без названия', // Для этапа берем из row.stage!

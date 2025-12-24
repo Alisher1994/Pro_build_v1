@@ -191,6 +191,19 @@ class ApiService {
         return await response.json();
     }
 
+    async bulkImport(sectionId, data) {
+        const response = await fetch(`${API_BASE_URL}/sections/${sectionId}/bulk-import`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Bulk import failed: ${errorText}`);
+        }
+        return await response.json();
+    }
+
     async uploadIFC(sectionId, file) {
         const formData = new FormData();
         formData.append('file', file);  // Backend ожидает 'file'

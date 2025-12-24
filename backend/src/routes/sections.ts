@@ -29,7 +29,7 @@ const upload = multer({ storage });
 router.get('/', async (req, res) => {
   try {
     const { estimateId } = req.query;
-    
+
     const sections = await prisma.estimateSection.findMany({
       where: estimateId ? { estimateId: String(estimateId) } : undefined,
       include: {
@@ -154,14 +154,14 @@ router.delete('/:id', async (req, res) => {
 router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     const ifcFileUrl = `/uploads/ifc/${req.file.filename}`;
     const ifcFilePath = path.join(__dirname, '../../uploads/ifc', req.file.filename);
-    
+
     console.log('📁 IFC файл загружен:', ifcFileUrl);
     console.log('📦 Размер:', (req.file.size / 1024 / 1024).toFixed(2), 'MB');
 
@@ -170,14 +170,14 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
     // Пытаемся конвертировать IFC в XKT
     try {
       const xktDir = path.join(__dirname, '../../uploads/xkt');
-      
+
       // Создаём директорию для XKT если не существует
       if (!fs.existsSync(xktDir)) {
         fs.mkdirSync(xktDir, { recursive: true });
       }
 
       console.log('🔄 Начало конвертации IFC → XKT...');
-      
+
       const xktPath = await convertIfcToXkt({
         ifcPath: ifcFilePath,
         outputDir: xktDir,
@@ -185,7 +185,7 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
 
       const xktFileName = path.basename(xktPath);
       xktFileUrl = `/uploads/xkt/${xktFileName}`;
-      
+
       console.log('✅ Конвертация завершена успешно');
       console.log('📂 XKT файл:', xktFileUrl);
     } catch (conversionError: any) {
@@ -197,18 +197,18 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
     // Обновляем раздел с путями к файлам
     const section = await prisma.estimateSection.update({
       where: { id },
-      data: { 
+      data: {
         ifcFileUrl,
         xktFileUrl: xktFileUrl || undefined,
       },
     });
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       ifcFileUrl: section.ifcFileUrl,
       xktFileUrl: section.xktFileUrl,
       hasXkt: !!xktFileUrl,
-      section 
+      section
     });
   } catch (error: any) {
     console.error('❌ Ошибка загрузки IFC:', error);
@@ -258,6 +258,73 @@ router.delete('/:id/ifc', async (req, res) => {
 
     res.json({ message: 'IFC file unlinked successfully', section });
   } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/sections/:id/bulk-import - Массовый импорт данных (Этапы -> Виды работ -> Ресурсы)
+router.post('/:id/bulk-import', async (req, res) => {
+  try {
+    const { id: sectionId } = req.params;
+    const { stages } = req.body;
+
+    if (!stages || !Array.isArray(stages)) {
+      return res.status(400).json({ error: 'Stages array is required' });
+    }
+
+    console.log(`📦 Starting bulk import for section ${sectionId}, stages count: ${stages.length}`);
+
+    // Используем транзакцию для атомарности
+    const result = await prisma.$transaction(async (tx) => {
+      const createdStages = [];
+
+      for (const stageData of stages) {
+        const stage = await tx.estimateStage.create({
+          data: {
+            sectionId,
+            name: stageData.name,
+            description: stageData.description || '',
+            orderIndex: stageData.orderIndex || 0,
+            workTypes: {
+              create: (stageData.works || []).map((work: any) => ({
+                code: work.code || null,
+                name: work.name,
+                unit: work.unit || 'шт',
+                quantity: parseFloat(work.quantity) || 0,
+                orderIndex: work.orderIndex || 0,
+                resources: {
+                  create: (work.resources || []).map((resource: any) => {
+                    const quantity = parseFloat(resource.quantity) || 0;
+                    const price = parseFloat(resource.price) || parseFloat(resource.unitPrice) || 0;
+                    return {
+                      name: resource.name,
+                      code: resource.code || resource.number || null,
+                      unit: resource.unit || 'шт',
+                      quantity,
+                      unitPrice: price,
+                      totalCost: quantity * price,
+                      resourceType: resource.resourceType || 'material'
+                    };
+                  })
+                }
+              }))
+            }
+          }
+        });
+        createdStages.push(stage);
+      }
+      return createdStages;
+    }, {
+      timeout: 30000 // Увеличиваем таймаут для больших импортов
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Bulk import completed successfully',
+      data: result
+    });
+  } catch (error: any) {
+    console.error('❌ Bulk import error:', error);
     res.status(500).json({ error: error.message });
   }
 });

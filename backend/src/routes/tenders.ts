@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import multer from 'multer';
+import fs from 'fs';
+import { parse } from 'csv-parse';
+import { scrapeRating } from '../services/ratingScraper';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -22,6 +25,7 @@ router.get('/', async (req: Request, res: Response) => {
     const tenders = await prisma.tender.findMany({
       where: { projectId },
       include: {
+        project: true,
         invites: {
           include: {
             subcontractor: true,
@@ -165,6 +169,26 @@ router.post('/:id/invites', async (req: Request, res: Response) => {
 
     // Генерируем 4-значный цифровой код
     const inviteCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Получаем субподрядчика для проверки INN
+    const subcontractor = await prisma.subcontractor.findUnique({
+      where: { id: subcontractorId }
+    });
+
+    if (subcontractor && subcontractor.inn) {
+      // Запускаем скрапинг рейтинга в фоне (не блокируем ответ)
+      scrapeRating(subcontractor.inn).then(async (rating) => {
+        if (rating) {
+          console.log(`Updated rating for ${subcontractor.company} (INN: ${subcontractor.inn}): ${rating}`);
+          await prisma.subcontractor.update({
+            where: { id: subcontractorId },
+            data: { rating }
+          });
+        }
+      }).catch(err => {
+        console.error(`Background rating scrape failed for ${subcontractor.inn}:`, err);
+      });
+    }
 
     // Создаем приглашение
     const invite = await prisma.tenderInvite.create({

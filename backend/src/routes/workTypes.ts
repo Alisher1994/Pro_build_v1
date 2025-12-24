@@ -50,7 +50,7 @@ const normalizeWorkType = (workType: any) => {
 router.get('/', async (req, res) => {
   try {
     const { stageId } = req.query;
-    
+
     const workTypes = await prisma.workType.findMany({
       where: stageId ? { stageId: String(stageId) } : undefined,
       include: {
@@ -133,8 +133,8 @@ router.post('/', async (req, res) => {
       totalCost !== undefined
         ? totalCost
         : typeof quantity === 'number' && typeof unitCost === 'number'
-        ? quantity * unitCost
-        : undefined;
+          ? quantity * unitCost
+          : undefined;
     if (computedTotal !== undefined) data.totalCost = computedTotal;
 
     const formattedIfcElements = formatJsonField(ifcElements);
@@ -192,21 +192,33 @@ router.put('/:id', async (req, res) => {
     if (orderIndex !== undefined) data.orderIndex = orderIndex;
 
     // totalCost является суммой (обычно из ресурсов) и не должен автоматически
-    // пересчитываться из quantity * unitCost при изменении quantity.
-    const effectiveTotalCost = totalCost !== undefined ? totalCost : current.totalCost;
+    // пересчитываться из quantity * unitCost при изменении quantity,
+    // ЕСЛИ у вида работ есть вложенные ресурсы.
+    // Если же ресурсов нет (это листовой узел), то totalCost = quantity * unitCost.
+
+    // Проверим наличие ресурсов
+    const resourceCount = await prisma.resource.count({ where: { workTypeId: id } });
+    const isLeaf = resourceCount === 0;
+
     const effectiveQuantity = quantity !== undefined ? quantity : current.quantity;
+    const effectiveUnitCost = unitCost !== undefined ? unitCost : current.unitCost;
 
     if (totalCost !== undefined) {
       data.totalCost = totalCost;
+    } else if (isLeaf && (quantity !== undefined || unitCost !== undefined)) {
+      // Автоматически вычисляем totalCost для листового узла
+      const q = typeof effectiveQuantity === 'number' ? effectiveQuantity : 0;
+      const u = typeof effectiveUnitCost === 'number' ? effectiveUnitCost : 0;
+      data.totalCost = q * u;
     }
 
     // unitCost вычисляем автоматически, если изменили quantity или totalCost
     // (или если unitCost не задан), чтобы цена всегда = сумма / кол-во.
-    const shouldAutoUnitCost = unitCost === undefined && (quantity !== undefined || totalCost !== undefined);
+    const shouldAutoUnitCost = unitCost === undefined && (quantity !== undefined || totalCost !== undefined) && !isLeaf;
     if (shouldAutoUnitCost) {
       const q = typeof effectiveQuantity === 'number' ? effectiveQuantity : 0;
-      const t = typeof effectiveTotalCost === 'number' ? effectiveTotalCost : 0;
-      data.unitCost = q > 0 ? t / q : 0;
+      const t = data.totalCost !== undefined ? data.totalCost : current.totalCost;
+      data.unitCost = q > 0 ? (typeof t === 'number' ? t : 0) / q : 0;
     }
 
     const formattedIfcElements = formatJsonField(ifcElements);
@@ -262,7 +274,10 @@ router.post('/:id/recalculate', async (req, res) => {
 
     const current = await prisma.workType.findUnique({
       where: { id },
-      select: { quantity: true },
+      select: {
+        quantity: true,
+        unitCost: true
+      },
     });
     if (!current) {
       return res.status(404).json({ error: 'Work type not found' });
@@ -274,10 +289,17 @@ router.post('/:id/recalculate', async (req, res) => {
       select: { totalCost: true },
     });
 
-    const totalCost = resources.reduce((sum, r) => sum + r.totalCost, 0);
-
+    let totalCost = 0;
+    let unitCost = typeof current.unitCost === 'number' ? current.unitCost : 0;
     const qty = typeof current.quantity === 'number' ? current.quantity : 0;
-    const unitCost = qty > 0 ? totalCost / qty : 0;
+
+    if (resources.length > 0) {
+      totalCost = resources.reduce((sum, r) => sum + r.totalCost, 0);
+      unitCost = qty > 0 ? totalCost / qty : 0;
+    } else {
+      // Если ресурсов нет, это листовой узел - считаем по его цене и кол-ву
+      totalCost = qty * unitCost;
+    }
 
     const workType = await prisma.workType.update({
       where: { id },

@@ -165,6 +165,25 @@
       background: var(--gray-50);
     }
 
+    .lot-meta-chip {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .lot-meta-chip.sum-chip {
+      background: #e6f6f5;
+      color: #246664;
+      font-weight: 700;
+    }
+
     .badge {
       display: inline-block;
       padding: 4px 8px;
@@ -481,10 +500,12 @@
 
     .lot-summary-right {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
       font-size: 12px;
       flex-shrink: 0;
+      padding-right: 8px;
     }
 
     .countdown {
@@ -508,33 +529,33 @@
     }
 
     .cd-box {
-      width: 34px;
-      height: 44px;
+      width: 24px;
+      height: 32px;
       background: linear-gradient(180deg, #9aa0aa 0%, #6f7683 100%);
       color: #fff;
-      border-radius: 6px;
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 18px;
-      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.2);
       position: relative;
     }
 
     .cd-box::after {
       content: "";
       position: absolute;
-      left: 6px;
-      right: 6px;
+      left: 4px;
+      right: 4px;
       top: 50%;
       height: 1px;
       background: rgba(255, 255, 255, 0.25);
     }
 
     .cd-label {
-      font-size: 11px;
-      color: var(--gray-700);
+      font-size: 9px;
+      color: var(--gray-600);
       font-weight: 600;
       text-transform: lowercase;
     }
@@ -542,26 +563,164 @@
     .cd-sep {
       font-weight: 900;
       color: var(--gray-700);
-      padding: 0 2px;
+      padding: 0 1px;
+      margin-top: -9px;
+    }
+
+    .pictorial-chart {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .person-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+      /* Darker gray for better visibility */
+    }
+
+    .person-icon.active {
+      color: #2B7A78;
     }
 
     .works-modal {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      padding: 0;
     }
 
     .works-header {
       display: grid;
       grid-template-columns: 1fr 100px 90px;
       gap: 8px;
-      padding: 10px 12px;
+      padding: 10px 16px;
       background: var(--gray-50);
-      border: 1px solid var(--gray-200);
-      border-radius: 6px;
+      border-bottom: 1px solid var(--gray-200);
       font-size: 11px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: var(--gray-500);
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .sort-switch {
+      display: flex;
+      background: var(--gray-100);
+      padding: 4px;
+      border-radius: 8px;
+      gap: 4px;
+      /* width: fit-content; Removing this to let it stretch if needed or keep it compact */
+      margin-right: auto;
+    }
+
+    .sort-btn {
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sort-btn:hover {
+      color: var(--gray-900);
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .sort-btn.active {
+      background: #fff;
+      color: var(--primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .offers-toolbar {
+      padding: 12px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .works-block-group {
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .works-block-group summary {
+      padding: 12px 16px;
+      background: #fff;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      list-style: none;
+    }
+
+    .works-block-group summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .works-block-group summary::before {
+      content: "→";
+      transition: transform 0.2s;
+      font-weight: normal;
+      color: var(--gray-400);
+    }
+
+    .works-block-group[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    .works-estimate-group {
+      margin-left: 20px;
+      border-left: 2px solid var(--gray-100);
+      border-bottom: 1px solid var(--gray-50);
+    }
+
+    .works-estimate-group summary {
+      padding: 10px 16px;
+      background: #fafafa;
+      font-weight: 600;
+      color: var(--gray-800);
+      cursor: pointer;
+      font-size: 13px;
+      list-style: none;
+    }
+
+    .works-estimate-group summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .works-estimate-group summary::before {
+      content: "•";
+      margin-right: 8px;
+      color: var(--primary-light);
+    }
+
+    .works-stage-group {
+      margin: 4px 16px 12px 32px;
+      background: #fff;
+      border: 1px solid var(--gray-100);
+      border-radius: 6px;
+    }
+
+    .works-stage-group-title {
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--gray-600);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      text-transform: uppercase;
       letter-spacing: 0.3px;
     }
 
@@ -705,21 +864,22 @@
       align-items: flex-start;
       font-size: 10px;
       color: var(--gray-700);
-      width: fit-content;
-      gap: 3px;
+      width: 100%;
+      justify-content: space-between;
+      gap: 2px;
     }
 
     .step-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 46px;
+      width: 42px;
       position: relative;
     }
 
     .status-step {
-      width: 22px;
-      height: 22px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       border: 1px solid var(--gray-300);
       background: var(--gray-100);
@@ -770,11 +930,11 @@
     }
 
     .status-line {
-      width: 10px;
-      flex: none;
-      height: 2px;
+      width: 4px;
+      flex: 1;
+      height: 1px;
       background: var(--gray-300);
-      margin-top: 10px;
+      margin-top: 9px;
     }
 
     .status-line.done {
@@ -794,10 +954,12 @@
     }
 
     .step-label {
-      margin-top: 3px;
-      font-size: 9px;
+      margin-top: 4px;
+      font-size: 7.5px;
       text-align: center;
-      line-height: 1.2;
+      line-height: 1.1;
+      white-space: normal;
+      word-break: break-word;
     }
 
     .step-label.active {
@@ -992,13 +1154,52 @@
       height: 8px;
       background: var(--gray-200);
       border-radius: 2px;
-      transition: background 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .rating-cube.active {
-      background: var(--primary);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
     }
 
+    .rating-cube.active:nth-child(1) {
+      background: #ff4d4d;
+    }
+
+    .rating-cube.active:nth-child(2) {
+      background: #ff7043;
+    }
+
+    .rating-cube.active:nth-child(3) {
+      background: #ffa726;
+    }
+
+    .rating-cube.active:nth-child(4) {
+      background: #ffca28;
+    }
+
+    .rating-cube.active:nth-child(5) {
+      background: #fdd835;
+    }
+
+    .rating-cube.active:nth-child(6) {
+      background: #c0ca33;
+    }
+
+    .rating-cube.active:nth-child(7) {
+      background: #9ccc65;
+    }
+
+    .rating-cube.active:nth-child(8) {
+      background: #66bb6a;
+    }
+
+    .rating-cube.active:nth-child(9) {
+      background: #43a047;
+    }
+
+    .rating-cube.active:nth-child(10) {
+      background: #2e7d32;
+    }
 
     .offer-actions {
       display: flex;
@@ -1457,6 +1658,154 @@
       }
     }
 
+    /* Tree and Works Modal Styles */
+    .tree-grid-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 80px 70px 110px;
+      column-gap: 12px;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--gray-500);
+      font-weight: 700;
+    }
+
+    #modal-body.list {
+      max-height: calc(90vh - 120px);
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .works-modal {
+      display: flex;
+      flex-direction: column;
+      min-width: 600px;
+    }
+
+    .works-block-group {
+      border-bottom: 1px solid var(--gray-100);
+      background: #fff;
+    }
+
+    .works-block-content,
+    .works-estimate-content {
+      background: #fafafa;
+    }
+
+    .works-block-group summary {
+      padding: 14px 16px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      list-style: none;
+      transition: background 0.2s;
+    }
+
+    .works-block-group summary:hover {
+      background: var(--gray-50);
+    }
+
+    .works-block-group summary::before {
+      content: "";
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 7px solid var(--gray-400);
+      transition: transform 0.2s;
+    }
+
+    .works-block-group[open]>summary::before {
+      transform: rotate(90deg);
+    }
+
+    .works-estimate-group {
+      margin-left: 20px;
+      border-left: 2px solid var(--gray-100);
+    }
+
+    .works-estimate-group summary {
+      padding: 12px 16px;
+      background: #fafafa;
+      font-weight: 600;
+      color: var(--gray-800);
+      cursor: pointer;
+      font-size: 13px;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .works-estimate-group summary::before {
+      content: "•";
+      font-weight: bold;
+      color: var(--primary-light);
+    }
+
+    .works-stage-group {
+      margin: 8px 16px 16px 32px;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .works-stage-group-title {
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--gray-600);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .works-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 70px 110px;
+      gap: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      align-items: start;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .works-row:last-child {
+      border-bottom: none;
+    }
+
+    .works-name {
+      color: var(--gray-800);
+      line-height: 1.5;
+    }
+
+    .works-volume,
+    .works-unit,
+    .works-sum {
+      color: var(--gray-600);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      text-align: left;
+    }
+
+    .works-sum {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
     .doc-icon-btn {
       display: flex;
       align-items: center;
@@ -1539,6 +1888,31 @@
     const apiCancelContract = cancelContract;
 
     let lots = [];
+    let PROJECT_CURRENCY = 'UZS';
+
+    /**
+     * Форматирование суммы с учетом валюты проекта
+     */
+    function formatMoney(amount, currency = PROJECT_CURRENCY) {
+      if (amount === undefined || amount === null || isNaN(amount)) return '—';
+
+      const currencySymbols = {
+        'UZS': 'сўм',
+        'RUB': '₽',
+        'USD': '$',
+        'EUR': '€',
+        'KGS': 'сом',
+        'KZT': '₸'
+      };
+
+      const symbol = currencySymbols[currency] || currency || '';
+      const formatted = new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+
+      return `${formatted} ${symbol}`;
+    }
 
     let lotFilter = "all";
     let objectFilter = null;
@@ -1643,10 +2017,7 @@
       }
     }
 
-    const formatMoney = (value) => {
-      if (value === undefined || value === null || Number.isNaN(value)) return "—";
-      return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 0 }).format(value);
-    };
+
 
     const formatDate = (value) => {
       if (!value) return "—";
@@ -1657,20 +2028,23 @@
 
     const statusStepper = (status) => {
       const steps = [
-        { key: "uploaded", label: "Загрузка оферты", icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><polyline points="8 8 12 4 16 8"></polyline><rect x="4" y="16" width="16" height="4" rx="1"></rect></svg>' },
-        { key: "parsed", label: "Разобрано", icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
-        { key: "winner", label: "Победитель", icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' },
-        { key: "contract", label: "Договор", icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' }
+        { key: "login", label: "Вход", icon: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>' },
+        { key: "docs", label: "Документы", icon: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' },
+        { key: "uploaded", label: "Загрузка оферты", icon: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><polyline points="8 8 12 4 16 8"></polyline><rect x="4" y="16" width="16" height="4" rx="1"></rect></svg>' },
+        { key: "parsed", label: "Разобрано", icon: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
+        { key: "winner", label: "Победитель", icon: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' },
+        { key: "contract", label: "Договор", icon: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' }
       ];
-      // map status to step index
       // map status to step index
       const stateIndex = {
         invited: -1,
-        uploaded: 0,
-        parsing: 1,
-        parsed: 1,
-        winner: 2,
-        contract: 3
+        login: 0,
+        docs: 1,
+        uploaded: 2,
+        parsing: 3,
+        parsed: 3,
+        winner: 4,
+        contract: 5
       };
       const current = stateIndex[status] ?? -1;
       const failed = status === "failed";
@@ -1684,7 +2058,7 @@
         let lineHtml = "";
         if (!isLast) {
           let lineClass = "status-line";
-          if (failed && i === 1) lineClass += " failed";
+          if (failed && i === 3) lineClass += " failed";
           else if (i < current) lineClass += " done";
           else if (i === current && !invited) lineClass += " active";
 
@@ -1693,23 +2067,23 @@
 
         // Step logic
         let stepClass = "status-step";
-        if (failed && i === 2) stepClass += " failed";
-        else if (winner && i === 2) stepClass += " winner";
+        if (failed && i === 4) stepClass += " failed";
+        else if (winner && i === 4) stepClass += " winner";
         else if (!invited && i <= current) stepClass += " done";
 
-        // Special case for invited: first step is active (waiting for upload)
+        // Special case for invited: first step is active (waiting for login/entry)
         if (invited && i === 0) stepClass = "status-step active";
 
         // Label logic
         let labelClass = "step-label";
-        if (failed && i === 2) labelClass += " failed";
-        else if (winner && i === 2) labelClass += " winner";
+        if (failed && i === 4) labelClass += " failed";
+        else if (winner && i === 4) labelClass += " winner";
         else if (!invited && i <= current) labelClass += " done";
 
         if (invited && i === 0) labelClass = "step-label active";
 
         let labelText = step.label;
-        if (failed && i === 2) labelText = "Ошибка";
+        if (failed && i === 4) labelText = "Ошибка";
 
         return `
           <div class="step-item">
@@ -1726,7 +2100,27 @@
     function updateCountdowns() {
       document.querySelectorAll('.countdown').forEach(el => {
         const deadline = el.getAttribute('data-deadline');
-        const p = countdownParts(deadline) || { days: "00", hours: "00", mins: "00", secs: "00" };
+        if (!deadline) return;
+
+        const target = new Date(deadline + "T23:59:59");
+        const now = new Date();
+        const diff = target - now;
+
+        if (diff <= 0) {
+          if (!el.classList.contains('expired')) {
+            el.classList.add('expired');
+            el.innerHTML = `
+              <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Срок приёма данных истёк</span>
+              </div>`;
+          }
+          return;
+        }
+
+        const p = countdownParts(deadline);
+        if (!p) return;
+
         const map = {
           days: p.days,
           hours: p.hours,
@@ -1781,6 +2175,21 @@
     };
 
     const countdownMarkup = (deadline) => {
+      if (!deadline) return `<div class="countdown" data-deadline=""></div>`;
+
+      const target = new Date(deadline + "T23:59:59");
+      const now = new Date();
+      if (target - now <= 0) {
+        return `
+          <div class="countdown expired" data-deadline="${deadline}">
+            <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Срок приёма данных истёк</span>
+            </div>
+          </div>
+        `;
+      }
+
       const p = countdownParts(deadline) || { days: "00", hours: "00", mins: "00", secs: "00" };
       const unitBoxes = (val, unit) => `
         <div class="cd-digits">
@@ -1789,7 +2198,7 @@
         </div>`;
 
       return `
-        <div class="countdown" data-deadline="${deadline || ''}">
+        <div class="countdown" data-deadline="${deadline}">
           <div class="cd-block">
             ${unitBoxes(p.days, 'days')}
             <div class="cd-label">Дни</div>
@@ -2004,7 +2413,13 @@
                 </div>
                 <div class="sub-item-info">
                     <div class="sub-item-name">${s.company || "Без названия"}</div>
-                    <div class="sub-item-inn">ИНН: ${s.inn || "—"}</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <div class="sub-item-inn">ИНН: ${s.inn || "—"}</div>
+                      <span style="display: inline-flex; align-items: center; gap: 3px; color: #f59e0b; font-size: 10px; font-weight: 700; background: #fffbeb; padding: 0px 5px; border-radius: 10px; border: 1px solid #fef3c7;">
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          0.0
+                      </span>
+                    </div>
                 </div>
                 ${isExisting ? '<span class="existing-badge">В лоте</span>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;"><polyline points="9 18 15 12 9 6"></polyline></svg>'}
             </div>
@@ -2039,6 +2454,13 @@
           detailsPanel.innerHTML = `
             <div class="sub-panel-header" style="padding-bottom: 2px;">
                 <div style="font-weight: 700; font-size: 15px; color: var(--primary);">${sub.company}</div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 2px;">
+                  <div style="font-size: 12px; color: var(--gray-600);">ИНН: ${sub.inn || '—'}</div>
+                  <span style="display: inline-flex; align-items: center; gap: 3px; color: #f59e0b; font-size: 11px; font-weight: 700; background: #fffbeb; padding: 1px 6px; border-radius: 12px; border: 1px solid #fef3c7;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                      0.0
+                  </span>
+                </div>
                 <div style="font-size: 12px; color: var(--gray-600); margin-top: 4px;">${sub.lastName} ${sub.firstName} · ${sub.phone}</div>
             </div>
             <div class="sub-tabs">
@@ -2149,56 +2571,68 @@
       modalTitle.textContent = lot.title || `Лот ${lot.id}`;
       modalMeta.textContent = `${lot.id}${lot.objectName ? ' · ' + lot.objectName : ''}`;
 
-      const blocksLabel = (lot.blocks && lot.blocks.length) ? lot.blocks.join(', ') : '—';
-
       // Use stored items if available, otherwise look in uploads
       const items = (lot.items && lot.items.length) ? lot.items : (lot.uploads || []).flatMap(u => u.items || []);
-      const grouped = new Map();
+
+      // Hierarchy: Block -> Estimate -> Stage -> [Items]
+      const hierarchy = {};
 
       if (items.length) {
         items.forEach(it => {
-          const stage = it.section || 'Этап';
-          const row = {
+          const b = it.blockName || 'Общее';
+          const e = it.estimateName || 'Раздел';
+          const s = it.stageName || it.section || 'Этап';
+
+          if (!hierarchy[b]) hierarchy[b] = {};
+          if (!hierarchy[b][e]) hierarchy[b][e] = {};
+          if (!hierarchy[b][e][s]) hierarchy[b][e][s] = [];
+          hierarchy[b][e][s].push({
             name: it.name || `${it.section || 'Работа'}`,
-            volume: it.volume ?? it.qty ?? it.quantity ?? it.sum ?? '—',
-            unit: it.unit ?? it.uom ?? it.measure ?? '—'
-          };
-          if (!grouped.has(stage)) grouped.set(stage, []);
-          grouped.get(stage).push(row);
+            volume: it.volume ?? it.qty ?? it.quantity ?? '—',
+            unit: it.unit ?? it.uom ?? it.measure ?? '—',
+            sum: parseFloat(it.totalCost) || 0
+          });
         });
-      } else if (lot.sections && lot.sections.length) {
-        lot.sections.forEach(sec => {
-          grouped.set(sec, [
-            { name: `Работы раздела ${sec}`, volume: '—', unit: '—' }
-          ]);
-        });
-      } else {
-        grouped.set('Этап 1', [{ name: 'Виды работ не указаны', volume: '—', unit: '—' }]);
       }
 
       const bodyHtml = `
         <div class="works-modal">
-          <div class="works-header"><span>Вид работ</span><span>Объем</span><span>Ед. изм.</span></div>
-          ${Array.from(grouped.entries()).map(([stage, rows]) => `
-            <div class="works-stage">
-              <div class="works-stage-title">
-                <input type="checkbox" checked disabled aria-hidden="true">
-                <span>${stage}</span>
-              </div>
-              <div class="works-list">
-                ${rows.map(r => `
-                  <div class="works-row">
-                    <label style="display:flex; align-items:center; gap:8px;">
-                      <input type="checkbox" checked disabled aria-hidden="true">
-                      <span class="works-name">${r.name}</span>
-                    </label>
-                    <span class="works-volume">${r.volume}</span>
-                    <span class="works-unit">${r.unit}</span>
-                  </div>
+          <div class="tree-grid-header">
+            <span>Вид работ</span>
+            <span>Объем</span>
+            <span>Ед. изм.</span>
+            <span>Сумма</span>
+          </div>
+          ${Object.entries(hierarchy).map(([block, estimates]) => `
+            <details class="works-block-group" open>
+              <summary>${block}</summary>
+              <div class="works-block-content">
+                ${Object.entries(estimates).map(([estimate, stages]) => `
+                  <details class="works-estimate-group" open>
+                    <summary>${estimate}</summary>
+                    <div class="works-estimate-content">
+                      ${Object.entries(stages).map(([stage, rows]) => `
+                        <div class="works-stage-group">
+                          <div class="works-stage-group-title">${stage}</div>
+                          <div class="works-list">
+                            ${rows.map(r => `
+                              <div class="works-row">
+                                <span class="works-name">${r.name}</span>
+                                <span class="works-volume">${r.volume}</span>
+                                <span class="works-unit">${r.unit}</span>
+                                <span class="works-sum">${formatMoney(r.sum)}</span>
+                              </div>
+                            `).join('')}
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </details>
                 `).join('')}
               </div>
-            </div>
+            </details>
           `).join('')}
+          ${Object.keys(hierarchy).length === 0 ? '<div style="padding:48px 24px; text-align:center; color:var(--gray-500); font-size:14px;">Состав работ не определен для данного лота</div>' : ''}
         </div>
       `;
 
@@ -2296,6 +2730,31 @@
             </div>
         `;
       modal.style.display = "flex";
+    }
+
+    function getPictorialChart(uploads) {
+      if (!uploads || uploads.length === 0) return '';
+      const invitedCount = uploads.length;
+      const activeCount = uploads.filter(u => u.status !== 'invited').length;
+      const maxIcons = 10;
+      const displayTotal = Math.min(invitedCount, maxIcons);
+
+      let iconsHtml = '';
+      for (let i = 0; i < displayTotal; i++) {
+        const isActive = i < activeCount;
+        iconsHtml += `
+          <div class="person-icon ${isActive ? 'active' : ''}" title="${isActive ? 'Вошел в систему' : 'Приглашен'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="pictorial-chart" title="Участники: ${activeCount} вошли / ${invitedCount} приглашено">
+          ${iconsHtml}
+          <span style="font-size: 10px; color: var(--gray-500); margin-left: 2px; font-weight: 600;">${activeCount}/${invitedCount}</span>
+        </div>
+      `;
     }
 
     function shareOffer(lotId, uploadId) {
@@ -2419,19 +2878,37 @@
       );
       container.innerHTML = filtered.map((lot) => {
         const filteredUploads = lot.uploads;
-        const lotName = lot.title || `Лот ${lot.id}`;
-        const startLabel = formatDate(lot.startDate);
-        const endLabel = formatDate(lot.deadline);
-        const sectionsLabel = (lot.sections && lot.sections.length) ? lot.sections.join(', ') : '—';
-        const blocksLabel = (lot.blocks && lot.blocks.length) ? lot.blocks.join(', ') : '—';
+        const lotName = lot.title || 'Без названия';
+        const startLabel = lot.startDate ? new Date(lot.startDate).toLocaleDateString() : '—';
+        const endLabel = lot.deadline ? new Date(lot.deadline).toLocaleDateString() : '—';
 
+        const blocksLabel = (lot.blocks && lot.blocks.length) ? lot.blocks.join(', ') : '—';
+        const sectionsLabel = (lot.sections && lot.sections.length) ? lot.sections.join(', ') : '—';
+
+        // Calculate lot total sum from items
+        const lotSum = (lot.items || []).reduce((acc, it) => acc + (parseFloat(it.totalCost) || 0), 0);
+
+        // Sorting Logic
         const sortedUploads = [...filteredUploads].sort((a, b) => {
-          const scoreA = Number.isFinite(a.score) ? a.score : -Infinity;
-          const scoreB = Number.isFinite(b.score) ? b.score : -Infinity;
-          const sumA = Number.isFinite(a.total) ? a.total : Infinity;
-          const sumB = Number.isFinite(b.total) ? b.total : Infinity;
-          if (offerSortMode === "score") return scoreB - scoreA;
-          return sumA - sumB;
+          // Robust score extraction
+          let scoreA = parseFloat(a.score);
+          let scoreB = parseFloat(b.score);
+          if (!Number.isFinite(scoreA)) scoreA = -Infinity;
+          if (!Number.isFinite(scoreB)) scoreB = -Infinity;
+
+          // Robust sum extraction
+          let sumA = parseFloat(a.total);
+          let sumB = parseFloat(b.total);
+          if (!Number.isFinite(sumA)) sumA = Infinity;
+          if (!Number.isFinite(sumB)) sumB = Infinity;
+
+          if (offerSortMode === "score") {
+            // Descending score (higher is better)
+            return scoreB - scoreA;
+          } else {
+            // Ascending sum (cheaper is better)
+            return sumA - sumB;
+          }
         });
 
         const hasWinner = filteredUploads.some(up => up.status === 'winner');
@@ -2539,7 +3016,7 @@
                   ${lotIconSvg}
                 </div>
                 <div class="lot-lines">
-                  <div class="lot-line">
+                   <div class="lot-line">
                     ${statusBadge(lot.status)}
                     <button class="lot-share-btn" data-lot-id="${lot._rawData?.id}" title="Поделиться лотом" onclick="event.stopPropagation(); shareLot('${lot._rawData?.id}')">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg>
@@ -2547,7 +3024,8 @@
                     <span class="lot-id">${lot.id}</span>
                     <span class="lot-title">${lotName}</span>
                   </div>
-                  <div class="lot-line">
+                   <div class="lot-line">
+                    ${(lot.items && lot.items.length > 0) ? `<span class="lot-meta-chip sum-chip" title="Общая сумма по смете"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>${formatMoney(lotSum)}</span>` : ''}
                     <span class="lot-meta-chip">Срок: ${startLabel} — ${endLabel}</span>
                   </div>
                   <div class="lot-line">
@@ -2558,13 +3036,18 @@
                 </div>
               </div>
               <div class="lot-summary-right">
-                ${countdownMarkup(lot.deadline)}
-                <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation();">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <div style="display: flex; align-items: flex-start; gap: 8px;">
+                  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                    ${countdownMarkup(lot.deadline)}
+                    ${getPictorialChart(lot.uploads)}
+                  </div>
+                  <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation();" style="margin-top: 2px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </summary>
             <div class="offers-toolbar">
@@ -2613,6 +3096,7 @@
       // Sort buttons
       container.querySelectorAll('.sort-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+          e.preventDefault();
           e.stopPropagation();
           const mode = btn.dataset.sort;
           if (mode && mode !== offerSortMode) {
@@ -2830,7 +3314,10 @@
       // New Layout Structure
       innerModal.innerHTML = `
         <div class="row" style="justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); margin-bottom: 12px;">
-          <h3 style="margin:0;">Добавление нового лота</h3>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <h3 style="margin:0;">Добавление нового лота</h3>
+            <div id="new-lot-total-sum" style="font-weight: 700; font-size: 14px; color: var(--primary);">Итого: 0 ${PROJECT_CURRENCY === 'UZS' ? 'сўм' : '$'}</div>
+          </div>
           <div style="display:flex; gap:12px; align-items:center;">
             <input type="date" id="new-lot-deadline" value="${today}" min="${today}" style="padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; width: 140px; font-family:inherit; font-size:13px;">
             <button class="btn" id="btn-create-lot-save">Сохранить</button>
@@ -2877,12 +3364,12 @@
             .nav-item.active { background: var(--primary-lighter); color: var(--primary); font-weight: 500; }
             .nav-item.disabled { opacity: 0.5; cursor: not-allowed !important; background: var(--gray-50); color: var(--gray-400); pointer-events: none; }
 
-            .tree-grid-header { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: 1fr 40px 50px; column-gap: 8px; padding: 8px 12px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--gray-500); }
+            .tree-grid-header { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: 1fr 60px 50px 100px; column-gap: 8px; padding: 8px 12px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--gray-500); }
             .tree-stage { padding: 0 12px; }
             .tree-stage-header { display: flex; align-items: center; gap: 8px; padding: 8px 0; position: sticky; top: 36px; background: var(--gray-50); z-index: 2; font-size: 12px; }
             .tree-stage-header strong { font-weight: 600; color: var(--gray-900); font-size: 12px; }
             .tree-wt-list { margin-left: 12px; display: flex; flex-direction: column; }
-            .tree-wt-row { display: grid; grid-template-columns: 1fr 20px 20px; align-items: center; column-gap: 8px; padding: 6px 8px; border: 1px solid var(--gray-200); background: #fff; font-size: 12px; color: var(--gray-700); }
+            .tree-wt-row { display: grid; grid-template-columns: 1fr 60px 50px 100px; align-items: center; column-gap: 8px; padding: 6px 8px; border: 1px solid var(--gray-200); background: #fff; font-size: 12px; color: var(--gray-700); }
             .tree-wt-row + .tree-wt-row { margin-top: 4px; }
             .tree-wt-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: inherit; cursor: pointer; }
             .tree-wt-item:hover { color: var(--gray-900); }
@@ -3080,7 +3567,7 @@
           header.textContent = `3. Состав работ раздела ${estimateName}`;
         }
 
-        let html = '<div class="tree-grid-header"><span>Вид работ</span><span>Объем</span><span>Ед. изм.</span></div>';
+        let html = '<div class="tree-grid-header"><span>Вид работ</span><span>Объем</span><span>Ед. изм.</span><span>Сумма</span></div>';
         stages.forEach(stage => {
           if (!stage.wts || stage.wts.length === 0) return;
 
@@ -3089,6 +3576,8 @@
             const isUsed = usedWorkTypeIds.has(wt.id);
             const volume = wt.volume ?? wt.qty ?? wt.quantity ?? '—';
             const unit = wt.unit ?? wt.uom ?? wt.measure ?? '—';
+
+            const itemTotalCost = wt.totalCost || (parseFloat(wt.quantity || 0) * parseFloat(wt.unitCost || 0)) || 0;
 
             return `
                     <div class="tree-wt-row ${isUsed ? 'disabled' : ''}">
@@ -3102,12 +3591,15 @@
                           data-stage-name="${stage.name}"
                           data-unit="${unit}"
                           data-volume="${volume}"
+                          data-unit-cost="${wt.unitCost || 0}"
+                          data-total-cost="${itemTotalCost}"
                         >
                         <span class="wt-name" title="${wt.name}">${wt.name}</span>
                         ${isUsed ? '<span class="wt-badge">В другом лоте</span>' : ''}
                       </label>
                       <span class="tree-wt-volume">${volume}</span>
                       <span class="tree-wt-unit">${unit}</span>
+                      <span class="tree-wt-sum" style="text-align:right; font-weight:600; color:var(--primary);">${formatMoney(itemTotalCost)}</span>
                     </div>
                   `;
           }).join('');
@@ -3148,7 +3640,9 @@
               blockId: activeBlockId,
               blockName: blockName,
               unit: cb.dataset.unit,
-              volume: cb.dataset.volume
+              volume: cb.dataset.volume,
+              unitCost: cb.dataset.unitCost,
+              totalCost: cb.dataset.totalCost
             });
           } else {
             selectedWorkTypes.delete(wtId);
@@ -3159,7 +3653,10 @@
         };
 
         container.querySelectorAll('.wt-cb').forEach(cb => {
-          cb.addEventListener('change', () => handleWorkTypeChange(cb));
+          cb.addEventListener('change', () => {
+            handleWorkTypeChange(cb);
+            updateSelectedTotal();
+          });
         });
 
         container.querySelectorAll('.stage-cb').forEach(stageCb => {
@@ -3178,8 +3675,21 @@
             });
 
             updateStageCheckboxes(container);
+            updateSelectedTotal();
           });
         });
+      }
+
+      function updateSelectedTotal() {
+        const sumDisplay = document.getElementById('new-lot-total-sum');
+        if (!sumDisplay) return;
+
+        let total = 0;
+        selectedWorkTypes.forEach(wt => {
+          total += parseFloat(wt.totalCost) || 0;
+        });
+
+        sumDisplay.textContent = `Итого: ${formatMoney(total)}`;
       }
 
       function updateStageCheckboxes(container) {
@@ -3234,11 +3744,16 @@
           // Prepare items for backend
           const itemsPayload = items.map(i => ({
             workTypeId: i.id, // Save the original ID for tracking
-            section: i.stageName, // Using stageName as section for now
+            blockName: i.blockName,
+            estimateName: i.estimateName,
+            stageName: i.stageName,
+            section: i.stageName, // Keep for backward compatibility
             name: i.name,
             unit: i.unit || "ед.", // Use selected unit
             quantity: parseFloat(i.volume) || 1, // Use selected volume/quantity
-            volume: i.volume || "—"
+            volume: i.volume || "—",
+            totalCost: parseFloat(i.totalCost) || 0,
+            unitCost: parseFloat(i.unitCost) || 0
           }));
 
           // Call API to create tender
@@ -3265,15 +3780,15 @@
     function getRatingPoints(ratingBase) {
       if (!ratingBase) return 0;
       const ratingMap = {
-        'AAA': 10.0, 'AA': 9.2, 'A': 8.4,
-        'BBB': 7.6, 'BB': 6.8, 'B': 6.0,
-        'CCC': 5.2, 'CC': 4.4, 'C': 3.6,
-        'DDD': 2.8, 'DD': 2.0, 'D': 1.2
+        'AAA': 5.0, 'AA': 4.6, 'A': 4.2,
+        'BBB': 3.8, 'BB': 3.4, 'B': 3.0,
+        'CCC': 2.6, 'CC': 2.2, 'C': 1.8,
+        'DDD': 1.4, 'DD': 1.0, 'D': 0.6
       };
       let cleanRating = ratingBase.replace('+', '').trim();
       let pts = ratingMap[cleanRating] || 0;
-      if (ratingBase.includes('+')) pts += 0.4;
-      return parseFloat(Math.min(10.0, pts).toFixed(1));
+      if (ratingBase.includes('+')) pts += 0.2;
+      return parseFloat(Math.min(5.0, pts).toFixed(1));
     }
 
     // ===========================================
@@ -3281,44 +3796,51 @@
     // ===========================================
 
     function calculateBidScore(bid, allBids, targetDeadline) {
-      // 1. mc.uz Rating (max 10 points)
+      // 1. mc.uz Rating (max 5.0 points)
       let score = getRatingPoints(bid.subcontractor?.rating || bid.rating);
 
-      // 2. Documents (max 1 point)
-      if (bid.subcontractor?.certificatePhoto) score += 0.5;
-      if (bid.subcontractor?.licensePhoto) score += 0.5;
+      // 2. Documents (max 1.0 point)
+      // +0.5 each for Certificate and License
+      if (bid.subcontractor?.certificatePhoto || bid.certificatePhoto) score += 0.5;
+      if (bid.subcontractor?.licensePhoto || bid.licensePhoto) score += 0.5;
 
-      // 3. Price Competitiveness (max 3 points)
+      // 3. Price Competitiveness (max 2.5 points)
+      // Lower price is better. Comparison with other bids.
       if (allBids && allBids.length > 0) {
         const prices = allBids.map(b => b.priceTotal).filter(p => p > 0);
         const minPrice = prices.length ? Math.min(...prices) : 0;
         const maxPrice = prices.length ? Math.max(...prices) : 0;
+
         if (maxPrice > minPrice && bid.priceTotal > 0) {
-          score += 3 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
+          // If multiple bids, lowest gets 2.5, highest gets 0 (among distributed)
+          score += 2.5 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
         } else if (bid.priceTotal > 0) {
-          score += 3;
+          // If only one bid or all same, full 2.5 points
+          score += 2.5;
         }
       }
 
-      // 4. Deadline Competitiveness (max 1 point)
+      // 4. Deadline Competitiveness (max 1.5 points)
+      // Sooner date is better. Comparison with target lot deadline.
       if (targetDeadline && bid.completionDate) {
         const target = new Date(targetDeadline);
         const bidDate = new Date(bid.completionDate);
         if (!isNaN(target.getTime()) && !isNaN(bidDate.getTime())) {
-          // If bid is before or on target, full point
+          // If bid is before or on target, full points (1.5)
           if (bidDate <= target) {
-            score += 1.0;
+            score += 1.5;
           } else {
-            // If bid is after target, deduct 0.1 per day, min 0
+            // If bid is after target, deduct 0.15 per day delay, min 0
             const dayDiff = Math.ceil((bidDate - target) / (1000 * 60 * 60 * 24));
-            score += Math.max(0, 1.0 - (dayDiff * 0.1));
+            score += Math.max(0, 1.5 - (dayDiff * 0.15));
           }
         }
       } else {
+        // Flat small bonus if no deadline data provided
         score += 0.5;
       }
 
-      return parseFloat(Math.min(15, score).toFixed(1));
+      return parseFloat(Math.min(10, score).toFixed(1));
     }
 
     /**
@@ -3327,6 +3849,10 @@
     async function loadTenders() {
       try {
         const tenders = await apiGetTenders(CURRENT_PROJECT_ID);
+
+        if (tenders && tenders.length > 0 && tenders[0].project) {
+          PROJECT_CURRENCY = tenders[0].project.currency || 'UZS';
+        }
 
         // Преобразуем данные с сервера в формат для UI
         lots = tenders.map((tender, index) => {

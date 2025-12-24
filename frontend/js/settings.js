@@ -100,34 +100,43 @@ const SettingsManager = {
 
                 return `
                     <tr data-id="${item.id}">
-                        <td>
+                        <td style="vertical-align: middle;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 ${avatar}
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <span style="font-weight: 600; color: var(--gray-900);">${item.company || ''}</span>
-                                    <span style="color: var(--gray-500); font-size: 12px;">${fio || ''}</span>
+                                    <span style="font-weight: 600; color: var(--gray-900); line-height: 1.2;">${item.company || ''}</span>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="color: var(--gray-500); font-size: 11px;">ИНН: ${item.inn || '—'}</span>
+                                        <span style="display: inline-flex; align-items: center; gap: 3px; color: #f59e0b; font-size: 11px; font-weight: 700; background: #fffbeb; padding: 1px 6px; border-radius: 12px; border: 1px solid #fef3c7;">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                            0.0
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </td>
-                        <td>${fio || ''}</td>
-                        <td style="font-size: 12px; color: var(--gray-700);">${workTypesDisplay}</td>
-                        <td>${item.phone || ''}</td>
-                        <td>${item.email || ''}</td>
-                        <td>${statusLabel}</td>
-                        <td style="white-space: nowrap; display: flex; gap: 8px; align-items: center;">
-                            <button class="btn btn-secondary subcontractor-edit" title="Изменить" aria-label="Изменить" data-id="${item.id}" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 20h9" />
-                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                                </svg>
-                            </button>
-                            <button class="btn btn-danger subcontractor-delete" title="Удалить" aria-label="Удалить" data-id="${item.id}" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                    <path d="M3 6h18" />
-                                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
-                            </button>
+
+                        <td style="vertical-align: middle;">${fio || ''}</td>
+                        <td style="vertical-align: middle; font-size: 12px; color: var(--gray-700);">${workTypesDisplay}</td>
+                        <td style="vertical-align: middle;">${item.phone || ''}</td>
+                        <td style="vertical-align: middle;">${item.email || ''}</td>
+                        <td style="vertical-align: middle;">${statusLabel}</td>
+                        <td style="vertical-align: middle;">
+                            <div style="white-space: nowrap; display: flex; gap: 8px; align-items: center;">
+                                <button class="btn btn-secondary subcontractor-edit" title="Изменить" aria-label="Изменить" data-id="${item.id}" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                    </svg>
+                                </button>
+                                <button class="btn btn-danger subcontractor-delete" title="Удалить" aria-label="Удалить" data-id="${item.id}" style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                        <path d="M3 6h18" />
+                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -523,7 +532,7 @@ const SettingsManager = {
                     const item = this.subcontractors.find((s) => s.id === id);
                     if (item && item.workTypes) {
                         const types = item.workTypes.split(',');
-                        alert(`Виды работ для ${item.company}:\n\n${types.join('\n')}`);
+                        alert(`Компания: ${item.company}\nИНН: ${item.inn || '—'}\n\nВиды работ:\n${types.join('\n')}`);
                     }
                 });
             });

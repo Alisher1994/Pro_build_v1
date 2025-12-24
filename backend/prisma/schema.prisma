@@ -610,6 +610,8 @@ model TenderBid {
   blockDate       DateTime?
   contractNumber  String?  // Номер договора (если выбран победитель)
   contractDate    DateTime? // Дата создания договора
+  certificatePhoto String?  // Путь к файлу сертификата
+  licensePhoto     String?  // Путь к файлу лицензии
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   

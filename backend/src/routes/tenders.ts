@@ -3,12 +3,30 @@ import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
+import path from 'path';
 import { parse } from 'csv-parse';
 import { scrapeRating } from '../services/ratingScraper';
 
 const router = Router();
 const prisma = new PrismaClient();
-const upload = multer({ storage: multer.memoryStorage() });
+
+// Configure multer for file uploads
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
 
 // ==========================================
 // GET /api/tenders?projectId=X
@@ -625,6 +643,12 @@ router.post('/invites/:token/auth', async (req: Request, res: Response) => {
     if (!invite) return res.status(404).json({ error: 'Invite not found' });
     if (invite.inviteCode !== code) return res.status(401).json({ error: 'Invalid code' });
 
+    // Update status to 'login' to indicate subcontractor has accessed the portal
+    await prisma.tenderInvite.update({
+      where: { token },
+      data: { status: 'login' }
+    });
+
     res.json({ success: true, token: invite.token });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -739,6 +763,68 @@ router.post('/invites/:token/bid', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Bid error:', error);
     res.status(500).json({ error: 'Failed to save bid' });
+  }
+});
+
+// POST /api/tenders/invites/:token/upload-doc
+// Upload certificate or license document
+router.post('/invites/:token/upload-doc', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { docType, code } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token },
+      include: { bid: true }
+    });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Auto-create bid if it doesn't exist
+    let bidId: string;
+    if (!invite.bid) {
+      const newBid = await prisma.tenderBid.create({
+        data: {
+          inviteId: invite.id,
+          tenderId: invite.tenderId,
+          subcontractorId: invite.subcontractorId,
+          priceTotal: 0,
+          items: '[]',
+          files: '[]',
+          status: 'draft'
+        }
+      });
+      bidId = newBid.id;
+    } else {
+      bidId = invite.bid.id;
+    }
+
+    // Determine which field to update
+    const updateData: any = {};
+    if (docType === 'certificate') {
+      updateData.certificatePhoto = `/uploads/${file.filename}`;
+    } else if (docType === 'license') {
+      updateData.licensePhoto = `/uploads/${file.filename}`;
+    } else {
+      return res.status(400).json({ error: 'Invalid document type' });
+    }
+
+    // Update the bid with the file path
+    await prisma.tenderBid.update({
+      where: { id: bidId },
+      data: updateData
+    });
+
+    res.json({ success: true, path: updateData.certificatePhoto || updateData.licensePhoto });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Failed to upload document' });
   }
 });
 

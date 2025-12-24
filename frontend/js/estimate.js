@@ -485,9 +485,19 @@ const EstimateManager = {
                     if (stageTotal === 0) {
                         try {
                             const workTypes = await api.getWorkTypes(stage.id);
-                            stageTotal = workTypes.reduce((sum, wt) => sum + (wt.totalCost || 0), 0);
+                            let calculatedStageTotal = 0;
+                            for (const wt of workTypes) {
+                                let wtTotal = wt.totalCost || 0;
+                                if (wtTotal === 0) {
+                                    // Опускаемся до ресурсов, если у работы тоже 0
+                                    const resources = await api.getResources(wt.id);
+                                    wtTotal = resources.reduce((sum, r) => sum + (r.totalCost || ((r.quantity || 0) * (r.unitPrice || 0))), 0);
+                                }
+                                calculatedStageTotal += wtTotal;
+                            }
+                            stageTotal = calculatedStageTotal;
                         } catch (e) {
-                            console.warn('Error fetching workTypes for stage total calculation:', stage.id, e);
+                            console.warn('Error fetching details for estimate list calculation:', stage.id, e);
                         }
                     }
                     total += stageTotal;

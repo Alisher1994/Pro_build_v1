@@ -76,6 +76,24 @@ class ChatManager {
             if (!this.isVisible) this.toggleVisibility(true);
             if (!this.isOpen) this.toggleSidebar(true);
         });
+
+        // Listen for requests from iframes
+        window.addEventListener('message', (e) => {
+            if (e.data.type === 'get-chat-state') {
+                this.broadcastState();
+            }
+        });
+    }
+
+    toggleSidebar(forceOpen = null) {
+        if (forceOpen !== null) {
+            this.isOpen = forceOpen;
+        } else {
+            this.isOpen = !this.isOpen;
+        }
+
+        this.sidebar.classList.toggle('collapsed', !this.isOpen);
+        this.broadcastState();
     }
 
     toggleVisibility(forceVisible = null) {
@@ -85,6 +103,24 @@ class ChatManager {
             this.isVisible = !this.isVisible;
         }
         this.sidebar.classList.toggle('hidden', !this.isVisible);
+        this.broadcastState();
+    }
+
+    broadcastState() {
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+            iframe.contentWindow.postMessage({
+                type: 'chat-state-update',
+                isVisible: this.isVisible,
+                isOpen: this.isOpen
+            }, '*');
+        });
+    }
+
+    swapPosition() {
+        this.isLeft = !this.isLeft;
+        this.sidebar.classList.toggle('position-left', this.isLeft);
+        this.sidebar.classList.toggle('position-right', !this.isLeft);
     }
 
     initTabs() {
@@ -121,25 +157,6 @@ class ChatManager {
                 input.value = '';
             }
         });
-    }
-
-    toggleSidebar(forceOpen = null) {
-        if (forceOpen !== null) {
-            this.isOpen = forceOpen;
-        } else {
-            this.isOpen = !this.isOpen;
-        }
-
-        this.sidebar.classList.toggle('collapsed', !this.isOpen);
-
-        // Update main content margin/padding if necessary
-        // document.querySelector('.main-content').style.marginRight = this.isOpen ? '320px' : '60px';
-    }
-
-    swapPosition() {
-        this.isLeft = !this.isLeft;
-        this.sidebar.classList.toggle('position-left', this.isLeft);
-        this.sidebar.classList.toggle('position-right', !this.isLeft);
     }
 
     switchTab(tabName) {

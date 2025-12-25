@@ -178,9 +178,10 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--gray-50);
-    border-bottom: 1px solid var(--gray-200);
+    background: var(--excel-green);
+    border-bottom: 1px solid var(--excel-green-hover);
     padding: 0 var(--spacing-md);
+    color: var(--white);
 }
 
 .schedule-bottom-tabs {
@@ -193,23 +194,27 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .schedule-bottom-tab {
     height: calc(var(--schedule-bottom-tabs-height) - 8px);
     padding: 0 var(--spacing-md);
-    border: 1px solid var(--gray-300);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--gray-800);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white);
     cursor: pointer;
     font-size: var(--font-size-base);
     transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .schedule-bottom-tab:hover {
-    background: var(--gray-100);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .schedule-bottom-tab.active {
-    background: var(--primary-lighter);
-    border-color: var(--primary);
-    color: var(--primary);
+    background: var(--white);
+    border-color: var(--white);
+    color: var(--excel-green);
     font-weight: 600;
 }
 
@@ -223,14 +228,14 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gray-700);
+    color: var(--white);
     transition: all 0.15s ease;
     flex-shrink: 0;
 }
 
 .schedule-bottom-toggle:hover {
-    background: var(--gray-200);
-    color: var(--gray-900);
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--white);
 }
 
 .schedule-bottom-toggle svg {
@@ -1145,8 +1150,8 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 
 .ribbon-panel {
     display: none;
-    padding: var(--spacing-md) var(--spacing-lg);
-    gap: var(--spacing-md);
+    padding: 8px;
+    gap: 0;
 }
 
 .ribbon-panel.active {
@@ -1156,12 +1161,12 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .ribbon-group {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: 8px;
 }
 
 .ribbon-group-content {
     display: flex;
-    gap: var(--spacing-xs);
+    gap: 4px;
 }
 
 .ribbon-group-content.row {
@@ -1171,28 +1176,40 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .ribbon-btn {
     background: transparent;
     border: 1px solid transparent;
-    padding: 5px;
     border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 2px;
-    font-size: 9px;
+    justify-content: flex-start;
+    gap: 4px;
+    font-size: 10px;
+    line-height: 1.1;
     color: var(--gray-800);
     font-family: var(--font-family);
     transition: all 0.15s ease;
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
+    padding-top: 8px;
     text-align: center;
 }
 
-.ribbon-btn.large {
-    min-height: 48px;
-    min-width: 56px;
-    font-size: 10px;
+.ribbon-btn span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
 }
+
+.ribbon-btn.large {
+    /* Merged into base .ribbon-btn class for unified standard */
+    width: 60px;
+    height: 60px;
+}
+
+
 
 .ribbon-btn:hover {
     background: var(--primary-lighter);
@@ -1209,22 +1226,23 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 
 .ribbon-btn svg {
     flex-shrink: 0;
-    width: 16px !important;
-    height: 16px !important;
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 1.5;
 }
 
 .ribbon-btn.large svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 20px !important;
+    height: 20px !important;
 }
 
 .ribbon-group-label {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--gray-600);
     text-align: center;
-    padding-top: var(--spacing-xs);
+    padding-top: 4px;
     border-top: 1px solid var(--gray-200);
-    min-height: 24px;
+    min-height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1233,7 +1251,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .ribbon-separator {
     width: 1px;
     background: var(--gray-300);
-    margin: 0 var(--spacing-sm);
+    margin: 0 8px;
 }
 
 /* ========================================
@@ -3608,4 +3626,11 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
     padding: 8px;
     font-size: 14px;
     outline: none;
+}
+
+/* ========================================
+   SCHEDULE ROOT
+   ======================================== */
+.schedule-root {
+    border-radius: var(--radius-lg);
 }

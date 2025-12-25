@@ -63,9 +63,32 @@
             transition: all 0.2s;
         }
 
+        .controls.sidebar-collapsed {
+            right: 80px;
+        }
+
+        .controls.sidebar-open {
+            right: 340px;
+        }
+
         .btn:hover {
             border-color: var(--primary);
             color: var(--primary);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .square-btn {
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            justify-content: center;
+            color: #000;
+        }
+
+        .square-btn svg {
+            width: 18px;
+            height: 18px;
         }
 
         .node-btn {
@@ -175,9 +198,39 @@
 
 <body>
     <div class="controls">
-        <button class="btn" onclick="chart.expandAll().render()">Развернуть всё</button>
-        <button class="btn" onclick="chart.collapseAll().render()">Свернуть всё</button>
-        <button class="btn" onclick="chart.fit()">По центру</button>
+        <button class="btn square-btn" onclick="chart.expandAll().render()" title="Развернуть всё">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-list-chevrons-up-down-icon lucide-list-chevrons-up-down">
+                <path d="M3 5h8" />
+                <path d="M3 12h8" />
+                <path d="M3 19h8" />
+                <path d="m15 8 3-3 3 3" />
+                <path d="m15 16 3 3 3-3" />
+            </svg>
+        </button>
+        <button class="btn square-btn" onclick="chart.collapseAll().render()" title="Свернуть всё">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-list-chevrons-down-up-icon lucide-list-chevrons-down-up">
+                <path d="M3 5h8" />
+                <path d="M3 12h8" />
+                <path d="M3 19h8" />
+                <path d="m15 5 3 3 3-3" />
+                <path d="m15 19 3-3 3 3" />
+            </svg>
+        </button>
+        <button class="btn square-btn" onclick="chart.fit()" title="По центру">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-fullscreen-icon lucide-fullscreen">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                <rect width="10" height="8" x="7" y="8" rx="1" />
+            </svg>
+        </button>
         <button class="btn" style="display:none; background: var(--primary); color: white;"
             id="create-group-btn">Создать группу (0)</button>
     </div>
@@ -336,6 +389,27 @@
             btn.style.display = selectedEmployees.size > 0 ? 'block' : 'none';
             btn.innerText = `Создать группу (${selectedEmployees.size})`;
         }
+
+        // Listen for chat toggle from parent
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'chat-state-update') {
+                const controls = document.querySelector('.controls');
+                const { isVisible, isOpen } = event.data;
+
+                controls.classList.remove('sidebar-collapsed', 'sidebar-open');
+
+                if (isVisible) {
+                    if (isOpen) {
+                        controls.classList.add('sidebar-open');
+                    } else {
+                        controls.classList.add('sidebar-collapsed');
+                    }
+                }
+            }
+        });
+
+        // Request initial state
+        window.parent.postMessage({ type: 'get-chat-state' }, '*');
     </script>
 </body>
 

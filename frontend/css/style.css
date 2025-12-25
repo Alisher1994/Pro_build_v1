@@ -1037,7 +1037,7 @@ body {
 
 .ribbon-tabs {
     display: flex;
-    height: 40px;
+    height: 32px;
 }
 
 .ribbon-toggle {
@@ -1066,8 +1066,8 @@ body {
 .ribbon-tab {
     background: transparent;
     border: none;
-    padding: 0 var(--spacing-xl);
-    font-size: var(--font-size-base);
+    padding: 0 14px;
+    font-size: 12px;
     color: var(--gray-700);
     cursor: pointer;
     font-weight: 500;
@@ -1093,15 +1093,15 @@ body {
     left: 50%;
     transform: translateX(-50%);
     bottom: 0;
-    width: 60px;
-    height: 3px;
+    width: 50px;
+    height: 2px;
     background: var(--primary);
-    border-radius: 3px 3px 0 0;
+    border-radius: 2px 2px 0 0;
 }
 
 .ribbon-content {
     position: relative;
-    min-height: 96px;
+    min-height: 84px;
     /* Высота активной панели для стабильности */
     max-height: 500px;
     overflow: hidden;
@@ -1148,27 +1148,27 @@ body {
 .ribbon-btn {
     background: transparent;
     border: 1px solid transparent;
-    padding: 6px;
+    padding: 5px;
     border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    font-size: 10px;
+    gap: 2px;
+    font-size: 9px;
     color: var(--gray-800);
     font-family: var(--font-family);
     transition: all 0.15s ease;
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     text-align: center;
 }
 
 .ribbon-btn.large {
-    min-height: 56px;
-    min-width: 64px;
-    font-size: 11px;
+    min-height: 48px;
+    min-width: 56px;
+    font-size: 10px;
 }
 
 .ribbon-btn:hover {
@@ -1186,13 +1186,13 @@ body {
 
 .ribbon-btn svg {
     flex-shrink: 0;
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
 }
 
 .ribbon-btn.large svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 18px !important;
+    height: 18px !important;
 }
 
 .ribbon-group-label {

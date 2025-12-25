@@ -197,7 +197,7 @@ const ScheduleManager = {
                 });
                 // Держим верхний уровень видимым
                 rootIds.forEach((id) => {
-                    try { gantt.open(id); } catch (_) {}
+                    try { gantt.open(id); } catch (_) { }
                 });
             });
             gantt.render();
@@ -211,7 +211,7 @@ const ScheduleManager = {
             if (!this.isInitialized || typeof gantt === 'undefined' || typeof gantt.addMarker !== 'function') return;
 
             if (this.todayMarkerId) {
-                try { gantt.deleteMarker(this.todayMarkerId); } catch (_) {}
+                try { gantt.deleteMarker(this.todayMarkerId); } catch (_) { }
                 this.todayMarkerId = null;
             }
 
@@ -402,7 +402,7 @@ const ScheduleManager = {
 
     async init(projectId) {
         this.currentProjectId = projectId;
-        
+
         // Очищаем контейнер
         const contentArea = document.getElementById('content-area');
         contentArea.innerHTML = `
@@ -426,19 +426,26 @@ const ScheduleManager = {
                 </div>
                 <div class="schedule-main">
                     <div id="gantt_here" class="schedule-gantt"></div>
-                    <div id="schedule-bottom" class="schedule-bottom" aria-label="Нижняя панель">
-                        <div class="schedule-bottom-tabs" role="tablist" aria-label="Нижние вкладки">
-                            <button type="button" class="schedule-bottom-tab" data-tab="resources" role="tab" aria-selected="false">Ресурсы</button>
-                            <button type="button" class="schedule-bottom-tab" data-tab="contractors" role="tab" aria-selected="false">Подрядчики</button>
-                        </div>
-                        <div class="schedule-bottom-content" role="region" aria-label="Содержимое нижней панели">
-                            <div class="schedule-bottom-pane" data-pane="resources">
-                                <div style="color: var(--gray-700);">Ресурсы (в разработке)</div>
-                            </div>
-                            <div class="schedule-bottom-pane" data-pane="contractors">
-                                <div style="color: var(--gray-700);">Подрядчики (в разработке)</div>
-                            </div>
-                        </div>
+                </div>
+            </div>
+            <div id="schedule-bottom" class="schedule-bottom-panel" aria-label="Нижняя панель">
+                <div class="schedule-bottom-header">
+                    <div class="schedule-bottom-tabs" role="tablist" aria-label="Нижние вкладки">
+                        <button type="button" class="schedule-bottom-tab" data-tab="resources" role="tab" aria-selected="false">Ресурсы</button>
+                        <button type="button" class="schedule-bottom-tab" data-tab="contractors" role="tab" aria-selected="false">Подрядчики</button>
+                    </div>
+                    <button type="button" class="schedule-bottom-toggle" aria-label="Свернуть/развернуть панель" title="Свернуть/развернуть">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="schedule-bottom-content" role="region" aria-label="Содержимое нижней панели">
+                    <div class="schedule-bottom-pane" data-pane="resources">
+                        <div style="color: var(--gray-700);">Ресурсы (в разработке)</div>
+                    </div>
+                    <div class="schedule-bottom-pane" data-pane="contractors">
+                        <div style="color: var(--gray-700);">Подрядчики (в разработке)</div>
                     </div>
                 </div>
             </div>
@@ -448,7 +455,7 @@ const ScheduleManager = {
 
         // Инициализация DHTMLX Gantt
         this.initGantt();
-        
+
         // Загрузка данных
         await this.loadData();
     },
@@ -465,6 +472,15 @@ const ScheduleManager = {
                 this.toggleBottomPanel(tab);
             });
         });
+
+        // Toggle button handler
+        const toggleBtn = bottom.querySelector('.schedule-bottom-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                // Toggle open/close state
+                this.setBottomPanelState(!this.bottomPanel.isOpen, this.bottomPanel.activeTab);
+            });
+        }
 
         // Начальное состояние: скрыто (только строка вкладок)
         this.setBottomPanelState(false, this.bottomPanel.activeTab);
@@ -611,15 +627,8 @@ const ScheduleManager = {
     },
 
     computeBottomOpenHeightPx() {
-        // Максимум 30% от доступной высоты области графика
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return 220;
-        const rect = contentArea.getBoundingClientRect();
-        const total = Math.max(0, rect.height);
-        const open = Math.max(0, Math.floor(total * 0.30));
-        // Не даём открыть меньше чем высота вкладок + 1px
-        const tabsHeight = 38;
-        return Math.max(tabsHeight + 1, open);
+        // Фиксированная высота для нижней панели
+        return 300;
     },
 
     setBottomPanelState(isOpen, activeTab) {
@@ -660,7 +669,7 @@ const ScheduleManager = {
                     gantt.setSizes();
                 }
             });
-        } catch (_) {}
+        } catch (_) { }
     },
 
     toggleBottomPanel(tab) {
@@ -675,9 +684,9 @@ const ScheduleManager = {
     },
 
     initGantt() {
-        try { console.log('[ScheduleManager]', this.version); } catch (_) {}
+        try { console.log('[ScheduleManager]', this.version); } catch (_) { }
         // ============= ВСЕ КОНФИГУРАЦИИ ДО gantt.init() =============
-        
+
         // Русификация
         gantt.i18n.setLocale("ru");
 
@@ -718,7 +727,7 @@ const ScheduleManager = {
         gantt.config.subscales = [
             { unit: "day", step: 1, date: "%d" }
         ];
-        
+
         // Формат даты, приходящей с сервера (YYYY-MM-DD HH:mm)
         gantt.config.xml_date = "%Y-%m-%d %H:%i";
 
@@ -749,7 +758,7 @@ const ScheduleManager = {
         // Отключаем стандартное редактирование через Lightbox по двойному клику
         gantt.config.details_on_dblclick = false;
         gantt.config.details_on_create = false;
-        
+
         // Конфигурация колонок (БЕЗ editor для text — добавим программно только для task-строк)
         gantt.config.columns = [
             { name: "text", label: "Название задачи", tree: true, width: 360, resize: true },
@@ -758,29 +767,31 @@ const ScheduleManager = {
             { name: "duration", label: "Длит.", align: "center", width: 60, resize: true },
             { name: "quantity", label: "Объем", align: "center", width: 70, resize: true },
             { name: "unit", label: "Ед.изм.", align: "center", width: 60, resize: true },
-            { name: "progress", label: "%", align: "center", width: 50, resize: true, template: function(obj) {
-                return Math.round(obj.progress * 100) + "%";
-            }},
+            {
+                name: "progress", label: "%", align: "center", width: 50, resize: true, template: function (obj) {
+                    return Math.round(obj.progress * 100) + "%";
+                }
+            },
             { name: "add", label: "", width: 44 }
         ];
 
         // Настройка Lightbox (окна свойств) - хоть и не используем, но на всякий случай
         gantt.config.lightbox.sections = [
-            {name: "description", height: 38, map_to: "text", type: "textarea", focus: true},
-            {name: "quantity", height: 30, map_to: "quantity", type: "textarea"},
-            {name: "unit", height: 30, map_to: "unit", type: "textarea"},
-            {name: "time", height: 72, type: "duration", map_to: "auto"}
+            { name: "description", height: 38, map_to: "text", type: "textarea", focus: true },
+            { name: "quantity", height: 30, map_to: "quantity", type: "textarea" },
+            { name: "unit", height: 30, map_to: "unit", type: "textarea" },
+            { name: "time", height: 72, type: "duration", map_to: "auto" }
         ];
-        
+
         gantt.locale.labels.section_description = "Название";
         gantt.locale.labels.section_quantity = "Объем";
         gantt.locale.labels.section_unit = "Ед. изм.";
         gantt.locale.labels.section_time = "Время";
-        
+
         // Стилизация строк (заливка фона) — и в таблице, и в шкале
-        const rowClass = function(start, end, task){
+        const rowClass = function (start, end, task) {
             const classes = [];
-            
+
             // Добавляем класс уровня вложенности для P6-стиля
             if (typeof task.$level !== 'undefined') {
                 classes.push("level_" + task.$level);
@@ -798,7 +809,7 @@ const ScheduleManager = {
                 else if (task.blockId) classes.push("row_block");
                 // Прочие группировки
                 else classes.push("row_stage");
-                
+
                 // Для всех project-строк кроме этажей скрываем кнопку "+"
                 const isFloor = task.id.toString().includes('floor') || (task.text && (task.text.includes('Этаж') || task.text.match(/Level|Storey|План|Отм/i)));
                 if (!isFloor) classes.push("hide_add_button");
@@ -811,7 +822,7 @@ const ScheduleManager = {
 
         gantt.templates.grid_row_class = rowClass;
         gantt.templates.task_row_class = rowClass;
-        
+
         // CSS для скрытия кнопки "+" у не-этажей
         if (!document.getElementById('gantt-hide-add-style')) {
             const style = document.createElement('style');
@@ -849,10 +860,10 @@ const ScheduleManager = {
             this.rollupParentChainFrom(id);
             return true;
         });
-        
+
         // Блокируем двойной клик
         gantt.attachEvent("onTaskDblClick", () => false);
-        
+
         // Inline-редактирование по клику в ячейку таблицы
         gantt.attachEvent("onGridClick", (id, e) => {
             try {
@@ -875,7 +886,7 @@ const ScheduleManager = {
                 if (!col || col.name === 'add') return true;
 
                 const task = gantt.getTask(id);
-                
+
                 // Запрещаем редактирование названий для всех групповых строк (type === 'project')
                 if (task.type === 'project' && col.name === 'text') {
                     return true;
@@ -1815,7 +1826,7 @@ const ScheduleManager = {
         try {
             gantt.clearAll();
             const data = await api.getGanttData(this.currentProjectId);
-            
+
             if (data.data && data.data.length > 0) {
                 gantt.parse(data);
                 this.ensureTodayMarker();
@@ -1881,7 +1892,7 @@ const ScheduleManager = {
                 </div>
             </div>
         `;
-        
+
         if (!document.getElementById('wizard-styles')) {
             const style = document.createElement('style');
             style.id = 'wizard-styles';
@@ -1926,7 +1937,7 @@ const ScheduleManager = {
 
     async selectGenerationMode(mode, useAI = false) {
         UI.closeModal();
-        
+
         if (!confirm('Внимание! Текущий график будет полностью перезаписан. Продолжить?')) {
             return;
         }
@@ -1937,9 +1948,9 @@ const ScheduleManager = {
             await api.generateGanttSchedule(this.currentProjectId, mode, useAI);
             await this.loadData();
             UI.showNotification(
-                useAI 
-                    ? 'График успешно сформирован с применением нормативов через ИИ ассистента' 
-                    : 'График успешно сформирован', 
+                useAI
+                    ? 'График успешно сформирован с применением нормативов через ИИ ассистента'
+                    : 'График успешно сформирован',
                 'success'
             );
         } catch (error) {

@@ -149,24 +149,45 @@ body {
     min-height: 0;
 }
 
-.schedule-bottom {
-    flex: 0 0 auto;
+/* Fixed bottom panel */
+.schedule-bottom-panel {
+    position: fixed;
+    bottom: 0;
+    left: 280px;
+    /* Начинается от правого края sidebar */
+    right: 0;
     height: var(--schedule-bottom-tabs-height);
     background: var(--white);
     border-top: 1px solid var(--gray-300);
-    overflow: hidden;
+    z-index: 100;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.25s ease;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Когда sidebar свернут */
+body:has(.sidebar.collapsed) .schedule-bottom-panel {
+    left: 78px;
+}
 
+.schedule-bottom-panel.is-open {
+    height: 300px;
+}
 
-.schedule-bottom-tabs {
+.schedule-bottom-header {
     height: var(--schedule-bottom-tabs-height);
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-bottom: 1px solid var(--gray-200);
+    justify-content: space-between;
     background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 var(--spacing-md);
+}
+
+.schedule-bottom-tabs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex: 1;
 }
 
 .schedule-bottom-tab {
@@ -178,6 +199,7 @@ body {
     color: var(--gray-800);
     cursor: pointer;
     font-size: var(--font-size-base);
+    transition: all 0.15s ease;
 }
 
 .schedule-bottom-tab:hover {
@@ -191,6 +213,34 @@ body {
     font-weight: 600;
 }
 
+.schedule-bottom-toggle {
+    border: none;
+    background: transparent;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-700);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.schedule-bottom-toggle:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+.schedule-bottom-toggle svg {
+    transition: transform 0.3s ease;
+}
+
+.schedule-bottom-panel.is-open .schedule-bottom-toggle svg {
+    transform: rotate(180deg);
+}
+
 .schedule-bottom-content {
     height: calc(100% - var(--schedule-bottom-tabs-height));
     overflow: auto;
@@ -198,7 +248,7 @@ body {
     display: none;
 }
 
-.schedule-bottom.is-open .schedule-bottom-content {
+.schedule-bottom-panel.is-open .schedule-bottom-content {
     display: block;
 }
 

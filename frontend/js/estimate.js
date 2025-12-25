@@ -36,59 +36,42 @@ const EstimateManager = {
         return symbols[currency] || currency;
     },
 
-    // Обновить breadcrumb в верхней панели
+    // Обновить breadcrumb в верхней панели через метод app
     async updateBreadcrumb(items = null) {
-        const container = document.getElementById('breadcrumb-container');
-        if (!container) return;
-
-        // Если items не передан, строим из текущего состояния
         if (!items) {
             items = [];
 
-            if (this.currentProject) {
-                items.push({
-                    text: this.currentProject.name,
-                    clickable: false
-                });
-            }
-
             if (this.currentBlockId && this.currentBlock) {
-                items.push({
-                    text: 'Блоки',
-                    clickable: true,
-                    onClick: () => this.renderEstimateTree(this.currentProjectId)
-                });
+                // Block Name
                 items.push({
                     text: this.currentBlock.name,
-                    clickable: !!this.currentEstimateId,
-                    onClick: this.currentEstimateId ? () => this.openBlock(this.currentBlockId) : null
+                    onClick: () => this.openBlock(this.currentBlockId)
                 });
             }
 
             if (this.currentEstimateId && this.currentEstimate) {
+                // Estimate Name
                 items.push({
                     text: this.currentEstimate.name,
-                    clickable: !!this.currentSectionId,
-                    onClick: this.currentSectionId ? () => this.openEstimate(this.currentEstimateId) : null
+                    onClick: () => this.openEstimate(this.currentEstimateId)
                 });
             }
 
             if (this.currentSectionId && this.currentSection) {
+                // Section Name
                 items.push({
                     text: `${this.currentSection.code} - ${this.currentSection.name}`,
-                    clickable: !!this.currentStageId,
-                    onClick: this.currentStageId ? () => this.openSection(this.currentSectionId) : null
+                    onClick: () => this.openSection(this.currentSectionId)
                 });
             }
 
             if (this.currentStageId) {
-                // Получаем stage для отображения в breadcrumb
                 try {
                     const stage = await api.getStage(this.currentStageId);
                     if (stage) {
                         items.push({
                             text: stage.name,
-                            clickable: false
+                            onClick: null // Leaf node
                         });
                     }
                 } catch (error) {
@@ -97,29 +80,9 @@ const EstimateManager = {
             }
         }
 
-        if (items.length === 0) {
-            container.innerHTML = '';
-            return;
+        if (window.app && typeof window.app.updateBreadcrumbs === 'function') {
+            window.app.updateBreadcrumbs(items);
         }
-
-        let html = '';
-        items.forEach((item, index) => {
-            if (index > 0) {
-                html += '<span style="margin: 0 8px; color: var(--gray-400);">/</span>';
-            }
-
-            if (item.clickable && item.onClick) {
-                // Создаем уникальный идентификатор для обработчика
-                const handlerId = `breadcrumb_handler_${index}_${Date.now()}`;
-                // Сохраняем обработчик в глобальную область
-                window[handlerId] = item.onClick;
-                html += `<span onclick="window['${handlerId}']()" style="cursor: pointer; color: var(--primary-color);" title="${item.title || ''}">${item.text}</span>`;
-            } else {
-                html += `<span style="color: ${index === items.length - 1 ? 'var(--gray-900); font-weight: 700;' : 'var(--gray-600)'};">${item.text}</span>`;
-            }
-        });
-
-        container.innerHTML = html;
     },
 
     // Восстановление состояния (открытый блок или смета)

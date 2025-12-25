@@ -346,92 +346,92 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     height: 48px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 0 var(--spacing-lg);
     background: var(--excel-green);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--white);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    max-width: 160px;
+    overflow: hidden;
+}
+
+.sidebar-brand img {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo-collapsed {
+    display: none;
+}
+
+/* Sidebar Footer and Actions */
+.sidebar-footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--gray-50);
     gap: var(--spacing-sm);
 }
 
-.sidebar-brand span {
-    font-size: var(--font-size-sm);
-    font-weight: 700;
-    color: var(--white);
-    letter-spacing: 1px;
-}
-
-.sidebar-toggle {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    width: var(--height-button-sm);
-    height: var(--height-button-sm);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--white);
-    transition: all 0.15s ease;
-}
-
-.sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
-    color: var(--white);
-}
-
-.sidebar-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
 .add-btn {
-    background: rgba(255, 255, 255, 0.15);
+    flex: 1;
+    background: var(--excel-green);
     color: var(--white);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--excel-green-hover);
     border-radius: var(--radius-md);
-    width: var(--height-button-sm);
-    height: var(--height-button-sm);
-    font-size: 16px;
+    height: 36px;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
-    font-weight: 600;
-    line-height: 1;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 12px;
 }
 
 .add-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: scale(1.05);
+    background: var(--excel-green-hover);
+    box-shadow: var(--shadow-sm);
 }
 
 .sidebar-toggle {
-    background: transparent;
-    border: 1px solid transparent;
-    width: var(--height-button-sm);
-    height: var(--height-button-sm);
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    width: 36px;
+    height: 36px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--white);
-    transition: all 0.15s ease;
-}
-
-.sidebar-toggle svg {
-    transition: transform 0.2s ease;
+    color: var(--gray-700);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: var(--white);
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+    color: var(--primary);
+}
+
+.sidebar-toggle svg {
+    transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-toggle svg {
+    transform: rotate(180deg);
 }
 
 .project-list {
@@ -562,22 +562,43 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 }
 
 .sidebar.collapsed .sidebar-brand {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.sidebar.collapsed .logo-expanded {
     display: none;
+}
+
+.sidebar.collapsed .logo-collapsed {
+    display: block;
+    height: 36px;
 }
 
 .sidebar.collapsed .sidebar-header {
     padding: 10px 0;
 }
 
-.sidebar.collapsed .sidebar-actions {
+.sidebar.collapsed .sidebar-footer {
     flex-direction: column;
-    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+}
+
+.sidebar.collapsed .add-btn {
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+}
+
+.sidebar.collapsed .add-btn .btn-text {
+    display: none;
 }
 
 .sidebar.collapsed .project-list {
     padding: var(--spacing-sm) 0;
     overflow: hidden;
-    /* Скрыть скроллбары */
 }
 
 .sidebar.collapsed .project-list li {

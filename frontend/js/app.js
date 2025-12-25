@@ -305,44 +305,87 @@ class ProBIMApp {
         this.updateBreadcrumbs();
     }
 
-    updateBreadcrumbs() {
+    updateBreadcrumbs(extraItems = []) {
         const breadcrumbs = document.getElementById('breadcrumbs-bar');
         if (!breadcrumbs) return;
 
-        const projectName = this.currentProjectId
-            ? (this.projects.find(p => p.id === this.currentProjectId)?.name || 'Проект')
-            : null;
+        const project = this.projects.find(p => p.id === this.currentProjectId);
+        const projectName = project?.name || 'Проект';
 
-        const tabMap = {
-            'dashboard': 'Дашборд',
-            'estimate': 'Смета',
-            'tender': 'Тендер',
-            'schedule': 'График',
-            'supply': 'Снабжение',
-            'finance': 'Финансы',
-            'analytics': 'Аналитика',
-            'otitb': 'ОТ и ТБ',
-            'settings': 'Настройки',
-            'norms-settings': 'Настройки норм'
-        };
+        let html = '';
 
-        const currentTabName = tabMap[this.currentRibbonTab] || 'Текущая страница';
+        // 1. Project Name (Static)
+        html += `<span class="breadcrumb-item" style="color: var(--gray-500); cursor: default;">${projectName}</span>`;
+        html += `<span class="breadcrumb-separator">/</span>`;
 
-        let html = `<span class="breadcrumb-item" onclick="location.reload()">Главная</span>`;
+        // 2. Main (Главная)
+        const isDashboardStats = this.currentRibbonTab === 'dashboard' && this.currentDashboardSubTab === 'statistics';
 
-        if (projectName) {
-            html += `
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item">${projectName}</span>
-            `;
+        if (isDashboardStats) {
+            html += `<span class="breadcrumb-item active">Главная</span>`;
+        } else {
+            // "Главная" click -> Go to Dashboard Statistics
+            html += `<span class="breadcrumb-item clickable" onclick="app.loadStatisticsTab()" style="cursor: pointer; color: var(--primary-color);">Главная</span>`;
         }
 
-        if (this.currentRibbonTab) {
-            html += `
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">${currentTabName}</span>
-            `;
+        // 3. Tab / Sub-tab Logic
+        if (!isDashboardStats) {
+            html += `<span class="breadcrumb-separator">/</span>`;
+
+            let label = '';
+            let isLast = extraItems.length === 0;
+
+            if (this.currentRibbonTab === 'dashboard') {
+                if (this.currentDashboardSubTab === 'org-structure') label = 'Структура';
+                else if (this.currentDashboardSubTab === 'cameras') label = 'Камеры';
+            }
+            else if (this.currentRibbonTab === 'estimate') {
+                label = 'Смета';
+                // Estimate can have extra items (Block > Estimate...)
+            }
+            else if (this.currentRibbonTab === 'tender') label = 'Тендер';
+            else if (this.currentRibbonTab === 'schedule') label = 'График';
+            else if (this.currentRibbonTab === 'supply') label = 'Снабжение';
+            else if (this.currentRibbonTab === 'finance') label = 'Финансы';
+            else if (this.currentRibbonTab === 'otitb') {
+                if (this.otitbActive === 'permit') label = 'Наряд допуск';
+                else if (this.otitbActive === 'instructions') label = 'Инструкции';
+                else if (this.otitbActive === 'worktypes') label = 'Виды работ';
+                else label = 'ОТ и ТБ';
+            }
+            else if (this.currentRibbonTab === 'settings') {
+                if (this.setSettingsMode === 'subcontractors' || document.getElementById('subcontractors-btn')?.classList.contains('active')) label = 'Субподряд';
+                else label = 'Настройки проекта';
+            }
+            else if (this.currentRibbonTab === 'norms-settings') label = 'Настройки норм';
+
+            // Render the label (clickable if there are extra items and it makes sense to reset, otherwise active)
+            // For sections like 'Смета', clicking it should reset to the root of the section
+
+            if (label) {
+                if (!isLast && this.currentRibbonTab === 'estimate') {
+                    html += `<span class="breadcrumb-item clickable" onclick="EstimateManager.renderEstimateTree(app.currentProjectId)" style="cursor: pointer; color: var(--primary-color);">${label}</span>`;
+                } else {
+                    html += `<span class="breadcrumb-item ${isLast ? 'active' : ''}">${label}</span>`;
+                }
+            }
         }
+
+        // 4. Extra Items (from nested managers)
+        extraItems.forEach((item, index) => {
+            html += `<span class="breadcrumb-separator">/</span>`;
+            const isItemLast = index === extraItems.length - 1;
+
+            if (item.onClick && !isItemLast) {
+                // We need to attach the handler globally or use a closure.
+                // Since this re-renders, a global handler id is safest.
+                const handlerId = `bc_handler_${Date.now()}_${index}`;
+                window[handlerId] = item.onClick;
+                html += `<span class="breadcrumb-item clickable" onclick="window['${handlerId}']()" style="cursor: pointer; color: var(--primary-color);">${item.text}</span>`;
+            } else {
+                html += `<span class="breadcrumb-item active">${item.text}</span>`;
+            }
+        });
 
         breadcrumbs.innerHTML = html;
     }
@@ -351,6 +394,7 @@ class ProBIMApp {
         if (this.currentProjectId) {
             ScheduleManager.init(this.currentProjectId);
         }
+        this.updateBreadcrumbs();
     }
 
     loadTenderTab() {
@@ -358,6 +402,7 @@ class ProBIMApp {
         contentArea.innerHTML = `
             <iframe id="tender-frame" src="tender-prototype.html" style="width: 100%; height: 100%; border: none;"></iframe>
         `;
+        this.updateBreadcrumbs();
 
         const iframe = document.getElementById('tender-frame');
         iframe.onload = () => {
@@ -390,6 +435,7 @@ class ProBIMApp {
                 <p style="margin-top: 16px; color: var(--gray-600);">Функционал в разработке...</p>
             </div>
         `;
+        this.updateBreadcrumbs();
     }
 
     loadDashboardTab() {

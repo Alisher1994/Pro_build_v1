@@ -409,12 +409,14 @@ class ProBIMApp {
     loadDashboardTab() {
         const contentArea = document.getElementById('content-area');
         contentArea.style.padding = '0';
+        contentArea.style.overflow = 'auto';
         contentArea.innerHTML = `
             <iframe 
                 id="dashboard-frame" 
                 src="dashboard.html" 
-                style="width: 100%; height: 100%; border: none; display: block;"
+                style="width: 100%; min-height: 100%; border: none; display: block;"
                 title="Dashboard"
+                scrolling="yes"
             ></iframe>
         `;
     }

@@ -66,43 +66,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// ==========================================
-// GET /api/tenders/:id
-// Получить детали лота
-// ==========================================
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
 
-    const tender = await prisma.tender.findUnique({
-      where: { id },
-      include: {
-        project: true,
-        invites: {
-          include: {
-            subcontractor: true,
-            bid: true
-          }
-        },
-        bids: {
-          include: {
-            subcontractor: true,
-            invite: true
-          }
-        }
-      }
-    });
-
-    if (!tender) {
-      return res.status(404).json({ error: 'Tender not found' });
-    }
-
-    res.json(tender);
-  } catch (error) {
-    console.error('Error fetching tender:', error);
-    res.status(500).json({ error: 'Failed to fetch tender' });
-  }
-});
 
 // ==========================================
 // POST /api/tenders
@@ -1001,6 +965,45 @@ router.post('/invites/:token/upload-csv', upload.single('file'), async (req: Req
   } catch (error) {
     console.error('CSV Upload error:', error);
     res.status(500).json({ error: 'Failed to process CSV' });
+  }
+});
+
+
+// ==========================================
+// GET /api/tenders/:id
+// Получить детали лота
+// ==========================================
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const tender = await prisma.tender.findUnique({
+      where: { id },
+      include: {
+        project: true,
+        invites: {
+          include: {
+            subcontractor: true,
+            bid: true
+          }
+        },
+        bids: {
+          include: {
+            subcontractor: true,
+            invite: true
+          }
+        }
+      }
+    });
+
+    if (!tender) {
+      return res.status(404).json({ error: 'Tender not found' });
+    }
+
+    res.json(tender);
+  } catch (error) {
+    console.error('Error fetching tender:', error);
+    res.status(500).json({ error: 'Failed to fetch tender' });
   }
 });
 

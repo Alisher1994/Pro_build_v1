@@ -92,8 +92,8 @@
 
 .card {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin: 1rem;
 }
 
@@ -165,7 +165,7 @@
 
 .schedule-card {
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 1.5rem;
     background: white;
     cursor: pointer;
@@ -173,7 +173,7 @@
 }
 
 .schedule-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
 }
 
@@ -356,7 +356,7 @@
     min-height: 600px;
     background: white;
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 1rem;
 }
 
@@ -375,7 +375,7 @@
     width: 100%;
     height: 700px;
     background: #263238;
-    border-radius: 8px;
+    border-radius: 4px;
     overflow: hidden;
 }
 
@@ -485,15 +485,15 @@
     .schedule-list {
         grid-template-columns: 1fr;
     }
-    
+
     .view-tabs {
         overflow-x: auto;
     }
-    
+
     .schedule-table {
         font-size: 0.75rem;
     }
-    
+
     .schedule-table th,
     .schedule-table td {
         padding: 0.5rem;
@@ -509,17 +509,43 @@
    ======================================== */
 
 /* Row Backgrounds by Level */
-.gantt_row.level_0, .gantt_task_row.level_0 { background-color: #E1F5FE !important; font-weight: bold; color: #01579B; }
-.gantt_row.level_1, .gantt_task_row.level_1 { background-color: #F1F8E9 !important; font-weight: 600; color: #33691E; }
-.gantt_row.level_2, .gantt_task_row.level_2 { background-color: #FFF3E0 !important; color: #E65100; }
-.gantt_row.level_3, .gantt_task_row.level_3 { background-color: #F3E5F5 !important; color: #4A148C; }
-.gantt_row.level_4, .gantt_task_row.level_4 { background-color: #FAFAFA !important; }
+.gantt_row.level_0,
+.gantt_task_row.level_0 {
+    background-color: #E1F5FE !important;
+    font-weight: bold;
+    color: #01579B;
+}
+
+.gantt_row.level_1,
+.gantt_task_row.level_1 {
+    background-color: #F1F8E9 !important;
+    font-weight: 600;
+    color: #33691E;
+}
+
+.gantt_row.level_2,
+.gantt_task_row.level_2 {
+    background-color: #FFF3E0 !important;
+    color: #E65100;
+}
+
+.gantt_row.level_3,
+.gantt_task_row.level_3 {
+    background-color: #F3E5F5 !important;
+    color: #4A148C;
+}
+
+.gantt_row.level_4,
+.gantt_task_row.level_4 {
+    background-color: #FAFAFA !important;
+}
 
 /* Vertical Lines (Indentation Cells) */
 /* These styles turn the indentation whitespace into colored vertical bands */
 
 .gantt_tree_indent {
-    width: 15px !important; /* Fixed width for the 'cell' look */
+    width: 15px !important;
+    /* Fixed width for the 'cell' look */
     box-sizing: border-box;
     position: relative;
 }
@@ -569,7 +595,8 @@
 .gantt_row:hover {
     background-color: #f5f5f5 !important;
 }
-.gantt_row.gantt_selected {
-    background-color: #FFF9C4 !important; /* Yellow selection like P6 */
-}
 
+.gantt_row.gantt_selected {
+    background-color: #FFF9C4 !important;
+    /* Yellow selection like P6 */
+}

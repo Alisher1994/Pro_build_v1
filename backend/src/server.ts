@@ -1,3 +1,4 @@
+// Last updated: 2025-12-25T05:06:00
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -83,6 +84,7 @@ const portNumber = Number(PORT);
 app.listen(portNumber, '0.0.0.0', () => {
   console.log(`🚀 ProBIM Server running on http://0.0.0.0:${portNumber}`);
   console.log(`📊 API available at http://0.0.0.0:${portNumber}/api`);
+  console.log(`🔄 Routes reloaded at ${new Date().toISOString()}`);
 });
 
 export default app;

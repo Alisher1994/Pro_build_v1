@@ -209,7 +209,7 @@ const IFCViewerManager = {
                     };
 
                     const navTop = themeValue('--accent-blue', '#0078D4');
-                    const navBottom = themeValue('--primary', '#2B7A78');
+                    const navBottom = themeValue('--primary', '#207345');
                     const navLeft = themeValue('--accent-red', '#D13438');
                     const navRight = themeValue('--accent-green', '#107C10');
                     const navFront = themeValue('--gray-300', '#E1DFDD');
@@ -656,9 +656,9 @@ const IFCViewerManager = {
             if (!this.viewer || !this.xktLoader) {
                 throw new Error('IFC viewer не инициализирован');
             }
-            
+
             console.log('Загрузка XKT:', url);
-            
+
             // Удаляем предыдущую модель
             if (this.currentModel) {
                 this.currentModel.destroy();
@@ -686,7 +686,7 @@ const IFCViewerManager = {
             this.currentModel.on("loaded", () => {
                 clearInterval(progressInterval);
                 if (onProgress) onProgress(100);
-                
+
                 console.log('✓ XKT модель загружена');
                 this.viewer.cameraFlight.flyTo(this.viewer.scene);
 
@@ -694,10 +694,10 @@ const IFCViewerManager = {
                 this.ensureGroundGrid();
 
                 this.setDisplayMode(this.displayMode || 'default');
-                
+
                 // Автоматически скрываем помещения (IfcSpace) при загрузке
                 this.hideSpaces();
-                
+
                 this.refreshViewport();
 
                 // После автопозиционирования даём пользователю паузу, затем (если нет выделения)
@@ -721,17 +721,17 @@ const IFCViewerManager = {
     // Скрыть все помещения (IfcSpace)
     hideSpaces() {
         if (!this.viewer || !this.viewer.metaScene) return;
-        
+
         const spaceIds = [];
         const metaObjects = this.viewer.metaScene.metaObjects;
-        
+
         for (const id in metaObjects) {
             const metaObject = metaObjects[id];
             if (metaObject.type === 'IfcSpace') {
                 spaceIds.push(metaObject.id);
             }
         }
-        
+
         if (spaceIds.length > 0) {
             this.viewer.scene.setObjectsVisible(spaceIds, false);
             console.log(`Скрыто помещений: ${spaceIds.length}`);
@@ -741,17 +741,17 @@ const IFCViewerManager = {
     // Показать все помещения (IfcSpace)
     showSpaces() {
         if (!this.viewer || !this.viewer.metaScene) return;
-        
+
         const spaceIds = [];
         const metaObjects = this.viewer.metaScene.metaObjects;
-        
+
         for (const id in metaObjects) {
             const metaObject = metaObjects[id];
             if (metaObject.type === 'IfcSpace') {
                 spaceIds.push(metaObject.id);
             }
         }
-        
+
         if (spaceIds.length > 0) {
             this.viewer.scene.setObjectsVisible(spaceIds, true);
             console.log(`Показано помещений: ${spaceIds.length}`);
@@ -761,29 +761,29 @@ const IFCViewerManager = {
     // Переключить видимость помещений
     toggleSpaces() {
         if (!this.viewer || !this.viewer.metaScene) return false;
-        
+
         const spaceIds = [];
         const metaObjects = this.viewer.metaScene.metaObjects;
-        
+
         for (const id in metaObjects) {
             const metaObject = metaObjects[id];
             if (metaObject.type === 'IfcSpace') {
                 spaceIds.push(metaObject.id);
             }
         }
-        
+
         if (spaceIds.length > 0) {
             // Проверяем видимость первого помещения
             const firstSpace = this.viewer.scene.objects[spaceIds[0]];
             const currentlyVisible = firstSpace ? firstSpace.visible : true;
-            
+
             // Переключаем видимость всех помещений
             this.viewer.scene.setObjectsVisible(spaceIds, !currentlyVisible);
             console.log(`Помещения ${!currentlyVisible ? 'показаны' : 'скрыты'}: ${spaceIds.length}`);
-            
+
             return !currentlyVisible;
         }
-        
+
         return false;
     },
 
@@ -901,12 +901,12 @@ const IFCViewerManager = {
         } catch (error) {
             console.warn('Не удалось получить AABB для элемента', entity.id, error);
         }
-        
+
         // Собираем все атрибуты из propertySets
         const attributes = { ...(metaObject.attributes || {}) };
         attributes['GlobalId'] = entity.id;
         attributes['GUID'] = entity.id;
-        
+
         if (metaObject.propertySets) {
             metaObject.propertySets.forEach(pset => {
                 if (pset.properties) {
@@ -963,14 +963,14 @@ const IFCViewerManager = {
             // Попытка получить AABB
             let aabb = entity.aabb;
             if (!aabb || aabb.length < 6) {
-                 try {
-                     const computedAABB = this.viewer.scene.getAABB([id]);
-                     if (computedAABB && computedAABB.length === 6) {
-                         aabb = computedAABB;
-                     }
-                 } catch (e) {
-                     console.warn('Failed to get AABB for', id);
-                 }
+                try {
+                    const computedAABB = this.viewer.scene.getAABB([id]);
+                    if (computedAABB && computedAABB.length === 6) {
+                        aabb = computedAABB;
+                    }
+                } catch (e) {
+                    console.warn('Failed to get AABB for', id);
+                }
             }
 
             if (aabb) {
@@ -981,7 +981,7 @@ const IFCViewerManager = {
                 // Логика должна совпадать с estimate.js computeElementDimensions
                 const volume = length * height * depth;
                 const area = length * depth; // Площадь проекции (как в estimate.js)
-                
+
                 totalVolume += volume;
                 totalArea += area;
                 totalLength += length;
@@ -1058,7 +1058,7 @@ const IFCViewerManager = {
     // Подсветить элементы (для показа связанных ресурсов)
     highlightElements(elementIds, color = [0.1, 0.5, 1.0]) {
         if (!elementIds || elementIds.length === 0) return;
-        
+
         this.viewer.scene.setObjectsColorized(elementIds, color);
         this.viewer.scene.setObjectsOpacity(elementIds, 1.0);
     },
@@ -1103,7 +1103,7 @@ const IFCViewerManager = {
     // Убрать подсветку
     unhighlightElements(elementIds) {
         if (!elementIds || elementIds.length === 0) return;
-        
+
         this.viewer.scene.setObjectsColorized(elementIds, null);
         this.viewer.scene.setObjectsOpacity(elementIds, 1.0);
     },
@@ -1143,7 +1143,7 @@ const IFCViewerManager = {
     // Zoom на элементы
     zoomToElements(elementIds) {
         if (!elementIds || elementIds.length === 0) return;
-        
+
         this.viewer.cameraFlight.flyTo({
             aabb: this.viewer.scene.getAABB(elementIds),
             duration: 0.5
@@ -1184,14 +1184,14 @@ const IFCViewerManager = {
     getElementsByType(ifcType) {
         const metaObjects = this.viewer.metaScene.metaObjects;
         const elementIds = [];
-        
+
         for (const id in metaObjects) {
             const metaObject = metaObjects[id];
             if (metaObject.type === ifcType) {
                 elementIds.push(id);
             }
         }
-        
+
         return elementIds;
     },
 
@@ -1212,7 +1212,7 @@ const IFCViewerManager = {
 
         const targetType = metaObject.type;
         let targetNamePrefix = metaObject.name;
-        
+
         // Эвристика для Revit: имя часто содержит ID в конце (например "Family:Type:12345")
         // Попробуем найти общую часть имени, чтобы выделить всё семейство/тип
         if (targetNamePrefix && targetNamePrefix.includes(':')) {
@@ -1228,7 +1228,7 @@ const IFCViewerManager = {
         // Находим все элементы того же типа и с похожим именем
         const metaObjects = this.viewer.metaScene.metaObjects;
         const similarElementIds = [];
-        
+
         for (const id in metaObjects) {
             const obj = metaObjects[id];
             // Обязательно совпадение по типу IFC
@@ -1248,14 +1248,14 @@ const IFCViewerManager = {
         if (similarElementIds.length > 0) {
             // Очищаем текущий выбор, чтобы показать группу
             this.clearSelection(false);
-            
+
             // Выделяем все найденные
             this.selectedElements = similarElementIds;
             this.viewer.scene.setObjectsSelected(similarElementIds, true);
             this.updateSelectionVisuals();
-            
+
             UI.showNotification(`Выбрано ${similarElementIds.length} элементов типа ${targetType} (семейство: ${targetNamePrefix || 'Все'})`, 'info');
-            
+
             // Вызываем callback для обновления UI (свойств и т.д.)
             if (this.onElementSelected) {
                 // Передаем первый элемент как "активный" для свойств, но список всех выбранных
@@ -1276,23 +1276,23 @@ const IFCViewerManager = {
         this.displayMode = normalizedMode;
         const allIds = Object.keys(this.viewer.scene.objects);
         this.viewer.scene.setObjectsXRayed(allIds, false);
-        
+
         switch (normalizedMode) {
             case 'transparent':
                 this.viewer.scene.setObjectsOpacity(allIds, 0.3);
                 this.viewer.scene.setObjectsColorized(allIds, null);
                 break;
-            
+
             case 'monochrome':
                 this.viewer.scene.setObjectsOpacity(allIds, 1.0);
                 this.viewer.scene.setObjectsColorized(allIds, [0.8, 0.8, 0.8]);
                 break;
-            
+
             case 'xray':
                 this.viewer.scene.setObjectsOpacity(allIds, 0.5);
                 this.viewer.scene.setObjectsXRayed(allIds, true);
                 break;
-            
+
             case 'default':
             default:
                 this.viewer.scene.setObjectsOpacity(allIds, 1.0);

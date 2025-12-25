@@ -37,7 +37,7 @@ const InstructionsManager = {
             const instructions = await response.json();
 
             const table = document.getElementById('instructions-table');
-            
+
             if (instructions.length === 0) {
                 table.innerHTML = '<div style="text-align: center; color: var(--gray-500); padding: 40px;">Нет инструкций</div>';
                 return;
@@ -59,9 +59,9 @@ const InstructionsManager = {
                                 <td style="padding: 12px 16px; color: var(--gray-800); font-family: monospace;">${instr.code}</td>
                                 <td style="padding: 12px 16px; color: var(--gray-900); font-weight: 500;">${instr.name}</td>
                                 <td style="padding: 12px 16px; color: var(--gray-600); font-size: 13px;">
-                                    ${instr.workTypes.length > 0 
-                                        ? instr.workTypes.map(wt => wt.workTypeItem.name).join(', ') 
-                                        : '<span style="color: var(--gray-400);">Не привязаны</span>'}
+                                    ${instr.workTypes.length > 0
+                    ? instr.workTypes.map(wt => wt.workTypeItem.name).join(', ')
+                    : '<span style="color: var(--gray-400);">Не привязаны</span>'}
                                 </td>
                                 <td style="padding: 12px 16px; text-align: right;">
                                     <button onclick="InstructionsManager.showEditModal('${instr.id}')" 
@@ -100,13 +100,13 @@ const InstructionsManager = {
         try {
             const response = await fetch(`/api/instructions/${instructionId}`);
             const instruction = await response.json();
-            
+
             const selectedWorkTypeIds = instruction.workTypes.map(wt => wt.workTypeItemId);
-            
+
             this.showModal(
-                'Редактировать инструкцию', 
-                instruction.code, 
-                instruction.name, 
+                'Редактировать инструкцию',
+                instruction.code,
+                instruction.name,
                 instruction.text,
                 selectedWorkTypeIds,
                 instructionId
@@ -180,21 +180,21 @@ const InstructionsManager = {
                         </div>
                         
                         <div id="work-types-list" style="border: 1px solid var(--gray-300); border-radius: 4px; height: 460px; overflow-y: auto; padding: 8px;">
-                            ${groups.length === 0 
-                                ? '<div style="text-align: center; color: var(--gray-500); padding: 20px;">Нет доступных видов работ. Сначала создайте их в справочнике.</div>'
-                                : groups.map(group => `
+                            ${groups.length === 0
+                ? '<div style="text-align: center; color: var(--gray-500); padding: 20px;">Нет доступных видов работ. Сначала создайте их в справочнике.</div>'
+                : groups.map(group => `
                                     <div class="work-type-group-block" data-group-id="${group.id}" style="margin-bottom: 12px;">
-                                        <div style="background: #c1d8d7; padding: 8px 12px; font-weight: 600; color: var(--gray-800); border-radius: 4px; margin-bottom: 4px;">
+                                        <div style="background: #b7d5c4; padding: 8px 12px; font-weight: 600; color: var(--gray-800); border-radius: 4px; margin-bottom: 4px;">
                                             ${group.name}
                                         </div>
-                                        ${group.workTypeItems.length === 0 
-                                            ? '<div style="padding: 8px 12px; color: var(--gray-500); font-size: 13px;">Нет видов работ в группе</div>'
-                                            : group.workTypeItems.map(item => `
+                                        ${group.workTypeItems.length === 0
+                        ? '<div style="padding: 8px 12px; color: var(--gray-500); font-size: 13px;">Нет видов работ в группе</div>'
+                        : group.workTypeItems.map(item => `
                                                 <div class="work-type-item" data-item-name="${item.name.toLowerCase()}" style="padding: 4px 12px;">
                                                     <label style="display: flex; align-items: center; cursor: pointer;">
                                                         <input type="checkbox" class="work-type-checkbox" value="${item.id}" 
                                                             ${selectedWorkTypeIds.includes(item.id) ? 'checked' : ''}
-                                                            style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer; accent-color: #2B7A78;"/>
+                                                            style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer; accent-color: #207345;"/>
                                                         <span style="font-size: 14px; color: var(--gray-800);">${item.name} (${item.unit})</span>
                                                     </label>
                                                 </div>
@@ -221,14 +221,14 @@ const InstructionsManager = {
             </div>
         `;
         document.body.appendChild(modal);
-        
+
         // Добавляем счетчик символов
         const textInput = document.getElementById('instruction-text-input');
         const charCounter = document.getElementById('char-counter');
         textInput.addEventListener('input', () => {
             charCounter.textContent = textInput.value.length;
         });
-        
+
         document.getElementById('instruction-code-input').focus();
     },
 
@@ -236,10 +236,10 @@ const InstructionsManager = {
         const code = document.getElementById('instruction-code-input').value.trim();
         const name = document.getElementById('instruction-name-input').value.trim();
         const text = document.getElementById('instruction-text-input').value.trim();
-        
+
         const checkboxes = document.querySelectorAll('.work-type-checkbox:checked');
         const workTypeItemIds = Array.from(checkboxes).map(cb => cb.value);
-        
+
         if (!code) {
             alert('Код инструкции обязателен');
             return;
@@ -265,7 +265,7 @@ const InstructionsManager = {
             const isEdit = instructionId && instructionId !== 'null';
             const url = isEdit ? `/api/instructions/${instructionId}` : '/api/instructions';
             const method = isEdit ? 'PUT' : 'POST';
-            
+
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
@@ -307,19 +307,19 @@ const InstructionsManager = {
     filterWorkTypes(searchText) {
         const search = searchText.toLowerCase().trim();
         const groups = document.querySelectorAll('.work-type-group-block');
-        
+
         groups.forEach(group => {
             const items = group.querySelectorAll('.work-type-item');
             let hasVisibleItems = false;
-            
+
             items.forEach(item => {
                 const itemName = item.getAttribute('data-item-name');
                 const matches = !search || itemName.includes(search);
-                
+
                 item.style.display = matches ? '' : 'none';
                 if (matches) hasVisibleItems = true;
             });
-            
+
             // Скрываем группу, если в ней нет видимых элементов
             group.style.display = hasVisibleItems ? '' : 'none';
         });
@@ -330,10 +330,10 @@ const InstructionsManager = {
         const nameInput = document.getElementById('instruction-name-input');
         const textInput = document.getElementById('instruction-text-input');
         const charCounter = document.getElementById('char-counter');
-        
+
         const code = codeInput.value.trim();
         const name = nameInput.value.trim();
-        
+
         if (!name) {
             alert('Введите наименование инструкции перед генерацией');
             nameInput.focus();
@@ -377,7 +377,7 @@ const InstructionsManager = {
             }
 
             const data = await response.json();
-            
+
             // Вставляем сгенерированный текст
             textInput.value = data.excerpt || '';
             charCounter.textContent = textInput.value.length;

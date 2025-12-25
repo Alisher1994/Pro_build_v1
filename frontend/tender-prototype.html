@@ -75,7 +75,7 @@
     .nav-item {
       display: block;
       padding: 8px 12px;
-      border-radius: 6px;
+      border-radius: 4px;
       color: var(--gray-700);
       cursor: pointer;
       font-size: 13px;
@@ -131,7 +131,7 @@
 
     .chip {
       padding: 5px 10px;
-      border-radius: 8px;
+      border-radius: 4px;
       font-size: 12px;
       background: var(--gray-200);
       color: var(--gray-800);
@@ -179,7 +179,7 @@
     }
 
     .lot-meta-chip.sum-chip {
-      background: #e6f6f5;
+      background: #e7f5ee;
       color: #246664;
       font-weight: 700;
     }
@@ -187,7 +187,7 @@
     .badge {
       display: inline-block;
       padding: 4px 8px;
-      border-radius: 8px;
+      border-radius: 4px;
       font-size: 12px;
       font-weight: 400;
       color: #fff;
@@ -295,7 +295,7 @@
       border: 1px solid var(--gray-300);
       background: var(--primary);
       color: #fff;
-      border-radius: 8px;
+      border-radius: 4px;
       padding: 6px 16px;
       font-size: 13px;
       font-weight: 600;
@@ -358,7 +358,7 @@
       align-items: center;
       gap: 6px;
       padding: 4px 8px;
-      border-radius: 8px;
+      border-radius: 4px;
       background: var(--primary-lighter);
       color: var(--primary);
       font-size: 12px;
@@ -392,7 +392,7 @@
 
     .lot-entry {
       border: 1px solid var(--gray-200);
-      border-radius: 12px;
+      border-radius: 4px;
       background: var(--white);
       overflow: hidden;
     }
@@ -411,11 +411,11 @@
     }
 
     .lot-entry summary:hover {
-      background: #F0F9F9;
+      background: #f0f9f5;
     }
 
     .lot-entry[open] summary {
-      background: #F0F9F9;
+      background: #f0f9f5;
     }
 
     .lot-summary-left {
@@ -581,7 +581,7 @@
     }
 
     .person-icon.active {
-      color: #2B7A78;
+      color: #207345;
     }
 
     .works-modal {
@@ -622,7 +622,7 @@
       padding: 6px 12px;
       border: none;
       background: transparent;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 12px;
       font-weight: 500;
       color: var(--gray-600);
@@ -653,7 +653,7 @@
       display: flex;
       align-items: center;
       padding: 4px 8px;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 10px;
       cursor: pointer;
       transition: all 0.2s;
@@ -776,7 +776,7 @@
     }
 
     .works-stage-title input {
-      accent-color: #2B7A78;
+      accent-color: #207345;
     }
 
     .works-list {
@@ -799,7 +799,7 @@
     }
 
     .works-row input {
-      accent-color: #2B7A78;
+      accent-color: #207345;
     }
 
     .works-name {
@@ -827,7 +827,7 @@
 
     .modal {
       background: var(--white);
-      border-radius: 12px;
+      border-radius: 4px;
       border: 1px solid var(--gray-300);
       max-width: 1400px;
       width: 100%;
@@ -864,7 +864,7 @@
       justify-content: center;
       border: 1px solid var(--gray-300);
       background: var(--white);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
       flex-shrink: 0;
@@ -883,7 +883,7 @@
 
     .pill-small {
       padding: 4px 8px;
-      border-radius: 6px;
+      border-radius: 4px;
       background: var(--gray-200);
       color: var(--gray-700);
       font-size: 12px;
@@ -1058,7 +1058,7 @@
 
     .offer-card {
       border: 1px solid var(--gray-200);
-      border-radius: 10px;
+      border-radius: 4px;
       padding: 12px;
       background: #fff;
       display: flex;
@@ -1086,7 +1086,7 @@
       font-weight: 600;
       font-size: 13px;
       padding: 8px 12px;
-      border-radius: 8px;
+      border-radius: 4px;
     }
 
     .offer-card.is-blocked {
@@ -1146,7 +1146,7 @@
     .progress {
       position: relative;
       background: var(--gray-100);
-      border-radius: 999px;
+      border-radius: 4px;
       height: 8px;
       flex: 1;
     }
@@ -1154,7 +1154,7 @@
     .progress-bar {
       height: 100%;
       background: var(--primary);
-      border-radius: 999px;
+      border-radius: 4px;
       transition: width 0.2s ease;
     }
 
@@ -1185,50 +1185,76 @@
       background: var(--gray-200);
       border-radius: 2px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0.3;
     }
 
     .rating-cube.active {
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+      animation: cube-fill 0.6s ease-out forwards;
+    }
+
+    @keyframes cube-fill {
+      from {
+        opacity: 0;
+        transform: scaleX(0);
+        transform-origin: left;
+      }
+
+      to {
+        opacity: 1;
+        transform: scaleX(1);
+        transform-origin: left;
+      }
     }
 
     .rating-cube.active:nth-child(1) {
       background: #ff4d4d;
+      animation-delay: 0.1s;
     }
 
     .rating-cube.active:nth-child(2) {
       background: #ff7043;
+      animation-delay: 0.2s;
     }
 
     .rating-cube.active:nth-child(3) {
       background: #ffa726;
+      animation-delay: 0.3s;
     }
 
     .rating-cube.active:nth-child(4) {
       background: #ffca28;
+      animation-delay: 0.4s;
     }
 
     .rating-cube.active:nth-child(5) {
       background: #fdd835;
+      animation-delay: 0.5s;
     }
 
     .rating-cube.active:nth-child(6) {
       background: #c0ca33;
+      animation-delay: 0.6s;
     }
 
     .rating-cube.active:nth-child(7) {
       background: #9ccc65;
+      animation-delay: 0.7s;
     }
 
     .rating-cube.active:nth-child(8) {
       background: #66bb6a;
+      animation-delay: 0.8s;
     }
 
     .rating-cube.active:nth-child(9) {
       background: #43a047;
+      animation-delay: 0.9s;
     }
 
     .rating-cube.active:nth-child(10) {
       background: #2e7d32;
+      animation-delay: 1.0s;
     }
 
     .offer-actions {
@@ -1262,7 +1288,7 @@
       justify-content: center;
       border: 1px solid var(--gray-300);
       background: var(--white);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -1300,7 +1326,7 @@
       justify-content: center;
       border: 1px solid var(--gray-300);
       background: var(--white);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -1325,7 +1351,7 @@
       justify-content: center;
       border: 1px solid var(--gray-300);
       background: var(--white);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -1350,7 +1376,7 @@
       justify-content: center;
       border: 1px solid var(--gray-300);
       background: var(--white);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -1369,7 +1395,29 @@
     .offer-title-box {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 8px;
+    }
+
+    .offer-extra-content {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .offers-grid.expanded .offer-extra-content {
+      display: flex;
+    }
+
+    .offers-grid:not(.expanded) .offer-card:not(.invite-card) {
+      cursor: zoom-in;
+    }
+
+    .offers-grid.expanded .offer-card:not(.invite-card) {
+      cursor: zoom-out;
+    }
+
+    .offer-row-spacer {
+      height: 8px;
     }
 
     .offer-code-badge {
@@ -1402,7 +1450,7 @@
       justify-content: center;
       border: 1px solid var(--gray-300);
       background: var(--white);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -1430,7 +1478,7 @@
     .block-reason-banner {
       background: #FFE5E5;
       border: 1px solid #FFCCCC;
-      border-radius: 6px;
+      border-radius: 4px;
       padding: 12px;
       font-size: 12px;
       color: var(--gray-800);
@@ -1444,7 +1492,7 @@
     .share-link-box {
       background: var(--gray-50);
       border: 1px solid var(--gray-300);
-      border-radius: 8px;
+      border-radius: 4px;
       padding: 12px;
       margin-top: 12px;
     }
@@ -1453,7 +1501,7 @@
       width: 100%;
       padding: 8px 12px;
       border: 1px solid var(--gray-300);
-      border-radius: 6px;
+      border-radius: 4px;
       font-family: monospace;
       font-size: 12px;
       background: #fff;
@@ -1483,7 +1531,7 @@
       flex-direction: column;
       overflow: hidden;
       border: 1px solid var(--gray-200);
-      border-radius: 8px;
+      border-radius: 4px;
       background: #fafafa;
     }
 
@@ -1503,7 +1551,7 @@
       width: 100%;
       padding: 8px 12px;
       border: 1px solid var(--gray-300);
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 13px;
       color: var(--gray-800);
       transition: all 0.2s;
@@ -1552,7 +1600,7 @@
     .sub-item-photo {
       width: 40px;
       height: 40px;
-      border-radius: 6px;
+      border-radius: 4px;
       background: var(--gray-200);
       flex-shrink: 0;
       display: flex;
@@ -1787,7 +1835,7 @@
       margin: 8px 16px 16px 32px;
       background: #fff;
       border: 1px solid var(--gray-200);
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     }
@@ -1983,7 +2031,7 @@
     };
 
     const lotIconSvg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2B7A78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#207345" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="m11 17 2 2a1 1 0 1 0 3-3"/>
         <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/>
         <path d="m21 3 1 11h-2"/>
@@ -1996,7 +2044,7 @@
       if (!text || text === '—') return;
       navigator.clipboard.writeText(text).then(() => {
         const originalText = el.innerHTML;
-        el.innerHTML = 'Код скопирован!';
+        el.innerHTML = 'Скопировано';
         el.style.background = 'var(--accent-blue)';
         el.style.color = '#fff';
         setTimeout(() => {
@@ -3048,14 +3096,24 @@
             </button>
           ` : '';
 
+          const rawInn = String(u.inn || (u._rawData?.subcontractor?.inn) || '');
+          const formattedInn = rawInn ? rawInn.replace(/(\d{3})(?=\d)/g, '$1 ') : '—';
+
           return `
             <div class="offer-card ${cardClass}" data-offer-id="${u.uploadId}" data-lot-id="${lot.id}">
               <div class="offer-header">
                 <div class="offer-title-box">
                   <div class="offer-title">${u.subcontractor}</div>
-                  <div class="offer-code-badge" onclick="copyToClipboard('${u.inviteCode}', this)" title="Нажмите, чтобы скопировать">
-                    Код: ${u.inviteCode || '—'}
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; opacity: 0.6;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="offer-code-badge" onclick="copyToClipboard('${rawInn}', this)" title="Нажмите, чтобы скопировать ИНН">
+                      ИНН: ${formattedInn}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; opacity: 0.6;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                    <span style="color: var(--gray-300); font-size: 11px;">|</span>
+                    <div class="offer-code-badge" onclick="copyToClipboard('${u.inviteCode}', this)" title="Нажмите, чтобы скопировать Код">
+                      Код: ${u.inviteCode || '—'}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; opacity: 0.6;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
                   </div>
                 </div>
                 <div class="offer-header-actions">
@@ -3072,45 +3130,6 @@
               <div class="offer-status">${statusStepper(u)}</div>
               <div class="offer-row"><span class="offer-label">Срок</span><span>${u.completionDate || "—"}</span></div>
               <div class="offer-row"><span class="offer-label">Сумма</span><span class="offer-sum">${sumLabel}</span></div>
-              <div class="offer-row" style="margin: 4px 0;">
-                <span class="offer-label">Документы</span>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <div class="doc-icon-btn ${u.certificatePhoto ? 'active' : ''}" 
-                       onclick="event.stopPropagation(); ${u.certificatePhoto ? `viewDoc('Сертификат (Гувохнома)', '${u.certificatePhoto}')` : ''}" 
-                       title="${u.certificatePhoto ? 'Просмотреть Сертификат' : 'Сертификат не загружен'}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    <span style="font-size: 10px; margin-left: 4px;">Сертификат</span>
-                  </div>
-                  <div class="doc-icon-btn ${u.licensePhoto ? 'active' : ''}" 
-                       onclick="event.stopPropagation(); ${u.licensePhoto ? `viewDoc('Лицензия', '${u.licensePhoto}')` : ''}" 
-                       title="${u.licensePhoto ? 'Просмотреть Лицензию' : 'Лицензия не загружена'}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    <span style="font-size: 10px; margin-left: 4px;">Лицензия</span>
-                  </div>
-                  <div class="doc-icon-btn ${u.mtbPhoto ? 'active' : ''}" 
-                       onclick="event.stopPropagation(); ${u.mtbPhoto ? `viewDoc('МТБ', '${u.mtbPhoto}')` : ''}" 
-                       title="${u.mtbPhoto ? 'Просмотреть МТБ' : 'МТБ не загружена'}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.63 3 12"/><polyline points="21 12 16.5 14.63 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    <span style="font-size: 10px; margin-left: 4px;">МТБ</span>
-                  </div>
-                  <div class="doc-icon-btn ${u.trPhoto ? 'active' : ''}" 
-                       onclick="event.stopPropagation(); ${u.trPhoto ? `viewDoc('Трудовые ресурсы', '${u.trPhoto}')` : ''}" 
-                       title="${u.trPhoto ? 'Просмотреть ТР' : 'ТР не загружена'}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span style="font-size: 10px; margin-left: 4px;">ТР</span>
-                  </div>
-                </div>
-              </div>
-              <div class="offer-row">
-                <span class="offer-label">Баллы</span>
-                <div class="progress-wrap">
-                  <div class="rating-cubes">
-                    ${Array.from({ length: 10 }, (_, i) => `<div class="rating-cube ${(u.score || 0) > i ? 'active' : ''}"></div>`).join('')}
-                  </div>
-                  <span class="progress-value">${u.score ?? '—'}</span>
-                </div>
-              </div>
-              <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
               <div class="offer-row">
                 <span class="offer-label">Рейтинг (mc.uz)</span>
                 <div style="display:flex; align-items:center; gap:6px;">
@@ -3122,9 +3141,57 @@
                   </button>
                 </div>
               </div>
-              <div class="offer-actions">
-                <button class="btn secondary btn-view-file" data-url="${fileUrl}" ${u.status === 'invited' ? 'disabled style="opacity:0.5;"' : ''}>Просмотр файла</button>
-                <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) || u.status === 'invited' ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Составить договор' : 'Выбрать')}</button>
+              <div class="offer-row">
+                <span class="offer-label">Баллы</span>
+                <div class="progress-wrap">
+                  <div class="rating-cubes">
+                    ${Array.from({ length: 10 }, (_, i) => `<div class="rating-cube ${(u.score || 0) > i ? 'active' : ''}"></div>`).join('')}
+                  </div>
+                  <span class="progress-value">${u.score ?? '—'}</span>
+                </div>
+              </div>
+              
+              <div class="offer-extra-content">
+                <div class="offer-row" style="margin: 4px 0;">
+                  <span class="offer-label">Документы</span>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <div class="doc-icon-btn ${u.certificatePhoto ? 'active' : ''}" 
+                        onclick="event.stopPropagation(); ${u.certificatePhoto ? `viewDoc('Сертификат (Гувохнома)', '${u.certificatePhoto}')` : ''}" 
+                        title="${u.certificatePhoto ? 'Просмотреть Сертификат' : 'Сертификат не загружен'}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      <span style="font-size: 10px; margin-left: 4px;">Сертификат</span>
+                    </div>
+                    <div class="doc-icon-btn ${u.licensePhoto ? 'active' : ''}" 
+                        onclick="event.stopPropagation(); ${u.licensePhoto ? `viewDoc('Лицензия', '${u.licensePhoto}')` : ''}" 
+                        title="${u.licensePhoto ? 'Просмотреть Лицензию' : 'Лицензия не загружена'}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                      <span style="font-size: 10px; margin-left: 4px;">Лицензия</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="offer-row" style="margin: 4px 0;">
+                  <span class="offer-label">Справки:</span>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <div class="doc-icon-btn ${u.mtbPhoto ? 'active' : ''}" 
+                        onclick="event.stopPropagation(); ${u.mtbPhoto ? `viewDoc('МТБ', '${u.mtbPhoto}')` : ''}" 
+                        title="${u.mtbPhoto ? 'Просмотреть МТБ' : 'МТБ не загружена'}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.63 3 12"/><polyline points="21 12 16.5 14.63 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                      <span style="font-size: 10px; margin-left: 4px;">МТБ</span>
+                    </div>
+                    <div class="doc-icon-btn ${u.trPhoto ? 'active' : ''}" 
+                        onclick="event.stopPropagation(); ${u.trPhoto ? `viewDoc('Трудовые ресурсы', '${u.trPhoto}')` : ''}" 
+                        title="${u.trPhoto ? 'Просмотреть ТР' : 'ТР не загружена'}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      <span style="font-size: 10px; margin-left: 4px;">ТР</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="offer-row-spacer"></div>
+                <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
+                <div class="offer-actions">
+                  <button class="btn secondary btn-view-file" data-url="${fileUrl}" ${u.status === 'invited' ? 'disabled style="opacity:0.5;"' : ''}>Просмотр файла</button>
+                  <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) || u.status === 'invited' ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Составить договор' : 'Выбрать')}</button>
+                </div>
               </div>
             </div>
           `;
@@ -3193,6 +3260,19 @@
           </details>
         `;
       }).join("");
+
+      // Add click toggler for expanding all cards in a grid
+      container.querySelectorAll(".offer-card:not(.invite-card)").forEach(card => {
+        card.addEventListener("click", (e) => {
+          // Prevent expansion if clicking on interactive elements
+          if (e.target.closest('button, a, .offer-code-badge')) return;
+
+          const grid = card.closest('.offers-grid');
+          if (grid) {
+            grid.classList.toggle('expanded');
+          }
+        });
+      });
 
       // Add event listeners for block buttons
       container.querySelectorAll(".block-btn").forEach(btn => {
@@ -3517,7 +3597,7 @@
               margin-left: auto; white-space: nowrap;
             }
             
-            input[type="checkbox"] { accent-color: #2B7A78; width: 16px; height: 16px; }
+            input[type="checkbox"] { accent-color: #207345; width: 16px; height: 16px; }
             input[type="checkbox"]:disabled { cursor: not-allowed; }
         </style>
 

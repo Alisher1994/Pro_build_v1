@@ -1254,7 +1254,7 @@ const EstimateManager = {
             for (const stage of allStages) {
                 html += `
                     <div class="tree-node" style="margin-bottom: 8px;">
-                        <div onclick="EstimateManager.toggleStage('${stage.id}')" style="padding: 8px 12px; background: #F0F9F9; border-left: 3px solid var(--primary); cursor: pointer; border-radius: 4px;">
+                        <div onclick="EstimateManager.toggleStage('${stage.id}')" style="padding: 8px 12px; background: #f0f9f5; border-left: 3px solid var(--primary); cursor: pointer; border-radius: 4px;">
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                                     <svg id="stage-icon-${stage.id}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

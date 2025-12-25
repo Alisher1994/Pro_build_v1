@@ -36,7 +36,8 @@ echo.
 :: 3. Launch Backend (Dev Mode with AI Support)
 echo [3/4] Starting Backend (Port 3001)...
 echo Includes: AI Services, mc.uz Scraper, API
-start "ProBIM Backend [3001]" cmd /k "cd backend && echo === BACKEND LOGS === && npm run dev"
+:: Added prisma generate to ensure latest schema is available
+start "ProBIM Backend [3001]" cmd /k "cd backend && echo === SYNCING DATABASE SCHEMA === && npx prisma generate && echo. && echo === BACKEND LOGS === && npm run dev"
 
 :: 4. Launch Frontend
 echo [4/4] Starting Frontend (Port 8000)...
@@ -48,6 +49,7 @@ echo ✅ PROJECT STARTED SUCCESSFULLY!
 echo ===================================================
 echo 🌍 Frontend: http://localhost:8000
 echo 📊 Backend API: http://localhost:3001/api
+echo 🗄️  Database: Railway Cloud (PostgreSQL)
 echo 🤖 AI Model (Norms): llama3.2:3b
 echo 🤖 AI Model (Instructions): llama3.2:1b
 echo 🔍 mc.uz Parsing: Active

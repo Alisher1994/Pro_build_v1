@@ -358,7 +358,7 @@ const SettingsManager = {
                     selectedContainer.innerHTML = '<span style="color: var(--gray-400); font-size: 14px;">Выберите виды работ...</span>';
                 } else {
                     selectedContainer.innerHTML = selectedWorkTypes.map(type => `
-                        <div style="background: #2B7A78; color: #fff; padding: 2px 10px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <div style="background: #207345; color: #fff; padding: 2px 10px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
                             ${type}
                             <span class="remove-work-type" data-value="${type}" style="cursor: pointer; font-size: 14px; line-height: 1;">&times;</span>
                         </div>
@@ -371,8 +371,8 @@ const SettingsManager = {
                     const checkbox = opt.querySelector('.checkbox-box');
                     const check = checkbox.querySelector('svg');
                     if (selectedWorkTypes.includes(val)) {
-                        checkbox.style.background = '#2B7A78';
-                        checkbox.style.borderColor = '#2B7A78';
+                        checkbox.style.background = '#207345';
+                        checkbox.style.borderColor = '#207345';
                         check.style.display = 'block';
                     } else {
                         checkbox.style.background = 'transparent';

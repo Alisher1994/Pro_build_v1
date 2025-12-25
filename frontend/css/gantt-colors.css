@@ -3,35 +3,39 @@
 */
 
 :root {
-    --gantt-phase-color: #2B7A78;   /* Очередь */
-    --gantt-block-color: #76a9a8;   /* Блок */
-    --gantt-floor-color: #c1d8d7;   /* Этаж */
-    --gantt-group-color: #f5f5f5;   /* Light Gray */
+    --gantt-phase-color: #207345;
+    /* Очередь */
+    --gantt-block-color: #5a9d79;
+    /* Блок */
+    --gantt-floor-color: #b7d5c4;
+    /* Этаж */
+    --gantt-group-color: #f5f5f5;
+    /* Light Gray */
 
     /* DHTMLX Gantt (v9+) skin variables */
-    --dhx-gantt-base-colors-primary: #4BC0BD;
+    --dhx-gantt-base-colors-primary: #32a870;
     /* Force solid (non-blue) task background */
-    --dhx-gantt-task-blue: #dae8e7;
-    --dhx-gantt-task-green: #dae8e7;
-    --dhx-gantt-task-violet: #dae8e7;
-    --dhx-gantt-task-yellow: #dae8e7;
-    --dhx-gantt-task-background: #dae8e7;
+    --dhx-gantt-task-blue: #d9eae0;
+    --dhx-gantt-task-green: #d9eae0;
+    --dhx-gantt-task-violet: #d9eae0;
+    --dhx-gantt-task-yellow: #d9eae0;
+    --dhx-gantt-task-background: #d9eae0;
 }
 
 /* Fallback for older skins / ensure correct progress colors */
 .gantt_task_line {
-    background-color: #dae8e7;
+    background-color: #d9eae0;
 }
 
 /* Some skins apply additional classes for task types */
 .gantt_task_line.gantt_bar_task,
 .gantt_task_line.gantt_bar_project,
 .gantt_task_line.gantt_bar_milestone {
-    background-color: #dae8e7;
+    background-color: #d9eae0;
 }
 
 .gantt_task_line .gantt_task_progress {
-    background-color: #4BC0BD;
+    background-color: #32a870;
 }
 
 /* Today marker (red vertical line) */
@@ -69,9 +73,17 @@
     border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.gantt-legend .legend-swatch.phase { background: var(--gantt-phase-color); }
-.gantt-legend .legend-swatch.block { background: var(--gantt-block-color); }
-.gantt-legend .legend-swatch.floor { background: var(--gantt-floor-color); }
+.gantt-legend .legend-swatch.phase {
+    background: var(--gantt-phase-color);
+}
+
+.gantt-legend .legend-swatch.block {
+    background: var(--gantt-block-color);
+}
+
+.gantt-legend .legend-swatch.floor {
+    background: var(--gantt-floor-color);
+}
 
 /* Phase (Очередь) */
 .gantt_row.row_phase .gantt_cell {
@@ -79,6 +91,7 @@
     color: #fff !important;
     font-weight: bold;
 }
+
 .gantt_row.row_phase .gantt_tree_content {
     color: #fff !important;
 }
@@ -108,7 +121,7 @@
 .gantt_row.row_block .gantt_cell,
 .gantt_row.row_floor .gantt_cell,
 .gantt_row.row_stage .gantt_cell {
-    border-right-color: rgba(0,0,0,0.1) !important;
+    border-right-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Do NOT color the last "add" (+) column (it sits after the % column) */

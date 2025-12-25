@@ -27,19 +27,19 @@ class ProBIMApp {
     }
 
     getInitialRibbonTab() {
-        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'analytics', 'otitb', 'settings']);
+        // Убрали 'analytics' из списка разрешенных
+        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'settings']);
 
-        // Очищаем хеш estimate при загрузке (legacy)
+        // Принудительно открываем Дашборд при обновлении
+        // Если в URL есть хеш, его можно оставить для глубокой навигации, 
+        // но если пользователь хочет "по умолчанию Дашборд", лучше игнорировать сохраненное состояние.
+
         const hash = (window.location.hash || '').replace('#', '').trim();
-        if (hash === 'estimate') {
-            window.history.replaceState(null, '', window.location.pathname);
-        } else if (hash && allowed.has(hash)) {
+        if (hash && allowed.has(hash)) {
             return hash;
         }
 
-        const saved = (localStorage.getItem('probim_active_ribbon_tab') || '').trim();
-        if (saved && allowed.has(saved)) return saved;
-
+        // Игнорируем localStorage для того, чтобы всегда был Дашборд при чистом заходе/F5
         return 'dashboard';
     }
 
@@ -96,6 +96,9 @@ class ProBIMApp {
 
         // Обновляем состояние ribbon
         this.updateRibbonState();
+
+        // Инициализируем погоду
+        this.initWeather();
 
         console.log('✅ ProBIM Application Ready');
     }
@@ -1453,6 +1456,136 @@ class ProBIMApp {
                     await EstimateManager.openSection(state.params.sectionId);
                 }
                 break;
+        }
+    }
+
+    async initWeather() {
+        const widget = document.getElementById('weather-widget');
+        const aqiWidget = document.getElementById('aqi-widget');
+        if (!widget) return;
+
+        const tempEl = widget.querySelector('.weather-temp');
+        const cityEl = widget.querySelector('.weather-city');
+        const iconContainer = widget.querySelector('.weather-icon');
+
+        const aqiValueEl = document.getElementById('aqi-value');
+        const aqiIndicator = document.getElementById('aqi-indicator');
+
+        const updateUI = (temp, city, weatherCode, isDay) => {
+            if (tempEl) tempEl.textContent = `${temp > 0 ? '+' : ''}${Math.round(temp)}°C`;
+            if (cityEl) cityEl.textContent = city;
+
+            if (iconContainer) {
+                const getIconPath = (code, day) => {
+                    const base = 'src/animated icons/';
+                    if (code === 0) return day ? base + 'day.svg' : base + 'night.svg';
+                    if (code >= 1 && code <= 3) return day ? base + 'cloudy-day-1.svg' : base + 'cloudy-night-1.svg';
+                    if (code >= 45 && code <= 48) return base + 'cloudy.svg';
+                    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return base + 'rainy-6.svg';
+                    if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return base + 'snowy-6.svg';
+                    if (code >= 95) return base + 'thunder.svg';
+                    return base + 'cloudy.svg';
+                };
+
+                const iconPath = getIconPath(weatherCode, isDay);
+                iconContainer.innerHTML = `<img src="${iconPath}" alt="Weather Icon" />`;
+            }
+        };
+
+        const aqiToPm25 = (aqi) => {
+            // Официальная формула US EPA (инвертированная) для PM2.5
+            if (aqi <= 50) return (aqi - 0) * (12.0 - 0) / (50 - 0) + 0;
+            if (aqi <= 100) return (aqi - 51) * (35.4 - 12.1) / (100 - 51) + 12.1;
+            if (aqi <= 150) return (aqi - 101) * (55.4 - 35.5) / (150 - 101) + 35.5;
+            if (aqi <= 200) return (aqi - 151) * (150.4 - 55.5) / (200 - 151) + 55.5;
+            if (aqi <= 300) return (aqi - 201) * (250.4 - 150.5) / (300 - 201) + 150.5;
+            if (aqi <= 400) return (aqi - 301) * (350.4 - 250.5) / (400 - 301) + 250.5;
+            return (aqi - 401) * (500.4 - 350.5) / (500 - 401) + 350.5;
+        };
+
+        const updateAQIUI = (aqi) => {
+            if (!aqiValueEl || !aqiIndicator) return;
+
+            const aqiNum = Math.round(aqi);
+            aqiValueEl.textContent = aqiNum;
+
+            // Вычисляем физический вес из индекса
+            const pm25 = aqiToPm25(aqiNum);
+            const pmEl = document.getElementById('pm-value');
+            if (pmEl) {
+                pmEl.textContent = Math.round(pm25);
+            }
+
+            aqiIndicator.className = 'aqi-indicator';
+
+            if (aqiNum <= 50) {
+                // Good
+            } else if (aqiNum <= 100) {
+                aqiIndicator.classList.add('moderate');
+            } else if (aqiNum <= 150) {
+                aqiIndicator.classList.add('sensitive');
+            } else if (aqiNum <= 200) {
+                aqiIndicator.classList.add('unhealthy');
+            } else if (aqiNum <= 300) {
+                aqiIndicator.style.background = '#8f3f97';
+                aqiIndicator.style.color = '#8f3f97';
+            } else {
+                aqiIndicator.classList.add('hazardous');
+            }
+
+            const widget = document.getElementById('aqi-widget');
+            if (widget) {
+                widget.title = `Индекс AQI: ${aqiNum}\nКонцентрация PM2.5: ${pm25.toFixed(1)} мкг/м³`;
+            }
+        };
+
+        const fetchWeatherAndAQI = async (lat, lon, city = 'Локация') => {
+            try {
+                // Fetch Weather (Open-Meteo ок для погоды)
+                const weatherResp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const weatherData = await weatherResp.json();
+                if (weatherData.current_weather) {
+                    const cw = weatherData.current_weather;
+                    updateUI(cw.temperature, city, cw.weathercode, cw.is_day === 1);
+                }
+
+                // Fetch AQI from WAQI (World Air Quality Index)
+                // Используем локацию "tashkent" или ближайшую станцию
+                // Токен "demo" официальный для небольших нагрузок
+                const aqiResp = await fetch(`https://api.waqi.info/feed/tashkent/?token=demo`);
+                const aqiData = await aqiResp.json();
+
+                if (aqiData.status === 'ok') {
+                    updateAQIUI(aqiData.data.aqi);
+                }
+            } catch (e) {
+                console.error('Environmental data fetch failed', e);
+            }
+        };
+
+        // Пытаемся получить геопозицию
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    let cityName = 'Ваш город';
+                    try {
+                        const geoResp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=10&addressdetails=1`, {
+                            headers: { 'Accept-Language': 'ru' }
+                        });
+                        const geoData = await geoResp.json();
+                        cityName = geoData.address.city || geoData.address.town || geoData.address.village || 'Ваш город';
+                    } catch (e) {
+                        console.warn('City detection failed', e);
+                    }
+                    await fetchWeatherAndAQI(pos.coords.latitude, pos.coords.longitude, cityName);
+                },
+                async () => {
+                    // Дефолт (Ташкент) если запретили доступ
+                    await fetchWeatherAndAQI(41.3111, 69.2406, 'Ташкент');
+                }
+            );
+        } else {
+            await fetchWeatherAndAQI(41.3111, 69.2406, 'Ташкент');
         }
     }
 }

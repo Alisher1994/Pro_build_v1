@@ -11,9 +11,9 @@
         rel="stylesheet">
     <style>
         :root {
-            --primary: #2B7A78;
-            --primary-light: #3AAFA9;
-            --primary-lighter: #DEF2F1;
+            --primary: #207345;
+            --primary-light: #5a9d79;
+            --primary-lighter: #d9eae0;
             --dark: #17252A;
             --gray-50: #F8FAFC;
             --gray-100: #F1F5F9;
@@ -150,7 +150,7 @@
             width: 50px;
             height: 60px;
             border: 2px solid var(--gray-200);
-            border-radius: 12px;
+            border-radius: 4px;
             font-size: 28px;
             text-align: center;
             font-weight: 700;
@@ -171,7 +171,7 @@
             background: var(--primary);
             color: var(--white);
             border: none;
-            border-radius: 12px;
+            border-radius: 4px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -223,7 +223,7 @@
         .tender-info-chip {
             background: var(--gray-100);
             padding: 6px 12px;
-            border-radius: 20px;
+            border-radius: 4px;
             font-size: 13px;
             font-weight: 500;
             color: var(--gray-700);
@@ -236,7 +236,7 @@
 
         .btn-action {
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -268,7 +268,7 @@
             background: var(--primary);
             color: #fff;
             padding: 8px 16px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-weight: 500;
             transition: all 0.2s;
             display: flex;
@@ -289,7 +289,7 @@
             background: #E6F4F1;
             color: var(--primary);
             padding: 8px 16px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -337,7 +337,7 @@
 
         .stat-input {
             border: 1px solid var(--gray-300);
-            border-radius: 6px;
+            border-radius: 4px;
             padding: 4px 8px;
             font-size: 14px;
             font-weight: 600;
@@ -386,7 +386,7 @@
             display: flex;
             flex-direction: column;
             background: var(--white);
-            border-radius: 12px;
+            border-radius: 4px;
             box-shadow: var(--shadow-sm);
             overflow: hidden;
             border: 1px solid var(--gray-200);
@@ -438,7 +438,7 @@
             color: var(--primary);
             border: none;
             padding: 6px 12px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -522,7 +522,7 @@
             color: var(--dark);
             padding: 10px 14px;
             background: var(--gray-50);
-            border-radius: 8px;
+            border-radius: 4px;
             margin-bottom: 12px;
             border-left: 4px solid var(--primary);
             display: flex;
@@ -534,7 +534,7 @@
             margin-left: 12px;
             margin-bottom: 12px;
             border: 1px solid var(--gray-100);
-            border-radius: 8px;
+            border-radius: 4px;
             padding: 12px;
             transition: border-color 0.2s;
         }
@@ -622,7 +622,7 @@
         .estimate-item {
             cursor: pointer;
             transition: all 0.2s;
-            border-radius: 8px;
+            border-radius: 4px;
             margin-bottom: 4px;
         }
 
@@ -648,7 +648,7 @@
         .section-item {
             cursor: pointer;
             transition: all 0.2s;
-            border-radius: 8px;
+            border-radius: 4px;
             margin-bottom: 4px;
         }
 
@@ -694,7 +694,7 @@
         .res-icon-box {
             width: 32px;
             height: 32px;
-            border-radius: 8px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -857,7 +857,7 @@
             background: var(--primary-lighter);
             color: var(--primary);
             padding: 4px 10px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-weight: 700;
             font-size: 13px;
         }
@@ -1604,7 +1604,7 @@
                     const workNum = idx + 1;
 
                     return `
-                                    <div class="tree-work shadow-sm" style="background: #fff; margin-bottom: 20px;">
+                                    <div class="tree-work shadow-sm" style="background: #fff; margin-bottom: 20px; border-radius: 4px;">
                                         <div class="tree-work-header" style="border-bottom: none; padding-bottom: 4px;" onclick="toggleTreeItem('${workRef}')">
                                             <div style="display:flex; align-items:start; gap:12px;">
                                                 <span class="caret" id="caret-${workRef}" style="margin-top: 4px;">▼</span>
@@ -1612,7 +1612,7 @@
                                                 <div>
                                                     <div style="font-weight: 500; font-size: 14px;">${item.name} <span style="color: #CBD5E1; margin-left:8px; font-weight:400;">(${resources.length} ресурсов)</span></div>
                                                     <div style="font-size: 13px; color: #94A3B8; margin-top: 4px; font-weight: 400;">
-                                                        Объем: <span style="color: #2B7A78; font-weight: 600;">${formatNum(item.volume)} ${item.unit}</span>
+                                                        Объем: <span style="color: #207345; font-weight: 600;">${formatNum(item.volume)} ${item.unit}</span>
                                                     </div>
                                                 </div>
                                             </div>

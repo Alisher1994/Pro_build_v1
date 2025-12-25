@@ -251,7 +251,7 @@ class ProBIMApp {
 
         switch (this.currentRibbonTab) {
             case 'dashboard':
-                this.loadDashboardTab();
+                await this.loadDashboardTab();
                 break;
             case 'estimate':
                 if (isRestoring && EstimateManager.restoreState) {
@@ -406,19 +406,47 @@ class ProBIMApp {
         }
     }
 
-    loadDashboardTab() {
+    async loadDashboardTab() {
         const contentArea = document.getElementById('content-area');
         contentArea.style.padding = '0';
         contentArea.style.overflow = 'auto';
-        contentArea.innerHTML = `
-            <iframe 
-                id="dashboard-frame" 
-                src="dashboard.html" 
-                style="width: 100%; min-height: 100%; border: none; display: block;"
-                title="Dashboard"
-                scrolling="yes"
-            ></iframe>
-        `;
+
+        try {
+            const response = await fetch('dashboard.html');
+            const html = await response.text();
+
+            // Extract body content from dashboard.html
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const dashboardContent = doc.querySelector('.dashboard-container');
+            const styles = doc.querySelector('style');
+
+            if (dashboardContent) {
+                contentArea.innerHTML = '';
+                if (styles) {
+                    contentArea.appendChild(styles.cloneNode(true));
+                }
+                contentArea.appendChild(dashboardContent.cloneNode(true));
+
+                // Re-execute scripts for Chart.js
+                const scripts = doc.querySelectorAll('script');
+                scripts.forEach(script => {
+                    if (script.textContent && !script.src) {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = script.textContent;
+                        contentArea.appendChild(newScript);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            contentArea.innerHTML = `
+                <div style="padding: 24px;">
+                    <h2>Ошибка загрузки дашборда</h2>
+                    <p style="color: var(--gray-600);">Не удалось загрузить содержимое дашборда</p>
+                </div>
+            `;
+        }
     }
 
     loadAnalyticsTab() {

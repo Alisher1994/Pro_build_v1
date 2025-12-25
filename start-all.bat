@@ -1,9 +1,10 @@
 @echo off
+chcp 65001 >nul
 SETLOCAL EnableDelayedExpansion
-title ProBIM Unified Starter (With Ollama Support)
+title ProBIM Unified Starter
 
 echo ===================================================
-echo 🔥 ProBIM: Unified Project Starter (AI + Full Stack)
+echo 🔥 ProBIM: Unified Project Starter
 echo ===================================================
 echo.
 
@@ -33,30 +34,19 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000 ^| findstr LISTENING') 
 )
 echo.
 
-:: 3. Launch Backend (Dev Mode with AI Support)
+:: 3. Launch Backend
 echo [3/4] Starting Backend (Port 3001)...
-echo Includes: AI Services, mc.uz Scraper, API
-:: Added prisma generate to ensure latest schema is available
-start "ProBIM Backend [3001]" cmd /k "cd backend && echo === SYNCING DATABASE SCHEMA === && npx prisma generate && echo. && echo === BACKEND LOGS === && npm run dev"
+start "ProBIM Backend" cmd /k "cd backend && npx prisma generate && npm run dev"
 
 :: 4. Launch Frontend
 echo [4/4] Starting Frontend (Port 8000)...
-start "ProBIM Frontend [8000]" cmd /k "cd frontend && echo === FRONTEND LOGS === && python -m http.server 8000"
+start "ProBIM Frontend" cmd /k "cd frontend && python -m http.server 8000"
 
 echo.
 echo ===================================================
-echo ✅ PROJECT STARTED SUCCESSFULLY!
+echo ✅ PROJECT STARTED
 echo ===================================================
-echo 🌍 Frontend: http://localhost:8000
-echo 📊 Backend API: http://localhost:3001/api
-echo 🗄️  Database: Railway Cloud (PostgreSQL)
-echo 🤖 AI Model (Norms): llama3.2:3b
-echo 🤖 AI Model (Instructions): llama3.2:1b
-echo 🔍 mc.uz Parsing: Active
-echo ===================================================
-echo.
-echo You can close THIS window. Keep the others open.
-echo If AI doesn't respond, check if models are pulled:
-echo 'ollama pull llama3.2:1b' and 'ollama pull llama3.2:3b'
+echo Frontend: http://localhost:8000
+echo Backend:  http://localhost:3001
 echo.
 pause

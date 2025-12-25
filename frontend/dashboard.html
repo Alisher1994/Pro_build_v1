@@ -400,15 +400,6 @@
                 <p class="dashboard-subtitle">Комплексный обзор ключевых показателей и аналитика в реальном времени</p>
             </div>
             <div class="dashboard-actions">
-                <button class="dashboard-btn" id="org-structure-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    Структура объекта
-                </button>
                 <button class="dashboard-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -761,597 +752,827 @@
     </div>
 
     <script>
-        // Chart.js configuration
-        Chart.defaults.font.family = "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
-        Chart.defaults.color = '#605E5C';
-        Chart.defaults.borderColor = '#E1DFDD';
+        (() => {
+            // Chart.js configuration
+            Chart.defaults.font.family = "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
+            Chart.defaults.color = '#605E5C';
+            Chart.defaults.borderColor = '#E1DFDD';
 
-        const primaryColor = '#207345';
-        const primaryLight = '#5a9d79';
-        const accentBlue = '#207345';
-        const accentOrange = '#CA5010';
-        const accentGreen = '#107C10';
-        const accentRed = '#D13438';
+            const primaryColor = '#207345';
+            const primaryLight = '#5a9d79';
+            const accentBlue = '#207345';
+            const accentOrange = '#CA5010';
+            const accentGreen = '#107C10';
+            const accentRed = '#D13438';
 
-        // Cost Analysis Line Chart
-        const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
-        new Chart(costCtx, {
-            type: 'line',
-            data: {
-                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-                datasets: [{
-                    label: 'План',
-                    data: [400000, 800000, 1200000, 1600000, 2000000, 2400000],
-                    borderColor: primaryColor,
-                    backgroundColor: 'rgba(32, 115, 69, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    pointBackgroundColor: 'white',
-                    pointBorderColor: primaryColor,
-                    pointBorderWidth: 3
-                }, {
-                    label: 'Факт',
-                    data: [380000, 820000, 1150000, 1680000, 1950000, 2350000],
-                    borderColor: accentOrange,
-                    backgroundColor: 'rgba(202, 80, 16, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    pointBackgroundColor: 'white',
-                    pointBorderColor: accentOrange,
-                    pointBorderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
+            // Cost Analysis Line Chart
+            const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
+            new Chart(costCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                    datasets: [{
+                        label: 'План',
+                        data: [400000, 800000, 1200000, 1600000, 2000000, 2400000],
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(32, 115, 69, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: 'white',
+                        pointBorderColor: primaryColor,
+                        pointBorderWidth: 3
+                    }, {
+                        label: 'Факт',
+                        data: [380000, 820000, 1150000, 1680000, 1950000, 2350000],
+                        borderColor: accentOrange,
+                        backgroundColor: 'rgba(202, 80, 16, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: 'white',
+                        pointBorderColor: accentOrange,
+                        pointBorderWidth: 3
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return '₸ ' + (value / 1000000).toFixed(1) + 'M';
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [2, 4]
                             }
                         },
-                        grid: {
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 16
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': ₸ ' + context.parsed.y.toLocaleString('ru-RU');
+                        x: {
+                            grid: {
+                                display: false
                             }
                         }
                     }
-                },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeInOutQuart'
                 }
-            }
-        });
-
-        // Budget Doughnut Chart
-        const budgetCtx = document.getElementById('budgetChart').getContext('2d');
-        new Chart(budgetCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['АР', 'КЖ', 'ОВ', 'ВК', 'ЭОМ', 'Прочее'],
-                datasets: [{
-                    data: [850000, 620000, 380000, 290000, 180000, 80000],
-                    backgroundColor: [
-                        primaryColor,
-                        primaryLight,
-                        '#9ccc65',
-                        '#66bb6a',
-                        '#43a047',
-                        '#2e7d32'
-                    ],
-                    borderWidth: 0,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            padding: 16,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            font: {
-                                size: 13
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.label + ': ₸ ' + context.parsed.toLocaleString('ru-RU');
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true,
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-
-        // Timeline Bar Chart
-        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
-        new Chart(timelineCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-                datasets: [{
-                    label: 'Выполнено работ, %',
-                    data: [12, 28, 45, 62, 78, 85],
-                    backgroundColor: primaryColor,
-                    borderRadius: 4,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function (value) {
-                                return value + '%';
-                            }
-                        },
-                        grid: {
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return 'Прогресс: ' + context.parsed.y + '%';
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart',
-                    delay: (context) => {
-                        return context.dataIndex * 100;
-                    }
-                }
-            }
-        });
-
-        // Resources Radar Chart
-        const resourcesCtx = document.getElementById('resourcesChart').getContext('2d');
-        new Chart(resourcesCtx, {
-            type: 'radar',
-            data: {
-                labels: ['Бетон', 'Арматура', 'Кирпич', 'Техника', 'Инструмент'],
-                datasets: [{
-                    label: 'Использовано',
-                    data: [85, 72, 68, 90, 78],
-                    backgroundColor: 'rgba(32, 115, 69, 0.2)',
-                    borderColor: primaryColor,
-                    borderWidth: 2,
-                    pointBackgroundColor: primaryColor,
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: primaryColor
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 20
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-
-        // Quality Polar Chart
-        const qualityCtx = document.getElementById('qualityChart').getContext('2d');
-        new Chart(qualityCtx, {
-            type: 'polarArea',
-            data: {
-                labels: ['Блок А', 'Блок Б', 'Блок В', 'Блок Г', 'Блок Д'],
-                datasets: [{
-                    data: [4.8, 4.5, 4.7, 4.2, 4.6],
-                    backgroundColor: [
-                        'rgba(32, 115, 69, 0.7)',
-                        'rgba(90, 157, 121, 0.7)',
-                        'rgba(156, 204, 101, 0.7)',
-                        'rgba(102, 187, 106, 0.7)',
-                        'rgba(67, 160, 71, 0.7)'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 5,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            padding: 12,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-
-        // Staff Area Chart
-        const staffCtx = document.getElementById('staffChart').getContext('2d');
-        new Chart(staffCtx, {
-            type: 'line',
-            data: {
-                labels: ['Нед 1', 'Нед 2', 'Нед 3', 'Нед 4', 'Нед 5', 'Нед 6', 'Нед 7', 'Нед 8'],
-                datasets: [{
-                    label: 'Рабочие',
-                    data: [120, 135, 148, 156, 152, 145, 150, 156],
-                    borderColor: primaryColor,
-                    backgroundColor: 'rgba(32, 115, 69, 0.2)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }, {
-                    label: 'Инженеры',
-                    data: [18, 20, 22, 24, 23, 22, 24, 25],
-                    borderColor: accentOrange,
-                    backgroundColor: 'rgba(202, 80, 16, 0.2)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 16
-                        }
-                    }
-                },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-
-        // Tenders Stacked Bar Chart
-        const tendersCtx = document.getElementById('tendersChart').getContext('2d');
-        new Chart(tendersCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-                datasets: [{
-                    label: 'Открыто',
-                    data: [3, 5, 4, 6, 5, 7],
-                    backgroundColor: primaryColor,
-                    borderRadius: 4
-                }, {
-                    label: 'Закрыто',
-                    data: [2, 4, 3, 5, 4, 6],
-                    backgroundColor: accentGreen,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        stacked: true,
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 12
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-
-        // Safety Mixed Chart
-        const safetyCtx = document.getElementById('safetyChart').getContext('2d');
-        new Chart(safetyCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-                datasets: [{
-                    type: 'line',
-                    label: 'Наряд-допуски',
-                    data: [45, 52, 48, 58, 55, 62],
-                    borderColor: primaryColor,
-                    backgroundColor: 'rgba(32, 115, 69, 0.1)',
-                    borderWidth: 3,
-                    fill: false,
-                    tension: 0.4,
-                    yAxisID: 'y1'
-                }, {
-                    type: 'bar',
-                    label: 'Инциденты',
-                    data: [2, 1, 3, 1, 2, 0],
-                    backgroundColor: accentRed,
-                    borderRadius: 4,
-                    yAxisID: 'y'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        beginAtZero: true,
-                        max: 5,
-                        grid: {
-                            drawBorder: false
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        beginAtZero: true,
-                        grid: {
-                            drawOnChartArea: false
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 12
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-
-        // Chart filter buttons
-        document.querySelectorAll('.chart-filter').forEach(btn => {
-            btn.addEventListener('click', function () {
-                this.parentElement.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
             });
-        });
 
-        // Organizational Structure Modal
-        const orgModal = document.createElement('div');
-        orgModal.id = 'org-structure-modal';
-        orgModal.style.cssText = `
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 10000;
-            backdrop-filter: blur(4px);
-        `;
-        orgModal.innerHTML = `
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 95%;
-                max-width: 1600px;
-                height: 90%;
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                display: flex;
-                flex-direction: column;
-            ">
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 20px 24px;
-                    border-bottom: 1px solid var(--gray-200);
-                ">
-                    <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: var(--gray-900);">
-                        Структура объекта
-                    </h2>
-                    <button id="close-org-modal" style="
-                        background: transparent;
-                        border: none;
-                        width: 32px;
-                        height: 32px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: var(--gray-600);
-                        transition: all 0.15s ease;
-                    " onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-                <iframe 
-                    src="org-structure.html" 
-                    style="flex: 1; border: none; width: 100%;"
-                    title="Organizational Structure"
-                ></iframe>
-            </div>
-        `;
-        document.body.appendChild(orgModal);
+            // Budget Doughnut Chart
+            const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+            new Chart(budgetCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Строительство', 'Инженерия', 'Отделка', 'Оборудование', 'Прочее'],
+                    datasets: [{
+                        data: [45, 25, 15, 10, 5],
+                        backgroundColor: [
+                            primaryColor,
+                            '#2b8c5a',
+                            '#43aa75',
+                            '#65c692',
+                            '#e0e0e0'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
 
-        // Open modal
-        document.getElementById('org-structure-btn').addEventListener('click', () => {
-            orgModal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        });
+            // Timeline Bar Chart
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            new Chart(timelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май'],
+                    datasets: [{
+                        label: 'Выполнение',
+                        data: [65, 75, 80, 85, 90],
+                        backgroundColor: primaryColor,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                borderDash: [2, 4]
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
 
-        // Close modal
-        document.getElementById('close-org-modal').addEventListener('click', () => {
-            orgModal.style.display = 'none';
-            document.body.style.overflow = '';
-        });
+            // Resources Chart
+            const resourcesCtx = document.getElementById('resourcesChart').getContext('2d');
+            new Chart(resourcesCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Бетон', 'Арматура', 'Техника', 'Люди', 'Время'],
+                    datasets: [{
+                        label: 'Использование',
+                        data: [85, 90, 75, 95, 80],
+                        backgroundColor: 'rgba(32, 115, 69, 0.2)',
+                        borderColor: primaryColor,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: primaryColor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
 
-        // Close on backdrop click
-        orgModal.addEventListener('click', (e) => {
-            if (e.target === orgModal) {
-                orgModal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        });
+            // Quality Chart
+            const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+            new Chart(qualityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Блок А', 'Блок Б', 'Блок В'],
+                    datasets: [{
+                        label: 'Оценка (1-5)',
+                        data: [4.8, 4.5, 4.9],
+                        backgroundColor: [
+                            '#43aa75',
+                            '#ffd700',
+                            primaryColor
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            grid: {
+                                borderDash: [2, 4]
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
 
-        // Close on Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && orgModal.style.display === 'block') {
-                orgModal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        });
+            // Staff Chart
+            const staffCtx = document.getElementById('staffChart').getContext('2d');
+            new Chart(staffCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Н1', 'Н2', 'Н3', 'Н4', 'Н1', 'Н2', 'Н3', 'Н4'],
+                    datasets: [{
+                        label: 'Рабочие',
+                        data: [120, 135, 140, 138, 145, 150, 156, 152],
+                        borderColor: '#2b8c5a',
+                        backgroundColor: 'rgba(43, 140, 90, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 100
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Tenders Chart
+            const tendersCtx = document.getElementById('tendersChart').getContext('2d');
+            new Chart(tendersCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Подписано', 'В процессе', 'План'],
+                    datasets: [{
+                        data: [12, 5, 8],
+                        backgroundColor: [
+                            primaryColor,
+                            '#ffd700',
+                            '#e0e0e0'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Safety Chart
+            const safetyCtx = document.getElementById('safetyChart').getContext('2d');
+            new Chart(safetyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Без нарушений', 'Мелкие', 'Средние'],
+                    datasets: [{
+                        label: 'Количество',
+                        data: [145, 3, 1],
+                        backgroundColor: [
+                            primaryColor,
+                            '#ffd700',
+                            accentRed
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart filter buttons interaction
+            document.querySelectorAll('.chart-filter').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    this.parentElement.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+        })();
     </script>
+</body>
+
+</html> const primaryLight = '#5a9d79';
+const accentBlue = '#207345';
+const accentOrange = '#CA5010';
+const accentGreen = '#107C10';
+const accentRed = '#D13438';
+
+// Cost Analysis Line Chart
+const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
+new Chart(costCtx, {
+type: 'line',
+data: {
+labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+datasets: [{
+label: 'План',
+data: [400000, 800000, 1200000, 1600000, 2000000, 2400000],
+borderColor: primaryColor,
+backgroundColor: 'rgba(32, 115, 69, 0.1)',
+borderWidth: 3,
+fill: true,
+tension: 0.4,
+pointRadius: 6,
+pointHoverRadius: 8,
+pointBackgroundColor: 'white',
+pointBorderColor: primaryColor,
+pointBorderWidth: 3
+}, {
+label: 'Факт',
+data: [380000, 820000, 1150000, 1680000, 1950000, 2350000],
+borderColor: accentOrange,
+backgroundColor: 'rgba(202, 80, 16, 0.1)',
+borderWidth: 3,
+fill: true,
+tension: 0.4,
+pointRadius: 6,
+pointHoverRadius: 8,
+pointBackgroundColor: 'white',
+pointBorderColor: accentOrange,
+pointBorderWidth: 3
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+interaction: {
+mode: 'index',
+intersect: false
+},
+scales: {
+y: {
+beginAtZero: true,
+ticks: {
+callback: function (value) {
+return '₸ ' + (value / 1000000).toFixed(1) + 'M';
+}
+},
+grid: {
+drawBorder: false
+}
+},
+x: {
+grid: {
+display: false
+}
+}
+},
+plugins: {
+legend: {
+display: true,
+position: 'top',
+align: 'end',
+labels: {
+usePointStyle: true,
+padding: 16
+}
+},
+tooltip: {
+callbacks: {
+label: function (context) {
+return context.dataset.label + ': ₸ ' + context.parsed.y.toLocaleString('ru-RU');
+}
+}
+}
+},
+animation: {
+duration: 2000,
+easing: 'easeInOutQuart'
+}
+}
+});
+
+// Budget Doughnut Chart
+const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+new Chart(budgetCtx, {
+type: 'doughnut',
+data: {
+labels: ['АР', 'КЖ', 'ОВ', 'ВК', 'ЭОМ', 'Прочее'],
+datasets: [{
+data: [850000, 620000, 380000, 290000, 180000, 80000],
+backgroundColor: [
+primaryColor,
+primaryLight,
+'#9ccc65',
+'#66bb6a',
+'#43a047',
+'#2e7d32'
+],
+borderWidth: 0,
+borderRadius: 4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+position: 'right',
+labels: {
+padding: 16,
+usePointStyle: true,
+pointStyle: 'circle',
+font: {
+size: 13
+}
+}
+},
+tooltip: {
+callbacks: {
+(() => {
+// Chart.js configuration
+Chart.defaults.font.family = "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
+Chart.defaults.color = '#605E5C';
+Chart.defaults.borderColor = '#E1DFDD';
+
+const primaryColor = '#207345';
+const primaryLight = '#5a9d79';
+const accentBlue = '#207345';
+const accentOrange = '#CA5010';
+const accentGreen = '#107C10';
+const accentRed = '#D13438';
+
+// Cost Analysis Line Chart
+const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
+new Chart(costCtx, {
+type: 'line',
+data: {
+labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+datasets: [{
+label: 'План',
+data: [400000, 800000, 1200000, 1600000, 2000000, 2400000],
+borderColor: primaryColor,
+backgroundColor: 'rgba(32, 115, 69, 0.1)',
+borderWidth: 3,
+fill: true,
+tension: 0.4,
+pointRadius: 6,
+pointHoverRadius: 8,
+pointBackgroundColor: 'white',
+pointBorderColor: primaryColor,
+pointBorderWidth: 3
+}, {
+label: 'Факт',
+data: [380000, 820000, 1150000, 1680000, 1950000, 2350000],
+borderColor: accentOrange,
+backgroundColor: 'rgba(202, 80, 16, 0.1)',
+borderWidth: 3,
+fill: true,
+tension: 0.4,
+pointRadius: 6,
+pointHoverRadius: 8,
+pointBackgroundColor: 'white',
+pointBorderColor: accentOrange,
+pointBorderWidth: 3
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: true,
+position: 'top',
+align: 'end',
+labels: {
+usePointStyle: true,
+padding: 20
+}
+}
+},
+scales: {
+y: {
+beginAtZero: true,
+grid: {
+borderDash: [2, 4]
+}
+},
+x: {
+grid: {
+display: false
+}
+}
+}
+}
+});
+
+// Budget Doughnut Chart
+const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+new Chart(budgetCtx, {
+type: 'doughnut',
+data: {
+labels: ['Строительство', 'Инженерия', 'Отделка', 'Оборудование', 'Прочее'],
+datasets: [{
+data: [45, 25, 15, 10, 5],
+backgroundColor: [
+primaryColor,
+'#2b8c5a',
+'#43aa75',
+'#65c692',
+'#e0e0e0'
+],
+borderWidth: 0
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+cutout: '70%',
+plugins: {
+legend: {
+position: 'right',
+labels: {
+usePointStyle: true,
+padding: 20
+}
+}
+}
+}
+});
+
+// Timeline Bar Chart
+const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+new Chart(timelineCtx, {
+type: 'bar',
+data: {
+labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май'],
+datasets: [{
+label: 'Выполнение',
+data: [65, 75, 80, 85, 90],
+backgroundColor: primaryColor,
+borderRadius: 4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+},
+scales: {
+y: {
+beginAtZero: true,
+max: 100,
+grid: {
+borderDash: [2, 4]
+}
+},
+x: {
+grid: {
+display: false
+}
+}
+}
+}
+});
+
+// Resources Chart
+const resourcesCtx = document.getElementById('resourcesChart').getContext('2d');
+new Chart(resourcesCtx, {
+type: 'radar',
+data: {
+labels: ['Бетон', 'Арматура', 'Техника', 'Люди', 'Время'],
+datasets: [{
+label: 'Использование',
+data: [85, 90, 75, 95, 80],
+backgroundColor: 'rgba(32, 115, 69, 0.2)',
+borderColor: primaryColor,
+pointBackgroundColor: primaryColor,
+pointBorderColor: '#fff',
+pointHoverBackgroundColor: '#fff',
+pointHoverBorderColor: primaryColor
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+},
+scales: {
+r: {
+angleLines: {
+display: true
+},
+suggestedMin: 0,
+suggestedMax: 100
+}
+}
+}
+});
+
+// Quality Chart
+const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+new Chart(qualityCtx, {
+type: 'bar',
+data: {
+labels: ['Блок А', 'Блок Б', 'Блок В'],
+datasets: [{
+label: 'Оценка (1-5)',
+data: [4.8, 4.5, 4.9],
+backgroundColor: [
+'#43aa75',
+'#ffd700',
+primaryColor
+],
+borderRadius: 4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+},
+scales: {
+y: {
+beginAtZero: true,
+max: 5,
+grid: {
+borderDash: [2, 4]
+}
+},
+x: {
+grid: {
+display: false
+}
+}
+}
+}
+});
+
+// Staff Chart
+const staffCtx = document.getElementById('staffChart').getContext('2d');
+new Chart(staffCtx, {
+type: 'line',
+data: {
+labels: ['Н1', 'Н2', 'Н3', 'Н4', 'Н1', 'Н2', 'Н3', 'Н4'],
+datasets: [{
+label: 'Рабочие',
+data: [120, 135, 140, 138, 145, 150, 156, 152],
+borderColor: '#2b8c5a',
+backgroundColor: 'rgba(43, 140, 90, 0.1)',
+fill: true,
+tension: 0.4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+},
+scales: {
+y: {
+beginAtZero: false,
+min: 100
+},
+x: {
+grid: {
+display: false
+}
+}
+}
+}
+});
+
+// Tenders Chart
+const tendersCtx = document.getElementById('tendersChart').getContext('2d');
+new Chart(tendersCtx, {
+type: 'doughnut',
+data: {
+labels: ['Подписано', 'В процессе', 'План'],
+datasets: [{
+data: [12, 5, 8],
+backgroundColor: [
+primaryColor,
+'#ffd700',
+'#e0e0e0'
+],
+borderWidth: 0
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+cutout: '60%',
+plugins: {
+legend: {
+position: 'right',
+labels: {
+usePointStyle: true,
+boxWidth: 8
+}
+}
+}
+}
+});
+
+// Safety Chart
+const safetyCtx = document.getElementById('safetyChart').getContext('2d');
+new Chart(safetyCtx, {
+type: 'bar',
+data: {
+labels: ['Без нарушений', 'Мелкие', 'Средние'],
+datasets: [{
+label: 'Количество',
+data: [145, 3, 1],
+backgroundColor: [
+primaryColor,
+'#ffd700',
+accentRed
+],
+borderRadius: 4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+},
+scales: {
+y: {
+beginAtZero: true
+},
+x: {
+grid: {
+display: false
+}
+}
+}
+}
+});
+
+// Chart filter buttons interaction
+document.querySelectorAll('.chart-filter').forEach(btn => {
+btn.addEventListener('click', function () {
+this.parentElement.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
+this.classList.add('active');
+});
+});
+
+})();
+</script>
+
+
 </body>
 
 </html>

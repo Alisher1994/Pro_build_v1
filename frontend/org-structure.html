@@ -4,706 +4,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Структура объекта</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Структура проекта · ProBIM</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-org-chart@3.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #207345;
+            --primary-hover: #1a5e38;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --white: #FFFFFF;
+            --red: #eb4034;
+        }
+
         body {
             margin: 0;
             padding: 0;
             background: var(--gray-50);
-            font-family: var(--font-family);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
         }
 
-        .org-structure-container {
-            padding: 24px;
-            max-width: 1920px;
-            margin: 0 auto;
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            background-color: var(--gray-50);
         }
 
-        .org-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding: 16px 24px;
-            background: var(--white);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .org-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--gray-900);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .org-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .org-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--gray-300);
-            border-radius: var(--radius-md);
-            background: var(--white);
-            color: var(--gray-800);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .org-btn:hover {
-            background: var(--gray-50);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .org-btn.primary {
-            background: var(--primary);
-            color: var(--white);
-            border-color: var(--primary);
-        }
-
-        .org-btn.primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .org-chart {
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            position: relative;
+            gap: 10px;
+            z-index: 100;
         }
 
-        .org-level {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            margin-bottom: 60px;
-            position: relative;
-            width: 100%;
-        }
-
-        .org-card {
+        .btn {
+            padding: 10px 16px;
             background: var(--white);
-            border: 2px solid var(--gray-300);
+            border: 1px solid var(--gray-200);
             border-radius: 8px;
-            padding: 16px;
-            min-width: 240px;
-            max-width: 280px;
-            position: relative;
-            transition: all 0.2s ease;
             cursor: pointer;
-        }
-
-        .org-card:hover {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .org-card.selected {
-            border-color: var(--primary);
-            background: var(--primary-lighter);
-            box-shadow: 0 0 0 3px rgba(32, 115, 69, 0.1);
-        }
-
-        .org-card.ceo {
-            border-color: #FFD700;
-            background: linear-gradient(135deg, #FFFEF0 0%, #FFF9E6 100%);
-        }
-
-        .org-card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .org-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--white);
-            font-weight: 600;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .org-avatar img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .org-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .org-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--gray-900);
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .org-position {
-            font-size: 12px;
-            color: var(--gray-600);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .org-department {
             font-size: 13px;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 8px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 6px;
-        }
-
-        .org-stats {
-            display: flex;
-            gap: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--gray-200);
-            font-size: 12px;
-        }
-
-        .org-stat {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: var(--gray-600);
-        }
-
-        .org-stat-value {
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        .org-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            background: var(--primary-lighter);
-            color: var(--primary);
-        }
-
-        .org-badge.new {
-            background: #E3F2FD;
-            color: #1976D2;
-        }
-
-        /* Connecting lines */
-        .org-connector {
-            position: absolute;
-            background: var(--gray-300);
-        }
-
-        .org-connector.vertical {
-            width: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .org-connector.horizontal {
-            height: 2px;
-            top: -30px;
-        }
-
-        .org-card::before {
-            content: '';
-            position: absolute;
-            width: 2px;
-            height: 30px;
-            background: var(--gray-300);
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .org-level:first-child .org-card::before {
-            display: none;
-        }
-
-        .org-card::after {
-            content: '';
-            position: absolute;
-            width: 2px;
-            height: 30px;
-            background: var(--gray-300);
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-        }
-
-        .org-card.has-children::after {
-            display: block;
-        }
-
-        .org-expand-btn {
-            position: absolute;
-            bottom: -42px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--white);
-            border: 2px solid var(--gray-300);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            z-index: 10;
-        }
-
-        .org-expand-btn:hover {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: var(--white);
-        }
-
-        .org-expand-btn svg {
-            width: 12px;
-            height: 12px;
-            transition: transform 0.2s ease;
-        }
-
-        .org-expand-btn.expanded svg {
-            transform: rotate(180deg);
-        }
-
-        .org-team-members {
-            display: flex;
-            gap: 6px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        .team-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--gray-700);
-            border: 2px solid var(--white);
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .team-avatar:hover {
-            transform: scale(1.1);
-            z-index: 1;
-        }
-
-        .team-avatar img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .team-more {
-            background: var(--primary-lighter);
-            color: var(--primary);
-        }
-
-        .zoom-controls {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            display: flex;
             gap: 8px;
-            background: var(--white);
-            padding: 8px;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
         }
 
-        .zoom-btn {
-            width: 36px;
-            height: 36px;
-            border: 1px solid var(--gray-300);
-            border-radius: var(--radius-md);
-            background: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .zoom-btn:hover {
-            background: var(--gray-50);
+        .btn:hover {
             border-color: var(--primary);
             color: var(--primary);
         }
 
-        .search-box {
-            position: relative;
-            width: 300px;
+        .node-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s, background-color 0.2s;
+            color: white;
         }
 
-        .search-box input {
+        .node-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-btn {
+            background-color: var(--primary);
+        }
+
+        .call-btn {
+            background-color: #3b82f6;
+        }
+
+        .group-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        #call-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 8px 12px 8px 36px;
-            border: 1px solid var(--gray-300);
-            border-radius: var(--radius-md);
-            font-size: 13px;
-        }
-
-        .search-box svg {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray-500);
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
             }
         }
 
-        .org-card {
-            animation: fadeIn 0.3s ease;
+        .call-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .call-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .call-status {
+            font-size: 16px;
+            opacity: 0.7;
+            margin-bottom: 50px;
+        }
+
+        .call-actions {
+            display: flex;
+            gap: 40px;
+        }
+
+        .end-call-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(235, 64, 52, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .end-call-btn:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
 
 <body>
-    <div class="org-structure-container">
-        <div class="org-header">
-            <div class="org-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    <div class="controls">
+        <button class="btn" onclick="chart.expandAll().render()">Развернуть всё</button>
+        <button class="btn" onclick="chart.collapseAll().render()">Свернуть всё</button>
+        <button class="btn" onclick="chart.fit()">По центру</button>
+        <button class="btn" style="display:none; background: var(--primary); color: white;"
+            id="create-group-btn">Создать группу (0)</button>
+    </div>
+
+    <div id="call-overlay">
+        <img src="" class="call-avatar" id="call-avatar">
+        <div class="call-name" id="call-name"></div>
+        <div class="call-status" id="call-status">Звонок...</div>
+        <div class="call-actions">
+            <button class="end-call-btn" onclick="endCall()" title="Завершить вызов">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+                    <path
+                        d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.94C17.55,15.31 18.76,15.51 20,15.51C20.55,15.51 21,15.96 21,16.51V19.51C21,20.06 20.55,20.51 20,20.51C10.61,20.51 3,12.9 3,3.51C3,2.96 3.45,2.51 4,2.51H7C7.55,2.51 8,2.96 8,3.51C8,4.75 8.2,5.96 8.57,7.08C8.69,7.43 8.6,7.82 8.32,8.1L6.62,10.79Z"
+                        transform="rotate(135 12 12)" />
                 </svg>
-                Структура объекта
-            </div>
-            <div class="org-actions">
-                <div class="search-box">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    <input type="text" placeholder="Поиск по имени или должности..." id="org-search">
-                </div>
-                <button class="org-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Экспорт
-                </button>
-                <button class="org-btn primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                    </svg>
-                    Добавить сотрудника
-                </button>
-            </div>
-        </div>
-
-        <div class="org-chart" id="org-chart">
-            <!-- Organizational chart will be rendered here -->
+            </button>
         </div>
     </div>
 
-    <div class="zoom-controls">
-        <button class="zoom-btn" id="zoom-out" title="Уменьшить">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        </button>
-        <button class="zoom-btn" id="zoom-reset" title="Сбросить масштаб">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-            </svg>
-        </button>
-        <button class="zoom-btn" id="zoom-in" title="Увеличить">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        </button>
-    </div>
+    <div class="chart-container"></div>
 
     <script>
-        // Sample organizational data
-        const orgData = {
-            id: 'ceo',
-            name: 'Алексей Иванов',
-            position: 'Руководитель проекта',
-            department: 'Управление',
-            avatar: null,
-            employees: 1,
-            subordinates: 15,
-            isCEO: true,
-            children: [
-                {
-                    id: 'construction',
-                    name: 'Сергей Петров',
-                    position: 'Начальник строительства',
-                    department: 'Строительство',
-                    avatar: null,
-                    employees: 8,
-                    subordinates: 8,
-                    team: [
-                        { name: 'ИИ', color: '#4CAF50' },
-                        { name: 'ПС', color: '#2196F3' },
-                        { name: 'АК', color: '#FF9800' },
-                        { name: 'МД', color: '#9C27B0' },
-                        { name: '+4', isMore: true }
-                    ],
-                    children: []
-                },
-                {
-                    id: 'engineering',
-                    name: 'Мария Сидорова',
-                    position: 'Главный инженер',
-                    department: 'Инженерная служба',
-                    avatar: null,
-                    employees: 5,
-                    subordinates: 5,
-                    team: [
-                        { name: 'ВК', color: '#00BCD4' },
-                        { name: 'ЕЛ', color: '#E91E63' },
-                        { name: 'НТ', color: '#3F51B5' },
-                        { name: '+2', isMore: true }
-                    ],
-                    children: []
-                },
-                {
-                    id: 'quality',
-                    name: 'Дмитрий Козлов',
-                    position: 'Начальник ОТК',
-                    department: 'Контроль качества',
-                    avatar: null,
-                    employees: 3,
-                    subordinates: 3,
-                    team: [
-                        { name: 'ОА', color: '#FF5722' },
-                        { name: 'ТВ', color: '#607D8B' },
-                        { name: 'ГС', color: '#795548' }
-                    ],
-                    children: []
-                },
-                {
-                    id: 'safety',
-                    name: 'Елена Морозова',
-                    position: 'Инженер по ОТ',
-                    department: 'Охрана труда',
-                    avatar: null,
-                    employees: 2,
-                    subordinates: 2,
-                    team: [
-                        { name: 'КП', color: '#CDDC39' },
-                        { name: 'ЛМ', color: '#FFC107' }
-                    ],
-                    children: []
+        let chart = null;
+        let selectedEmployees = new Set();
+
+        const data = [
+            { id: "1", parentId: null, name: "ЖК 'Гранд Палас'", position: "Проект", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&h=200&fit=crop", type: "project" },
+
+            // Руководство
+            { id: "2", parentId: "1", name: "Александр Волков", position: "РП (Руководитель проекта)", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop", phone: "+7 (701) 111-22-33", email: "volkov@probim.kz" },
+            { id: "3", parentId: "2", name: "Дмитрий Сабиров", position: "ЗРП (Зам. руководителя)", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop", phone: "+7 (701) 444-55-66", email: "sabirov@probim.kz" },
+
+            // Департаменты
+            {
+                id: "dept_construct", parentId: "3",
+                name: "Отдел строительства",
+                position: "Департамент",
+                headName: "Игорь Новиков",
+                headPosition: "Начальник отдела",
+                phone: "+7 (702) 000-11-22",
+                image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
+                type: "dept"
+            },
+            {
+                id: "dept_eng", parentId: "3",
+                name: "Инженерная служба",
+                position: "Департамент",
+                headName: "Елена Ким",
+                headPosition: "Главный инженер",
+                phone: "+7 (705) 123-45-67",
+                image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop",
+                type: "dept"
+            },
+            {
+                id: "dept_quality", parentId: "3",
+                name: "ОТК и Лаборатория",
+                position: "Департамент",
+                headName: "Виктория Смирнова",
+                headPosition: "Начальник ОТК",
+                phone: "+7 (707) 888-99-00",
+                image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop",
+                type: "dept"
+            },
+            {
+                id: "dept_safety", parentId: "3",
+                name: "ОТ и ТБ",
+                position: "Департамент",
+                headName: "Наталья Громова",
+                headPosition: "Специалист по ТБ",
+                phone: "+7 (701) 555-44-33",
+                image: "https://images.unsplash.com/photo-1567532939604-b6c5b0ad2e01?w=150&h=150&fit=crop",
+                type: "dept"
+            },
+
+            // Сотрудники
+            { id: "5", parentId: "dept_construct", name: "Олег Макаров", position: "Технический надзор", image: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop", phone: "+7 (702) 333-44-55" },
+            { id: "10", parentId: "dept_construct", name: "Сергей Куц", position: "Прораб участка", image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop", phone: "+7 (702) 999-00-11" },
+            { id: "7", parentId: "dept_eng", name: "Ольга Иванова", position: "Инженер-проектировщик", image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop", phone: "+7 (705) 999-88-77" }
+        ];
+
+        window.addEventListener('load', () => {
+            const checkSize = setInterval(() => {
+                const container = document.querySelector('.chart-container');
+                if (container && container.clientHeight > 0) {
+                    clearInterval(checkSize);
+                    renderChart();
                 }
-            ]
-        };
+            }, 100);
+        });
 
-        function getInitials(name) {
-            return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        function makeCall(name, image) {
+            document.getElementById('call-name').innerText = name;
+            document.getElementById('call-avatar').src = image;
+            document.getElementById('call-overlay').style.display = 'flex';
+            let dots = 0;
+            window.callTimer = setInterval(() => {
+                dots = (dots + 1) % 4;
+                document.getElementById('call-status').innerText = 'Вызов' + '.'.repeat(dots);
+            }, 500);
         }
 
-        function getAvatarColor(id) {
-            const colors = [
-                '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#00BCD4',
-                '#E91E63', '#3F51B5', '#FF5722', '#607D8B', '#795548'
-            ];
-            const index = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            return colors[index % colors.length];
+        function endCall() {
+            document.getElementById('call-overlay').style.display = 'none';
+            clearInterval(window.callTimer);
         }
 
-        function renderOrgCard(person) {
-            const initials = getInitials(person.name);
-            const avatarColor = getAvatarColor(person.id);
-            const hasChildren = person.children && person.children.length > 0;
+        function renderChart() {
+            chart = new d3.OrgChart()
+                .container('.chart-container')
+                .data(data)
+                .nodeWidth(d => 280)
+                .nodeHeight(d => 160)
+                .compact(false)
+                .childrenMargin(d => 60)
+                .nodeContent(function (d, i, arr, state) {
+                    const isProject = d.data.type === 'project';
+                    const isDept = d.data.type === 'dept';
+                    const color = isProject ? '#207345' : '#FFFFFF';
+                    const textColor = isProject ? '#FFFFFF' : '#1F2937';
+                    const subColor = isProject ? 'rgba(255,255,255,0.7)' : '#6B7280';
+                    const name = isDept ? d.data.headName : d.data.name;
+                    const pos = isDept ? d.data.headPosition : d.data.position;
+                    const phone = d.data.phone || '';
+                    const image = d.data.image;
 
-            let teamHTML = '';
-            if (person.team && person.team.length > 0) {
-                teamHTML = `
-                    <div class="org-team-members">
-                        ${person.team.map(member => `
-                            <div class="team-avatar ${member.isMore ? 'team-more' : ''}" 
-                                 style="${!member.isMore ? `background: ${member.color}20; color: ${member.color}; border-color: ${member.color}30;` : ''}"
-                                 title="${member.name}">
-                                ${member.name}
+                    return `
+                        <div style="width:${d.width}px;height:${d.height}px;background:${color};border:1px solid #E5E7EB;border-radius:12px;padding:15px;box-sizing:border-box;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); display:flex; flex-direction:column; position:relative;">
+                            ${!isProject ? `<div style="position:absolute;top:10px;right:10px; z-index:10;"><input type="checkbox" class="group-checkbox" ${selectedEmployees.has(d.data.id) ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelect('${d.data.id}')"></div>` : ''}
+                            ${isDept ? `<div style="font-size:10px; font-weight:700; color:var(--primary); text-transform:uppercase; margin-bottom:8px;">${d.data.name}</div>` : ''}
+                            <div style="display:flex;align-items:center;gap:12px; flex:1;">
+                                <img src="${image}" style="width:55px;height:55px;border-radius:50%;object-fit:cover;border:2px solid ${isProject ? 'rgba(255,255,255,0.2)' : '#F3F4F6'}">
+                                <div style="flex:1; overflow:hidden;">
+                                    <div style="font-weight:700;font-size:15px;color:${textColor}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
+                                    <div style="font-size:11px;color:${subColor};margin-top:2px;">${pos}</div>
+                                </div>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="org-card ${person.isCEO ? 'ceo' : ''} ${hasChildren ? 'has-children' : ''}" data-id="${person.id}">
-                    ${person.department ? `<div class="org-department">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
-                        ${person.department}
-                        ${person.isCEO ? '<span class="org-badge">Руководитель</span>' : ''}
-                    </div>` : ''}
-                    <div class="org-card-header">
-                        <div class="org-avatar" style="background: ${avatarColor}">
-                            ${person.avatar ? `<img src="${person.avatar}" alt="${person.name}">` : initials}
-                        </div>
-                        <div class="org-info">
-                            <div class="org-name">${person.name}</div>
-                            <div class="org-position">${person.position}</div>
-                        </div>
-                    </div>
-                    ${teamHTML}
-                    <div class="org-stats">
-                        <div class="org-stat">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                            <span class="org-stat-value">${person.employees || 0}</span> сотр.
-                        </div>
-                        ${person.subordinates ? `
-                            <div class="org-stat">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="16 18 22 12 16 6"></polyline>
-                                    <polyline points="8 6 2 12 8 18"></polyline>
-                                </svg>
-                                <span class="org-stat-value">${person.subordinates}</span> подч.
+                            <div style="margin-top:12px; padding-top:10px; border-top:1px solid ${isProject ? 'rgba(255,255,255,0.1)' : '#F3F4F6'}; display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px; font-weight:500; color:${isProject ? 'rgba(255,255,255,0.9)' : '#4B5563'}">${phone}</span>
+                                ${!isProject ? `
+                                    <div style="display:flex; gap:8px;">
+                                        <button class="node-btn call-btn" onclick="event.stopPropagation(); makeCall('${name}', '${image}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.18-2.18a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></button>
+                                        <button class="node-btn chat-btn" onclick="event.stopPropagation(); window.parent.dispatchEvent(new CustomEvent('open-chat', { detail: { name: '${name}', image: '${image}' } }))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg></button>
+                                    </div>
+                                ` : ''}
                             </div>
-                        ` : ''}
-                    </div>
-                    ${hasChildren ? `
-                        <button class="org-expand-btn expanded" data-id="${person.id}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
+                        </div>
+                    `;
+                })
+                .render();
         }
 
-        function renderOrgChart(data, container) {
-            container.innerHTML = '';
-
-            // Level 1: CEO
-            const level1 = document.createElement('div');
-            level1.className = 'org-level';
-            level1.innerHTML = renderOrgCard(data);
-            container.appendChild(level1);
-
-            // Level 2: Direct reports
-            if (data.children && data.children.length > 0) {
-                const level2 = document.createElement('div');
-                level2.className = 'org-level';
-                level2.innerHTML = data.children.map(child => renderOrgCard(child)).join('');
-                container.appendChild(level2);
-            }
+        function toggleSelect(id) {
+            if (selectedEmployees.has(id)) selectedEmployees.delete(id);
+            else selectedEmployees.add(id);
+            const btn = document.getElementById('create-group-btn');
+            btn.style.display = selectedEmployees.size > 0 ? 'block' : 'none';
+            btn.innerText = `Создать группу (${selectedEmployees.size})`;
         }
-
-        // Initialize
-        const chartContainer = document.getElementById('org-chart');
-        renderOrgChart(orgData, chartContainer);
-
-        // Event listeners
-        document.addEventListener('click', (e) => {
-            const card = e.target.closest('.org-card');
-            if (card) {
-                document.querySelectorAll('.org-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-            }
-
-            const expandBtn = e.target.closest('.org-expand-btn');
-            if (expandBtn) {
-                e.stopPropagation();
-                expandBtn.classList.toggle('expanded');
-                // TODO: Implement expand/collapse logic
-            }
-        });
-
-        // Search functionality
-        document.getElementById('org-search').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            document.querySelectorAll('.org-card').forEach(card => {
-                const name = card.querySelector('.org-name').textContent.toLowerCase();
-                const position = card.querySelector('.org-position').textContent.toLowerCase();
-                const match = name.includes(query) || position.includes(query);
-                card.style.opacity = query && !match ? '0.3' : '1';
-                card.style.transform = query && match ? 'scale(1.02)' : '';
-            });
-        });
-
-        // Zoom controls
-        let zoomLevel = 1;
-        const chart = document.getElementById('org-chart');
-
-        document.getElementById('zoom-in').addEventListener('click', () => {
-            zoomLevel = Math.min(zoomLevel + 0.1, 1.5);
-            chart.style.transform = `scale(${zoomLevel})`;
-        });
-
-        document.getElementById('zoom-out').addEventListener('click', () => {
-            zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
-            chart.style.transform = `scale(${zoomLevel})`;
-        });
-
-        document.getElementById('zoom-reset').addEventListener('click', () => {
-            zoomLevel = 1;
-            chart.style.transform = 'scale(1)';
-        });
     </script>
 </body>
 

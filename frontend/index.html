@@ -204,11 +204,8 @@
                 </div>
                 <div class="account-switcher" role="button" tabindex="0" aria-label="Переключение аккаунта">
                     <div class="account-icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                        </svg>
+                        <img src="https://i.pravatar.cc/150?img=11" alt="User"
+                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                     </div>
                     <div class="account-info">
                         <span class="account-company" id="header-company-name">ООО «PROBIM»</span>
@@ -222,6 +219,16 @@
                         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
                     <span class="notification-badge">3</span>
+                </button>
+                <button class="qat-btn" id="header-chat-toggle" title="Чат">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
+                        <path d="M8 12h.01" />
+                        <path d="M12 12h.01" />
+                        <path d="M16 12h.01" />
+                    </svg>
                 </button>
             </div>
         </div>
@@ -254,7 +261,16 @@
                 <div class="ribbon-panel active" data-panel="dashboard">
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button class="ribbon-btn large">
+                            <button class="ribbon-btn large" id="btn-stats-tab">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="20" x2="18" y2="10" />
+                                    <line x1="12" y1="20" x2="12" y2="4" />
+                                    <line x1="6" y1="20" x2="6" y2="14" />
+                                </svg>
+                                <span>Статистика</span>
+                            </button>
+                            <button class="ribbon-btn large" id="btn-structure-tab">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <rect x="3" y="3" width="7" height="9" />
@@ -262,7 +278,16 @@
                                     <rect x="14" y="12" width="7" height="9" />
                                     <rect x="3" y="16" width="7" height="5" />
                                 </svg>
-                                <span>Виджеты</span>
+                                <span>Структура</span>
+                            </button>
+                            <button class="ribbon-btn large" id="btn-cameras-tab">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                </svg>
+                                <span>Камеры</span>
                             </button>
                         </div>
                         <span class="ribbon-group-label">Дашборд</span>
@@ -755,6 +780,134 @@
         </div>
     </div>
 
+    <!-- Chat Sidebar -->
+    <div id="chat-sidebar" class="chat-sidebar position-right collapsed">
+        <!-- Sidebar Header (Controls & Search) -->
+        <!-- Sidebar Header (Controls & Search) -->
+        <div class="chat-sidebar-header">
+            <div class="chat-header-title-row">
+                <span class="chat-header-title">Сообщения</span>
+            </div>
+            <div class="chat-controls-row">
+                <div class="chat-search-wrapper">
+                    <input type="text" id="chat-search-input" placeholder="Поиск...">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Tabs -->
+        <div class="chat-sidebar-tabs">
+            <button class="chat-tab-btn active" data-tab="contacts" title="Контакты">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Контакты</span>
+            </button>
+            <button class="chat-tab-btn" data-tab="groups" title="Группы">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Группы</span>
+            </button>
+            <button class="chat-tab-btn" data-tab="channel" title="Канал">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Канал</span>
+            </button>
+            <button class="chat-tab-btn" data-tab="subcontractors" title="Субподрядчики">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                </svg>
+                <span>Суб.</span>
+            </button>
+        </div>
+
+        <!-- List View -->
+        <div id="chat-list-view" class="chat-view active">
+            <div id="chat-list-container" class="chat-list-items"></div>
+        </div>
+
+        <!-- Conversation View -->
+        <div id="chat-conversation-view" class="chat-view" style="display:none;">
+            <div class="chat-conversation-header">
+                <button id="chat-back-btn" class="chat-back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+                <img id="conversation-user-image" src="" class="chat-avatar"
+                    style="width:32px;height:32px;margin-right:8px; display:none;">
+                <div class="chat-conversation-info">
+                    <span id="converastion-user-name" class="name">Name</span>
+                    <span id="conversation-user-status" class="status">Online</span>
+                </div>
+            </div>
+
+            <div id="chat-messages-area" class="chat-messages-area">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <div class="chat-input-area">
+                <button id="chat-btn-attach" class="chat-media-btn" title="Прикрепить файл">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                </button>
+                <button id="chat-btn-emoji" class="chat-media-btn" title="Смайлы">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                        <line x1="9" x2="9.01" y1="9" y2="9" />
+                        <line x1="15" x2="15.01" y1="9" y2="9" />
+                    </svg>
+                </button>
+                <input type="text" id="chat-message-input" placeholder="Сообщение...">
+                <button id="chat-btn-voice" class="chat-media-btn" title="Голосовое сообщение">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                    </svg>
+                </button>
+                <button id="chat-btn-video" class="chat-media-btn" title="Видеосообщение">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 7l-7 5 7 5V7z" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Footer (Bottom Controls) -->
+        <div class="chat-sidebar-footer">
+            <button id="chat-swap-btn" class="chat-control-btn" title="Поменять сторону">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3 4 7l4 4" />
+                    <path d="M4 7h16" />
+                    <path d="m16 21 4-4-4-4" />
+                    <path d="M20 17H4" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Modals будут добавлены через JavaScript -->
     <div id="modal-container"></div>
     <div id="block-reason-modal" class="hidden" role="dialog" aria-modal="true">
@@ -824,6 +977,7 @@
     <script src="js/import.js" defer></script>
     <script src="js/schedule.js?v=20251219-2" defer></script>
     <script src="js/estimate.js" defer></script>
+    <script src="js/chat.js" defer></script>
     <script src="js/settings.js" defer></script>
     <script src="js/norms.js" defer></script>
     <script src="js/normsSettings.js" defer></script>

@@ -24,6 +24,7 @@ class ProBIMApp {
         this.sidebarCollapsed = false;
         this.navigationHistory = []; // История навигации внутри системы
         this.otitbActive = null;
+        this.currentDashboardSubTab = 'statistics';
     }
 
     getInitialRibbonTab() {
@@ -204,6 +205,11 @@ class ProBIMApp {
     }
 
     async selectProject(projectId, isRestoring = false) {
+        // Expand sidebar if clicking manually (not restoring)
+        if (!isRestoring && this.sidebarCollapsed) {
+            this.setSidebarCollapsed(false);
+        }
+
         this.currentProjectId = projectId;
         localStorage.setItem('probim_last_project_id', projectId);
 
@@ -251,7 +257,13 @@ class ProBIMApp {
 
         switch (this.currentRibbonTab) {
             case 'dashboard':
-                await this.loadDashboardTab();
+                if (this.currentDashboardSubTab === 'org-structure') {
+                    await this.loadOrgStructureTab();
+                } else if (this.currentDashboardSubTab === 'cameras') {
+                    await this.loadCamerasTab();
+                } else {
+                    await this.loadStatisticsTab();
+                }
                 break;
             case 'estimate':
                 if (isRestoring && EstimateManager.restoreState) {
@@ -406,7 +418,13 @@ class ProBIMApp {
         }
     }
 
-    async loadDashboardTab() {
+    async loadStatisticsTab() {
+        if (!this.currentProjectId) return;
+        this.currentRibbonTab = 'dashboard';
+        this.currentDashboardSubTab = 'statistics';
+        this.applyRibbonTabToUI('dashboard');
+        this.setDashboardActive('statistics');
+
         const contentArea = document.getElementById('content-area');
         contentArea.style.padding = '0';
         contentArea.style.overflow = 'auto';
@@ -415,7 +433,6 @@ class ProBIMApp {
             const response = await fetch('dashboard.html');
             const html = await response.text();
 
-            // Extract body content from dashboard.html
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const dashboardContent = doc.querySelector('.dashboard-container');
@@ -428,7 +445,6 @@ class ProBIMApp {
                 }
                 contentArea.appendChild(dashboardContent.cloneNode(true));
 
-                // Re-execute scripts for Chart.js
                 const scripts = doc.querySelectorAll('script');
                 scripts.forEach(script => {
                     if (script.textContent && !script.src) {
@@ -439,13 +455,55 @@ class ProBIMApp {
                 });
             }
         } catch (error) {
-            console.error('Error loading dashboard:', error);
-            contentArea.innerHTML = `
-                <div style="padding: 24px;">
-                    <h2>Ошибка загрузки дашборда</h2>
-                    <p style="color: var(--gray-600);">Не удалось загрузить содержимое дашборда</p>
-                </div>
-            `;
+            console.error('Error loading dashboard statistics:', error);
+            contentArea.innerHTML = `<div style="padding: 24px;"><h2>Ошибка загрузки дашборда</h2></div>`;
+        }
+    }
+
+    async loadOrgStructureTab() {
+        if (!this.currentProjectId) return;
+        this.currentRibbonTab = 'dashboard';
+        this.currentDashboardSubTab = 'org-structure';
+        this.applyRibbonTabToUI('dashboard');
+        this.setDashboardActive('org-structure');
+
+        const contentArea = document.getElementById('content-area');
+        contentArea.style.padding = '0';
+        contentArea.style.overflow = 'hidden';
+
+        contentArea.innerHTML = `
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                <iframe src="org-structure.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Структура объекта"></iframe>
+            </div>
+        `;
+    }
+
+    async loadCamerasTab() {
+        if (!this.currentProjectId) return;
+        this.currentRibbonTab = 'dashboard';
+        this.currentDashboardSubTab = 'cameras';
+        this.applyRibbonTabToUI('dashboard');
+        this.setDashboardActive('cameras');
+
+        const contentArea = document.getElementById('content-area');
+        contentArea.style.padding = '0';
+        contentArea.style.overflow = 'hidden';
+
+        contentArea.innerHTML = `
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                <iframe src="cameras.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Камеры"></iframe>
+            </div>
+        `;
+    }
+
+    setDashboardActive(tab) {
+        document.querySelectorAll('[data-panel="dashboard"] .ribbon-btn').forEach(btn => btn.classList.remove('active'));
+        if (tab === 'statistics') {
+            document.getElementById('btn-stats-tab')?.classList.add('active');
+        } else if (tab === 'org-structure') {
+            document.getElementById('btn-structure-tab')?.classList.add('active');
+        } else if (tab === 'cameras') {
+            document.getElementById('btn-cameras-tab')?.classList.add('active');
         }
     }
 
@@ -956,6 +1014,18 @@ class ProBIMApp {
         }
 
         // Ribbon tabs
+        document.getElementById('btn-stats-tab')?.addEventListener('click', () => {
+            this.loadStatisticsTab();
+        });
+
+        document.getElementById('btn-structure-tab')?.addEventListener('click', () => {
+            this.loadOrgStructureTab();
+        });
+
+        document.getElementById('btn-cameras-tab')?.addEventListener('click', () => {
+            this.loadCamerasTab();
+        });
+
         document.querySelectorAll('.ribbon-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 // Убираем активный класс со всех вкладок
@@ -1128,9 +1198,37 @@ class ProBIMApp {
         }
 
         const sidebarToggle = document.getElementById('sidebar-collapse-toggle');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent sidebar click event
                 this.toggleSidebarCollapsed();
+            });
+
+            // Click sidebar to expand if collapsed
+            sidebar.addEventListener('click', (e) => {
+                if (this.sidebarCollapsed) {
+                    this.setSidebarCollapsed(false);
+                }
+            });
+
+            // Robust expanding for project list items (capturing phase)
+            const projectList = document.getElementById('project-list');
+            if (projectList) {
+                projectList.addEventListener('click', (e) => {
+                    if (this.sidebarCollapsed) {
+                        this.setSidebarCollapsed(false);
+                    }
+                }, true); // Capture phase to ensure it runs before other handlers
+            }
+
+            // Click outside to collapse if expanded
+            document.addEventListener('click', (e) => {
+                if (!this.sidebarCollapsed &&
+                    !sidebar.contains(e.target) &&
+                    !sidebarToggle.contains(e.target)) {
+                    this.setSidebarCollapsed(true);
+                }
             });
         }
 

@@ -301,6 +301,50 @@ class ProBIMApp {
                 await SettingsManager.showNormsSettings(this.currentProjectId);
                 break;
         }
+
+        this.updateBreadcrumbs();
+    }
+
+    updateBreadcrumbs() {
+        const breadcrumbs = document.getElementById('breadcrumbs-bar');
+        if (!breadcrumbs) return;
+
+        const projectName = this.currentProjectId
+            ? (this.projects.find(p => p.id === this.currentProjectId)?.name || 'Проект')
+            : null;
+
+        const tabMap = {
+            'dashboard': 'Дашборд',
+            'estimate': 'Смета',
+            'tender': 'Тендер',
+            'schedule': 'График',
+            'supply': 'Снабжение',
+            'finance': 'Финансы',
+            'analytics': 'Аналитика',
+            'otitb': 'ОТ и ТБ',
+            'settings': 'Настройки',
+            'norms-settings': 'Настройки норм'
+        };
+
+        const currentTabName = tabMap[this.currentRibbonTab] || 'Текущая страница';
+
+        let html = `<span class="breadcrumb-item" onclick="location.reload()">Главная</span>`;
+
+        if (projectName) {
+            html += `
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item">${projectName}</span>
+            `;
+        }
+
+        if (this.currentRibbonTab) {
+            html += `
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item active">${currentTabName}</span>
+            `;
+        }
+
+        breadcrumbs.innerHTML = html;
     }
 
     loadScheduleTab() {

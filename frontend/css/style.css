@@ -1197,6 +1197,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .ribbon-btn span {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3633,4 +3634,43 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
    ======================================== */
 .schedule-root {
     border-radius: var(--radius-lg);
+}
+
+/* ========================================
+   Breadcrumbs Bar
+   ======================================== */
+.breadcrumbs-bar {
+    height: 33px;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-md);
+    gap: 8px;
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--primary);
+}
+
+.breadcrumb-item.active {
+    color: var(--gray-900);
+    font-weight: 500;
+    cursor: default;
+}
+
+.breadcrumb-item.active:hover {
+    color: var(--gray-900);
+}
+
+.breadcrumb-separator {
+    color: var(--gray-400);
+    font-size: 10px;
 }

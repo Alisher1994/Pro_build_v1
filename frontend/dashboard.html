@@ -8,11 +8,20 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        .dashboard-container {
-            padding: 32px;
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
             background: var(--gray-100);
-            min-height: 100vh;
-            overflow-y: auto;
+        }
+
+        .dashboard-container {
+            padding: 32px 48px;
+            background: var(--gray-100);
+            max-width: 1920px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .dashboard-header {

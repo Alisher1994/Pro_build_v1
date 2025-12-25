@@ -1101,7 +1101,7 @@ body {
 
 .ribbon-content {
     position: relative;
-    min-height: 121px;
+    min-height: 96px;
     /* Высота активной панели для стабильности */
     max-height: 500px;
     overflow: hidden;
@@ -1148,27 +1148,27 @@ body {
 .ribbon-btn {
     background: transparent;
     border: 1px solid transparent;
-    padding: var(--spacing-sm);
+    padding: 6px;
     border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-xs);
-    font-size: var(--font-size-xs);
+    gap: 3px;
+    font-size: 10px;
     color: var(--gray-800);
     font-family: var(--font-family);
     transition: all 0.15s ease;
-    width: 70px;
-    height: 70px;
+    width: 56px;
+    height: 56px;
     text-align: center;
 }
 
 .ribbon-btn.large {
-    min-height: 70px;
-    min-width: 80px;
-    font-size: var(--font-size-sm);
+    min-height: 56px;
+    min-width: 64px;
+    font-size: 11px;
 }
 
 .ribbon-btn:hover {
@@ -1186,15 +1186,22 @@ body {
 
 .ribbon-btn svg {
     flex-shrink: 0;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.ribbon-btn.large svg {
+    width: 20px !important;
+    height: 20px !important;
 }
 
 .ribbon-group-label {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     color: var(--gray-600);
     text-align: center;
     padding-top: var(--spacing-xs);
     border-top: 1px solid var(--gray-200);
-    min-height: 28px;
+    min-height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -400,6 +400,15 @@
                 <p class="dashboard-subtitle">Комплексный обзор ключевых показателей и аналитика в реальном времени</p>
             </div>
             <div class="dashboard-actions">
+                <button class="dashboard-btn" id="org-structure-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Структура объекта
+                </button>
                 <button class="dashboard-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -1246,6 +1255,101 @@
                 this.parentElement.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
             });
+        });
+
+        // Organizational Structure Modal
+        const orgModal = document.createElement('div');
+        orgModal.id = 'org-structure-modal';
+        orgModal.style.cssText = `
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        `;
+        orgModal.innerHTML = `
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 95%;
+                max-width: 1600px;
+                height: 90%;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                display: flex;
+                flex-direction: column;
+            ">
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 20px 24px;
+                    border-bottom: 1px solid var(--gray-200);
+                ">
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: var(--gray-900);">
+                        Структура объекта
+                    </h2>
+                    <button id="close-org-modal" style="
+                        background: transparent;
+                        border: none;
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: var(--gray-600);
+                        transition: all 0.15s ease;
+                    " onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='transparent'">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <iframe 
+                    src="org-structure.html" 
+                    style="flex: 1; border: none; width: 100%;"
+                    title="Organizational Structure"
+                ></iframe>
+            </div>
+        `;
+        document.body.appendChild(orgModal);
+
+        // Open modal
+        document.getElementById('org-structure-btn').addEventListener('click', () => {
+            orgModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        });
+
+        // Close modal
+        document.getElementById('close-org-modal').addEventListener('click', () => {
+            orgModal.style.display = 'none';
+            document.body.style.overflow = '';
+        });
+
+        // Close on backdrop click
+        orgModal.addEventListener('click', (e) => {
+            if (e.target === orgModal) {
+                orgModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && orgModal.style.display === 'block') {
+                orgModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
         });
     </script>
 </body>

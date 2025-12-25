@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Структура объекта</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-org-chart@3.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--gray-50);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        .org-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-300);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            position: relative;
+        }
+
+        .org-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .org-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            transition: all 0.15s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(32, 115, 69, 0.1);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-500);
+        }
+
+        .org-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            background: var(--white);
+            color: var(--gray-800);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .org-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+            background: var(--white);
+            padding: 8px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-300);
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .zoom-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: calc(100vh - 65px);
+            background: var(--gray-50);
+        }
+
+        /* Custom node styles */
+        .node-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .node-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Contact info tooltip */
+        .contact-tooltip {
+            position: absolute;
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: none;
+            min-width: 200px;
+        }
+
+        .contact-tooltip.show {
+            display: block;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+
+        .contact-item svg {
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="org-header">
+        <div class="org-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Структура объекта: ЖК "Северный"
+        </div>
+        <div class="org-actions">
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" placeholder="Поиск по имени или должности..." id="org-search">
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoom-out" title="Уменьшить">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+                <button class="zoom-btn" id="zoom-reset" title="Сбросить">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                </button>
+                <button class="zoom-btn" id="zoom-in" title="Увеличить">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <button class="org-btn" id="expand-all">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="17 11 12 6 7 11"></polyline>
+                    <polyline points="17 18 12 13 7 18"></polyline>
+                </svg>
+                Развернуть все
+            </button>
+            <button class="org-btn" id="collapse-all">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="7 13 12 18 17 13"></polyline>
+                    <polyline points="7 6 12 11 17 6"></polyline>
+                </svg>
+                Свернуть все
+            </button>
+        </div>
+    </div>
+
+    <div class="chart-container"></div>
+
+    <script>
+        // Organizational data
+        const orgData = [
+            // Проект
+            { id: 1, parentId: null, name: 'ЖК "Северный"', position: 'Проект', image: 'https://i.pravatar.cc/150?img=0', phone: '', email: '', department: 'Проект' },
+
+            // РП
+            { id: 2, parentId: 1, name: 'Алексей Иванов', position: 'Руководитель проекта', image: 'https://i.pravatar.cc/150?img=12', phone: '+998 90 123 45 67', email: 'a.ivanov@probim.uz', department: 'Управление' },
+
+            // ЗРП
+            { id: 3, parentId: 2, name: 'Сергей Петров', position: 'Заместитель РП', image: 'https://i.pravatar.cc/150?img=13', phone: '+998 90 234 56 78', email: 's.petrov@probim.uz', department: 'Управление' },
+
+            // Отделы под ЗРП
+            { id: 4, parentId: 3, name: 'Дмитрий Козлов', position: 'Начальник строительства', image: 'https://i.pravatar.cc/150?img=14', phone: '+998 90 345 67 89', email: 'd.kozlov@probim.uz', department: 'Строительство' },
+            { id: 5, parentId: 3, name: 'Мария Сидорова', position: 'Главный инженер', image: 'https://i.pravatar.cc/150?img=47', phone: '+998 90 456 78 90', email: 'm.sidorova@probim.uz', department: 'Инженерная служба' },
+            { id: 6, parentId: 3, name: 'Андрей Морозов', position: 'Начальник ОТК', image: 'https://i.pravatar.cc/150?img=15', phone: '+998 90 567 89 01', email: 'a.morozov@probim.uz', department: 'Контроль качества' },
+            { id: 7, parentId: 3, name: 'Елена Волкова', position: 'Инженер по ОТ', image: 'https://i.pravatar.cc/150?img=48', phone: '+998 90 678 90 12', email: 'e.volkova@probim.uz', department: 'Охрана труда' },
+            { id: 8, parentId: 3, name: 'Игорь Смирнов', position: 'Начальник снабжения', image: 'https://i.pravatar.cc/150?img=16', phone: '+998 90 789 01 23', email: 'i.smirnov@probim.uz', department: 'Снабжение' },
+
+            // Подчиненные в строительстве
+            { id: 9, parentId: 4, name: 'Иван Кузнецов', position: 'Прораб', image: 'https://i.pravatar.cc/150?img=17', phone: '+998 90 890 12 34', email: 'i.kuznetsov@probim.uz', department: 'Строительство' },
+            { id: 10, parentId: 4, name: 'Павел Соколов', position: 'Прораб', image: 'https://i.pravatar.cc/150?img=18', phone: '+998 90 901 23 45', email: 'p.sokolov@probim.uz', department: 'Строительство' },
+            { id: 11, parentId: 4, name: 'Александр Попов', position: 'Мастер участка', image: 'https://i.pravatar.cc/150?img=19', phone: '+998 90 012 34 56', email: 'a.popov@probim.uz', department: 'Строительство' },
+            { id: 12, parentId: 4, name: 'Михаил Лебедев', position: 'Мастер участка', image: 'https://i.pravatar.cc/150?img=20', phone: '+998 90 123 45 67', email: 'm.lebedev@probim.uz', department: 'Строительство' },
+
+            // Подчиненные в инженерной службе
+            { id: 13, parentId: 5, name: 'Виктор Новиков', position: 'Инженер ПТО', image: 'https://i.pravatar.cc/150?img=21', phone: '+998 90 234 56 78', email: 'v.novikov@probim.uz', department: 'Инженерная служба' },
+            { id: 14, parentId: 5, name: 'Екатерина Федорова', position: 'Инженер ПТО', image: 'https://i.pravatar.cc/150?img=49', phone: '+998 90 345 67 89', email: 'e.fedorova@probim.uz', department: 'Инженерная служба' },
+            { id: 15, parentId: 5, name: 'Николай Орлов', position: 'Геодезист', image: 'https://i.pravatar.cc/150?img=22', phone: '+998 90 456 78 90', email: 'n.orlov@probim.uz', department: 'Инженерная служба' },
+
+            // Подчиненные в ОТК
+            { id: 16, parentId: 6, name: 'Ольга Белова', position: 'Инженер ОТК', image: 'https://i.pravatar.cc/150?img=50', phone: '+998 90 567 89 01', email: 'o.belova@probim.uz', department: 'Контроль качества' },
+            { id: 17, parentId: 6, name: 'Татьяна Егорова', position: 'Инженер ОТК', image: 'https://i.pravatar.cc/150?img=51', phone: '+998 90 678 90 12', email: 't.egorova@probim.uz', department: 'Контроль качества' },
+
+            // Подчиненные в охране труда
+            { id: 18, parentId: 7, name: 'Константин Павлов', position: 'Специалист по ОТ', image: 'https://i.pravatar.cc/150?img=23', phone: '+998 90 789 01 23', email: 'k.pavlov@probim.uz', department: 'Охрана труда' },
+
+            // Подчиненные в снабжении
+            { id: 19, parentId: 8, name: 'Людмила Макарова', position: 'Менеджер по закупкам', image: 'https://i.pravatar.cc/150?img=52', phone: '+998 90 890 12 34', email: 'l.makarova@probim.uz', department: 'Снабжение' },
+            { id: 20, parentId: 8, name: 'Григорий Васильев', position: 'Кладовщик', image: 'https://i.pravatar.cc/150?img=24', phone: '+998 90 901 23 45', email: 'g.vasiliev@probim.uz', department: 'Снабжение' },
+        ];
+
+        let chart = null;
+
+        // Initialize chart
+        chart = new d3.OrgChart()
+            .container('.chart-container')
+            .data(orgData)
+            .nodeWidth(d => 240)
+            .nodeHeight(d => 120)
+            .childrenMargin(d => 60)
+            .compactMarginBetween(d => 40)
+            .compactMarginPair(d => 40)
+            .neighbourMargin((a, b) => 30)
+            .nodeContent(function (d, i, arr, state) {
+                const color = d.data.id === 1 ? '#FFF9E6' : '#FFFFFF';
+                const borderColor = d.data.id === 1 ? '#FFD700' :
+                    d.data._highlighted || d.data._upToTheRootHighlighted ? '#207345' : '#E4E2E9';
+                const borderWidth = d.data.id === 1 ? '3px' :
+                    d.data._highlighted || d.data._upToTheRootHighlighted ? '3px' : '1px';
+
+                return `
+                    <div class="node-card" style="width:${d.width}px;height:${d.height}px;padding:1px;">
+                        <div style="font-family: 'Inter', sans-serif;
+                                    background-color:${color};
+                                    width:100%;
+                                    height:100%;
+                                    border-radius:10px;
+                                    border: ${borderWidth} solid ${borderColor};
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                    position:relative;
+                                    overflow:hidden;">
+                            
+                            <!-- ID Badge -->
+                            <div style="position:absolute;top:8px;right:8px;
+                                        background:#E5E9F2;
+                                        padding:2px 8px;
+                                        border-radius:12px;
+                                        font-size:10px;
+                                        color:#716E7B;
+                                        font-weight:600;">
+                                #${d.data.id}
+                            </div>
+                            
+                            <!-- Avatar -->
+                            <div style="margin-top:15px;margin-left:20px;
+                                        border-radius:50%;
+                                        width:50px;
+                                        height:50px;
+                                        overflow:hidden;
+                                        border:3px solid white;
+                                        box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                                <img src="${d.data.image}" 
+                                     style="width:100%;height:100%;object-fit:cover;" 
+                                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(d.data.name)}&background=207345&color=fff&size=50'"/>
+                            </div>
+                            
+                            <!-- Name & Position -->
+                            <div style="margin-top:12px;padding:0 20px;">
+                                <div style="font-size:14px;
+                                            color:#08011E;
+                                            font-weight:600;
+                                            margin-bottom:4px;
+                                            white-space:nowrap;
+                                            overflow:hidden;
+                                            text-overflow:ellipsis;">
+                                    ${d.data.name}
+                                </div>
+                                <div style="color:#716E7B;
+                                            font-size:11px;
+                                            white-space:nowrap;
+                                            overflow:hidden;
+                                            text-overflow:ellipsis;">
+                                    ${d.data.position}
+                                </div>
+                                ${d.data.department ? `
+                                    <div style="margin-top:6px;
+                                                display:inline-block;
+                                                background:#E8F5E9;
+                                                color:#207345;
+                                                padding:2px 8px;
+                                                border-radius:10px;
+                                                font-size:10px;
+                                                font-weight:600;">
+                                        ${d.data.department}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Contact Icons (if has contact info) -->
+                            ${d.data.phone || d.data.email ? `
+                                <div style="position:absolute;bottom:8px;left:20px;
+                                            display:flex;gap:8px;">
+                                    ${d.data.phone ? `
+                                        <div style="width:24px;height:24px;
+                                                    background:#E8F5E9;
+                                                    border-radius:50%;
+                                                    display:flex;
+                                                    align-items:center;
+                                                    justify-content:center;
+                                                    cursor:pointer;"
+                                             title="${d.data.phone}">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#207345" stroke-width="2">
+                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                            </svg>
+                                        </div>
+                                    ` : ''}
+                                    ${d.data.email ? `
+                                        <div style="width:24px;height:24px;
+                                                    background:#E3F2FD;
+                                                    border-radius:50%;
+                                                    display:flex;
+                                                    align-items:center;
+                                                    justify-content:center;
+                                                    cursor:pointer;"
+                                             title="${d.data.email}">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1976D2" stroke-width="2">
+                                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                            </svg>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            })
+            .render();
+
+        // Search functionality
+        document.getElementById('org-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (!query) {
+                chart.clearHighlighting();
+                return;
+            }
+
+            const matches = orgData.filter(d =>
+                d.name.toLowerCase().includes(query) ||
+                d.position.toLowerCase().includes(query)
+            ).map(d => d.id);
+
+            chart.clearHighlighting();
+            matches.forEach(id => {
+                chart.setHighlighted(id).render();
+            });
+        });
+
+        // Zoom controls
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            chart.zoomIn();
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            chart.zoomOut();
+        });
+
+        document.getElementById('zoom-reset').addEventListener('click', () => {
+            chart.fit();
+        });
+
+        // Expand/Collapse all
+        document.getElementById('expand-all').addEventListener('click', () => {
+            chart.expandAll();
+        });
+
+        document.getElementById('collapse-all').addEventListener('click', () => {
+            chart.collapseAll();
+        });
+
+        // Initial fit
+        setTimeout(() => {
+            chart.fit();
+        }, 100);
+    </script>
+</body>
+
+</html>

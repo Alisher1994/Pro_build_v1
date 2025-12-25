@@ -9,21 +9,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         .dashboard-container {
-            padding: 24px;
+            padding: 32px;
             background: var(--gray-100);
             min-height: 100vh;
             overflow-y: auto;
         }
 
         .dashboard-header {
-            margin-bottom: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .dashboard-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 600;
             color: var(--gray-900);
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
         }
 
         .dashboard-subtitle {
@@ -32,17 +35,52 @@
             margin: 0;
         }
 
+        .dashboard-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .dashboard-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            background: white;
+            font-size: 13px;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .dashboard-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .dashboard-btn.primary:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Stats Grid - 6 columns for desktop */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
         }
 
         .stat-card {
             background: white;
             border-radius: 4px;
-            padding: 20px;
+            padding: 24px;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--gray-200);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -76,12 +114,12 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .stat-icon {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 4px;
             display: flex;
             align-items: center;
@@ -90,8 +128,8 @@
         }
 
         .stat-icon svg {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             stroke: var(--primary);
         }
 
@@ -116,10 +154,10 @@
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
             color: var(--gray-900);
-            margin: 0 0 4px 0;
+            margin: 0 0 6px 0;
             line-height: 1;
             animation: countUp 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -128,6 +166,12 @@
             font-size: 13px;
             color: var(--gray-600);
             margin: 0;
+        }
+
+        .stat-sublabel {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin: 4px 0 0 0;
         }
 
         @keyframes countUp {
@@ -142,9 +186,26 @@
             }
         }
 
-        .charts-grid {
+        /* Main Charts Grid - 2 columns */
+        .charts-main-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* Secondary Charts Grid - 3 columns */
+        .charts-secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* Bottom Charts Grid - Full width */
+        .charts-bottom-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
             gap: 24px;
             margin-bottom: 24px;
         }
@@ -152,7 +213,7 @@
         .chart-card {
             background: white;
             border-radius: 4px;
-            padding: 24px;
+            padding: 28px;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--gray-200);
             animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -170,7 +231,7 @@
             }
         }
 
-        .chart-card.large {
+        .chart-card.full-width {
             grid-column: 1 / -1;
         }
 
@@ -178,18 +239,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .chart-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             color: var(--gray-900);
             margin: 0;
         }
 
         .chart-subtitle {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--gray-500);
             margin: 4px 0 0 0;
         }
@@ -223,27 +284,31 @@
 
         .chart-container {
             position: relative;
-            height: 300px;
+            height: 320px;
         }
 
         .chart-container.small {
-            height: 250px;
+            height: 280px;
+        }
+
+        .chart-container.medium {
+            height: 350px;
         }
 
         .chart-container.large {
-            height: 400px;
+            height: 420px;
         }
 
         .progress-list {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
         }
 
         .progress-item {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .progress-header {
@@ -253,19 +318,19 @@
         }
 
         .progress-name {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
             color: var(--gray-800);
         }
 
         .progress-value {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--primary);
         }
 
         .progress-bar-container {
-            height: 8px;
+            height: 10px;
             background: var(--gray-200);
             border-radius: 4px;
             overflow: hidden;
@@ -285,54 +350,36 @@
             }
         }
 
-        .team-grid {
+        .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
 
-        .team-member {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
+        .kpi-item {
+            padding: 16px;
             background: var(--gray-50);
             border-radius: 4px;
-            transition: all 0.2s;
+            border-left: 3px solid var(--primary);
         }
 
-        .team-member:hover {
-            background: var(--gray-100);
-        }
-
-        .team-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .team-info {
-            flex: 1;
-        }
-
-        .team-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--gray-900);
-            margin: 0 0 2px 0;
-        }
-
-        .team-role {
-            font-size: 11px;
+        .kpi-label {
+            font-size: 12px;
             color: var(--gray-600);
+            margin: 0 0 6px 0;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
             margin: 0;
+        }
+
+        .kpi-change {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin: 4px 0 0 0;
         }
     </style>
 </head>
@@ -340,13 +387,31 @@
 <body>
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h1 class="dashboard-title">Дашборд проекта</h1>
-            <p class="dashboard-subtitle">Обзор ключевых показателей и аналитика</p>
+            <div>
+                <h1 class="dashboard-title">Дашборд проекта</h1>
+                <p class="dashboard-subtitle">Комплексный обзор ключевых показателей и аналитика в реальном времени</p>
+            </div>
+            <div class="dashboard-actions">
+                <button class="dashboard-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Экспорт
+                </button>
+                <button class="dashboard-btn primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                    </svg>
+                    Обновить
+                </button>
+            </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Cards - 6 columns -->
         <div class="stats-grid">
-            <div class="stat-card" style="animation-delay: 0.1s;">
+            <div class="stat-card" style="animation-delay: 0.05s;">
                 <div class="stat-header">
                     <div class="stat-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -364,9 +429,10 @@
                 </div>
                 <h2 class="stat-value">24</h2>
                 <p class="stat-label">Активных блоков</p>
+                <p class="stat-sublabel">из 28 запланированных</p>
             </div>
 
-            <div class="stat-card" style="animation-delay: 0.2s;">
+            <div class="stat-card" style="animation-delay: 0.1s;">
                 <div class="stat-header">
                     <div class="stat-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -385,9 +451,10 @@
                 </div>
                 <h2 class="stat-value">₸ 2.4M</h2>
                 <p class="stat-label">Общий бюджет</p>
+                <p class="stat-sublabel">освоено 1.8M (75%)</p>
             </div>
 
-            <div class="stat-card" style="animation-delay: 0.3s;">
+            <div class="stat-card" style="animation-delay: 0.15s;">
                 <div class="stat-header">
                     <div class="stat-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -407,9 +474,10 @@
                 </div>
                 <h2 class="stat-value">18</h2>
                 <p class="stat-label">Субподрядчиков</p>
+                <p class="stat-sublabel">12 активных контрактов</p>
             </div>
 
-            <div class="stat-card" style="animation-delay: 0.4s;">
+            <div class="stat-card" style="animation-delay: 0.2s;">
                 <div class="stat-header">
                     <div class="stat-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -427,30 +495,92 @@
                 </div>
                 <h2 class="stat-value">45</h2>
                 <p class="stat-label">Дней до дедлайна</p>
+                <p class="stat-sublabel">завершение 08.02.2026</p>
+            </div>
+
+            <div class="stat-card" style="animation-delay: 0.25s;">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                    </div>
+                    <div class="stat-trend up">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                        </svg>
+                        +5%
+                    </div>
+                </div>
+                <h2 class="stat-value">78%</h2>
+                <p class="stat-label">Прогресс проекта</p>
+                <p class="stat-sublabel">опережаем график</p>
+            </div>
+
+            <div class="stat-card" style="animation-delay: 0.3s;">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <line x1="19" y1="8" x2="19" y2="14" />
+                            <line x1="22" y1="11" x2="16" y2="11" />
+                        </svg>
+                    </div>
+                    <div class="stat-trend up">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                        </svg>
+                        +8
+                    </div>
+                </div>
+                <h2 class="stat-value">156</h2>
+                <p class="stat-label">Рабочих на объекте</p>
+                <p class="stat-sublabel">пик активности</p>
             </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="charts-grid">
-            <!-- Budget Chart -->
-            <div class="chart-card" style="animation-delay: 0.5s;">
+        <!-- Main Charts - 2 columns -->
+        <div class="charts-main-grid">
+            <div class="chart-card" style="animation-delay: 0.35s;">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Анализ затрат</h3>
+                        <p class="chart-subtitle">План vs Факт по месяцам (млн ₸)</p>
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-filter active">6 мес</button>
+                        <button class="chart-filter">12 мес</button>
+                        <button class="chart-filter">Год</button>
+                    </div>
+                </div>
+                <div class="chart-container medium">
+                    <canvas id="costAnalysisChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="animation-delay: 0.4s;">
                 <div class="chart-header">
                     <div>
                         <h3 class="chart-title">Распределение бюджета</h3>
                         <p class="chart-subtitle">По разделам работ</p>
                     </div>
                 </div>
-                <div class="chart-container small">
+                <div class="chart-container medium">
                     <canvas id="budgetChart"></canvas>
                 </div>
             </div>
+        </div>
 
-            <!-- Timeline Chart -->
-            <div class="chart-card" style="animation-delay: 0.6s;">
+        <!-- Secondary Charts - 3 columns -->
+        <div class="charts-secondary-grid">
+            <div class="chart-card" style="animation-delay: 0.45s;">
                 <div class="chart-header">
                     <div>
                         <h3 class="chart-title">Прогресс по месяцам</h3>
-                        <p class="chart-subtitle">Выполнение работ</p>
+                        <p class="chart-subtitle">Выполнение работ (%)</p>
                     </div>
                 </div>
                 <div class="chart-container small">
@@ -458,8 +588,46 @@
                 </div>
             </div>
 
-            <!-- Progress Bars -->
-            <div class="chart-card" style="animation-delay: 0.7s;">
+            <div class="chart-card" style="animation-delay: 0.5s;">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Использование ресурсов</h3>
+                        <p class="chart-subtitle">Материалы и оборудование</p>
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="resourcesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="animation-delay: 0.55s;">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Качество работ</h3>
+                        <p class="chart-subtitle">Оценка по блокам</p>
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Charts - 2fr + 1fr -->
+        <div class="charts-bottom-grid">
+            <div class="chart-card" style="animation-delay: 0.6s;">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Динамика персонала</h3>
+                        <p class="chart-subtitle">Количество рабочих по неделям</p>
+                    </div>
+                </div>
+                <div class="chart-container medium">
+                    <canvas id="staffChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="animation-delay: 0.65s;">
                 <div class="chart-header">
                     <div>
                         <h3 class="chart-title">Прогресс по блокам</h3>
@@ -503,64 +671,73 @@
                             <div class="progress-bar" style="width: 15%;"></div>
                         </div>
                     </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-name">Блок Д - Инженерные сети</span>
+                            <span class="progress-value">42%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 42%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Charts Grid -->
+        <div class="charts-secondary-grid">
+            <div class="chart-card" style="animation-delay: 0.7s;">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Тендеры и контракты</h3>
+                        <p class="chart-subtitle">Статус по месяцам</p>
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="tendersChart"></canvas>
                 </div>
             </div>
 
-            <!-- Team Performance -->
+            <div class="chart-card" style="animation-delay: 0.75s;">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Безопасность труда</h3>
+                        <p class="chart-subtitle">Инциденты и наряд-допуски</p>
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="safetyChart"></canvas>
+                </div>
+            </div>
+
             <div class="chart-card" style="animation-delay: 0.8s;">
                 <div class="chart-header">
                     <div>
-                        <h3 class="chart-title">Команда проекта</h3>
-                        <p class="chart-subtitle">Активные участники</p>
+                        <h3 class="chart-title">Ключевые показатели</h3>
+                        <p class="chart-subtitle">KPI проекта</p>
                     </div>
                 </div>
-                <div class="team-grid">
-                    <div class="team-member">
-                        <div class="team-avatar">АС</div>
-                        <div class="team-info">
-                            <p class="team-name">Алишер Садыков</p>
-                            <p class="team-role">ГИП</p>
-                        </div>
+                <div class="kpi-grid">
+                    <div class="kpi-item">
+                        <p class="kpi-label">SPI (График)</p>
+                        <h4 class="kpi-value">1.05</h4>
+                        <p class="kpi-change">+0.03 от плана</p>
                     </div>
-                    <div class="team-member">
-                        <div class="team-avatar">ИП</div>
-                        <div class="team-info">
-                            <p class="team-name">Иван Петров</p>
-                            <p class="team-role">Прораб</p>
-                        </div>
+                    <div class="kpi-item">
+                        <p class="kpi-label">CPI (Бюджет)</p>
+                        <h4 class="kpi-value">0.98</h4>
+                        <p class="kpi-change">-0.02 от плана</p>
                     </div>
-                    <div class="team-member">
-                        <div class="team-avatar">МК</div>
-                        <div class="team-info">
-                            <p class="team-name">Мария Козлова</p>
-                            <p class="team-role">Сметчик</p>
-                        </div>
+                    <div class="kpi-item">
+                        <p class="kpi-label">Производительность</p>
+                        <h4 class="kpi-value">112%</h4>
+                        <p class="kpi-change">+12% от нормы</p>
                     </div>
-                    <div class="team-member">
-                        <div class="team-avatar">ДС</div>
-                        <div class="team-info">
-                            <p class="team-name">Дмитрий Смирнов</p>
-                            <p class="team-role">Инженер</p>
-                        </div>
+                    <div class="kpi-item">
+                        <p class="kpi-label">Качество</p>
+                        <h4 class="kpi-value">4.7</h4>
+                        <p class="kpi-change">из 5.0 баллов</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Large Chart - Cost Analysis -->
-            <div class="chart-card large" style="animation-delay: 0.9s;">
-                <div class="chart-header">
-                    <div>
-                        <h3 class="chart-title">Анализ затрат</h3>
-                        <p class="chart-subtitle">План vs Факт по месяцам</p>
-                    </div>
-                    <div class="chart-actions">
-                        <button class="chart-filter active">6 месяцев</button>
-                        <button class="chart-filter">12 месяцев</button>
-                        <button class="chart-filter">Весь период</button>
-                    </div>
-                </div>
-                <div class="chart-container large">
-                    <canvas id="costAnalysisChart"></canvas>
                 </div>
             </div>
         </div>
@@ -577,6 +754,91 @@
         const accentBlue = '#207345';
         const accentOrange = '#CA5010';
         const accentGreen = '#107C10';
+        const accentRed = '#D13438';
+
+        // Cost Analysis Line Chart
+        const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
+        new Chart(costCtx, {
+            type: 'line',
+            data: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                datasets: [{
+                    label: 'План',
+                    data: [400000, 800000, 1200000, 1600000, 2000000, 2400000],
+                    borderColor: primaryColor,
+                    backgroundColor: 'rgba(32, 115, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'white',
+                    pointBorderColor: primaryColor,
+                    pointBorderWidth: 3
+                }, {
+                    label: 'Факт',
+                    data: [380000, 820000, 1150000, 1680000, 1950000, 2350000],
+                    borderColor: accentOrange,
+                    backgroundColor: 'rgba(202, 80, 16, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'white',
+                    pointBorderColor: accentOrange,
+                    pointBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '₸ ' + (value / 1000000).toFixed(1) + 'M';
+                            }
+                        },
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ₸ ' + context.parsed.y.toLocaleString('ru-RU');
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
 
         // Budget Doughnut Chart
         const budgetCtx = document.getElementById('budgetChart').getContext('2d');
@@ -605,9 +867,12 @@
                     legend: {
                         position: 'right',
                         labels: {
-                            padding: 12,
+                            padding: 16,
                             usePointStyle: true,
-                            pointStyle: 'circle'
+                            pointStyle: 'circle',
+                            font: {
+                                size: 13
+                            }
                         }
                     },
                     tooltip: {
@@ -685,38 +950,122 @@
             }
         });
 
-        // Cost Analysis Line Chart
-        const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
-        new Chart(costCtx, {
+        // Resources Radar Chart
+        const resourcesCtx = document.getElementById('resourcesChart').getContext('2d');
+        new Chart(resourcesCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Бетон', 'Арматура', 'Кирпич', 'Техника', 'Инструмент'],
+                datasets: [{
+                    label: 'Использовано',
+                    data: [85, 72, 68, 90, 78],
+                    backgroundColor: 'rgba(32, 115, 69, 0.2)',
+                    borderColor: primaryColor,
+                    borderWidth: 2,
+                    pointBackgroundColor: primaryColor,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: primaryColor
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
+        // Quality Polar Chart
+        const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+        new Chart(qualityCtx, {
+            type: 'polarArea',
+            data: {
+                labels: ['Блок А', 'Блок Б', 'Блок В', 'Блок Г', 'Блок Д'],
+                datasets: [{
+                    data: [4.8, 4.5, 4.7, 4.2, 4.6],
+                    backgroundColor: [
+                        'rgba(32, 115, 69, 0.7)',
+                        'rgba(90, 157, 121, 0.7)',
+                        'rgba(156, 204, 101, 0.7)',
+                        'rgba(102, 187, 106, 0.7)',
+                        'rgba(67, 160, 71, 0.7)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 12,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
+        // Staff Area Chart
+        const staffCtx = document.getElementById('staffChart').getContext('2d');
+        new Chart(staffCtx, {
             type: 'line',
             data: {
-                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                labels: ['Нед 1', 'Нед 2', 'Нед 3', 'Нед 4', 'Нед 5', 'Нед 6', 'Нед 7', 'Нед 8'],
                 datasets: [{
-                    label: 'План',
-                    data: [400000, 800000, 1200000, 1600000, 2000000, 2400000],
+                    label: 'Рабочие',
+                    data: [120, 135, 148, 156, 152, 145, 150, 156],
                     borderColor: primaryColor,
-                    backgroundColor: 'rgba(32, 115, 69, 0.1)',
+                    backgroundColor: 'rgba(32, 115, 69, 0.2)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: 'white',
-                    pointBorderColor: primaryColor,
-                    pointBorderWidth: 2
+                    pointHoverRadius: 7
                 }, {
-                    label: 'Факт',
-                    data: [380000, 820000, 1150000, 1680000, 1950000, 2350000],
+                    label: 'Инженеры',
+                    data: [18, 20, 22, 24, 23, 22, 24, 25],
                     borderColor: accentOrange,
-                    backgroundColor: 'rgba(202, 80, 16, 0.1)',
+                    backgroundColor: 'rgba(202, 80, 16, 0.2)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: 'white',
-                    pointBorderColor: accentOrange,
-                    pointBorderWidth: 2
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -729,11 +1078,6 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return '₸ ' + (value / 1000000).toFixed(1) + 'M';
-                            }
-                        },
                         grid: {
                             drawBorder: false
                         }
@@ -753,13 +1097,6 @@
                             usePointStyle: true,
                             padding: 16
                         }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': ₸ ' + context.parsed.y.toLocaleString('ru-RU');
-                            }
-                        }
                     }
                 },
                 animation: {
@@ -769,10 +1106,136 @@
             }
         });
 
+        // Tenders Stacked Bar Chart
+        const tendersCtx = document.getElementById('tendersChart').getContext('2d');
+        new Chart(tendersCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                datasets: [{
+                    label: 'Открыто',
+                    data: [3, 5, 4, 6, 5, 7],
+                    backgroundColor: primaryColor,
+                    borderRadius: 4
+                }, {
+                    label: 'Закрыто',
+                    data: [2, 4, 3, 5, 4, 6],
+                    backgroundColor: accentGreen,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 12
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
+        // Safety Mixed Chart
+        const safetyCtx = document.getElementById('safetyChart').getContext('2d');
+        new Chart(safetyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                datasets: [{
+                    type: 'line',
+                    label: 'Наряд-допуски',
+                    data: [45, 52, 48, 58, 55, 62],
+                    borderColor: primaryColor,
+                    backgroundColor: 'rgba(32, 115, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }, {
+                    type: 'bar',
+                    label: 'Инциденты',
+                    data: [2, 1, 3, 1, 2, 0],
+                    backgroundColor: accentRed,
+                    borderRadius: 4,
+                    yAxisID: 'y'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        max: 5,
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 12
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
         // Chart filter buttons
         document.querySelectorAll('.chart-filter').forEach(btn => {
             btn.addEventListener('click', function () {
-                document.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
+                this.parentElement.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
             });
         });

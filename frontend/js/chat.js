@@ -170,33 +170,66 @@ class ChatManager {
         this.renderList(tabName);
     }
 
-    renderList(tabName) {
+    async renderList(tabName) {
         const listContainer = document.getElementById('chat-list-container');
-        listContainer.innerHTML = ''; // Cloud be a loader
+        listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--gray-400); font-size:12px;">Загрузка...</div>';
 
-        // Simulated Data
-        const mockData = this.getMockData(tabName);
+        try {
+            let data = [];
+            if (tabName === 'contacts') {
+                const employees = await window.api.getEmployees();
+                data = employees.map(e => ({
+                    id: e.id,
+                    name: `${e.lastName} ${e.firstName}`,
+                    image: e.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.firstName + ' ' + e.lastName)}&background=random`,
+                    lastMessage: e.position?.name || 'Сотрудник',
+                    lastTime: '10:45',
+                    online: Math.random() > 0.5
+                }));
+            } else if (tabName === 'subcontractors') {
+                const subs = await window.api.getAllSubcontractors();
+                data = subs.map(s => ({
+                    id: s.id,
+                    name: s.company,
+                    image: s.companyPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.company)}&background=207345&color=fff`,
+                    lastMessage: s.workTypes || 'Субподрядчик',
+                    lastTime: 'Пн',
+                    online: false
+                }));
+            } else {
+                data = this.getMockData(tabName);
+            }
 
-        mockData.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'chat-list-item';
-            el.onclick = () => this.openConversation(item);
+            listContainer.innerHTML = '';
+            if (data.length === 0) {
+                listContainer.innerHTML = '<div style="padding:40px; text-align:center; color:var(--gray-400); font-size:12px;">Пусто</div>';
+                return;
+            }
 
-            el.innerHTML = `
-                <div class="chat-avatar-wrapper">
-                    <img src="${item.image}" class="chat-avatar" alt="${item.name}">
-                    <span class="chat-status-dot ${item.online ? 'online' : ''}"></span>
-                </div>
-                <div class="chat-info">
-                    <div class="chat-name-row">
-                        <span class="chat-name">${item.name}</span>
-                        <span class="chat-time">${item.lastTime}</span>
+            data.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'chat-list-item';
+                el.onclick = () => this.openConversation(item);
+
+                el.innerHTML = `
+                    <div class="chat-avatar-wrapper">
+                        <img src="${item.image}" class="chat-avatar" alt="${item.name}">
+                        <span class="chat-status-dot ${item.online ? 'online' : ''}"></span>
                     </div>
-                    <div class="chat-preview">${item.lastMessage}</div>
-                </div>
-            `;
-            listContainer.appendChild(el);
-        });
+                    <div class="chat-info">
+                        <div class="chat-name-row">
+                            <span class="chat-name">${item.name}</span>
+                            <span class="chat-time">${item.lastTime}</span>
+                        </div>
+                        <div class="chat-preview">${item.lastMessage}</div>
+                    </div>
+                `;
+                listContainer.appendChild(el);
+            });
+        } catch (error) {
+            console.error('Chat render error:', error);
+            listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--red-500); font-size:12px;">Ошибка загрузки</div>';
+        }
     }
 
     openConversation(user) {

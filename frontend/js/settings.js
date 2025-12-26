@@ -1587,7 +1587,7 @@ const SettingsManager = {
                                     <div style="padding-bottom: 10px; font-weight: bold; color: var(--gray-400);">&gt;</div>
                                     <div style="flex: 1;">
                                         <label>Должность *</label>
-                                        <select name="positionId" id="emp-pos-id" required ${preSelect?.positionId && !isEdit ? 'disabled' : 'disabled'}>
+                                        <select name="positionId" id="emp-pos-id" required ${preSelect?.positionId && !isEdit ? 'disabled' : ''}>
                                             <option value="">Выберите должность</option>
                                         </select>
                                     </div>
@@ -1798,17 +1798,27 @@ const SettingsManager = {
             // Remove empty password if editing
             if (isEdit && !data.password) delete data.password;
 
-            // Validation: Check if position is Head and already occupied
+            // Validation: Check if position is Head and already occupied IN THE SAME PROJECT
             const selectedPos = positions.find(p => p.id === data.positionId);
             if (selectedPos && selectedPos.isHead) {
-                // Check if any OTHER employee already has this position
-                const existingHead = allEmployees.find(e =>
-                    e.positionId === data.positionId &&
-                    e.id !== emp?.id // Exclude self if editing
-                );
+                const isRP_ZRP = selectedPos.name.includes('РП (Руководитель проекта)') || selectedPos.name.includes('ЗРП (Зам. руководителя проекта)');
+
+                // Check if any OTHER employee already has this position in this project
+                const existingHead = allEmployees.find(e => {
+                    const isSameProject = e.projectId === data.projectId;
+                    const isSelf = isEdit && e.id === emp?.id;
+                    if (!isSameProject || isSelf) return false;
+
+                    if (isRP_ZRP) {
+                        return e.positionId === data.positionId;
+                    } else if (selectedPos.isHead) {
+                        return e.departmentId === data.departmentId && e.isHead && !['РП (Руководитель проекта)', 'ЗРП (Зам. руководителя проекта)'].includes(e.position?.name);
+                    }
+                    return false;
+                });
 
                 if (existingHead) {
-                    UI.showNotification(`Должность "${selectedPos.name}" уже занята сотрудником ${existingHead.lastName} ${existingHead.firstName}. Руководитель может быть только один.`, 'error');
+                    UI.showNotification(`Должность "${selectedPos.name}" в этом проекте уже занята сотрудником ${existingHead.lastName} ${existingHead.firstName}. Руководитель может быть только один.`, 'error');
                     return;
                 }
             }

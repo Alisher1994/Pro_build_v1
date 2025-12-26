@@ -259,22 +259,33 @@ router.get('/:id/hierarchy', async (req, res) => {
     const project = await prisma.project.findUnique({ where: { id } });
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
+    const hierarchy: any[] = [];
+
+    const totalStaff = await prisma.employee.count({ where: { projectId: id } });
+
     // 1. Root: The Project itself
-    const hierarchy: any[] = [{
+    hierarchy.push({
       id: project.id,
       parentId: null,
       name: project.name,
       position: 'Объект',
       image: project.photo || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&h=200&fit=crop',
-      type: 'project'
-    }];
+      type: 'project',
+      staffCount: totalStaff
+    });
 
-    // 2. Project Manager (RP)
+    // 2. Identify RP (Project Manager) and ZRP (Deputy)
     const rp = await prisma.employee.findFirst({
       where: { projectId: id, position: { name: 'РП (Руководитель проекта)' } },
       include: { position: true }
     });
 
+    const zrp = await prisma.employee.findFirst({
+      where: { projectId: id, position: { name: 'ЗРП (Зам. руководителя проекта)' } },
+      include: { position: true }
+    });
+
+    // 3. Add RP to hierarchy
     if (rp) {
       hierarchy.push({
         id: rp.id,
@@ -283,41 +294,38 @@ router.get('/:id/hierarchy', async (req, res) => {
         position: rp.position.name,
         image: rp.photo || `https://i.pravatar.cc/150?u=${rp.id}`,
         phone: rp.phone,
-        email: rp.email
+        email: rp.email,
+        type: 'employee'
       });
     }
 
-    const rpParentId = rp ? rp.id : project.id;
-
-    // 3. Deputy Manager (ZRP)
-    const zrp = await prisma.employee.findFirst({
-      where: { projectId: id, position: { name: 'ЗРП (Зам. руководителя проекта)' } },
-      include: { position: true }
-    });
-
+    // 4. Add ZRP to hierarchy (reports to RP if exists, otherwise to Project)
     if (zrp) {
       hierarchy.push({
         id: zrp.id,
-        parentId: rpParentId,
+        parentId: rp ? rp.id : project.id,
         name: `${zrp.lastName} ${zrp.firstName}`,
         position: zrp.position.name,
         image: zrp.photo || `https://i.pravatar.cc/150?u=${zrp.id}`,
         phone: zrp.phone,
-        email: zrp.email
+        email: zrp.email,
+        type: 'employee'
       });
     }
 
-    const zrpParentId = zrp ? zrp.id : rpParentId;
+    // 5. Reporting root for departments
+    const deptParentId = zrp ? zrp.id : (rp ? rp.id : project.id);
 
-    // 4. Departments and their heads
+    // 6. Get all departments and their staff in this project
     const departments = await prisma.department.findMany();
+
     for (const dept of departments) {
-      // Find head of this department in this project
-      const head = await prisma.employee.findFirst({
+      // Find all staff in this department for this project
+      const staff = await prisma.employee.findMany({
         where: {
           projectId: id,
           departmentId: dept.id,
-          isHead: true,
+          // Exclude RP/ZRP as they are already handled
           NOT: {
             position: {
               name: { in: ['РП (Руководитель проекта)', 'ЗРП (Зам. руководителя проекта)'] }
@@ -327,46 +335,60 @@ router.get('/:id/hierarchy', async (req, res) => {
         include: { position: true }
       });
 
+      if (staff.length === 0) continue;
+
+      // Find head of department
+      const head = staff.find(s => s.isHead);
+      const remainingStaff = staff.filter(s => !s.isHead);
+
+      const deptNodeId = `dept_${dept.id}`;
+
+      // Add Department Node (Represented by the Head if exists, otherwise generic)
       if (head) {
-        const deptNodeId = `dept_${dept.id}`;
         hierarchy.push({
           id: deptNodeId,
-          parentId: zrpParentId,
+          parentId: deptParentId,
           name: dept.name,
           position: 'Отдел',
           headName: `${head.lastName} ${head.firstName}`,
           headPosition: head.position.name,
           phone: head.phone,
           image: head.photo || `https://i.pravatar.cc/150?u=${head.id}`,
-          type: 'dept'
+          type: 'dept',
+          staffCount: staff.length
         });
-
-        // 5. Staff in this department
-        const staff = await prisma.employee.findMany({
-          where: {
-            projectId: id,
-            departmentId: dept.id,
-            isHead: false
-          },
-          include: { position: true }
+      } else {
+        hierarchy.push({
+          id: deptNodeId,
+          parentId: deptParentId,
+          name: dept.name,
+          position: 'Отдел (Без руководителя)',
+          headName: dept.name,
+          headPosition: 'Общий состав',
+          image: 'https://cdn-icons-png.flaticon.com/512/25/25400.png', // Generic group icon
+          type: 'dept',
+          staffCount: staff.length
         });
+      }
 
-        for (const s of staff) {
-          hierarchy.push({
-            id: s.id,
-            parentId: deptNodeId,
-            name: `${s.lastName} ${s.firstName}`,
-            position: s.position.name,
-            image: s.photo || `https://i.pravatar.cc/150?u=${s.id}`,
-            phone: s.phone,
-            email: s.email
-          });
-        }
+      // Add remaining staff reporting to the department node
+      for (const s of remainingStaff) {
+        hierarchy.push({
+          id: s.id,
+          parentId: deptNodeId,
+          name: `${s.lastName} ${s.firstName}`,
+          position: s.position.name,
+          image: s.photo || `https://i.pravatar.cc/150?u=${s.id}`,
+          phone: s.phone,
+          email: s.email,
+          type: 'employee'
+        });
       }
     }
 
     res.json(hierarchy);
   } catch (error: any) {
+    console.error('Hierarchy error:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -670,7 +670,22 @@ class ApiService {
         if (!response.ok) throw new Error('Failed to fetch org structure');
         return await response.json();
     }
+
+    // ========================================
+    // Employees
+    // ========================================
+    async getEmployees() {
+        const response = await fetch(`${API_BASE_URL}/employees`);
+        if (!response.ok) throw new Error('Failed to fetch employees');
+        return await response.json();
+    }
+
+    async getAllSubcontractors() {
+        const response = await fetch(`${API_BASE_URL}/subcontractors`);
+        if (!response.ok) throw new Error('Failed to fetch all subcontractors');
+        return await response.json();
+    }
 }
 
 // Экспортируем единственный экземпляр
-const api = new ApiService();
+window.api = new ApiService();

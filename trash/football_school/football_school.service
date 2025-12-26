@@ -1,0 +1,34 @@
+[Unit]
+Description=Football School Flask Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/football_school
+Environment="PATH=/opt/football_school/venv/bin"
+Environment="FLASK_APP=app.py"
+Environment="FLASK_ENV=production"
+Environment="SECRET_KEY=your-secret-key-change-this-in-production"
+Environment="PYTHONUNBUFFERED=1"
+
+# Запуск через Gunicorn
+ExecStart=/opt/football_school/venv/bin/gunicorn \
+    --bind 127.0.0.1:5001 \
+    --workers 2 \
+    --timeout 120 \
+    --access-logfile /var/log/football_school/access.log \
+    --error-logfile /var/log/football_school/error.log \
+    app:app
+
+# Перезапуск при сбое
+Restart=always
+RestartSec=10
+
+# Ограничения ресурсов
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+

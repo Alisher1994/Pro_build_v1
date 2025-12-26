@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Табель · ProBIM</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --primary-rgb: 32, 115, 69;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--gray-100);
+            font-family: var(--font-main);
+        }
+
+        .timesheet-container {
+            padding: 24px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .placeholder-card {
+            background: white;
+            padding: 60px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            max-width: 500px;
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            display: block;
+        }
+
+        h1 {
+            color: var(--gray-900);
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+
+        p {
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="timesheet-container">
+        <div class="placeholder-card">
+            <span class="placeholder-icon">🕒</span>
+            <h1>Табель учета рабочего времени</h1>
+            <p>Этот модуль находится на этапе проектирования и будет реализован в ближайшее время. Здесь будет доступна
+                система распознавания лиц для автоматической фиксации прихода и ухода сотрудников.</p>
+        </div>
+    </div>
+</body>
+
+</html>

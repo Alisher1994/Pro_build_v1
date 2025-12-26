@@ -244,13 +244,14 @@
         <div class="office-ribbon" id="office-ribbon">
             <div class="ribbon-tabs-bar">
                 <div class="ribbon-tabs">
-                    <button class="ribbon-tab active" data-ribbon="dashboard">Дашборд</button>
+                    <button class="ribbon-tab active" data-ribbon="dashboard">Главная</button>
                     <button class="ribbon-tab" data-ribbon="estimate">Смета</button>
                     <button class="ribbon-tab" data-ribbon="tender">Тендер</button>
                     <button class="ribbon-tab" data-ribbon="schedule">График</button>
                     <button class="ribbon-tab" data-ribbon="supply">Снабжение</button>
                     <button class="ribbon-tab" data-ribbon="finance">Финансы</button>
                     <button class="ribbon-tab" data-ribbon="otitb">ОТиТБ</button>
+                    <button class="ribbon-tab" data-ribbon="timesheet">Табель</button>
                     <button class="ribbon-tab" data-ribbon="settings">Настройки</button>
                 </div>
                 <button class="ribbon-toggle" id="ribbon-collapse-toggle" aria-expanded="true"
@@ -294,7 +295,7 @@
                                 <span>Камеры</span>
                             </button>
                         </div>
-                        <span class="ribbon-group-label">Дашборд</span>
+                        <span class="ribbon-group-label">Главная</span>
                     </div>
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group">
@@ -785,6 +786,25 @@
                             </button>
                         </div>
                         <span class="ribbon-group-label">Наряд-допуск</span>
+                    </div>
+                </div>
+
+                <!-- Timesheet Ribbon Panel -->
+                <div class="ribbon-panel" data-panel="timesheet">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="timesheet-view-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                <span>Просмотр<br>табеля</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Табель</span>
                     </div>
                 </div>
             </div>

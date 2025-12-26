@@ -72,6 +72,28 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'ProBIM API is running' });
 });
 
+// Proxy for external images to bypass CORS (for face recognition)
+app.get('/api/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url as string;
+  if (!imageUrl) {
+    res.status(400).send('URL is required');
+    return;
+  }
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+
+    const contentType = response.headers.get('content-type');
+    if (contentType) res.setHeader('Content-Type', contentType);
+
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (error: any) {
+    console.error('Proxy error:', error.message);
+    res.status(500).send('Error proxying image');
+  }
+});
+
 // Frontend fallback (SPA support)
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {

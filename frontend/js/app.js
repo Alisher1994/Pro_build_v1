@@ -29,7 +29,7 @@ class ProBIMApp {
 
     getInitialRibbonTab() {
         // Убрали 'analytics' из списка разрешенных
-        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'settings']);
+        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'timesheet', 'settings']);
 
         // Принудительно открываем Дашборд при обновлении
         // Если в URL есть хеш, его можно оставить для глубокой навигации, 
@@ -219,26 +219,23 @@ class ProBIMApp {
         const project = this.projects.find(p => p.id === this.currentProjectId);
         const isMainOffice = project?.name === 'Главный офис';
 
-        // Ribbon tabs
+        // Ribbon tabs visibility
         document.querySelectorAll('.ribbon-tab').forEach(tab => {
             const tabName = tab.dataset.ribbon;
-            if (isMainOffice && tabName !== 'settings') {
+            if (isMainOffice && tabName !== 'settings' && tabName !== 'dashboard') {
                 tab.style.display = 'none';
             } else {
                 tab.style.display = ''; // Restore default
             }
         });
 
-        // If in Main Office and current tab is NOT settings, force switch to settings
-        if (isMainOffice && this.currentRibbonTab !== 'settings') {
-            this.currentRibbonTab = 'settings';
-            this.applyRibbonTabToUI('settings');
-        }
+        // Specific buttons visibility inside the Settings ribbon panel
+        const projectBtn = document.getElementById('project-settings-btn');
+        const hrBtn = document.getElementById('hr-management-btn');
+        const subconBtn = document.getElementById('subcontractors-btn');
 
-        // Hide project-specific settings group in Main Office
-        const projectSettingsBtn = document.getElementById('project-settings-btn');
-        if (projectSettingsBtn) {
-            const group = projectSettingsBtn.closest('.ribbon-group');
+        if (projectBtn) {
+            const group = projectBtn.closest('.ribbon-group');
             const sep = group?.nextElementSibling;
             if (isMainOffice) {
                 if (group) group.style.display = 'none';
@@ -247,6 +244,38 @@ class ProBIMApp {
                 if (group) group.style.display = '';
                 if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = '';
             }
+        }
+
+        if (hrBtn) {
+            const group = hrBtn.closest('.ribbon-group');
+            // Find the separator that comes AFTER this group (handling HR being first)
+            const sep = group?.nextElementSibling;
+            if (isMainOffice) {
+                if (group) group.style.display = '';
+                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = '';
+            } else {
+                if (group) group.style.display = 'none';
+                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = 'none';
+            }
+        }
+
+        if (subconBtn) {
+            const group = subconBtn.closest('.ribbon-group');
+            // For Subcontractors (usually last in current HTML), we might have a separator BEFORE it
+            const sep = group?.previousElementSibling;
+            if (isMainOffice) {
+                if (group) group.style.display = '';
+                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = '';
+            } else {
+                if (group) group.style.display = 'none';
+                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = 'none';
+            }
+        }
+
+        // Auto-switch tab if necessary
+        if (isMainOffice && !['settings', 'dashboard'].includes(this.currentRibbonTab)) {
+            this.currentRibbonTab = 'dashboard';
+            this.applyRibbonTabToUI('dashboard');
         }
     }
 
@@ -339,6 +368,9 @@ class ProBIMApp {
                 this.setOTiTBActive('instructions');
                 InstructionsManager.show();
                 break;
+            case 'timesheet':
+                this.loadTimesheetTab();
+                break;
             case 'settings':
                 const project = this.projects.find(p => p.id === this.currentProjectId);
                 if (project?.name === 'Главный офис') {
@@ -401,7 +433,6 @@ class ProBIMApp {
             }
             else if (this.currentRibbonTab === 'estimate') {
                 label = 'Смета';
-                // Estimate can have extra items (Block > Estimate...)
             }
             else if (this.currentRibbonTab === 'tender') label = 'Тендер';
             else if (this.currentRibbonTab === 'schedule') label = 'График';
@@ -413,15 +444,17 @@ class ProBIMApp {
                 else if (this.otitbActive === 'worktypes') label = 'Виды работ';
                 else label = 'ОТ и ТБ';
             }
+            else if (this.currentRibbonTab === 'timesheet') {
+                label = 'Табель';
+            }
             else if (this.currentRibbonTab === 'settings') {
                 if (document.getElementById('subcontractors-btn')?.classList.contains('active')) label = 'Субподряд';
                 else if (document.getElementById('hr-management-btn')?.classList.contains('active')) label = 'Штат (Кадры)';
                 else label = isMainOffice ? 'Настройки компании' : 'Настройки проекта';
             }
-            else if (this.currentRibbonTab === 'norms-settings') label = 'Настройки норм';
-
-            // Render the label (clickable if there are extra items and it makes sense to reset, otherwise active)
-            // For sections like 'Смета', clicking it should reset to the root of the section
+            else if (this.currentRibbonTab === 'norms-settings') {
+                label = 'Настройки норм';
+            }
 
             if (label) {
                 if (!isLast && this.currentRibbonTab === 'estimate') {
@@ -502,7 +535,7 @@ class ProBIMApp {
     loadDashboardTab() {
         document.getElementById('content-area').innerHTML = `
             <div style="padding: 24px;">
-                <h2 style="margin-bottom: 24px;">Дашборд</h2>
+                <h2 style="margin-bottom: 24px;">Главная</h2>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                     <div style="background: var(--white); padding: 24px; border-radius: 8px; box-shadow: var(--shadow-sm);">
@@ -607,7 +640,7 @@ class ProBIMApp {
             }
         } catch (error) {
             console.error('Error loading dashboard statistics:', error);
-            contentArea.innerHTML = `<div style="padding: 24px;"><h2>Ошибка загрузки дашборда</h2></div>`;
+            contentArea.innerHTML = `<div style="padding: 24px;"><h2>Ошибка загрузки</h2></div>`;
         }
     }
 
@@ -645,6 +678,23 @@ class ProBIMApp {
                 <iframe src="cameras.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Камеры"></iframe>
             </div>
         `;
+    }
+
+    loadTimesheetTab() {
+        if (!this.currentProjectId) return;
+        this.currentRibbonTab = 'timesheet';
+        this.applyRibbonTabToUI('timesheet');
+
+        const contentArea = document.getElementById('content-area');
+        contentArea.style.padding = '0';
+        contentArea.style.overflow = 'hidden';
+
+        contentArea.innerHTML = `
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                <iframe src="timesheet.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Табель учета"></iframe>
+            </div>
+        `;
+        this.updateBreadcrumbs();
     }
 
     setDashboardActive(tab) {

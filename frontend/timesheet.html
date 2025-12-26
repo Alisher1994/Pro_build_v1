@@ -4,68 +4,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Табель · ProBIM</title>
+    <title>КПП · ProBIM</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
     <style>
         :root {
             --primary-rgb: 32, 115, 69;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-secondary: #666;
+            --border-color: #e0e0e0;
+            --danger-bg: #fee2e2;
+            --danger-border: #fca5a5;
         }
 
         body {
             margin: 0;
-            padding: 0;
-            background: var(--gray-100);
-            font-family: var(--font-main);
-        }
-
-        .timesheet-container {
             padding: 24px;
+            background: var(--bg-color);
+            font-family: 'Inter', sans-serif;
             height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            box-sizing: border-box;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
             gap: 20px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .top-section {
+            height: 60%;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            min-height: 450px;
+        }
+
+        .bottom-sections-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .bottom-row {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .row-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .row-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .row-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Section: Cameras & List */
+        .top-section {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            min-height: 300px;
+        }
+
+        /* Left Column: Cameras */
+        .cameras-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .camera-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+            min-height: 0;
+            /* Ensures cards are equal height regardless of content */
+        }
+
+        .camera-header {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .camera-status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #eee;
+        }
+
+        .camera-status.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .camera-status.offline {
+            background: #f3f4f6;
+            color: #9ca3af;
+        }
+
+        .video-wrapper {
+            flex: 1;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
             align-items: center;
             justify-content: center;
-            text-align: center;
         }
 
-        .placeholder-card {
-            background: white;
-            padding: 60px;
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .placeholder-text {
+            color: #666;
+            font-size: 12px;
+        }
+
+        /* Right Column: Events List */
+        .events-col {
+            background: var(--card-bg);
             border-radius: 12px;
-            box-shadow: var(--shadow-md);
-            max-width: 500px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        .placeholder-icon {
-            font-size: 64px;
-            margin-bottom: 24px;
-            display: block;
+        .events-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-main);
         }
 
-        h1 {
-            color: var(--gray-900);
-            margin-bottom: 12px;
-            font-size: 24px;
+        .events-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        p {
-            color: var(--gray-600);
-            line-height: 1.6;
+        .event-card {
+            display: flex;
+            gap: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid transparent;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .event-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .event-card.unknown {
+            background: var(--danger-bg);
+            border-color: var(--danger-border);
+        }
+
+        .event-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-info {
+            flex: 1;
+        }
+
+        .event-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .event-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .event-time {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* Bottom Section: Individual blocks */
+        .bottom-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .left-block {
+            flex: 2;
+        }
+
+        .right-block {
+            flex: 1;
+            min-height: 150px;
+        }
+
+
+        .stats-summary {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        #chart-container {
+            flex: 1;
+            width: 100%;
+            min-height: 0;
         }
     </style>
 </head>
 
 <body>
-    <div class="timesheet-container">
-        <div class="placeholder-card">
-            <span class="placeholder-icon">🕒</span>
-            <h1>Табель учета рабочего времени</h1>
-            <p>Этот модуль находится на этапе проектирования и будет реализован в ближайшее время. Здесь будет доступна
-                система распознавания лиц для автоматической фиксации прихода и ухода сотрудников.</p>
+
+    <div class="main-container">
+        <!-- Top Section -->
+        <div class="top-section">
+            <!-- Left: Cameras -->
+            <div class="cameras-col">
+                <!-- Entrance Camera -->
+                <div class="camera-card">
+                    <div class="camera-header">
+                        <span>📷 Камера (Вход)</span>
+                        <span class="camera-status active">ONLINE</span>
+                    </div>
+                    <div class="video-wrapper">
+                        <video id="video-entrance" autoplay playsinline muted></video>
+                    </div>
+                </div>
+                <!-- Exit Camera (Disabled) -->
+                <div class="camera-card" style="opacity: 0.7;">
+                    <div class="camera-header">
+                        <span>📷 Камера (Выход)</span>
+                        <span class="camera-status offline">OFFLINE</span>
+                    </div>
+                    <div class="video-wrapper" style="background: #e5e7eb;">
+                        <span class="placeholder-text">Камера отключена</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Events List -->
+            <div class="events-col">
+                <div class="events-header">
+                    Журнал событий (Сегодня)
+                </div>
+                <div class="events-list" id="events-list">
+                    <!-- Events will be simulated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Rows Wrapper -->
+        <div class="bottom-sections-wrapper">
+            <!-- Entrance Group -->
+            <div class="row-group">
+                <div class="row-title">Вход</div>
+                <div class="bottom-row">
+                    <!-- Left Block (Summary Bar Chart) -->
+                    <div class="bottom-container right-block">
+                        <div id="bar-chart-entrance" style="width: 100%; height: 100%;"></div>
+                    </div>
+                    <!-- Right Block (Stats & Chart) -->
+                    <div class="bottom-container left-block">
+                        <div class="stats-summary">
+                            <div class="stat-item">
+                                <span class="stat-val" id="total-employees-in">0</span>
+                                <span class="stat-label">Сотрудников</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-val" id="total-unknown-in" style="color: #ef4444;">0</span>
+                                <span class="stat-label">Неизвестных</span>
+                            </div>
+                        </div>
+                        <div id="chart-entrance" style="flex: 1; width: 100%; min-height: 0;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exit Group -->
+            <div class="row-group">
+                <div class="row-title">Выход</div>
+                <div class="bottom-row">
+                    <!-- Left Block (Summary Bar Chart) -->
+                    <div class="bottom-container right-block">
+                        <div id="bar-chart-exit" style="width: 100%; height: 100%;"></div>
+                    </div>
+                    <!-- Right Block (Stats & Chart) -->
+                    <div class="bottom-container left-block">
+                        <div class="stats-summary">
+                            <div class="stat-item">
+                                <span class="stat-val" id="total-employees-out">0</span>
+                                <span class="stat-label">Сотрудников</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-val" id="total-unknown-out" style="color: #ef4444;">0</span>
+                                <span class="stat-label">Неизвестных</span>
+                            </div>
+                        </div>
+                        <div id="chart-exit" style="flex: 1; width: 100%; min-height: 0;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        // --- Webcam Logic ---
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video-entrance');
+                if (video) video.srcObject = stream;
+            } catch (err) {
+                console.warn("Camera access denied or missing", err);
+            }
+        }
+        startCamera();
+
+        // --- Mock Data & Events ---
+        const employees = [
+            { name: "Алиев Тимур", pos: "Инженер", dept: "ПТО", photo: "https://ui-avatars.com/api/?name=Timur+Aliev&background=0D8ABC&color=fff" },
+            { name: "Иванова Мария", pos: "Архитектор", dept: "Проектный отдел", photo: "https://ui-avatars.com/api/?name=Maria+Ivanova&background=random" },
+            { name: "Султанов Бек", pos: "Мастер", dept: "Участок 1", photo: "https://ui-avatars.com/api/?name=Bek+Sultanov&background=random" }
+        ];
+
+        let stats = {
+            entrance: { employees: 142, unknown: 8 },
+            exit: { employees: 128, unknown: 3 }
+        };
+
+        function updateStats() {
+            document.getElementById('total-employees-in').innerText = stats.entrance.employees;
+            document.getElementById('total-unknown-in').innerText = stats.entrance.unknown;
+            document.getElementById('total-employees-out').innerText = stats.exit.employees;
+            document.getElementById('total-unknown-out').innerText = stats.exit.unknown;
+        }
+        updateStats();
+
+        function addEvent(isUnknown = false) {
+            const list = document.getElementById('events-list');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+            const card = document.createElement('div');
+            card.className = `event-card ${isUnknown ? 'unknown' : ''}`;
+
+            let html = '';
+            if (isUnknown) {
+                html = `
+                    <img src="https://ui-avatars.com/api/?name=Unknown&background=ef4444&color=fff" class="event-photo">
+                    <div class="event-info">
+                        <div class="event-name" style="color: #b91c1c;">Неизвестный</div>
+                        <div class="event-meta">Личность не установлена</div>
+                    </div>
+                    <div class="event-time">${timeStr}</div>
+                `;
+            } else {
+                const emp = employees[Math.floor(Math.random() * employees.length)];
+                html = `
+                    <img src="${emp.photo}" class="event-photo">
+                    <div class="event-info">
+                        <div class="event-name">${emp.name}</div>
+                        <div class="event-meta">${emp.pos} • ${emp.dept}</div>
+                    </div>
+                    <div class="event-time">${timeStr}</div>
+                `;
+            }
+
+            card.innerHTML = html;
+            list.insertBefore(card, list.firstChild);
+        }
+
+        // Add some initial mock events
+        addEvent(false);
+        addEvent(true);
+        addEvent(false);
+        addEvent(false);
+
+        // --- Highcharts Shared Configuration ---
+        const commonAreaOptions = {
+            chart: {
+                type: 'areaspline',
+                backgroundColor: 'transparent',
+                spacing: [10, 0, 0, 0],
+                style: { fontFamily: 'Inter, sans-serif' }
+            },
+            title: { text: null },
+            xAxis: {
+                categories: ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'],
+                tickmarkPlacement: 'on',
+                title: { enabled: false },
+                lineColor: '#eaeaea',
+                labels: { style: { color: '#9ca3af', fontSize: '11px' } },
+                gridLineWidth: 1,
+                gridLineColor: '#f3f4f6',
+                gridLineDashStyle: 'LongDash'
+            },
+            yAxis: {
+                title: { enabled: false },
+                labels: { style: { color: '#9ca3af', fontSize: '10px' }, x: -8 },
+                gridLineWidth: 1,
+                gridLineColor: '#f3f4f6',
+                gridLineDashStyle: 'LongDash',
+                tickInterval: 20,
+                min: 0
+            },
+            tooltip: {
+                shared: true,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#e5e7eb',
+                borderRadius: 8,
+                valueSuffix: ' чел.'
+            },
+            plotOptions: {
+                areaspline: {
+                    fillOpacity: 0.15,
+                    lineWidth: 3,
+                    marker: { enabled: false }
+                }
+            },
+            credits: { enabled: false },
+            legend: {
+                align: 'right',
+                verticalAlign: 'top',
+                floating: true,
+                y: -15,
+                itemStyle: { color: '#6b7280', fontSize: '12px', fontWeight: '500' }
+            }
+        };
+
+        // Entrance Area Chart
+        Highcharts.chart('chart-entrance', {
+            ...commonAreaOptions,
+            series: [{
+                name: 'Сотрудники',
+                color: '#207345',
+                data: [15, 45, 120, 20, 10, 5, 8, 12, 15, 30, 80]
+            }, {
+                name: 'Неизвестные',
+                color: '#ef4444',
+                data: [1, 2, 5, 0, 1, 0, 0, 1, 2, 1, 3]
+            }]
+        });
+
+        // Exit Area Chart
+        Highcharts.chart('chart-exit', {
+            ...commonAreaOptions,
+            series: [{
+                name: 'Сотрудники',
+                color: '#207345',
+                data: [5, 10, 15, 8, 12, 25, 40, 35, 110, 90, 20]
+            }, {
+                name: 'Неизвестные',
+                color: '#ef4444',
+                data: [0, 1, 0, 0, 2, 1, 0, 1, 1, 2, 0]
+            }]
+        });
+
+        const initBarChart = (containerId, employeeVal, unknownVal) => {
+            Highcharts.chart(containerId, {
+                chart: {
+                    type: 'bar',
+                    backgroundColor: 'transparent',
+                    height: 180,
+                    style: { fontFamily: 'Inter, sans-serif' }
+                },
+                title: {
+                    text: 'Итого за день',
+                    align: 'left',
+                    style: { fontSize: '14px', fontWeight: '600', color: '#333' }
+                },
+                xAxis: {
+                    categories: ['Сотрудники', 'Неизвестные'],
+                    lineColor: 'transparent',
+                    labels: { style: { color: '#6b7280', fontSize: '12px' } }
+                },
+                yAxis: { visible: false, max: 160 },
+                legend: { enabled: false },
+                credits: { enabled: false },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        pointWidth: 28,
+                        dataLabels: {
+                            enabled: true,
+                            style: { color: '#333', fontSize: '13px', fontWeight: '700', textOutline: 'none' }
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Количество',
+                    data: [
+                        { y: employeeVal, color: '#207345' },
+                        { y: unknownVal, color: '#ef4444' }
+                    ]
+                }]
+            });
+        };
+
+        initBarChart('bar-chart-entrance', stats.entrance.employees, stats.entrance.unknown);
+        initBarChart('bar-chart-exit', stats.exit.employees, stats.exit.unknown);
+    </script>
 </body>
 
 </html>

@@ -685,16 +685,50 @@ class ProBIMApp {
         this.currentRibbonTab = 'timesheet';
         this.applyRibbonTabToUI('timesheet');
 
+        // Setup listeners for the new buttons
+        const kppBtn = document.getElementById('timesheet-kpp-btn');
+        const tableBtn = document.getElementById('timesheet-table-btn');
+
+        if (kppBtn) {
+            kppBtn.onclick = () => this.setTimesheetSubTab('kpp');
+        }
+        if (tableBtn) {
+            tableBtn.onclick = () => this.setTimesheetSubTab('table');
+        }
+
+        // Default to KPP (Checkpoint) view
+        this.setTimesheetSubTab('kpp');
+    }
+
+    setTimesheetSubTab(tab) {
+        // Toggle active class
+        document.getElementById('timesheet-kpp-btn')?.classList.toggle('active', tab === 'kpp');
+        document.getElementById('timesheet-table-btn')?.classList.toggle('active', tab === 'table');
+
         const contentArea = document.getElementById('content-area');
         contentArea.style.padding = '0';
         contentArea.style.overflow = 'hidden';
 
-        contentArea.innerHTML = `
-            <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-                <iframe src="timesheet.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Табель учета"></iframe>
-            </div>
-        `;
-        this.updateBreadcrumbs();
+        // Update breadcrumbs
+        // Base label 'Табель' is added by updateBreadcrumbs logic when currentRibbonTab is timesheet.
+        // We add the sub-section as extra item.
+        const subName = tab === 'kpp' ? 'КПП' : 'Табель';
+        this.updateBreadcrumbs([{ text: subName }]);
+
+        if (tab === 'kpp') {
+            contentArea.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                    <iframe src="timesheet.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="КПП"></iframe>
+                </div>
+            `;
+        } else {
+            // Load Timesheet Table view
+            contentArea.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                    <iframe src="timesheet-table.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Табель"></iframe>
+                </div>
+            `;
+        }
     }
 
     setDashboardActive(tab) {

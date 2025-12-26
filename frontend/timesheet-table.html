@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Табель · ProBIM</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --primary-color: #207345;
+            --primary-rgb: 32, 115, 69;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-secondary: #666;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Filters Section */
+        .filters-bar {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            color: var(--text-main);
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+
+        /* Filter Toggle Button */
+        .filter-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-toggle-btn:hover {
+            background: #f9fafb;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .filter-toggle-btn.active {
+            background: rgba(var(--primary-rgb), 0.08);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .filter-toggle-btn svg {
+            flex-shrink: 0;
+        }
+
+        /* Filters Panel */
+        .filters-panel {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 16px;
+            border-left: 1px solid var(--border-color);
+            margin-left: 8px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .filter-divider {
+            width: 1px;
+            height: 30px;
+            background: var(--border-color);
+            margin: 0 8px;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d5db;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .toggle-switch input:focus+.toggle-slider {
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+        }
+
+        .filters-spacer {
+            flex: 1;
+        }
+
+        .current-period {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Table Container */
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+
+        .timesheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .timesheet-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f9fafb;
+        }
+
+        .timesheet-table th {
+            padding: 10px 4px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            border-right: 1px solid #f0f0f0;
+            white-space: nowrap;
+        }
+
+        .timesheet-table th.index-col {
+            text-align: center;
+            width: 40px;
+            min-width: 40px;
+            position: sticky;
+            left: 0;
+            background: #f9fafb;
+            z-index: 11;
+        }
+
+        .timesheet-table th.employee-col {
+            text-align: left;
+            padding-left: 20px;
+            min-width: 220px;
+            position: sticky;
+            left: 40px;
+            background: #f9fafb;
+            z-index: 11;
+        }
+
+        .timesheet-table th.day-col {
+            min-width: 70px;
+            font-size: 11px;
+            border-bottom: none;
+        }
+
+        .timesheet-table th.day-col.weekend {
+            color: #ef4444;
+        }
+
+        .timesheet-table th.day-col.today {
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-color);
+        }
+
+        .timesheet-table th.total-col {
+            min-width: 60px;
+            background: #f3f4f6;
+        }
+
+        .timesheet-table tbody tr {
+            transition: background 0.15s;
+        }
+
+        .timesheet-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .timesheet-table td {
+            padding: 8px 4px;
+            text-align: center;
+            border-bottom: 1px solid #f3f4f6;
+            border-right: 1px solid #f0f0f0;
+            color: var(--text-main);
+        }
+
+        .timesheet-table td.index-cell {
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-secondary);
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 5;
+        }
+
+        .timesheet-table td.employee-cell {
+            text-align: left;
+            padding: 12px 20px;
+            position: sticky;
+            left: 40px;
+            background: white;
+            z-index: 5;
+        }
+
+        .timesheet-table tbody tr:hover td.index-cell,
+        .timesheet-table tbody tr:hover td.employee-cell {
+            background: #f9fafb;
+        }
+
+        .employee-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .employee-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+        }
+
+        .employee-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .employee-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .employee-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .chat-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0;
+            /* Hidden by default */
+        }
+
+        .employee-cell:hover .chat-btn {
+            opacity: 1;
+            /* Show on row hover */
+        }
+
+        .chat-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .employee-position {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .time-cell {
+            font-size: 12px;
+            line-height: 1.3;
+            color: var(--text-secondary);
+        }
+
+        .time-cell.has-data {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .time-cell.weekend {
+            background: #fef2f2;
+        }
+
+
+
+        .hours-display {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .total-cell {
+            font-weight: 700;
+            color: var(--text-main);
+            background: #f9fafb;
+        }
+
+        .day-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .day-number {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .day-name {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        /* Empty state */
+        .empty-cell {
+            color: #d1d5db;
+        }
+
+        /* Stats mode columns */
+        .stat-col {
+            min-width: 100px;
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        .stat-col-header {
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .stat-value.green {
+            color: var(--primary-color);
+        }
+
+        .stat-value.orange {
+            color: #f59e0b;
+        }
+
+        .stat-value.red {
+            color: #ef4444;
+        }
+
+        .stat-value.blue {
+            color: #3b82f6;
+        }
+
+        /* Grouped header styles */
+        .group-header {
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: none;
+        }
+
+        .group-header.green-bg {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .group-header.yellow-bg {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .group-header.red-bg {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .sub-header {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 8px 4px;
+            text-align: center;
+            background: #f9fafb;
+        }
+
+        .sub-header.green-light {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .sub-header.yellow-light {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .sub-header.red-light {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Stats cell backgrounds - barely visible tint of header colors */
+        .stat-cell-green {
+            background: rgba(34, 197, 94, 0.04) !important;
+        }
+
+        .stat-cell-yellow {
+            background: rgba(250, 204, 21, 0.06) !important;
+        }
+
+        .stat-cell-red {
+            background: rgba(239, 68, 68, 0.04) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Filters Bar -->
+        <div class="filters-bar">
+            <!-- Filter Toggle Button -->
+            <button class="filter-toggle-btn" id="filter-toggle-btn" title="Показать/скрыть фильтры">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Фильтры</span>
+            </button>
+
+            <!-- Collapsible Filters Panel -->
+            <div class="filters-panel" id="filters-panel" style="display: none;">
+                <div class="filter-group">
+                    <label class="filter-label">Месяц:</label>
+                    <select class="filter-select" id="filter-month">
+                        <option value="0">Январь</option>
+                        <option value="1">Февраль</option>
+                        <option value="2">Март</option>
+                        <option value="3">Апрель</option>
+                        <option value="4">Май</option>
+                        <option value="5">Июнь</option>
+                        <option value="6">Июль</option>
+                        <option value="7">Август</option>
+                        <option value="8">Сентябрь</option>
+                        <option value="9">Октябрь</option>
+                        <option value="10">Ноябрь</option>
+                        <option value="11" selected>Декабрь</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Год:</label>
+                    <select class="filter-select" id="filter-year">
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Отдел:</label>
+                    <select class="filter-select" id="filter-department">
+                        <option value="">Все отделы</option>
+                        <!-- Options loaded from API -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Сотрудник:</label>
+                    <select class="filter-select" id="filter-employee">
+                        <option value="">Все сотрудники</option>
+                        <!-- Options loaded from API -->
+                    </select>
+                </div>
+
+                <div class="filter-divider"></div>
+
+                <div class="toggle-container">
+                    <span class="toggle-label">Показать часы</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="show-hours">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-container">
+                    <span class="toggle-label">Статистика</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="show-stats">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filters-spacer"></div>
+
+            <div class="current-period" id="current-period">Декабрь 2025</div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table class="timesheet-table">
+                <thead>
+                    <tr>
+                        <th class="employee-col">Сотрудник</th>
+                        <!-- Days will be generated by JS -->
+                    </tr>
+                </thead>
+                <tbody id="timesheet-body">
+                    <!-- Rows will be generated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+            'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
+        // Employees loaded from API
+        let employees = [];
+
+        // Attendance data (will be loaded from API in future)
+        let attendanceData = {};
+
+        // Chat Integration
+        function openChat(employeeId, employeeName) {
+            if (window.parent) {
+                window.parent.dispatchEvent(new CustomEvent('open-chat', {
+                    detail: {
+                        id: employeeId,
+                        name: employeeName
+                    }
+                }));
+            }
+        }
+
+        let showHours = false;
+
+        // Get current project ID from parent window
+        function getCurrentProjectId() {
+            try {
+                return window.parent?.app?.currentProjectId || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Load employees from API
+        async function loadEmployees() {
+            try {
+                const projectId = getCurrentProjectId();
+                let url = '/api/employees';
+                if (projectId) {
+                    url += `?projectId=${projectId}`;
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load employees');
+
+                const data = await response.json();
+
+                employees = data.map(emp => ({
+                    id: emp.id,
+                    name: `${emp.lastName} ${emp.firstName}`,
+                    department: emp.department?.name || 'Без отдела',
+                    position: emp.position?.name || 'Без должности',
+                    photo: emp.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.firstName + '+' + emp.lastName)}&background=207345&color=fff`
+                }));
+
+                // Mock attendance data for now (will be replaced with real data later)
+                attendanceData = {};
+                employees.forEach(emp => {
+                    attendanceData[emp.id] = generateMockAttendance();
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                return false;
+            }
+        }
+
+        // Generate mock attendance for demo (temporary)
+        function generateMockAttendance() {
+            const attendance = {};
+            const today = new Date();
+            for (let day = 1; day <= today.getDate(); day++) {
+                const date = new Date(today.getFullYear(), today.getMonth(), day);
+                if (date.getDay() !== 0 && date.getDay() !== 6) { // Not weekend
+                    if (Math.random() > 0.2) { // 80% chance of attendance
+                        const inHour = 8 + Math.floor(Math.random() * 2);
+                        const inMin = Math.floor(Math.random() * 60);
+                        const outHour = 17 + Math.floor(Math.random() * 2);
+                        const outMin = Math.floor(Math.random() * 60);
+                        attendance[day] = {
+                            in: `${String(inHour).padStart(2, '0')}:${String(inMin).padStart(2, '0')}`,
+                            out: `${String(outHour).padStart(2, '0')}:${String(outMin).padStart(2, '0')}`
+                        };
+                    }
+                }
+            }
+            return attendance;
+        }
+
+        // Initialize with current month/year
+        async function init() {
+            const now = new Date();
+            document.getElementById('filter-month').value = now.getMonth();
+            document.getElementById('filter-year').value = now.getFullYear();
+
+            // Show loading state
+            document.getElementById('timesheet-body').innerHTML = '<tr><td colspan="33" style="text-align: center; padding: 40px; color: #6b7280;">Загрузка сотрудников...</td></tr>';
+
+            // Load employees from API
+            await loadEmployees();
+
+            // Populate filter dropdowns
+            populateFilters();
+
+            renderTable();
+            updatePeriodLabel();
+
+            // Auto-scroll to today's date
+            setTimeout(() => scrollToToday(), 100);
+        }
+
+        // Populate filter dropdowns with data
+        function populateFilters() {
+            // Populate departments
+            const deptSelect = document.getElementById('filter-department');
+            const uniqueDepts = [...new Set(employees.map(e => e.department))];
+            uniqueDepts.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                deptSelect.appendChild(option);
+            });
+
+            // Populate employees
+            const empSelect = document.getElementById('filter-employee');
+            employees.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp.id;
+                option.textContent = emp.name;
+                empSelect.appendChild(option);
+            });
+        }
+
+        function scrollToToday() {
+            const todayHeader = document.querySelector('.timesheet-table thead th.today');
+            if (todayHeader) {
+                const container = document.querySelector('.table-container');
+                const headerRect = todayHeader.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                // Calculate scroll position to center today's column
+                const scrollLeft = todayHeader.offsetLeft - containerRect.width / 2 + headerRect.width / 2;
+
+                container.scrollTo({
+                    left: Math.max(0, scrollLeft),
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function updatePeriodLabel() {
+            const month = parseInt(document.getElementById('filter-month').value);
+            const year = document.getElementById('filter-year').value;
+            document.getElementById('current-period').textContent = `${monthNames[month]} ${year}`;
+        }
+
+        function getDaysInMonth(month, year) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        function isWeekend(year, month, day) {
+            const date = new Date(year, month, day);
+            const dayOfWeek = date.getDay();
+            return dayOfWeek === 0 || dayOfWeek === 6;
+        }
+
+        function isToday(year, month, day) {
+            const now = new Date();
+            return now.getFullYear() === year && now.getMonth() === month && now.getDate() === day;
+        }
+
+        function calculateHours(inTime, outTime) {
+            if (!inTime || !outTime) return 0;
+            const [inH, inM] = inTime.split(':').map(Number);
+            const [outH, outM] = outTime.split(':').map(Number);
+            return ((outH * 60 + outM) - (inH * 60 + inM)) / 60;
+        }
+
+        function renderTable() {
+            const month = parseInt(document.getElementById('filter-month').value);
+            const year = parseInt(document.getElementById('filter-year').value);
+            const daysInMonth = getDaysInMonth(month, year);
+
+            // Render header - use two rows like stats mode to prevent jumping
+            const thead = document.querySelector('.timesheet-table thead');
+
+            // Build first row (day numbers)
+            let row1 = '<tr><th class="index-col" rowspan="2">№</th><th class="employee-col" rowspan="2">Сотрудник</th>';
+            // Build second row (day names)
+            let row2 = '<tr>';
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayName = dayNames[date.getDay()];
+                const weekend = isWeekend(year, month, day);
+                const today = isToday(year, month, day);
+
+                row1 += `<th class="day-col ${weekend ? 'weekend' : ''} ${today ? 'today' : ''}">
+                    <span class="day-number">${day}</span>
+                </th>`;
+
+                row2 += `<th class="sub-header ${weekend ? 'weekend' : ''}">${dayName}</th>`;
+            }
+
+            row1 += '<th class="total-col" rowspan="2">Итого</th></tr>';
+            row2 += '</tr>';
+
+            thead.innerHTML = row1 + row2;
+
+            // Render body
+            const tbody = document.getElementById('timesheet-body');
+            tbody.innerHTML = '';
+
+            // Get filter values
+            const filterDept = document.getElementById('filter-department').value;
+            const filterEmp = document.getElementById('filter-employee').value;
+
+            // Filter employees
+            let filteredEmployees = employees;
+            if (filterDept) {
+                filteredEmployees = filteredEmployees.filter(e => e.department === filterDept);
+            }
+            if (filterEmp) {
+                filteredEmployees = filteredEmployees.filter(e => e.id === filterEmp);
+            }
+
+            if (filteredEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="34" style="text-align: center; padding: 40px; color: #6b7280;">Нет сотрудников для отображения</td></tr>';
+                return;
+            }
+
+            filteredEmployees.forEach((emp, index) => {
+                let totalHours = 0;
+                let rowHtml = `
+                    <tr>
+                        <td class="index-cell">${index + 1}</td>
+                        <td class="employee-cell">
+                            <div class="employee-info">
+                                <img src="${emp.photo}" class="employee-photo" alt="${emp.name}">
+                                <div class="employee-details">
+                                    <div class="employee-name-row">
+                                        <span class="employee-name">${emp.name}</span>
+                                        <button class="chat-btn" onclick="openChat('${emp.id}', '${emp.name}')" title="Написать сообщение">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <span class="employee-position">${emp.department} · ${emp.position}</span>
+                                </div>
+                            </div>
+                        </td>
+                `;
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const weekend = isWeekend(year, month, day);
+                    const today = isToday(year, month, day);
+                    const data = attendanceData[emp.id]?.[day];
+
+                    let cellContent = '<span class="empty-cell">—</span>';
+                    let cellClass = 'time-cell';
+
+                    if (weekend) cellClass += ' weekend';
+                    if (today) cellClass += ' today';
+
+                    if (data) {
+                        cellClass += ' has-data';
+                        const hours = calculateHours(data.in, data.out);
+                        totalHours += hours;
+
+                        if (showHours) {
+                            cellContent = `<span class="hours-display">${hours.toFixed(0)}</span>`;
+                        } else {
+                            cellContent = `${data.in}<br>${data.out}`;
+                        }
+                    }
+
+                    rowHtml += `<td class="${cellClass}">${cellContent}</td>`;
+                }
+
+                rowHtml += `<td class="total-cell">${totalHours.toFixed(0)}ч</td>`;
+                rowHtml += '</tr>';
+                tbody.innerHTML += rowHtml;
+            });
+        }
+
+        // Event listeners
+        document.getElementById('filter-month').addEventListener('change', () => {
+            renderTable();
+            updatePeriodLabel();
+        });
+
+        document.getElementById('filter-year').addEventListener('change', () => {
+            renderTable();
+            updatePeriodLabel();
+        });
+
+        document.getElementById('filter-department').addEventListener('change', () => {
+            if (showStats) {
+                renderStatsTable();
+            } else {
+                renderTable();
+            }
+        });
+
+        document.getElementById('filter-employee').addEventListener('change', () => {
+            if (showStats) {
+                renderStatsTable();
+            } else {
+                renderTable();
+            }
+        });
+
+        document.getElementById('show-hours').addEventListener('change', (e) => {
+            showHours = e.target.checked;
+            if (!showStats) renderTable();
+        });
+
+        document.getElementById('show-stats').addEventListener('change', (e) => {
+            showStats = e.target.checked;
+            if (showStats) {
+                renderStatsTable();
+            } else {
+                renderTable();
+            }
+        });
+
+        // Filter toggle button
+        document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+            const btn = document.getElementById('filter-toggle-btn');
+            const panel = document.getElementById('filters-panel');
+            const isVisible = panel.style.display !== 'none';
+
+            if (isVisible) {
+                panel.style.display = 'none';
+                btn.classList.remove('active');
+            } else {
+                panel.style.display = 'flex';
+                btn.classList.add('active');
+            }
+        });
+
+        // Stats mode
+        let showStats = false;
+
+        // Calculate late minutes (if came after 09:00)
+        function calculateLateMinutes(inTime) {
+            if (!inTime) return 0;
+            const [inH, inM] = inTime.split(':').map(Number);
+            const startMinutes = 9 * 60; // 09:00
+            const actualMinutes = inH * 60 + inM;
+            return Math.max(0, actualMinutes - startMinutes);
+        }
+
+        // Format minutes to HH:MM
+        function formatMinutes(totalMinutes) {
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            return `${String(hours).padStart(2, '0')}:${String(Math.round(mins)).padStart(2, '0')}`;
+        }
+
+        function renderStatsTable() {
+            const month = parseInt(document.getElementById('filter-month').value);
+            const year = parseInt(document.getElementById('filter-year').value);
+            const daysInMonth = getDaysInMonth(month, year);
+
+            // Render header for stats mode - use thead with two rows
+            const thead = document.querySelector('.timesheet-table thead');
+            thead.innerHTML = `
+                <tr>
+                    <th class="index-col" rowspan="2">№</th>
+                    <th class="employee-col" rowspan="2">Сотрудник</th>
+                    <th class="group-header green-bg" colspan="2">Явка</th>
+                    <th class="group-header yellow-bg" colspan="2">Опоздания</th>
+                    <th class="group-header red-bg" colspan="2">Отсутствие</th>
+                </tr>
+                <tr>
+                    <th class="sub-header green-light">в днях</th>
+                    <th class="sub-header green-light">в часах</th>
+                    <th class="sub-header yellow-light">в днях</th>
+                    <th class="sub-header yellow-light">в часах</th>
+                    <th class="sub-header red-light">в днях</th>
+                    <th class="sub-header red-light">в часах</th>
+                </tr>
+            `;
+
+            // Calculate working days in month (excluding weekends)
+            let workingDaysInMonth = 0;
+            for (let day = 1; day <= daysInMonth; day++) {
+                if (!isWeekend(year, month, day)) {
+                    workingDaysInMonth++;
+                }
+            }
+            const expectedHoursPerDay = 9; // 09:00 - 18:00
+
+            // Render body
+            const tbody = document.getElementById('timesheet-body');
+            tbody.innerHTML = '';
+
+            // Get filter values
+            const filterDept = document.getElementById('filter-department').value;
+            const filterEmp = document.getElementById('filter-employee').value;
+
+            // Filter employees
+            let filteredEmployees = employees;
+            if (filterDept) {
+                filteredEmployees = filteredEmployees.filter(e => e.department === filterDept);
+            }
+            if (filterEmp) {
+                filteredEmployees = filteredEmployees.filter(e => e.id === filterEmp);
+            }
+
+            if (filteredEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">Нет сотрудников для отображения</td></tr>';
+                return;
+            }
+
+            filteredEmployees.forEach((emp, index) => {
+                let attendanceDays = 0;
+                let totalLateMinutes = 0;
+                let totalWorkedMinutes = 0;
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    if (isWeekend(year, month, day)) continue;
+
+                    const data = attendanceData[emp.id]?.[day];
+                    if (data) {
+                        attendanceDays++;
+                        totalLateMinutes += calculateLateMinutes(data.in);
+                        totalWorkedMinutes += calculateHours(data.in, data.out) * 60;
+                    }
+                }
+
+                // Calculate absence (missed working days * expected hours)
+                const expectedWorkingDays = Math.min(workingDaysInMonth, new Date().getDate()); // up to today
+                const missedDays = Math.max(0, expectedWorkingDays - attendanceDays);
+                const absenceMinutes = missedDays * expectedHoursPerDay * 60;
+
+                // Calculate late days (days where employee was late)
+                let lateDays = 0;
+                for (let day = 1; day <= daysInMonth; day++) {
+                    if (isWeekend(year, month, day)) continue;
+                    const data = attendanceData[emp.id]?.[day];
+                    if (data && calculateLateMinutes(data.in) > 0) {
+                        lateDays++;
+                    }
+                }
+
+                const rowHtml = `
+                    <tr>
+                        <td class="index-cell">${index + 1}</td>
+                        <td class="employee-cell">
+                            <div class="employee-info">
+                                <img src="${emp.photo}" class="employee-photo" alt="${emp.name}">
+                                <div class="employee-details">
+                                    <div class="employee-name-row">
+                                        <span class="employee-name">${emp.name}</span>
+                                        <button class="chat-btn" onclick="openChat('${emp.id}', '${emp.name}')" title="Написать сообщение">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <span class="employee-position">${emp.department} · ${emp.position}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="stat-col stat-cell-green"><span class="stat-value green">${attendanceDays}</span></td>
+                        <td class="stat-col stat-cell-green"><span class="stat-value green">${formatMinutes(totalWorkedMinutes)}</span></td>
+                        <td class="stat-col stat-cell-yellow"><span class="stat-value orange">${lateDays}</span></td>
+                        <td class="stat-col stat-cell-yellow"><span class="stat-value orange">${formatMinutes(totalLateMinutes)}</span></td>
+                        <td class="stat-col stat-cell-red"><span class="stat-value red">${missedDays}</span></td>
+                        <td class="stat-col stat-cell-red"><span class="stat-value red">${formatMinutes(absenceMinutes)}</span></td>
+                    </tr>
+                `;
+                tbody.innerHTML += rowHtml;
+            });
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+
+</html>

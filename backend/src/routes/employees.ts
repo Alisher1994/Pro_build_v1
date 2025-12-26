@@ -7,7 +7,15 @@ const prisma = new PrismaClient();
 
 router.get('/', async (req, res) => {
     try {
+        const { projectId } = req.query;
+
+        const where: any = {};
+        if (projectId) {
+            where.projectId = projectId as string;
+        }
+
         const list = await prisma.employee.findMany({
+            where,
             include: {
                 department: true,
                 position: true,

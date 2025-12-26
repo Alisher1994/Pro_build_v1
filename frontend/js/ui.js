@@ -28,10 +28,10 @@ const UI = {
                 </div>
             </div>
         `;
-        
+
         const container = document.getElementById('modal-container');
         container.innerHTML = modalHTML;
-        
+
         // Close on overlay click
         document.getElementById('modal-overlay').addEventListener('click', (e) => {
             if (e.target.id === 'modal-overlay') {
@@ -65,13 +65,13 @@ const UI = {
                 </div>
             </div>
         `;
-        
+
         // Добавляем прямо в body для гарантированного отображения
         const existingModal = document.getElementById('loading-modal-overlay');
         if (existingModal) {
             existingModal.remove();
         }
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     },
 
@@ -79,7 +79,7 @@ const UI = {
     updateLoadingProgress(percent) {
         const progressBar = document.getElementById('loading-progress-bar');
         const progressText = document.getElementById('loading-progress-text');
-        
+
         if (progressBar) {
             progressBar.style.width = `${percent}%`;
         }
@@ -100,7 +100,7 @@ const UI = {
     showLoading(isLoading, message = 'Загрузка...') {
         const id = 'generic-loading-overlay';
         const existing = document.getElementById(id);
-        
+
         if (!isLoading) {
             if (existing) existing.remove();
             return;
@@ -281,10 +281,10 @@ const UI = {
                 ymaps.ready(() => {
                     // Проверяем, есть ли сохраненные координаты
                     const hasExistingCoords = existingProject?.latitude && existingProject?.longitude;
-                    const initialCenter = hasExistingCoords 
+                    const initialCenter = hasExistingCoords
                         ? [existingProject.latitude, existingProject.longitude]
                         : null;
-                    
+
                     // Определяем геолокацию пользователя
                     ymaps.geolocation.get({
                         provider: 'yandex',
@@ -296,7 +296,7 @@ const UI = {
                             zoom: 12,
                             controls: ['zoomControl', 'geolocationControl']
                         });
-                        
+
                         // Если есть сохраненные координаты, добавляем метку
                         if (hasExistingCoords) {
                             savedMapCoords = [existingProject.latitude, existingProject.longitude];
@@ -305,7 +305,7 @@ const UI = {
                             });
                             map.geoObjects.add(placemark);
                         }
-                        
+
                         // Добавляем метку при клике
                         map.events.add('click', function (e) {
                             const coords = e.get('coords');
@@ -315,7 +315,7 @@ const UI = {
                                 preset: 'islands#redDotIcon'
                             });
                             map.geoObjects.add(placemark);
-                            
+
                             // Получаем адрес
                             ymaps.geocode(coords).then(function (res) {
                                 const firstGeoObject = res.geoObjects.get(0);
@@ -323,14 +323,14 @@ const UI = {
                                 document.getElementById('project-address').value = address;
                             });
                         });
-                    }).catch(function() {
+                    }).catch(function () {
                         // Если геолокация не работает, используем Ташкент по умолчанию
                         const map = new ymaps.Map('project-map', {
                             center: initialCenter || [41.31, 69.24],
                             zoom: 12,
                             controls: ['zoomControl', 'geolocationControl']
                         });
-                        
+
                         // Если есть сохраненные координаты, добавляем метку
                         if (hasExistingCoords) {
                             savedMapCoords = [existingProject.latitude, existingProject.longitude];
@@ -339,7 +339,7 @@ const UI = {
                             });
                             map.geoObjects.add(placemark);
                         }
-                        
+
                         map.events.add('click', function (e) {
                             const coords = e.get('coords');
                             savedMapCoords = coords; // Сохраняем координаты
@@ -348,7 +348,7 @@ const UI = {
                                 preset: 'islands#redDotIcon'
                             });
                             map.geoObjects.add(placemark);
-                            
+
                             ymaps.geocode(coords).then(function (res) {
                                 const firstGeoObject = res.geoObjects.get(0);
                                 const address = firstGeoObject.getAddressLine();
@@ -395,11 +395,11 @@ const UI = {
                     const value = option.dataset.value;
                     const flagSrc = option.querySelector('.flag-icon').src;
                     const text = option.querySelector('span').textContent;
-                    
+
                     modalCurrencyInput.value = value;
                     modalCurrencyTrigger.querySelector('.flag-icon').src = flagSrc;
                     modalCurrencyTrigger.querySelector('.select-text').textContent = text;
-                    
+
                     modalCurrencyOptions.forEach(opt => opt.classList.remove('selected'));
                     option.classList.add('selected');
                     modalCurrencySelect.classList.remove('open');
@@ -483,7 +483,7 @@ const UI = {
                 };
 
                 if (!data.name) {
-                    alert('Пожалуйста, введите название проекта');
+                    UI.showNotification('Пожалуйста, введите название проекта', 'error');
                     return;
                 }
 
@@ -543,7 +543,7 @@ const UI = {
                 };
 
                 if (!data.name) {
-                    alert('Пожалуйста, введите название блока');
+                    UI.showNotification('Пожалуйста, введите название блока', 'error');
                     return;
                 }
 
@@ -605,7 +605,7 @@ const UI = {
                 };
 
                 if (!data.code || !data.name) {
-                    alert('Пожалуйста, заполните обязательные поля');
+                    UI.showNotification('Пожалуйста, заполните обязательные поля', 'error');
                     return;
                 }
 
@@ -626,7 +626,7 @@ const UI = {
     // Форматирование валюты с символом
     formatCurrency(amount, currencyCode = 'RUB') {
         if (amount === null || amount === undefined) return '';
-        
+
         const formatted = this.formatNumber(amount);
         const symbols = {
             'RUB': '₽',
@@ -645,14 +645,14 @@ const UI = {
             'TRY': '₺',
             'AED': 'د.إ'
         };
-        
+
         const symbol = symbols[currencyCode] || currencyCode;
-        
+
         // Для некоторых валют символ ставится перед суммой
         if (['USD', 'EUR', 'GBP', 'CNY'].includes(currencyCode)) {
             return `${symbol}${formatted}`;
         }
-        
+
         return `${formatted} ${symbol}`;
     },
 
@@ -717,7 +717,7 @@ const UI = {
                     UI.closeModal();
                     resolve(true);
                 });
-                
+
                 document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
                     UI.closeModal();
                     resolve(false);

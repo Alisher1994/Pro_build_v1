@@ -22,6 +22,9 @@ import normsRoutes from './routes/norms';
 import workTypeGroupRoutes from './routes/workTypeGroups';
 import subcontractorRoutes from './routes/subcontractors';
 import tenderRoutes from './routes/tenders';
+import departmentRoutes from './routes/departments';
+import positionRoutes from './routes/positions';
+import employeeRoutes from './routes/employees';
 
 dotenv.config();
 
@@ -60,6 +63,9 @@ app.use('/api/norms', normsRoutes);
 app.use('/api/work-type-groups', workTypeGroupRoutes);
 app.use('/api/subcontractors', subcontractorRoutes);
 app.use('/api/tenders', tenderRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/positions', positionRoutes);
+app.use('/api/employees', employeeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

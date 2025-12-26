@@ -4,6 +4,26 @@ import { PrismaClient } from '@prisma/client';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Seed: Ensure "Главный офис" exists
+const ensureBaseProject = async () => {
+  try {
+    const project = await prisma.project.findFirst({ where: { name: 'Главный офис' } });
+    if (!project) {
+      await prisma.project.create({
+        data: {
+          name: 'Главный офис',
+          isDeletable: false,
+          description: 'Центральный офис компании',
+          status: 'active'
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Failed to seed base project:', e);
+  }
+};
+ensureBaseProject();
+
 // ========================================
 // GET /api/projects - Получить все проекты
 // ========================================
@@ -119,7 +139,7 @@ router.put('/:id', async (req, res) => {
 
     // Строим объект данных только с определенными полями
     const updateData: any = {};
-    
+
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (address !== undefined) updateData.address = address;
@@ -159,6 +179,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (!project.isDeletable) return res.status(400).json({ error: 'Этот объект нельзя удалить' });
 
     await prisma.project.delete({
       where: { id },
@@ -221,6 +245,127 @@ router.get('/:id/stats', async (req, res) => {
       totalExpense,
       balance: totalIncome - totalExpense,
     });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========================================
+// GET /api/projects/:id/hierarchy - Оргструктура проекта
+// ========================================
+router.get('/:id/hierarchy', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // 1. Root: The Project itself
+    const hierarchy: any[] = [{
+      id: project.id,
+      parentId: null,
+      name: project.name,
+      position: 'Объект',
+      image: project.photo || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&h=200&fit=crop',
+      type: 'project'
+    }];
+
+    // 2. Project Manager (RP)
+    const rp = await prisma.employee.findFirst({
+      where: { projectId: id, position: { name: 'РП (Руководитель проекта)' } },
+      include: { position: true }
+    });
+
+    if (rp) {
+      hierarchy.push({
+        id: rp.id,
+        parentId: project.id,
+        name: `${rp.lastName} ${rp.firstName}`,
+        position: rp.position.name,
+        image: rp.photo || `https://i.pravatar.cc/150?u=${rp.id}`,
+        phone: rp.phone,
+        email: rp.email
+      });
+    }
+
+    const rpParentId = rp ? rp.id : project.id;
+
+    // 3. Deputy Manager (ZRP)
+    const zrp = await prisma.employee.findFirst({
+      where: { projectId: id, position: { name: 'ЗРП (Зам. руководителя проекта)' } },
+      include: { position: true }
+    });
+
+    if (zrp) {
+      hierarchy.push({
+        id: zrp.id,
+        parentId: rpParentId,
+        name: `${zrp.lastName} ${zrp.firstName}`,
+        position: zrp.position.name,
+        image: zrp.photo || `https://i.pravatar.cc/150?u=${zrp.id}`,
+        phone: zrp.phone,
+        email: zrp.email
+      });
+    }
+
+    const zrpParentId = zrp ? zrp.id : rpParentId;
+
+    // 4. Departments and their heads
+    const departments = await prisma.department.findMany();
+    for (const dept of departments) {
+      // Find head of this department in this project
+      const head = await prisma.employee.findFirst({
+        where: {
+          projectId: id,
+          departmentId: dept.id,
+          isHead: true,
+          NOT: {
+            position: {
+              name: { in: ['РП (Руководитель проекта)', 'ЗРП (Зам. руководителя проекта)'] }
+            }
+          }
+        },
+        include: { position: true }
+      });
+
+      if (head) {
+        const deptNodeId = `dept_${dept.id}`;
+        hierarchy.push({
+          id: deptNodeId,
+          parentId: zrpParentId,
+          name: dept.name,
+          position: 'Отдел',
+          headName: `${head.lastName} ${head.firstName}`,
+          headPosition: head.position.name,
+          phone: head.phone,
+          image: head.photo || `https://i.pravatar.cc/150?u=${head.id}`,
+          type: 'dept'
+        });
+
+        // 5. Staff in this department
+        const staff = await prisma.employee.findMany({
+          where: {
+            projectId: id,
+            departmentId: dept.id,
+            isHead: false
+          },
+          include: { position: true }
+        });
+
+        for (const s of staff) {
+          hierarchy.push({
+            id: s.id,
+            parentId: deptNodeId,
+            name: `${s.lastName} ${s.firstName}`,
+            position: s.position.name,
+            image: s.photo || `https://i.pravatar.cc/150?u=${s.id}`,
+            phone: s.phone,
+            email: s.email
+          });
+        }
+      }
+    }
+
+    res.json(hierarchy);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

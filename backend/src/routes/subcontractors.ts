@@ -1,23 +1,17 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import { scrapeRating } from '../services/ratingScraper';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-const requiredFields = ['projectId', 'company', 'lastName', 'firstName', 'phone', 'password'];
+const requiredFields = ['company', 'lastName', 'firstName', 'phone', 'password'];
 
-// GET /api/subcontractors?projectId=...
+// GET /api/subcontractors
 router.get('/', async (req, res) => {
   try {
-    const { projectId } = req.query;
-
-    if (!projectId) {
-      return res.status(400).json({ error: 'projectId is required' });
-    }
-
     const list = await prisma.subcontractor.findMany({
-      where: { projectId: String(projectId) },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -49,15 +43,18 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: `Required fields: ${missing.join(', ')}` });
     }
 
+    if (body.inn && (body.inn.length !== 9 || !/^\d+$/.test(body.inn))) {
+      return res.status(400).json({ error: 'ИНН должен состоять ровно из 9 цифр' });
+    }
+
     const data: any = {
-      projectId: body.projectId,
       company: body.company,
       lastName: body.lastName,
       firstName: body.firstName,
       middleName: body.middleName || null,
       phone: body.phone,
       email: body.email || null,
-      password: body.password,
+      password: await bcrypt.hash(body.password, 10),
       status: body.status || 'active',
       mfo: body.mfo || null,
       inn: body.inn || null,
@@ -75,6 +72,10 @@ router.post('/', async (req, res) => {
     const created = await prisma.subcontractor.create({ data });
     res.status(201).json(created);
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.includes('company') ? 'Компания' : 'ИНН';
+      return res.status(400).json({ error: `${field} уже существует` });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -85,9 +86,12 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const body = req.body || {};
 
+    if (body.inn && (body.inn.length !== 9 || !/^\d+$/.test(body.inn))) {
+      return res.status(400).json({ error: 'ИНН должен состоять ровно из 9 цифр' });
+    }
+
     const data: any = {};
     const fields = [
-      'projectId',
       'company',
       'lastName',
       'firstName',
@@ -109,11 +113,15 @@ router.put('/:id', async (req, res) => {
       'rating',
     ];
 
-    fields.forEach((key) => {
+    for (const key of fields) {
       if (body[key] !== undefined) {
-        data[key] = body[key] === '' ? null : body[key];
+        if (key === 'password' && body[key]) {
+          data[key] = await bcrypt.hash(body[key], 10);
+        } else {
+          data[key] = body[key] === '' ? null : body[key];
+        }
       }
-    });
+    }
 
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ error: 'No fields provided for update' });
@@ -124,6 +132,10 @@ router.put('/:id', async (req, res) => {
   } catch (error: any) {
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Subcontractor not found' });
+    }
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.includes('company') ? 'Компания' : 'ИНН';
+      return res.status(400).json({ error: `${field} уже существует` });
     }
     res.status(500).json({ error: error.message });
   }

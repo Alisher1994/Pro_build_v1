@@ -661,6 +661,15 @@ class ApiService {
         if (!response.ok) throw new Error('Failed to delete tender');
         return await response.json();
     }
+
+    // ========================================
+    // Organization Structure
+    // ========================================
+    async getOrgStructure(projectId) {
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/hierarchy`);
+        if (!response.ok) throw new Error('Failed to fetch org structure');
+        return await response.json();
+    }
 }
 
 // Экспортируем единственный экземпляр

@@ -34,6 +34,7 @@ model Project {
   startDate   DateTime?
   endDate     DateTime?
   status      String   @default("active") // active, paused, closed, exploitation
+  isDeletable Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -44,8 +45,8 @@ model Project {
   supplies    Supply[]
   finances    Finance[]
   ganttTasks  GanttTask[]
-  subcontractors Subcontractor[]
   tenders     Tender[]
+  employees   Employee[]
 }
 
 // ========================================
@@ -369,8 +370,7 @@ model Finance {
 // ========================================
 model Subcontractor {
   id            String   @id @default(uuid())
-  projectId     String
-  company       String
+  company       String   @unique
   lastName      String
   firstName     String
   middleName    String?
@@ -379,7 +379,7 @@ model Subcontractor {
   password      String
   status        String   @default("active") // active / inactive
   mfo           String?
-  inn           String?
+  inn           String?  @unique
   bankName      String?
   account       String?
   workTypes     String?
@@ -394,11 +394,9 @@ model Subcontractor {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tenderInvites TenderInvite[]
   tenderBids    TenderBid[]
 
-  @@index([projectId])
   @@index([status])
 }
 
@@ -627,4 +625,79 @@ model TenderBid {
   @@index([tenderId])
   @@index([subcontractorId])
   @@index([status])
+}
+// ========================================
+// 18. ОТДЕЛЫ
+// ========================================
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees   Employee[]
+  positions   Position[]
+}
+
+// ========================================
+// 19. ДОЛЖНОСТИ
+// ========================================
+model Position {
+  id          String   @id @default(uuid())
+  departmentId String?
+  name        String   @unique
+  isHead      Boolean  @default(false)
+  isSystem    Boolean  @default(false)
+  privileges  String   // JSON string: { read: boolean, edit: boolean, windows: string[] }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  department  Department? @relation(fields: [departmentId], references: [id])
+  employees   Employee[]
+}
+
+// ========================================
+// 20. СОТРУДНИКИ
+// ========================================
+model Employee {
+  id              String   @id @default(uuid())
+  lastName        String
+  firstName       String
+  middleName      String?
+  photo           String?
+  phone           String
+  corporatePhone  String?
+  password        String
+  email           String   @unique
+  positionId      String
+  hireDate        DateTime?
+  terminationDate DateTime?
+  score           Int      @default(0)
+  projectId       String?  // Закрепленный объект
+  education       String?  // среднее, высшее
+  departmentId    String?
+  isHead          Boolean  @default(false)
+  status          String   @default("active") // active, terminated, blacklist
+  gender          String?  // Мужской, Женский
+
+  // Passport Data
+  pinfl           String?
+  passportSeries  String?
+  passportNumber  String?
+  passportIssuedBy     String?
+  passportIssueDate    DateTime?
+  passportExpiryDate   DateTime?
+  nationality          String?
+
+  position        Position @relation(fields: [positionId], references: [id])
+  department      Department? @relation(fields: [departmentId], references: [id])
+  project         Project?    @relation(fields: [projectId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([positionId])
+  @@index([departmentId])
+  @@index([projectId])
 }

@@ -87,6 +87,10 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+input[type="checkbox"] {
+    accent-color: var(--primary);
+}
+
 /* ========================================
    Custom Scrollbar
    ======================================== */

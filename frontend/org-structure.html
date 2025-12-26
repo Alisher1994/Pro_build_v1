@@ -256,69 +256,33 @@
         let chart = null;
         let selectedEmployees = new Set();
 
-        const data = [
-            { id: "1", parentId: null, name: "ЖК 'Гранд Палас'", position: "Проект", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&h=200&fit=crop", type: "project" },
+        let data = [];
 
-            // Руководство
-            { id: "2", parentId: "1", name: "Александр Волков", position: "РП (Руководитель проекта)", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop", phone: "+7 (701) 111-22-33", email: "volkov@probim.kz" },
-            { id: "3", parentId: "2", name: "Дмитрий Сабиров", position: "ЗРП (Зам. руководителя)", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop", phone: "+7 (701) 444-55-66", email: "sabirov@probim.kz" },
+        async function loadData() {
+            try {
+                // Get current project ID from parent app
+                const projectId = window.parent.app.currentProjectId;
+                if (!projectId) return;
 
-            // Департаменты
-            {
-                id: "dept_construct", parentId: "3",
-                name: "Отдел строительства",
-                position: "Департамент",
-                headName: "Игорь Новиков",
-                headPosition: "Начальник отдела",
-                phone: "+7 (702) 000-11-22",
-                image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
-                type: "dept"
-            },
-            {
-                id: "dept_eng", parentId: "3",
-                name: "Инженерная служба",
-                position: "Департамент",
-                headName: "Елена Ким",
-                headPosition: "Главный инженер",
-                phone: "+7 (705) 123-45-67",
-                image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop",
-                type: "dept"
-            },
-            {
-                id: "dept_quality", parentId: "3",
-                name: "ОТК и Лаборатория",
-                position: "Департамент",
-                headName: "Виктория Смирнова",
-                headPosition: "Начальник ОТК",
-                phone: "+7 (707) 888-99-00",
-                image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop",
-                type: "dept"
-            },
-            {
-                id: "dept_safety", parentId: "3",
-                name: "ОТ и ТБ",
-                position: "Департамент",
-                headName: "Наталья Громова",
-                headPosition: "Специалист по ТБ",
-                phone: "+7 (701) 555-44-33",
-                image: "https://images.unsplash.com/photo-1567532939604-b6c5b0ad2e01?w=150&h=150&fit=crop",
-                type: "dept"
-            },
+                // Use the parent's API service
+                data = await window.parent.api.getOrgStructure(projectId);
 
-            // Сотрудники
-            { id: "5", parentId: "dept_construct", name: "Олег Макаров", position: "Технический надзор", image: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop", phone: "+7 (702) 333-44-55" },
-            { id: "10", parentId: "dept_construct", name: "Сергей Куц", position: "Прораб участка", image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop", phone: "+7 (702) 999-00-11" },
-            { id: "7", parentId: "dept_eng", name: "Ольга Иванова", position: "Инженер-проектировщик", image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop", phone: "+7 (705) 999-88-77" }
-        ];
+                if (data && data.length > 0) {
+                    renderChart();
+                } else {
+                    document.querySelector('.chart-container').innerHTML = `
+                        <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--gray-600);">
+                            У этого объекта пока нет назначенных сотрудников
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Error loading org structure:', e);
+            }
+        }
 
         window.addEventListener('load', () => {
-            const checkSize = setInterval(() => {
-                const container = document.querySelector('.chart-container');
-                if (container && container.clientHeight > 0) {
-                    clearInterval(checkSize);
-                    renderChart();
-                }
-            }, 100);
+            loadData();
         });
 
         function makeCall(name, image) {

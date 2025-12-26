@@ -1,0 +1,135 @@
+Checking staff integrity...
+Total Employees: 33
+Total Positions: 25
+Total Departments: 14
+
+--- Checking Employee Department vs Position Department Mismatch ---
+[MISMATCH] Emp: Смирнов (ID: 03ccbd31-679e-4d89-9178-10a8ff1380bd)
+  - Linked Dept: Главный офис (ID: f353fdba-94bf-46ea-b009-384ff09de2af)
+  - Position: Начальник отдела ПТО (ID: 949f59ad-d6fd-404f-b06b-d511aece1388) -> Belongs to Dept: undefined (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+[MISMATCH] Emp: Соколов (ID: 7aad7259-493a-497c-9ee8-3c608d9308b3)
+  - Linked Dept: Главный офис (ID: f353fdba-94bf-46ea-b009-384ff09de2af)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Сидоров (ID: 5f0e4402-6954-4a01-94d0-989712742fa7)
+  - Linked Dept: Главный офис (ID: f353fdba-94bf-46ea-b009-384ff09de2af)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Васильев (ID: 024c54b6-dcb1-4678-9dbf-286bb0e05553)
+  - Linked Dept: Главный офис (ID: f353fdba-94bf-46ea-b009-384ff09de2af)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Петров (ID: 28d0396f-741f-49b2-afc8-6358dc141464)
+  - Linked Dept: Производство (ID: eb17fc40-5dc4-4253-ab7c-2ce152e6dcf7)
+  - Position: Начальник отдела ПТО (ID: 949f59ad-d6fd-404f-b06b-d511aece1388) -> Belongs to Dept: undefined (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+[MISMATCH] Emp: Петров (ID: 4da547e5-ca85-4cea-96f7-604974117d9a)
+  - Linked Dept: Производство (ID: eb17fc40-5dc4-4253-ab7c-2ce152e6dcf7)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Васильев (ID: b7991fd7-a5bd-43df-b35a-8eaaeeed701a)
+  - Linked Dept: Производство (ID: eb17fc40-5dc4-4253-ab7c-2ce152e6dcf7)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Кузнецов (ID: c8ddffe6-d13a-43d0-9d12-87e888020431)
+  - Linked Dept: Производство (ID: eb17fc40-5dc4-4253-ab7c-2ce152e6dcf7)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Смирнов (ID: 64e3fe26-8ac2-4bbf-af71-b4c9609cf872)
+  - Linked Dept: Технический надзор (ID: 5e11c523-180c-46ca-a146-33daf182f3a6)
+  - Position: Начальник отдела ПТО (ID: 949f59ad-d6fd-404f-b06b-d511aece1388) -> Belongs to Dept: undefined (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+[MISMATCH] Emp: Попов (ID: 7ef44a88-c0c9-48b5-9d03-b84cc7f88ad5)
+  - Linked Dept: Технический надзор (ID: 5e11c523-180c-46ca-a146-33daf182f3a6)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Попов (ID: f6d604cc-3e0e-4ba0-a7b1-a66e1dc24692)
+  - Linked Dept: Технический надзор (ID: 5e11c523-180c-46ca-a146-33daf182f3a6)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Соколов (ID: e52130b2-692f-43f5-a808-67dd9aa8c068)
+  - Linked Dept: Технический надзор (ID: 5e11c523-180c-46ca-a146-33daf182f3a6)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Смирнов (ID: 41d836b2-aa27-45cc-b773-55624b162943)
+  - Linked Dept: Тендерный отдел (ID: 847e9158-adfb-4b88-8482-4e73287a2769)
+  - Position: Начальник отдела ПТО (ID: 949f59ad-d6fd-404f-b06b-d511aece1388) -> Belongs to Dept: undefined (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+[MISMATCH] Emp: Петров (ID: 9cec3838-823b-4d36-b55e-28f9ca8703a8)
+  - Linked Dept: Тендерный отдел (ID: 847e9158-adfb-4b88-8482-4e73287a2769)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Иванов (ID: 03bf4ad9-c06e-482c-a163-2a25e7b6bb16)
+  - Linked Dept: Тендерный отдел (ID: 847e9158-adfb-4b88-8482-4e73287a2769)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Сидоров (ID: ea6dff2a-49fc-4d22-9ea4-0e440cf203ff)
+  - Linked Dept: Тендерный отдел (ID: 847e9158-adfb-4b88-8482-4e73287a2769)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Васильев (ID: 8da25722-8cf9-4a19-8cce-fd9cbf22ed39)
+  - Linked Dept: Отдел планирования (ID: 72c4f638-41e4-4a2a-b002-4a7923be7012)
+  - Position: Начальник отдела ПТО (ID: 949f59ad-d6fd-404f-b06b-d511aece1388) -> Belongs to Dept: undefined (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+[MISMATCH] Emp: Попов (ID: 5f0b5b17-e5e9-410c-9a98-171c84e62f88)
+  - Linked Dept: Отдел планирования (ID: 72c4f638-41e4-4a2a-b002-4a7923be7012)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Сидоров (ID: 2802174a-0b09-41df-8171-77fd2b1aa0bc)
+  - Linked Dept: Отдел планирования (ID: 72c4f638-41e4-4a2a-b002-4a7923be7012)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Кузнецов (ID: 97ee55e3-6856-4a78-ba83-96b02f8ff1a5)
+  - Linked Dept: Отдел планирования (ID: 72c4f638-41e4-4a2a-b002-4a7923be7012)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Иванов (ID: b09c7a5b-974d-49d9-b0be-dcab904e5fcb)
+  - Linked Dept: Отдел финансирования (ID: 0a90e780-1434-440c-a393-e3a47b94f50d)
+  - Position: Начальник отдела ПТО (ID: 949f59ad-d6fd-404f-b06b-d511aece1388) -> Belongs to Dept: undefined (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+[MISMATCH] Emp: Кузнецов (ID: 23973061-365f-4305-affc-19f984cc9ca0)
+  - Linked Dept: Отдел финансирования (ID: 0a90e780-1434-440c-a393-e3a47b94f50d)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Новиков (ID: 3b7d90ce-108d-423c-a8cc-b13055fc87ab)
+  - Linked Dept: Отдел финансирования (ID: 0a90e780-1434-440c-a393-e3a47b94f50d)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+[MISMATCH] Emp: Васильев (ID: 167127ff-4ce4-430a-8e5a-8bb69041ff23)
+  - Linked Dept: Отдел финансирования (ID: 0a90e780-1434-440c-a393-e3a47b94f50d)
+  - Position: Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) -> Belongs to Dept: undefined (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+Found 24 mismatches.
+
+--- Department Counts Verification ---
+[DEPT] ОТиТБ (ID: 26464f5b-f78f-4281-b3a6-bd14ede0a4a6)
+  - Direct Employees (by departmentId): 5
+  - Employees via Positions (by position.departmentId): 23
+  -> DISCREPANCY!
+[DEPT] Технический надзор (ID: 5e11c523-180c-46ca-a146-33daf182f3a6)
+  - Direct Employees (by departmentId): 4
+  - Employees via Positions (by position.departmentId): 0
+  -> DISCREPANCY!
+[DEPT] Тендерный отдел (ID: 847e9158-adfb-4b88-8482-4e73287a2769)
+  - Direct Employees (by departmentId): 4
+  - Employees via Positions (by position.departmentId): 0
+  -> DISCREPANCY!
+[DEPT] Отдел планирования (ID: 72c4f638-41e4-4a2a-b002-4a7923be7012)
+  - Direct Employees (by departmentId): 4
+  - Employees via Positions (by position.departmentId): 0
+  -> DISCREPANCY!
+[DEPT] Отдел финансирования (ID: 0a90e780-1434-440c-a393-e3a47b94f50d)
+  - Direct Employees (by departmentId): 4
+  - Employees via Positions (by position.departmentId): 0
+  -> DISCREPANCY!
+[DEPT] Руководство проекта (ID: ebb7df4e-98c4-444e-be27-75f1e6e5172e)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 0
+[DEPT] Отдел кадров (ID: de89d73a-c8d6-4a03-a087-306be3f4d8ca)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 0
+[DEPT] Отдел маркетинга (ID: cdd34490-9d22-4d5b-b4f2-f1f1b0476381)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 0
+[DEPT] ПТО (ID: d18482f1-c34e-4724-b3a2-9e131e09f214)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 6
+  -> DISCREPANCY!
+[DEPT] Отдел снабжения (ID: 55ad2bcd-c757-4f45-8556-94728811e75e)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 0
+[DEPT] IT-отдел (ID: d152d9e7-7073-4ad3-98b2-3b4da1b4370d)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 0
+[DEPT] Производство (ID: eb17fc40-5dc4-4253-ab7c-2ce152e6dcf7)
+  - Direct Employees (by departmentId): 8
+  - Employees via Positions (by position.departmentId): 4
+  -> DISCREPANCY!
+[DEPT] Главный офис (ID: f353fdba-94bf-46ea-b009-384ff09de2af)
+  - Direct Employees (by departmentId): 4
+  - Employees via Positions (by position.departmentId): 0
+  -> DISCREPANCY!
+[DEPT] 1 (ID: 71edc0d0-8b25-414d-b031-a592dcaa4fc9)
+  - Direct Employees (by departmentId): 0
+  - Employees via Positions (by position.departmentId): 0
+
+--- Position Counts Verification for OTiTB ---
+[POS] Начальник отдела ОТиТБ (ID: 110264e9-f119-4b33-9ccb-f328eaa5369d) HEAD: true -> Count: 1
+[POS] Инженер ОТиТБ (ID: 422f952c-7b95-4dd0-87e7-4d1ec6393109) HEAD: false -> Count: 22

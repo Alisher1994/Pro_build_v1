@@ -152,12 +152,22 @@ class ProBIMApp {
             const isSelected = project.id === this.currentProjectId;
             const projectName = project.name || 'Без названия';
             const safeName = this.escapeHtml(projectName);
+            const isMainOffice = project.name === 'Главный офис';
+
+            const iconHtml = isMainOffice ? `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 12h4"/><path d="M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/>
+                    <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/>
+                    <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>
+                </svg>` : `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>`;
+
             html += `
                 <li class="${isSelected ? 'selected' : ''}" onclick="app.selectProject('${project.id}')" title="${safeName}" aria-label="${safeName}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
+                    ${iconHtml}
                     <span>${safeName}</span>
                     <button class="project-menu-btn" onclick="event.stopPropagation(); app.toggleProjectMenu('${project.id}', event)" title="Меню">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -174,6 +184,7 @@ class ProBIMApp {
                             </svg>
                             Изменить
                         </button>
+                        ${!isMainOffice ? `
                         <button onclick="event.stopPropagation(); app.deleteProject('${project.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="3 6 5 6 21 6"/>
@@ -181,6 +192,7 @@ class ProBIMApp {
                             </svg>
                             Удалить
                         </button>
+                        ` : ''}
                     </div>
                 </li>
             `;
@@ -199,8 +211,42 @@ class ProBIMApp {
 
         if (!this.currentProjectId) {
             ribbon.classList.add('disabled');
-        } else {
-            ribbon.classList.remove('disabled');
+            return;
+        }
+
+        ribbon.classList.remove('disabled');
+
+        const project = this.projects.find(p => p.id === this.currentProjectId);
+        const isMainOffice = project?.name === 'Главный офис';
+
+        // Ribbon tabs
+        document.querySelectorAll('.ribbon-tab').forEach(tab => {
+            const tabName = tab.dataset.ribbon;
+            if (isMainOffice && tabName !== 'settings') {
+                tab.style.display = 'none';
+            } else {
+                tab.style.display = ''; // Restore default
+            }
+        });
+
+        // If in Main Office and current tab is NOT settings, force switch to settings
+        if (isMainOffice && this.currentRibbonTab !== 'settings') {
+            this.currentRibbonTab = 'settings';
+            this.applyRibbonTabToUI('settings');
+        }
+
+        // Hide project-specific settings group in Main Office
+        const projectSettingsBtn = document.getElementById('project-settings-btn');
+        if (projectSettingsBtn) {
+            const group = projectSettingsBtn.closest('.ribbon-group');
+            const sep = group?.nextElementSibling;
+            if (isMainOffice) {
+                if (group) group.style.display = 'none';
+                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = 'none';
+            } else {
+                if (group) group.style.display = '';
+                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = '';
+            }
         }
     }
 
@@ -294,8 +340,14 @@ class ProBIMApp {
                 InstructionsManager.show();
                 break;
             case 'settings':
-                await SettingsManager.showProjectSettings(this.currentProjectId);
-                this.setSettingsActive('project');
+                const project = this.projects.find(p => p.id === this.currentProjectId);
+                if (project?.name === 'Главный офис') {
+                    SettingsManager.showStaffManagement(this.currentProjectId);
+                    this.setSettingsActive('hr');
+                } else {
+                    await SettingsManager.showProjectSettings(this.currentProjectId);
+                    this.setSettingsActive('project');
+                }
                 break;
             case 'norms-settings':
                 await SettingsManager.showNormsSettings(this.currentProjectId);
@@ -311,11 +363,19 @@ class ProBIMApp {
 
         const project = this.projects.find(p => p.id === this.currentProjectId);
         const projectName = project?.name || 'Проект';
+        const isMainOffice = project?.name === 'Главный офис';
+
+        const projectIcon = isMainOffice ? `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: text-bottom; opacity: 0.8;">
+                <path d="M10 12h4"/><path d="M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/>
+                <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/>
+                <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>
+            </svg>` : '';
 
         let html = '';
 
         // 1. Project Name (Static)
-        html += `<span class="breadcrumb-item" style="color: var(--gray-500); cursor: default;">${projectName}</span>`;
+        html += `<span class="breadcrumb-item" style="color: var(--gray-500); cursor: default; display: flex; align-items: center;">${projectIcon}${projectName}</span>`;
         html += `<span class="breadcrumb-separator">/</span>`;
 
         // 2. Main (Главная)
@@ -354,8 +414,9 @@ class ProBIMApp {
                 else label = 'ОТ и ТБ';
             }
             else if (this.currentRibbonTab === 'settings') {
-                if (this.setSettingsMode === 'subcontractors' || document.getElementById('subcontractors-btn')?.classList.contains('active')) label = 'Субподряд';
-                else label = 'Настройки проекта';
+                if (document.getElementById('subcontractors-btn')?.classList.contains('active')) label = 'Субподряд';
+                else if (document.getElementById('hr-management-btn')?.classList.contains('active')) label = 'Штат (Кадры)';
+                else label = isMainOffice ? 'Настройки компании' : 'Настройки проекта';
             }
             else if (this.currentRibbonTab === 'norms-settings') label = 'Настройки норм';
 
@@ -622,12 +683,15 @@ class ProBIMApp {
     setSettingsActive(mode) {
         const map = {
             project: document.getElementById('project-settings-btn'),
-            subcontractors: document.getElementById('subcontractors-btn')
+            subcontractors: document.getElementById('subcontractors-btn'),
+            hr: document.getElementById('hr-management-btn')
         };
         Object.entries(map).forEach(([key, btn]) => {
             if (!btn) return;
             btn.classList.toggle('active', key === mode);
         });
+
+        this.updateBreadcrumbs();
     }
 
     showPermitBoard() {
@@ -1260,6 +1324,17 @@ class ProBIMApp {
             this.applyRibbonTabToUI('settings');
             this.setSettingsActive('subcontractors');
             SettingsManager.showSubcontractors(this.currentProjectId);
+        });
+
+        document.getElementById('hr-management-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            this.currentRibbonTab = 'settings';
+            this.applyRibbonTabToUI('settings');
+            this.setSettingsActive('hr');
+            SettingsManager.showStaffManagement(this.currentProjectId);
         });
 
         document.getElementById('permit-board-btn')?.addEventListener('click', () => {

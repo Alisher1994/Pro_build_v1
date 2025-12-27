@@ -15,11 +15,11 @@ CREATE TABLE "Project" (
     "customer" TEXT,
     "contractor" TEXT,
     "currency" TEXT NOT NULL DEFAULT 'RUB',
-    "startDate" DATETIME,
-    "endDate" DATETIME,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
     "status" TEXT NOT NULL DEFAULT 'active',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -33,8 +33,8 @@ CREATE TABLE "Block" (
     "area" REAL,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
     "constructionPhase" INTEGER NOT NULL DEFAULT 1,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Block_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -49,8 +49,8 @@ CREATE TABLE "Estimate" (
     "status" TEXT NOT NULL DEFAULT 'draft',
     "ifcFileUrl" TEXT,
     "xktFileUrl" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Estimate_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Estimate_blockId_fkey" FOREIGN KEY ("blockId") REFERENCES "Block" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -66,8 +66,8 @@ CREATE TABLE "EstimateSection" (
     "xktFileUrl" TEXT,
     "totalCost" REAL NOT NULL DEFAULT 0,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "EstimateSection_estimateId_fkey" FOREIGN KEY ("estimateId") REFERENCES "Estimate" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -82,8 +82,8 @@ CREATE TABLE "EstimateStage" (
     "unitCost" REAL,
     "totalCost" REAL NOT NULL DEFAULT 0,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "EstimateStage_sectionId_fkey" FOREIGN KEY ("sectionId") REFERENCES "EstimateSection" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -101,8 +101,8 @@ CREATE TABLE "WorkType" (
     "ifcElements" TEXT,
     "ifcProperties" TEXT,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "WorkType_stageId_fkey" FOREIGN KEY ("stageId") REFERENCES "EstimateStage" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -121,8 +121,8 @@ CREATE TABLE "Resource" (
     "ifcProperties" TEXT,
     "description" TEXT,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Resource_workTypeId_fkey" FOREIGN KEY ("workTypeId") REFERENCES "WorkType" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -133,11 +133,11 @@ CREATE TABLE "Schedule" (
     "blockId" TEXT,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "startDate" DATETIME,
-    "endDate" DATETIME,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
     "status" TEXT NOT NULL DEFAULT 'draft',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Schedule_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -151,11 +151,11 @@ CREATE TABLE "ScheduleTask" (
     "zone" TEXT,
     "unit" TEXT,
     "quantity" REAL NOT NULL DEFAULT 0,
-    "startDate" DATETIME,
-    "endDate" DATETIME,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
     "duration" INTEGER,
-    "actualStart" DATETIME,
-    "actualEnd" DATETIME,
+    "actualStart" TIMESTAMP(3),
+    "actualEnd" TIMESTAMP(3),
     "actualQuantity" REAL NOT NULL DEFAULT 0,
     "progress" REAL NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'not_started',
@@ -163,8 +163,8 @@ CREATE TABLE "ScheduleTask" (
     "ifcElements" TEXT,
     "notes" TEXT,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "ScheduleTask_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "Schedule" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -175,8 +175,8 @@ CREATE TABLE "Supply" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "status" TEXT NOT NULL DEFAULT 'planning',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Supply_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -185,18 +185,18 @@ CREATE TABLE "SupplyItem" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "supplyId" TEXT NOT NULL,
     "resourceId" TEXT NOT NULL,
-    "requiredDate" DATETIME NOT NULL,
+    "requiredDate" TIMESTAMP(3) NOT NULL,
     "requiredQuantity" REAL NOT NULL,
-    "orderedDate" DATETIME,
+    "orderedDate" TIMESTAMP(3),
     "orderedQuantity" REAL NOT NULL DEFAULT 0,
-    "deliveredDate" DATETIME,
+    "deliveredDate" TIMESTAMP(3),
     "deliveredQuantity" REAL NOT NULL DEFAULT 0,
     "supplier" TEXT,
     "purchasePrice" REAL,
     "status" TEXT NOT NULL DEFAULT 'not_ordered',
     "notes" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "SupplyItem_supplyId_fkey" FOREIGN KEY ("supplyId") REFERENCES "Supply" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "SupplyItem_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "Resource" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -208,11 +208,11 @@ CREATE TABLE "Finance" (
     "type" TEXT NOT NULL,
     "category" TEXT NOT NULL,
     "amount" REAL NOT NULL,
-    "date" DATETIME NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
     "description" TEXT,
     "reference" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Finance_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -235,8 +235,8 @@ CREATE TABLE "Subcontractor" (
     "address" TEXT,
     "companyPhoto" TEXT,
     "directorPhoto" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Subcontractor_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -254,8 +254,8 @@ CREATE TABLE "IFCElement" (
     "properties" TEXT,
     "geometry" TEXT,
     "status" TEXT NOT NULL DEFAULT 'not_planned',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -263,7 +263,7 @@ CREATE TABLE "GanttTask" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "projectId" TEXT NOT NULL,
     "text" TEXT NOT NULL,
-    "start_date" DATETIME,
+    "start_date" TIMESTAMP(3),
     "duration" INTEGER NOT NULL DEFAULT 1,
     "progress" REAL NOT NULL DEFAULT 0,
     "parent" TEXT,
@@ -273,8 +273,8 @@ CREATE TABLE "GanttTask" (
     "quantity" REAL,
     "unit" TEXT,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "GanttTask_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -294,8 +294,8 @@ CREATE TABLE "WorkTypeGroup" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -305,8 +305,8 @@ CREATE TABLE "WorkTypeItem" (
     "name" TEXT NOT NULL,
     "unit" TEXT NOT NULL,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "WorkTypeItem_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "WorkTypeGroup" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -316,8 +316,8 @@ CREATE TABLE "Instruction" (
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "text" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable

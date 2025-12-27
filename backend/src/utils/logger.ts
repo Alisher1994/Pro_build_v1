@@ -1,5 +1,6 @@
 import winston from 'winston';
 import path from 'path';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 const { combine, timestamp, printf, colorize } = winston.format;
 
@@ -16,14 +17,20 @@ const logger = winston.createLogger({
         logFormat
     ),
     transports: [
-        // Write all logs with level 'error' and below to 'error.log'
-        new winston.transports.File({
-            filename: path.join(__dirname, '../../logs/error.log'),
+        new DailyRotateFile({
+            filename: path.join(__dirname, '../../logs/error-%DATE%.log'),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '5m',
+            maxFiles: '14d',
             level: 'error'
         }),
-        // Write all logs with level 'info' and below to 'combined.log'
-        new winston.transports.File({
-            filename: path.join(__dirname, '../../logs/combined.log')
+        new DailyRotateFile({
+            filename: path.join(__dirname, '../../logs/combined-%DATE%.log'),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '10m',
+            maxFiles: '14d'
         }),
     ],
 });

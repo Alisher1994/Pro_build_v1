@@ -1,8 +1,7 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // GET /api/stages - Получить все этапы
 router.get('/', async (req, res) => {

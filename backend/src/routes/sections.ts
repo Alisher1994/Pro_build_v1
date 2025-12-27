@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -7,7 +7,6 @@ import { convertIfcToXkt } from '../services/ifcConverter';
 import logger from '../utils/logger';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Настройка загрузки файлов
 const storage = multer.diskStorage({
@@ -24,7 +23,19 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const extOk = path.extname(file.originalname).toLowerCase() === '.ifc';
+    const mimeOk = file.mimetype === 'application/octet-stream' || file.mimetype === 'model/ifc' || file.mimetype === '';
+    if (extOk && mimeOk) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .ifc files are allowed'));
+    }
+  }
+});
 
 // GET /api/sections - Получить все разделы
 router.get('/', async (req, res) => {

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 import crypto from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
@@ -8,7 +8,6 @@ import { scrapeRating } from '../services/ratingScraper';
 import logger from '../utils/logger';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Configure multer for file uploads
 const uploadsDir = path.join(__dirname, '../../uploads');
@@ -26,7 +25,27 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const allowedMimes = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/jpeg',
+  'image/png'
+]);
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (allowedMimes.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Unsupported file type'));
+    }
+  }
+});
 
 // ==========================================
 // GET /api/tenders?projectId=X
@@ -34,33 +53,46 @@ const upload = multer({ storage });
 // ==========================================
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.query;
+    const { projectId, limit, offset } = req.query;
 
     if (!projectId || typeof projectId !== 'string') {
       return res.status(400).json({ error: 'projectId is required' });
     }
 
-    const tenders = await prisma.tender.findMany({
-      where: { projectId },
-      include: {
-        project: true,
-        invites: {
-          include: {
-            subcontractor: true,
-            bid: true
+    const take = limit ? Math.min(Math.max(Number(limit), 1), 200) : undefined;
+    const skip = offset ? Math.max(Number(offset), 0) : 0;
+
+    const [total, tenders] = await Promise.all([
+      prisma.tender.count({ where: { projectId } }),
+      prisma.tender.findMany({
+        where: { projectId },
+        include: {
+          project: true,
+          invites: {
+            include: {
+              subcontractor: true,
+              bid: true
+            }
+          },
+          bids: {
+            include: {
+              subcontractor: true,
+              invite: true
+            }
           }
         },
-        bids: {
-          include: {
-            subcontractor: true,
-            invite: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip
+      })
+    ]);
 
-    res.json(tenders);
+    res.json({
+      data: tenders,
+      total,
+      limit: take ?? null,
+      offset: skip
+    });
   } catch (error) {
     logger.error('Error fetching tenders:', error);
     res.status(500).json({ error: 'Failed to fetch tenders' });

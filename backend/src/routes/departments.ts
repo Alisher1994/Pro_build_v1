@@ -1,9 +1,8 @@
 import logger from '../utils/logger';
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Seed: Ensure "Главный офис" exists
 const ensureBaseDept = async () => {

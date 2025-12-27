@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 import bcrypt from 'bcrypt';
 import { scrapeRating } from '../services/ratingScraper';
 import logger from '../utils/logger';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const requiredFields = ['company', 'lastName', 'firstName', 'phone', 'password'];
 

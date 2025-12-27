@@ -32,6 +32,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Minimal security headers without extra deps
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
 // Middleware
 app.use(compression());
 app.use(cors());
@@ -81,16 +90,45 @@ app.get('/api/proxy-image', async (req, res) => {
     return;
   }
   try {
-    const response = await fetch(imageUrl);
+    const parsed = new URL(imageUrl);
+    const host = parsed.hostname.toLowerCase();
+    const isLocal = ['localhost', '127.0.0.1', '::1'].includes(host);
+    const isPrivate = /^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host);
+    if (isLocal || isPrivate) {
+      res.status(400).send('Blocked host');
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(imageUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+
+    const maxBytes = 5 * 1024 * 1024; // 5MB guard
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && Number(contentLength) > maxBytes) {
+      res.status(413).send('Image too large');
+      return;
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length > maxBytes) {
+      res.status(413).send('Image too large');
+      return;
+    }
 
     const contentType = response.headers.get('content-type');
     if (contentType) res.setHeader('Content-Type', contentType);
 
-    const buffer = await response.arrayBuffer();
-    res.send(Buffer.from(buffer));
+    res.send(buffer);
   } catch (error: any) {
     logger.error(`Proxy error: ${error.message}`);
+    if (error.name === 'AbortError') {
+      res.status(504).send('Upstream timeout');
+      return;
+    }
     res.status(500).send('Error proxying image');
   }
 });

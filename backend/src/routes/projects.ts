@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -19,7 +20,7 @@ const ensureBaseProject = async () => {
       });
     }
   } catch (e) {
-    console.error('Failed to seed base project:', e);
+    logger.error('Failed to seed base project:', e);
   }
 };
 ensureBaseProject();
@@ -42,7 +43,7 @@ router.get('/', async (req, res) => {
     });
     res.json(projects);
   } catch (error: any) {
-    console.error('Error fetching projects:', error);
+    logger.error('Error fetching projects:', error);
     res.status(500).json({ error: error.message, details: error.stack });
   }
 });
@@ -165,7 +166,7 @@ router.put('/:id', async (req, res) => {
 
     res.json(project);
   } catch (error: any) {
-    console.error('Error updating project:', error);
+    logger.error('Error updating project:', error);
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -388,9 +389,10 @@ router.get('/:id/hierarchy', async (req, res) => {
 
     res.json(hierarchy);
   } catch (error: any) {
-    console.error('Hierarchy error:', error);
+    logger.error('Hierarchy error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 export default router;
+

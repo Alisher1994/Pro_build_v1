@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
@@ -220,7 +221,7 @@ router.post('/:id/upload-ifc', upload.single('ifc'), async (req, res) => {
       estimate: updatedEstimate,
     });
   } catch (error: any) {
-    console.error('Error uploading IFC:', error);
+    logger.error('Error uploading IFC:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -245,3 +246,4 @@ router.delete('/:id/ifc', async (req, res) => {
 });
 
 export default router;
+

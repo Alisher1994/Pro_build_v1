@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
     });
     res.json(instructions);
   } catch (error: any) {
-    console.error('Error fetching instructions:', error);
+    logger.error('Error fetching instructions:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -64,7 +65,7 @@ router.get('/:id', async (req, res) => {
     
     res.json(instruction);
   } catch (error: any) {
-    console.error('Error fetching instruction:', error);
+    logger.error('Error fetching instruction:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -116,7 +117,7 @@ router.post('/', async (req, res) => {
     
     res.status(201).json(instruction);
   } catch (error: any) {
-    console.error('Error creating instruction:', error);
+    logger.error('Error creating instruction:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -164,7 +165,7 @@ router.put('/:id', async (req, res) => {
     
     res.json(instruction);
   } catch (error: any) {
-    console.error('Error updating instruction:', error);
+    logger.error('Error updating instruction:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -180,7 +181,7 @@ router.delete('/:id', async (req, res) => {
     
     res.json({ success: true });
   } catch (error: any) {
-    console.error('Error deleting instruction:', error);
+    logger.error('Error deleting instruction:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -251,7 +252,7 @@ router.post('/generate-excerpt', async (req, res) => {
     try {
       excerpt = await generateWithOllama(prompt);
     } catch (ollamaError: any) {
-      console.error('Ошибка генерации через Ollama:', ollamaError.message);
+      logger.error('Ошибка генерации через Ollama:', ollamaError.message);
       throw new Error(`Не удалось сгенерировать текст: ${ollamaError.message}. Убедитесь, что Ollama запущен и модель скачана.`);
     }
 
@@ -264,7 +265,7 @@ router.post('/generate-excerpt', async (req, res) => {
       isAI: true // Всегда true, так как заглушка убрана
     });
   } catch (error: any) {
-    console.error('Error generating instruction excerpt:', error);
+    logger.error('Error generating instruction excerpt:', error);
     res.status(500).json({ 
       error: 'Ошибка генерации текста', 
       message: error.message 
@@ -333,4 +334,5 @@ async function generateWithOllama(prompt: string): Promise<string> {
 }
 
 export default router;
+
 

@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import puppeteer from 'puppeteer';
 
 export async function scrapeRating(inn: string): Promise<string | null> {
@@ -33,7 +34,7 @@ export async function scrapeRating(inn: string): Promise<string | null> {
                 }
             }
         } catch (e: any) {
-            console.log('No modal found or error closing it:', e.message);
+            logger.info('No modal found or error closing it:', e.message);
         }
 
         // 3. Enter INN
@@ -61,9 +62,10 @@ export async function scrapeRating(inn: string): Promise<string | null> {
 
         return rating;
     } catch (error: any) {
-        console.error(`Scraping error for INN ${inn}:`, error.message);
+        logger.error(`Scraping error for INN ${inn}:`, error.message);
         return null;
     } finally {
         if (browser) await browser.close();
     }
 }
+

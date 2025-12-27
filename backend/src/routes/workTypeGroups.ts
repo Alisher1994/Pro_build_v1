@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
     });
     res.json(groups);
   } catch (error: any) {
-    console.error('Error fetching work type groups:', error);
+    logger.error('Error fetching work type groups:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -45,7 +46,7 @@ router.get('/:id', async (req, res) => {
     
     res.json(group);
   } catch (error: any) {
-    console.error('Error fetching work type group:', error);
+    logger.error('Error fetching work type group:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -68,7 +69,7 @@ router.post('/', async (req, res) => {
     
     res.status(201).json(group);
   } catch (error: any) {
-    console.error('Error creating work type group:', error);
+    logger.error('Error creating work type group:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -89,7 +90,7 @@ router.put('/:id', async (req, res) => {
     
     res.json(group);
   } catch (error: any) {
-    console.error('Error updating work type group:', error);
+    logger.error('Error updating work type group:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -116,7 +117,7 @@ router.delete('/:id', async (req, res) => {
     
     res.json({ success: true });
   } catch (error: any) {
-    console.error('Error deleting work type group:', error);
+    logger.error('Error deleting work type group:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -137,7 +138,7 @@ router.get('/:groupId/items', async (req, res) => {
     
     res.json(items);
   } catch (error: any) {
-    console.error('Error fetching work type items:', error);
+    logger.error('Error fetching work type items:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -167,7 +168,7 @@ router.post('/:groupId/items', async (req, res) => {
     
     res.status(201).json(item);
   } catch (error: any) {
-    console.error('Error creating work type item:', error);
+    logger.error('Error creating work type item:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -189,7 +190,7 @@ router.put('/:groupId/items/:itemId', async (req, res) => {
     
     res.json(item);
   } catch (error: any) {
-    console.error('Error updating work type item:', error);
+    logger.error('Error updating work type item:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -216,9 +217,10 @@ router.delete('/:groupId/items/:itemId', async (req, res) => {
     
     res.json({ success: true });
   } catch (error: any) {
-    console.error('Error deleting work type item:', error);
+    logger.error('Error deleting work type item:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 export default router;
+

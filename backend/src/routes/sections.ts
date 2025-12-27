@@ -4,6 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { convertIfcToXkt } from '../services/ifcConverter';
+import logger from '../utils/logger';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -162,8 +163,8 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
     const ifcFileUrl = `/uploads/ifc/${req.file.filename}`;
     const ifcFilePath = path.join(__dirname, '../../uploads/ifc', req.file.filename);
 
-    console.log('📁 IFC файл загружен:', ifcFileUrl);
-    console.log('📦 Размер:', (req.file.size / 1024 / 1024).toFixed(2), 'MB');
+    logger.info(`📁 IFC файл загружен: ${ifcFileUrl}`);
+    logger.info(`📦 Размер: ${(req.file.size / 1024 / 1024).toFixed(2)} MB`);
 
     let xktFileUrl = null;
 
@@ -176,7 +177,7 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
         fs.mkdirSync(xktDir, { recursive: true });
       }
 
-      console.log('🔄 Начало конвертации IFC → XKT...');
+      logger.info('🔄 Начало конвертации IFC → XKT...');
 
       const xktPath = await convertIfcToXkt({
         ifcPath: ifcFilePath,
@@ -186,12 +187,11 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
       const xktFileName = path.basename(xktPath);
       xktFileUrl = `/uploads/xkt/${xktFileName}`;
 
-      console.log('✅ Конвертация завершена успешно');
-      console.log('📂 XKT файл:', xktFileUrl);
+      logger.info('✅ Конвертация завершена успешно');
+      logger.info(`📂 XKT файл: ${xktFileUrl}`);
     } catch (conversionError: any) {
-      console.warn('⚠️ Конвертация не удалась:', conversionError.message);
-      console.log('📌 IFC файл сохранён, но XKT не создан');
-      // Продолжаем без XKT - можем использовать IFC напрямую
+      logger.warn(`⚠️ Конвертация не удалась: ${conversionError.message}`);
+      logger.info('📌 IFC файл сохранён, но XKT не создан');
     }
 
     // Обновляем раздел с путями к файлам
@@ -211,7 +211,7 @@ router.post('/:id/upload-ifc', upload.single('file'), async (req, res) => {
       section
     });
   } catch (error: any) {
-    console.error('❌ Ошибка загрузки IFC:', error);
+    logger.error('❌ Ошибка загрузки IFC:', error);
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Section not found' });
     }
@@ -272,7 +272,7 @@ router.post('/:id/bulk-import', async (req, res) => {
       return res.status(400).json({ error: 'Stages array is required' });
     }
 
-    console.log(`📦 Starting bulk import for section ${sectionId}, stages count: ${stages.length}`);
+    logger.info(`📦 Starting bulk import for section ${sectionId}, stages count: ${stages.length}`);
 
     // Используем транзакцию для атомарности
     const result = await prisma.$transaction(async (tx) => {
@@ -326,7 +326,7 @@ router.post('/:id/bulk-import', async (req, res) => {
       data: result
     });
   } catch (error: any) {
-    console.error('❌ Bulk import error:', error);
+    logger.error('❌ Bulk import error:', error);
     res.status(500).json({ error: error.message });
   }
 });

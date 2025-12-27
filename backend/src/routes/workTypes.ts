@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -17,7 +18,7 @@ const parseJsonField = (value: any, fallback: any) => {
     try {
       return JSON.parse(value);
     } catch (error) {
-      console.warn('Failed to parse JSON field', error);
+      logger.warn('Failed to parse JSON field', error);
       return fallback;
     }
   }
@@ -32,7 +33,7 @@ const formatJsonField = (value: any) => {
   try {
     return JSON.stringify(value);
   } catch (error) {
-    console.warn('Failed to stringify JSON field', error);
+    logger.warn('Failed to stringify JSON field', error);
     return undefined;
   }
 };
@@ -313,3 +314,4 @@ router.post('/:id/recalculate', async (req, res) => {
 });
 
 export default router;
+

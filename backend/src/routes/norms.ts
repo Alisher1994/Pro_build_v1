@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -51,7 +52,7 @@ router.post('/calculate', async (req, res) => {
         generated: true
       });
     } catch (ollamaError: any) {
-      console.error('Ошибка генерации норматива:', ollamaError.message);
+      logger.error('Ошибка генерации норматива:', ollamaError.message);
       // Возвращаем значение по умолчанию, если ИИ недоступен
       const defaultRate = getDefaultProductionRate(workTypeName, unit);
       res.json({ 
@@ -63,7 +64,7 @@ router.post('/calculate', async (req, res) => {
       });
     }
   } catch (error: any) {
-    console.error('Error calculating norm:', error);
+    logger.error('Error calculating norm:', error);
     res.status(500).json({ 
       error: 'Ошибка расчета норматива', 
       message: error.message 
@@ -155,4 +156,5 @@ function getDefaultProductionRate(workTypeName: string, unit?: string): number {
 }
 
 export default router;
+
 

@@ -614,149 +614,38 @@ const UI = {
         }, 100);
     },
 
-    // Форматирование числа (1 000 000)
+    // --- Formatting (Delegated to Utils) ---
     formatNumber(num, fractionDigits) {
-        if (num === null || num === undefined) return '';
-        const parsed = Number(num);
-        if (!Number.isFinite(parsed)) return '';
-        const fixed = typeof fractionDigits === 'number' ? parsed.toFixed(fractionDigits) : parsed.toString();
-        return fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return Utils.formatNumber(num, fractionDigits);
     },
 
-    // Форматирование валюты с символом
-    formatCurrency(amount, currencyCode = 'RUB') {
-        if (amount === null || amount === undefined) return '';
-
-        const formatted = this.formatNumber(amount);
-        const symbols = {
-            'RUB': '₽',
-            'UZS': 'сўм',
-            'USD': '$',
-            'EUR': '€',
-            'KGS': 'сом',
-            'KZT': '₸',
-            'TJS': 'ЅМ',
-            'TMT': 'm',
-            'AZN': '₼',
-            'BYN': 'Br',
-            'UAH': '₴',
-            'GBP': '£',
-            'CNY': '¥',
-            'TRY': '₺',
-            'AED': 'د.إ'
-        };
-
-        const symbol = symbols[currencyCode] || currencyCode;
-
-        // Для некоторых валют символ ставится перед суммой
-        if (['USD', 'EUR', 'GBP', 'CNY'].includes(currencyCode)) {
-            return `${symbol}${formatted}`;
-        }
-
-        return `${formatted} ${symbol}`;
+    formatCurrency(amount, currencyCode) {
+        return Utils.formatCurrency(amount, currencyCode || this.getCurrentCurrency());
     },
 
-    // Получить текущую валюту проекта
+    formatDate(dateString) {
+        return Utils.formatDate(dateString);
+    },
+
     getCurrentCurrency() {
-        // Получаем из EstimateManager или используем RUB по умолчанию
         if (typeof EstimateManager !== 'undefined' && EstimateManager.currentProject) {
             return EstimateManager.currentProject.currency || 'RUB';
         }
         return 'RUB';
     },
 
-    // Форматирование даты
-    formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU');
-    },
-
-    // Показать уведомление
+    // --- Notifications and dialogs (Using Utils) ---
     showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            background: ${type === 'error' ? '#D13438' : type === 'success' ? '#107C10' : '#0078D4'};
-            color: white;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        `;
-
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        Utils.showNotification(message, type);
     },
 
-    // Показать модальное окно подтверждения с promise
     showConfirmDialog(title, message, confirmText = 'Да', cancelText = 'Нет') {
-        return new Promise((resolve) => {
-            const content = `
-                <p style="font-size: 14px; color: var(--gray-700); margin: 0;">${message}</p>
-            `;
-
-            const buttons = `
-                <button class="btn btn-secondary" id="confirm-cancel-btn">${cancelText}</button>
-                <button class="btn btn-danger" id="confirm-ok-btn">${confirmText}</button>
-            `;
-
-            UI.showModal(title, content, buttons);
-
-            setTimeout(() => {
-                document.getElementById('confirm-ok-btn').addEventListener('click', () => {
-                    UI.closeModal();
-                    resolve(true);
-                });
-
-                document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
-                    UI.closeModal();
-                    resolve(false);
-                });
-            }, 100);
-        });
+        return Utils.confirm(title, message, confirmText, cancelText);
     },
 
-    // Подтверждение удаления
     confirmDelete(message, callback) {
-        if (confirm(message)) {
-            callback();
-        }
-    },
-
-    // Показать диалог подтверждения
-    showConfirmDialog(title, message, confirmText = 'Да', cancelText = 'Нет') {
-        return new Promise((resolve) => {
-            const content = `
-                <p style="font-size: 14px; margin: 16px 0;">${message}</p>
-            `;
-
-            const buttons = `
-                <button class="btn btn-secondary" id="confirm-cancel-btn">${cancelText}</button>
-                <button class="btn btn-primary" id="confirm-ok-btn">${confirmText}</button>
-            `;
-
-            UI.showModal(title, content, buttons);
-
-            setTimeout(() => {
-                document.getElementById('confirm-ok-btn').addEventListener('click', () => {
-                    UI.closeModal();
-                    resolve(true);
-                });
-                document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
-                    UI.closeModal();
-                    resolve(false);
-                });
-            }, 100);
+        Utils.confirm('Подтверждение', message).then(confirmed => {
+            if (confirmed) callback();
         });
     }
 };

@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -14,7 +15,7 @@ const ensureBaseDept = async () => {
             });
         }
     } catch (e) {
-        console.error('Failed to seed base department:', e);
+        logger.error('Failed to seed base department:', e);
     }
 };
 ensureBaseDept();
@@ -66,3 +67,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 export default router;
+

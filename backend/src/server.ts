@@ -4,6 +4,7 @@ import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
+import logger from './utils/logger';
 
 // Routes
 import projectRoutes from './routes/projects';
@@ -89,7 +90,7 @@ app.get('/api/proxy-image', async (req, res) => {
     const buffer = await response.arrayBuffer();
     res.send(Buffer.from(buffer));
   } catch (error: any) {
-    console.error('Proxy error:', error.message);
+    logger.error(`Proxy error: ${error.message}`);
     res.status(500).send('Error proxying image');
   }
 });
@@ -105,16 +106,16 @@ app.get('*', (req, res) => {
 
 // Error handling
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!', message: err.message });
 });
 
 // Start server
 const portNumber = Number(PORT);
 app.listen(portNumber, '0.0.0.0', () => {
-  console.log(`🚀 ProBIM Server running on http://0.0.0.0:${portNumber}`);
-  console.log(`📊 API available at http://0.0.0.0:${portNumber}/api`);
-  console.log(`🔄 Routes reloaded at ${new Date().toISOString()}`);
+  logger.info(`🚀 ProBIM Server running on http://0.0.0.0:${portNumber}`);
+  logger.info(`📊 API available at http://0.0.0.0:${portNumber}/api`);
+  logger.info(`🔄 Routes reloaded at ${new Date().toISOString()}`);
 });
 
 export default app;

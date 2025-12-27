@@ -5,6 +5,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { scrapeRating } from '../services/ratingScraper';
+import logger from '../utils/logger';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -61,7 +62,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json(tenders);
   } catch (error) {
-    console.error('Error fetching tenders:', error);
+    logger.error('Error fetching tenders:', error);
     res.status(500).json({ error: 'Failed to fetch tenders' });
   }
 });
@@ -106,7 +107,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.status(201).json(tender);
   } catch (error) {
-    console.error('Error creating tender:', error);
+    logger.error('Error creating tender:', error);
     res.status(500).json({ error: 'Failed to create tender' });
   }
 });
@@ -160,14 +161,14 @@ router.post('/:id/invites', async (req: Request, res: Response) => {
       // Запускаем скрапинг рейтинга в фоне (не блокируем ответ)
       scrapeRating(subcontractor.inn).then(async (rating) => {
         if (rating) {
-          console.log(`Updated rating for ${subcontractor.company} (INN: ${subcontractor.inn}): ${rating}`);
+          logger.info(`Updated rating for ${subcontractor.company} (INN: ${subcontractor.inn}): ${rating}`);
           await prisma.subcontractor.update({
             where: { id: subcontractorId },
             data: { rating }
           });
         }
       }).catch(err => {
-        console.error(`Background rating scrape failed for ${subcontractor.inn}:`, err);
+        logger.error(`Background rating scrape failed for ${subcontractor.inn}:`, err);
       });
     }
 
@@ -188,7 +189,7 @@ router.post('/:id/invites', async (req: Request, res: Response) => {
 
     res.status(201).json(invite);
   } catch (error) {
-    console.error('Error creating invite:', error);
+    logger.error('Error creating invite:', error);
     res.status(500).json({ error: 'Failed to create invite' });
   }
 });
@@ -235,13 +236,13 @@ router.post('/auth', async (req: Request, res: Response) => {
     });
 
     if (!invite) {
-      console.warn(`Auth failed: Tender ${trimmedTenderId}, Code ${trimmedCode}`);
+      logger.warn(`Auth failed: Tender ${trimmedTenderId}, Code ${trimmedCode}`);
       return res.status(401).json({ error: 'Invalid code for this lot' });
     }
 
     res.json({ token: invite.token, subcontractor: invite.subcontractor });
   } catch (error) {
-    console.error('Auth endpoint error:', error);
+    logger.error('Auth endpoint error:', error);
     res.status(500).json({ error: 'Auth failed' });
   }
 });
@@ -290,7 +291,7 @@ router.post('/bids/:id/block', async (req: Request, res: Response) => {
 
     res.json(bid);
   } catch (error) {
-    console.error('Error updating bid block status:', error);
+    logger.error('Error updating bid block status:', error);
     res.status(500).json({ error: 'Failed to update bid' });
   }
 });
@@ -333,7 +334,7 @@ router.post('/bids/:id/select-winner', async (req: Request, res: Response) => {
 
     res.json(updatedBid);
   } catch (error) {
-    console.error('Error selecting winner:', error);
+    logger.error('Error selecting winner:', error);
     res.status(500).json({ error: 'Failed to select winner' });
   }
 });
@@ -387,7 +388,7 @@ router.post('/bids/:id/create-contract', async (req: Request, res: Response) => 
 
     res.json(updatedBid);
   } catch (error) {
-    console.error('Error creating contract:', error);
+    logger.error('Error creating contract:', error);
     res.status(500).json({ error: 'Failed to create contract' });
   }
 });
@@ -433,7 +434,7 @@ router.post('/bids/:id/cancel-contract', async (req: Request, res: Response) => 
 
     res.json(updatedBid);
   } catch (error) {
-    console.error('Error canceling contract:', error);
+    logger.error('Error canceling contract:', error);
     res.status(500).json({ error: 'Failed to cancel contract' });
   }
 });
@@ -462,7 +463,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     res.json({ message: 'Tender deleted successfully' });
   } catch (error) {
-    console.error('Error deleting tender:', error);
+    logger.error('Error deleting tender:', error);
     res.status(500).json({ error: 'Failed to delete tender' });
   }
 });
@@ -487,7 +488,7 @@ router.post('/bids/:id/block', async (req: Request, res: Response) => {
 
     res.json({ message: 'Bid block status updated' });
   } catch (error) {
-    console.error('Error blocking bid:', error);
+    logger.error('Error blocking bid:', error);
     res.status(500).json({ error: 'Failed to update bid block status' });
   }
 });
@@ -509,7 +510,7 @@ router.post('/bids/:id/select-winner', async (req: Request, res: Response) => {
 
     res.json({ message: 'Winner selected' });
   } catch (error) {
-    console.error('Error selecting winner:', error);
+    logger.error('Error selecting winner:', error);
     res.status(500).json({ error: 'Failed to select winner' });
   }
 });
@@ -533,7 +534,7 @@ router.post('/bids/:id/create-contract', async (req: Request, res: Response) => 
 
     res.json({ message: 'Contract created' });
   } catch (error) {
-    console.error('Error creating contract:', error);
+    logger.error('Error creating contract:', error);
     res.status(500).json({ error: 'Failed to create contract' });
   }
 });
@@ -557,7 +558,7 @@ router.post('/bids/:id/cancel-contract', async (req: Request, res: Response) => 
 
     res.json({ message: 'Contract canceled' });
   } catch (error) {
-    console.error('Error canceling contract:', error);
+    logger.error('Error canceling contract:', error);
     res.status(500).json({ error: 'Failed to cancel contract' });
   }
 });
@@ -735,7 +736,7 @@ router.post('/invites/:token/bid', async (req: Request, res: Response) => {
 
     res.json(bid);
   } catch (error) {
-    console.error('Bid error:', error);
+    logger.error('Bid error:', error);
     res.status(500).json({ error: 'Failed to save bid' });
   }
 });
@@ -801,7 +802,7 @@ router.post('/invites/:token/upload-doc', upload.single('file'), async (req: Req
 
     res.json({ success: true, path: updateData.certificatePhoto || updateData.licensePhoto });
   } catch (error) {
-    console.error('Upload error:', error);
+    logger.error('Upload error:', error);
     res.status(500).json({ error: 'Failed to upload document' });
   }
 });
@@ -829,7 +830,7 @@ router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: R
     );
 
     if (estimateWorks.length === 0) {
-      console.log('Available items in tender:', tenderItems.map((it: any) => ({ id: it.estimateId, name: it.estimateName })));
+      logger.info('Available items in tender:', tenderItems.map((it: any) => ({ id: it.estimateId, name: it.estimateName })));
       return res.status(404).json({ error: `No works found for estimate "${estimateId}"` });
     }
 
@@ -875,7 +876,7 @@ router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: R
     res.send(csv);
 
   } catch (error) {
-    console.error('CSV Export error:', error);
+    logger.error('CSV Export error:', error);
     res.status(500).json({ error: 'Failed to export CSV' });
   }
 });
@@ -963,7 +964,7 @@ router.post('/invites/:token/upload-csv', upload.single('file'), async (req: Req
     res.json({ success: true, totalPrice, itemCount: parsedItems.length });
 
   } catch (error) {
-    console.error('CSV Upload error:', error);
+    logger.error('CSV Upload error:', error);
     res.status(500).json({ error: 'Failed to process CSV' });
   }
 });
@@ -1002,9 +1003,10 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json(tender);
   } catch (error) {
-    console.error('Error fetching tender:', error);
+    logger.error('Error fetching tender:', error);
     res.status(500).json({ error: 'Failed to fetch tender' });
   }
 });
 
 export default router;
+

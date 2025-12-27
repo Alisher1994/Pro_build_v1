@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
@@ -11,8 +12,8 @@ export interface ConvertOptions {
 export async function convertIfcToXkt(options: ConvertOptions): Promise<string> {
   const { ifcPath, outputDir, onProgress } = options;
 
-  console.log('🔄 Начало конвертации IFC → XKT');
-  console.log('📂 IFC файл:', ifcPath);
+  logger.info('🔄 Начало конвертации IFC → XKT');
+  logger.info('📂 IFC файл:', ifcPath);
 
   // Проверяем существование IFC файла
   if (!fs.existsSync(ifcPath)) {
@@ -50,7 +51,7 @@ export async function convertIfcToXkt(options: ConvertOptions): Promise<string> 
     convertProcess.stdout?.on('data', (data) => {
       stdoutData += data.toString();
       const output = data.toString();
-      console.log(output);
+      logger.info(output);
       
       // Симулируем прогресс
       if (progressPercent < 90) {
@@ -61,11 +62,11 @@ export async function convertIfcToXkt(options: ConvertOptions): Promise<string> 
 
     convertProcess.stderr?.on('data', (data) => {
       stderrData += data.toString();
-      console.error(data.toString());
+      logger.error(data.toString());
     });
 
     convertProcess.on('error', (error) => {
-      console.error('❌ Ошибка запуска процесса конвертации:', error.message);
+      logger.error('❌ Ошибка запуска процесса конвертации:', error.message);
       reject(new Error(`Не удалось запустить конвертацию: ${error.message}`));
     });
 
@@ -78,14 +79,14 @@ export async function convertIfcToXkt(options: ConvertOptions): Promise<string> 
         }
 
         const stats = fs.statSync(xktPath);
-        console.log('✅ XKT файл создан:', xktPath);
-        console.log('📦 Размер XKT:', (stats.size / 1024).toFixed(2), 'KB');
+        logger.info('✅ XKT файл создан:', xktPath);
+        logger.info('📦 Размер XKT:', (stats.size / 1024).toFixed(2), 'KB');
         
         if (onProgress) onProgress(100, 'Конвертация завершена');
         resolve(xktPath);
       } else {
-        console.error('❌ Ошибка конвертации. Код выхода:', code);
-        console.error('Stderr:', stderrData);
+        logger.error('❌ Ошибка конвертации. Код выхода:', code);
+        logger.error('Stderr:', stderrData);
         reject(new Error(`Конвертация завершилась с кодом ${code}`));
       }
     });
@@ -97,9 +98,10 @@ export function cleanupTempFiles(filePath: string) {
   try {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
-      console.log('🗑️ Временный файл удалён:', filePath);
+      logger.info('🗑️ Временный файл удалён:', filePath);
     }
   } catch (error) {
-    console.error('Ошибка удаления файла:', error);
+    logger.error('Ошибка удаления файла:', error);
   }
 }
+

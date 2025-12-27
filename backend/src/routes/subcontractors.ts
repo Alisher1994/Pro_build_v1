@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { scrapeRating } from '../services/ratingScraper';
+import logger from '../utils/logger';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -164,11 +165,11 @@ router.post('/:id/refresh-rating', async (req, res) => {
     if (!item.inn) return res.status(400).json({ error: 'ИНН не указан' });
 
     // Live Scraping Logic
-    console.log(`Starting live scrape for INN: ${item.inn}`);
+    logger.info(`Starting live scrape for INN: ${item.inn}`);
     let rating = await scrapeRating(item.inn);
 
     if (!rating) {
-      console.warn(`Scraping failed for INN ${item.inn}, using fallback.`);
+      logger.warn(`Scraping failed for INN ${item.inn}, using fallback.`);
       // Fallback: If it's a known INN from the user request
       if (item.inn === '300935078' || item.company.toUpperCase().includes('DISCOVER')) {
         rating = 'A';

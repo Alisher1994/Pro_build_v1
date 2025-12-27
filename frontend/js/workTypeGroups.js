@@ -56,7 +56,7 @@ const WorkTypeGroupsManager = {
             const groups = await response.json();
 
             const groupsList = document.getElementById('groups-list');
-            
+
             if (groups.length === 0) {
                 groupsList.innerHTML = '<div style="text-align: center; color: var(--gray-500); padding: 40px;">Нет групп работ</div>';
                 return;
@@ -136,7 +136,7 @@ const WorkTypeGroupsManager = {
             const items = await response.json();
 
             const itemsList = document.getElementById('items-list');
-            
+
             if (items.length === 0) {
                 itemsList.innerHTML = '<div style="text-align: center; color: var(--gray-500); padding: 40px;">Нет видов работ в этой группе</div>';
                 return;
@@ -184,78 +184,63 @@ const WorkTypeGroupsManager = {
             const group = await response.json();
             this.showGroupModal('Редактировать группу работ', group.name, groupId);
         } catch (error) {
-            console.error('Error loading group:', error);
-            alert('Ошибка загрузки группы');
+            UI.showNotification('Ошибка загрузки группы', 'error');
         }
     },
 
     showGroupModal(title, name = '', groupId = null) {
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 8px; padding: 32px; width: 500px; max-width: 90%;">
-                <h2 style="margin: 0 0 24px 0; font-size: 20px; color: var(--gray-900);">${title}</h2>
-                <div style="margin-bottom: 24px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                        Название группы *
-                    </label>
-                    <input type="text" id="group-name-input" value="${name}" 
-                        style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
-                        placeholder="Введите название группы"/>
-                </div>
-                <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                    <button onclick="this.closest('div[style*=fixed]').remove()" class="btn btn-secondary">
-                        Отмена
-                    </button>
-                    <button onclick="WorkTypeGroupsManager.saveGroup('${groupId}')" class="btn btn-primary">
-                        Сохранить
-                    </button>
-                </div>
+        const content = `
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">Название группы *</label>
+                <input type="text" id="group-name-input" value="${name}" 
+                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
+                    placeholder="Введите название группы"/>
             </div>
         `;
-        document.body.appendChild(modal);
+
+        const buttons = `
+            <button onclick="UI.closeModal()" class="btn btn-secondary">Отмена</button>
+            <button onclick="WorkTypeGroupsManager.saveGroup('${groupId}')" class="btn btn-primary">Сохранить</button>
+        `;
+
+        UI.showModal(title, content, buttons, { width: '500px' });
         document.getElementById('group-name-input').focus();
     },
 
     async saveGroup(groupId) {
         const name = document.getElementById('group-name-input').value.trim();
-        
         if (!name) {
-            alert('Название группы обязательно');
+            UI.showNotification('Название группы обязательно', 'error');
             return;
         }
 
         try {
-            // Проверяем что groupId не null и не строка 'null'
             const isEdit = groupId && groupId !== 'null';
             const url = isEdit ? `/api/work-type-groups/${groupId}` : '/api/work-type-groups';
             const method = isEdit ? 'PUT' : 'POST';
-            
+
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name })
             });
 
-            if (!response.ok) {
-                throw new Error('Ошибка сохранения группы');
-            }
+            if (!response.ok) throw new Error('Ошибка сохранения');
 
-            document.querySelector('div[style*=fixed]').remove();
+            UI.closeModal();
+            UI.showNotification('Группа сохранена', 'success');
             await this.loadGroups();
         } catch (error) {
-            console.error('Error saving group:', error);
-            alert('Ошибка сохранения группы');
+            UI.showNotification(error.message, 'error');
         }
     },
 
     async deleteGroup(groupId) {
-        if (!confirm('Удалить группу работ?')) return;
+        const confirmed = await UI.showConfirmDialog('Удаление', 'Удалить группу работ?');
+        if (!confirmed) return;
 
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}`, {
-                method: 'DELETE'
-            });
+            const response = await fetch(`/api/work-type-groups/${groupId}`, { method: 'DELETE' });
 
             if (!response.ok) {
                 const error = await response.json();
@@ -268,10 +253,10 @@ const WorkTypeGroupsManager = {
                 document.getElementById('add-item-btn').disabled = true;
             }
 
+            UI.showNotification('Группа удалена', 'success');
             await this.loadGroups();
         } catch (error) {
-            console.error('Error deleting group:', error);
-            alert(error.message || 'Ошибка удаления группы');
+            UI.showNotification(error.message, 'error');
         }
     },
 
@@ -288,119 +273,92 @@ const WorkTypeGroupsManager = {
             const response = await fetch(`/api/work-type-groups/${groupId}/items`);
             const items = await response.json();
             const item = items.find(i => i.id === itemId);
-            
-            if (!item) {
-                throw new Error('Вид работ не найден');
-            }
-            
+            if (!item) throw new Error('Вид работ не найден');
+
             this.showItemModal('Редактировать вид работ', item.name, item.unit, itemId);
         } catch (error) {
-            console.error('Error loading item:', error);
-            alert('Ошибка загрузки вида работ');
+            UI.showNotification('Ошибка загрузки вида работ', 'error');
         }
     },
 
     showItemModal(title, name = '', unit = '', itemId = null) {
         const units = ['м', 'м²', 'м³', 'шт', 'т', 'км', 'л', 'комплект', 'маш.-ч', 'чел.-ч'];
-        
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 8px; padding: 32px; width: 500px; max-width: 90%;">
-                <h2 style="margin: 0 0 24px 0; font-size: 20px; color: var(--gray-900);">${title}</h2>
-                
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                        Наименование вида работ *
-                    </label>
-                    <input type="text" id="item-name-input" value="${name}" 
-                        style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
-                        placeholder="Введите наименование"/>
-                </div>
 
-                <div style="margin-bottom: 24px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                        Единица измерения *
-                    </label>
-                    <select id="item-unit-input" 
-                        style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; background: white;">
-                        <option value="">Выберите единицу измерения</option>
-                        ${units.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u}</option>`).join('')}
-                    </select>
-                </div>
-
-                <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                    <button onclick="this.closest('div[style*=fixed]').remove()" class="btn btn-secondary">
-                        Отмена
-                    </button>
-                    <button onclick="WorkTypeGroupsManager.saveItem('${itemId}')" class="btn btn-primary">
-                        Сохранить
-                    </button>
-                </div>
+        const content = `
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">Наименование вида работ *</label>
+                <input type="text" id="item-name-input" value="${name}" 
+                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
+                    placeholder="Введите наименование"/>
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">Единица измерения *</label>
+                <select id="item-unit-input" 
+                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; background: white;">
+                    <option value="">Выберите единицу измерения</option>
+                    ${units.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u}</option>`).join('')}
+                </select>
             </div>
         `;
-        document.body.appendChild(modal);
+
+        const buttons = `
+            <button onclick="UI.closeModal()" class="btn btn-secondary">Отмена</button>
+            <button onclick="WorkTypeGroupsManager.saveItem('${itemId}')" class="btn btn-primary">Сохранить</button>
+        `;
+
+        UI.showModal(title, content, buttons, { width: '500px' });
         document.getElementById('item-name-input').focus();
     },
 
     async saveItem(itemId) {
         const name = document.getElementById('item-name-input').value.trim();
         const unit = document.getElementById('item-unit-input').value;
-        
-        if (!name) {
-            alert('Наименование вида работ обязательно');
-            return;
-        }
 
-        if (!unit) {
-            alert('Единица измерения обязательна');
+        if (!name || !unit) {
+            UI.showNotification('Пожалуйста, заполните все обязательные поля', 'error');
             return;
         }
 
         try {
             const groupId = this.selectedGroupId;
-            // Проверяем что itemId не null и не строка 'null'
             const isEdit = itemId && itemId !== 'null';
             const url = isEdit
-                ? `/api/work-type-groups/${groupId}/items/${itemId}` 
+                ? `/api/work-type-groups/${groupId}/items/${itemId}`
                 : `/api/work-type-groups/${groupId}/items`;
             const method = isEdit ? 'PUT' : 'POST';
-            
+
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, unit })
             });
 
-            if (!response.ok) {
-                throw new Error('Ошибка сохранения вида работ');
-            }
+            if (!response.ok) throw new Error('Ошибка сохранения');
 
-            document.querySelector('div[style*=fixed]').remove();
+            UI.closeModal();
+            UI.showNotification('Вид работ сохранен', 'success');
             await this.loadItems(groupId);
         } catch (error) {
-            console.error('Error saving item:', error);
-            alert('Ошибка сохранения вида работ');
+            UI.showNotification(error.message, 'error');
         }
     },
 
     async deleteItem(groupId, itemId) {
-        if (!confirm('Удалить вид работ?')) return;
+        const confirmed = await UI.showConfirmDialog('Удаление', 'Удалить вид работ?');
+        if (!confirmed) return;
 
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}/items/${itemId}`, {
-                method: 'DELETE'
-            });
+            const response = await fetch(`/api/work-type-groups/${groupId}/items/${itemId}`, { method: 'DELETE' });
 
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || 'Ошибка удаления');
             }
 
+            UI.showNotification('Вид работ удален', 'success');
             await this.loadItems(groupId);
         } catch (error) {
-            console.error('Error deleting item:', error);
-            alert(error.message || 'Ошибка удаления вида работ');
+            UI.showNotification(error.message, 'error');
         }
     }
 };

@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
@@ -510,7 +511,7 @@ router.post('/generate/:projectId', async (req, res) => {
                       }
               }
                 } catch (err) {
-                    console.error('Error parsing IFC for floors:', err);
+                    logger.error('Error parsing IFC for floors:', err);
                 }
             }
         }
@@ -545,7 +546,7 @@ router.post('/generate/:projectId', async (req, res) => {
     res.json({ message: 'Schedule generated successfully', tasksCount: tasksToCreate.length });
 
   } catch (error: any) {
-    console.error('Error generating schedule:', error);
+    logger.error('Error generating schedule:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -626,7 +627,7 @@ router.get('/estimate-tree/:blockId', async (req, res) => {
       }))
     });
   } catch (error: any) {
-    console.error('Error getting estimate tree:', error);
+    logger.error('Error getting estimate tree:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -658,7 +659,7 @@ router.get('/assignment-sources/:projectId', async (req, res) => {
       }))
     });
   } catch (error: any) {
-    console.error('Error getting assignment sources:', error);
+    logger.error('Error getting assignment sources:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -750,7 +751,7 @@ router.get('/assignment-estimate/:projectId/:blockId/:estimateId', async (req, r
       }))
     });
   } catch (error: any) {
-    console.error('Error getting assignment estimate:', error);
+    logger.error('Error getting assignment estimate:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -846,7 +847,7 @@ router.post('/assign-worktype', async (req, res) => {
 
     res.json({ status: 'ok', id: taskId });
   } catch (error: any) {
-    console.error('Error assigning work type:', error);
+    logger.error('Error assigning work type:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -936,7 +937,7 @@ router.delete('/:projectId', async (req, res) => {
 
     res.json({ message: 'Schedule cleared successfully' });
   } catch (error: any) {
-    console.error('Error clearing schedule:', error);
+    logger.error('Error clearing schedule:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -991,12 +992,12 @@ router.put('/task/:id', async (req, res) => {
         await rollupAncestors(meta.projectId, meta.parent ?? id);
       }
     } catch (e) {
-      console.warn('rollupAncestors failed:', e);
+      logger.warn('rollupAncestors failed:', e);
     }
 
     res.json({ status: 'ok' });
   } catch (error: any) {
-    console.error('Error updating task:', error);
+    logger.error('Error updating task:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1040,12 +1041,12 @@ router.delete('/task/:id', async (req, res) => {
     try {
       await rollupAncestors(task.projectId, task.parent ?? null);
     } catch (e) {
-      console.warn('rollupAncestors after delete failed:', e);
+      logger.warn('rollupAncestors after delete failed:', e);
     }
 
     res.json({ status: 'ok' });
   } catch (error: any) {
-    console.error('Error deleting gantt task:', error);
+    logger.error('Error deleting gantt task:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1067,7 +1068,7 @@ router.post('/link', async (req, res) => {
 
     res.json({ id: link.id, status: "ok" });
   } catch (error: any) {
-    console.error('Error creating link:', error);
+    logger.error('Error creating link:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1082,9 +1083,10 @@ router.delete('/link/:id', async (req, res) => {
     });
     res.json({ status: "ok" });
   } catch (error: any) {
-    console.error('Error deleting link:', error);
+    logger.error('Error deleting link:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 export default router;
+

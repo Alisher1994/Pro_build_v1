@@ -35,8 +35,8 @@ const NormsSettingsManager = {
 
     // Получить норматив для вида работ
     getNorm(workTypeName, unit) {
-        return this.norms.find(n => 
-            n.workTypeName === workTypeName && 
+        return this.norms.find(n =>
+            n.workTypeName === workTypeName &&
             (n.unit === unit || (!n.unit && !unit))
         );
     },
@@ -47,8 +47,8 @@ const NormsSettingsManager = {
         return this.norms.filter(n => {
             const normName = n.workTypeName.toLowerCase();
             return normName.includes(name) || name.includes(normName) ||
-                   normName.split(' ').some(word => name.includes(word)) ||
-                   name.split(' ').some(word => normName.includes(word));
+                normName.split(' ').some(word => name.includes(word)) ||
+                name.split(' ').some(word => normName.includes(word));
         });
     },
 
@@ -56,7 +56,7 @@ const NormsSettingsManager = {
     async showNormsSettings(projectId) {
         this.currentProjectId = projectId;
         await this.loadNorms();
-        
+
         const contentArea = document.getElementById('content-area');
         contentArea.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column; background: var(--gray-100);">
@@ -211,7 +211,7 @@ const NormsSettingsManager = {
         setTimeout(() => {
             const aiCheckbox = document.getElementById('norm-generate-with-ai');
             const generateBtn = document.getElementById('generate-norm-ai-btn');
-            
+
             aiCheckbox.addEventListener('change', (e) => {
                 generateBtn.style.display = e.target.checked ? 'inline-flex' : 'none';
             });
@@ -269,7 +269,7 @@ const NormsSettingsManager = {
         try {
             const data = JSON.parse(stored);
             const workTypes = [];
-            
+
             if (data.groups && Array.isArray(data.groups)) {
                 data.groups.forEach(group => {
                     if (group.items && Array.isArray(group.items)) {
@@ -282,7 +282,7 @@ const NormsSettingsManager = {
                     }
                 });
             }
-            
+
             return workTypes;
         } catch (e) {
             return [];
@@ -340,10 +340,9 @@ const NormsSettingsManager = {
     },
 
     // Удаление норматива
-    deleteNorm(normId) {
-        if (!confirm('Вы уверены, что хотите удалить этот норматив?')) {
-            return;
-        }
+    async deleteNorm(normId) {
+        const confirmed = await UI.showConfirmDialog('Удаление', 'Вы уверены, что хотите удалить этот норматив?');
+        if (!confirmed) return;
 
         this.norms = this.norms.filter(n => n.id !== normId);
         this.saveNorms();
@@ -354,7 +353,7 @@ const NormsSettingsManager = {
 
 // Добавляем метод в SettingsManager
 if (typeof SettingsManager !== 'undefined') {
-    SettingsManager.showNormsSettings = function(projectId) {
+    SettingsManager.showNormsSettings = function (projectId) {
         NormsSettingsManager.showNormsSettings(projectId);
     };
 }

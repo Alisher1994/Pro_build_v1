@@ -122,105 +122,77 @@ const InstructionsManager = {
         const groupsResponse = await fetch('/api/work-type-groups');
         const groups = await groupsResponse.json();
 
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; overflow-y: auto; padding: 20px;';
-        modal.innerHTML = `
-            <div style="background: white; border-radius: 8px; padding: 32px; width: 1200px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
-                <h2 style="margin: 0 0 24px 0; font-size: 20px; color: var(--gray-900);">${title}</h2>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                    <!-- Левая колонка: Код, Название, Текст -->
-                    <div>
-                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                                    Код *
-                                </label>
-                                <input type="text" id="instruction-code-input" value="${code}" 
-                                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
-                                    placeholder="Код"/>
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                                    Наименование *
-                                </label>
-                                <input type="text" id="instruction-name-input" value="${name}" 
-                                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
-                                    placeholder="Введите название инструкции"/>
-                            </div>
+        const content = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <!-- Левая колонка -->
+                <div>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">Код *</label>
+                            <input type="text" id="instruction-code-input" value="${code}" 
+                                style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
+                                placeholder="Код"/>
                         </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                                Текст инструкции * <span style="font-weight: normal; color: var(--gray-500);">(макс. 20 000 символов)</span>
-                            </label>
-                            <textarea id="instruction-text-input" 
-                                style="width: 100%; min-height: 400px; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; font-family: 'Segoe UI', sans-serif; resize: vertical;" 
-                                placeholder="Введите текст инструкции"
-                                maxlength="20000">${text}</textarea>
-                            <div style="text-align: right; font-size: 12px; color: var(--gray-500); margin-top: 4px;">
-                                <span id="char-counter">${text.length}</span> / 20 000
-                            </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">Наименование *</label>
+                            <input type="text" id="instruction-name-input" value="${name}" 
+                                style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;" 
+                                placeholder="Введите название"/>
                         </div>
                     </div>
 
-                    <!-- Правая колонка: Виды работ -->
-                    <div>
+                    <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                            Виды работ
+                            Текст инструкции * <span style="font-weight: normal; color: var(--gray-500);">(макс. 20 000 символов)</span>
                         </label>
-                        
-                        <!-- Поле поиска -->
-                        <div style="margin-bottom: 8px;">
-                            <input type="text" 
-                                id="work-types-search" 
-                                placeholder="Поиск видов работ..."
-                                style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;"
-                                oninput="InstructionsManager.filterWorkTypes(this.value)">
-                        </div>
-                        
-                        <div id="work-types-list" style="border: 1px solid var(--gray-300); border-radius: 4px; height: 460px; overflow-y: auto; padding: 8px;">
-                            ${groups.length === 0
-                ? '<div style="text-align: center; color: var(--gray-500); padding: 20px;">Нет доступных видов работ. Сначала создайте их в справочнике.</div>'
-                : groups.map(group => `
-                                    <div class="work-type-group-block" data-group-id="${group.id}" style="margin-bottom: 12px;">
-                                        <div style="background: #b7d5c4; padding: 8px 12px; font-weight: 600; color: var(--gray-800); border-radius: 4px; margin-bottom: 4px;">
-                                            ${group.name}
-                                        </div>
-                                        ${group.workTypeItems.length === 0
-                        ? '<div style="padding: 8px 12px; color: var(--gray-500); font-size: 13px;">Нет видов работ в группе</div>'
-                        : group.workTypeItems.map(item => `
-                                                <div class="work-type-item" data-item-name="${item.name.toLowerCase()}" style="padding: 4px 12px;">
-                                                    <label style="display: flex; align-items: center; cursor: pointer;">
-                                                        <input type="checkbox" class="work-type-checkbox" value="${item.id}" 
-                                                            ${selectedWorkTypeIds.includes(item.id) ? 'checked' : ''}
-                                                            style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer; accent-color: #207345;"/>
-                                                        <span style="font-size: 14px; color: var(--gray-800);">${item.name} (${item.unit})</span>
-                                                    </label>
-                                                </div>
-                                            `).join('')}
-                                    </div>
-                                `).join('')}
+                        <textarea id="instruction-text-input" 
+                            style="width: 100%; min-height: 400px; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; font-family: 'Segoe UI', sans-serif; resize: vertical;" 
+                            placeholder="Введите текст" maxlength="20000">${text}</textarea>
+                        <div style="text-align: right; font-size: 12px; color: var(--gray-500); margin-top: 4px;">
+                            <span id="char-counter">${text.length}</span> / 20 000
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 12px; justify-content: space-between; margin-top: 24px;">
-                    <button onclick="InstructionsManager.generateInstructionText()" class="btn btn-secondary" style="background: var(--primary); color: white; border-color: var(--primary);">
-                        🤖 Генерация текст инструкции
-                    </button>
-                    <div style="display: flex; gap: 12px;">
-                        <button onclick="this.closest('div[style*=fixed]').remove()" class="btn btn-secondary">
-                            Отмена
-                        </button>
-                        <button onclick="InstructionsManager.saveInstruction('${instructionId}')" class="btn btn-primary">
-                            Сохранить
-                        </button>
+                <!-- Правая колонка -->
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">Виды работ</label>
+                    <div style="margin-bottom: 8px;">
+                        <input type="text" id="work-types-search" placeholder="Поиск видов работ..."
+                            style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;"
+                            oninput="InstructionsManager.filterWorkTypes(this.value)">
+                    </div>
+                    <div id="work-types-list" style="border: 1px solid var(--gray-300); border-radius: 4px; height: 460px; overflow-y: auto; padding: 8px;">
+                        ${groups.map(group => `
+                            <div class="work-type-group-block" data-group-id="${group.id}" style="margin-bottom: 12px;">
+                                <div style="background: #b7d5c4; padding: 8px 12px; font-weight: 600; color: var(--gray-800); border-radius: 4px; margin-bottom: 4px;">${group.name}</div>
+                                ${group.workTypeItems.map(item => `
+                                    <div class="work-type-item" data-item-name="${item.name.toLowerCase()}" style="padding: 4px 12px;">
+                                        <label style="display: flex; align-items: center; cursor: pointer;">
+                                            <input type="checkbox" class="work-type-checkbox" value="${item.id}" 
+                                                ${selectedWorkTypeIds.includes(item.id) ? 'checked' : ''}
+                                                style="margin-right: 8px; width: 16px; height: 16px;"/>
+                                            <span style="font-size: 14px;">${item.name} (${item.unit})</span>
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             </div>
         `;
-        document.body.appendChild(modal);
+
+        const buttons = `
+            <button onclick="InstructionsManager.generateInstructionText()" class="btn btn-secondary" style="background: var(--primary); color: white;">
+                🤖 ГПР ИИ
+            </button>
+            <div style="flex: 1"></div>
+            <button onclick="UI.closeModal()" class="btn btn-secondary">Отмена</button>
+            <button onclick="InstructionsManager.saveInstruction('${instructionId}')" class="btn btn-primary">Сохранить</button>
+        `;
+
+        UI.showModal(title, content, buttons, { width: '1200px' });
 
         // Добавляем счетчик символов
         const textInput = document.getElementById('instruction-text-input');
@@ -240,28 +212,12 @@ const InstructionsManager = {
         const checkboxes = document.querySelectorAll('.work-type-checkbox:checked');
         const workTypeItemIds = Array.from(checkboxes).map(cb => cb.value);
 
-        if (!code) {
-            alert('Код инструкции обязателен');
-            return;
-        }
-
-        if (!name) {
-            alert('Название инструкции обязательно');
-            return;
-        }
-
-        if (!text) {
-            alert('Текст инструкции обязателен');
-            return;
-        }
-
-        if (text.length > 20000) {
-            alert('Текст инструкции не должен превышать 20 000 символов');
+        if (!code || !name || !text) {
+            UI.showNotification('Пожалуйста, заполните все обязательные поля', 'error');
             return;
         }
 
         try {
-            // Проверяем что instructionId не null и не строка 'null'
             const isEdit = instructionId && instructionId !== 'null';
             const url = isEdit ? `/api/instructions/${instructionId}` : '/api/instructions';
             const method = isEdit ? 'PUT' : 'POST';
@@ -272,35 +228,28 @@ const InstructionsManager = {
                 body: JSON.stringify({ code, name, text, workTypeItemIds })
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Ошибка сохранения');
-            }
+            if (!response.ok) throw new Error('Ошибка сохранения');
 
-            document.querySelector('div[style*=fixed]').remove();
+            UI.closeModal();
+            UI.showNotification('Инструкция сохранена', 'success');
             await this.loadInstructions();
         } catch (error) {
-            console.error('Error saving instruction:', error);
-            alert(error.message || 'Ошибка сохранения инструкции');
+            UI.showNotification(error.message, 'error');
         }
     },
 
     async deleteInstruction(instructionId) {
-        if (!confirm('Удалить инструкцию?')) return;
+        const confirmed = await UI.showConfirmDialog('Удаление', 'Удалить инструкцию?');
+        if (!confirmed) return;
 
         try {
-            const response = await fetch(`/api/instructions/${instructionId}`, {
-                method: 'DELETE'
-            });
+            const response = await fetch(`/api/instructions/${instructionId}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Ошибка удаления');
 
-            if (!response.ok) {
-                throw new Error('Ошибка удаления');
-            }
-
+            UI.showNotification('Инструкция удалена', 'success');
             await this.loadInstructions();
         } catch (error) {
-            console.error('Error deleting instruction:', error);
-            alert('Ошибка удаления инструкции');
+            UI.showNotification(error.message, 'error');
         }
     },
 

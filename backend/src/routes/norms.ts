@@ -1,9 +1,15 @@
 import logger from '../utils/logger';
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
+import assertSafeFetchTarget from '../utils/urlGuard';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const normCache = new Map<string, { value: number; ts: number }>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const ALLOWED_OLLAMA_HOSTS = (process.env.OLLAMA_ALLOWED_HOSTS || '')
+  .split(',')
+  .map(h => h.trim())
+  .filter(Boolean);
 
 // Конфигурация Ollama
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
@@ -74,6 +80,12 @@ router.post('/calculate', async (req, res) => {
 
 // Функция для генерации норматива с помощью Ollama
 async function generateNormWithOllama(prompt: string, workTypeName: string, unit?: string): Promise<number> {
+  const cacheKey = `${workTypeName.toLowerCase()}::${unit || 'шт'}`;
+  const cached = normCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return cached.value;
+  }
+
   let apiUrl: string;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -85,6 +97,8 @@ async function generateNormWithOllama(prompt: string, workTypeName: string, unit
   } else {
     apiUrl = `${OLLAMA_URL}/api/generate`;
   }
+
+  assertSafeFetchTarget(apiUrl, ALLOWED_OLLAMA_HOSTS);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 секунд таймаут
@@ -121,12 +135,16 @@ async function generateNormWithOllama(prompt: string, workTypeName: string, unit
     if (numbers && numbers[0]) {
       const rate = parseFloat(numbers[0]);
       if (rate > 0 && rate < 10000) { // Разумные пределы
-        return Math.round(rate * 10) / 10; // Округляем до 1 знака после запятой
+        const val = Math.round(rate * 10) / 10; // Округляем до 1 знака после запятой
+        normCache.set(cacheKey, { value: val, ts: Date.now() });
+        return val;
       }
     }
     
     // Если не удалось извлечь число, возвращаем значение по умолчанию
-    return getDefaultProductionRate(workTypeName, unit);
+    const fallback = getDefaultProductionRate(workTypeName, unit);
+    normCache.set(cacheKey, { value: fallback, ts: Date.now() });
+    return fallback;
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError' || error.message?.includes('aborted')) {

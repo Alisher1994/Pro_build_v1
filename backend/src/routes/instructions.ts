@@ -1,9 +1,13 @@
 import logger from '../utils/logger';
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
+import assertSafeFetchTarget from '../utils/urlGuard';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const ALLOWED_OLLAMA_HOSTS = (process.env.OLLAMA_ALLOWED_HOSTS || '')
+  .split(',')
+  .map(h => h.trim())
+  .filter(Boolean);
 
 // Конфигурация Ollama
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
@@ -289,6 +293,8 @@ async function generateWithOllama(prompt: string): Promise<string> {
       // Используем локальный Ollama
       apiUrl = `${OLLAMA_URL}/api/generate`;
     }
+
+  assertSafeFetchTarget(apiUrl, ALLOWED_OLLAMA_HOSTS);
 
   // Устанавливаем таймаут для генерации (Saiga/8B может отвечать дольше)
   const GENERATION_TIMEOUT_MS = Number(process.env.OLLAMA_INSTRUCTIONS_TIMEOUT_MS || 120000);

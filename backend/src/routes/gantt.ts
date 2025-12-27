@@ -1,11 +1,10 @@
 import logger from '../utils/logger';
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 import fs from 'fs';
 import path from 'path';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

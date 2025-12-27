@@ -1,8 +1,7 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // ========================================
 // ГРАФИКИ (Schedule)
@@ -11,19 +10,27 @@ const prisma = new PrismaClient();
 // GET /api/schedules - Получить все графики
 router.get('/', async (req, res) => {
   try {
-    const { projectId } = req.query;
+    const { projectId, limit, offset } = req.query;
+    const take = limit ? Math.min(Math.max(Number(limit), 1), 200) : undefined;
+    const skip = offset ? Math.max(Number(offset), 0) : 0;
+    const where = projectId ? { projectId: String(projectId) } : undefined;
     
-    const schedules = await prisma.schedule.findMany({
-      where: projectId ? { projectId: String(projectId) } : undefined,
-      include: {
-        project: true,
-        _count: {
-          select: { tasks: true },
+    const [total, schedules] = await Promise.all([
+      prisma.schedule.count({ where }),
+      prisma.schedule.findMany({
+        where,
+        include: {
+          project: true,
+          _count: {
+            select: { tasks: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(schedules);
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip
+      })
+    ]);
+    res.json({ data: schedules, total, limit: take ?? null, offset: skip });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

@@ -1,25 +1,32 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // GET /api/supplies - Получить все планы снабжения
 router.get('/', async (req, res) => {
   try {
-    const { projectId } = req.query;
+    const { projectId, limit, offset } = req.query;
+    const take = limit ? Math.min(Math.max(Number(limit), 1), 200) : undefined;
+    const skip = offset ? Math.max(Number(offset), 0) : 0;
+    const where = projectId ? { projectId: String(projectId) } : undefined;
     
-    const supplies = await prisma.supply.findMany({
-      where: projectId ? { projectId: String(projectId) } : undefined,
-      include: {
-        project: true,
-        _count: {
-          select: { items: true },
+    const [total, supplies] = await Promise.all([
+      prisma.supply.count({ where }),
+      prisma.supply.findMany({
+        where,
+        include: {
+          project: true,
+          _count: {
+            select: { items: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(supplies);
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip
+      })
+    ]);
+    res.json({ data: supplies, total, limit: take ?? null, offset: skip });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

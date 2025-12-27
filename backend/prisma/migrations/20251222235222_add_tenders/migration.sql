@@ -6,11 +6,11 @@ CREATE TABLE "Tender" (
     "description" TEXT,
     "blockIds" TEXT NOT NULL,
     "sectionIds" TEXT NOT NULL,
-    "startDate" DATETIME NOT NULL,
-    "deadline" DATETIME NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "deadline" TIMESTAMP(3) NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'open',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Tender_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -20,9 +20,9 @@ CREATE TABLE "TenderInvite" (
     "tenderId" TEXT NOT NULL,
     "subcontractorId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'pending',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "TenderInvite_tenderId_fkey" FOREIGN KEY ("tenderId") REFERENCES "Tender" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "TenderInvite_subcontractorId_fkey" FOREIGN KEY ("subcontractorId") REFERENCES "Subcontractor" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -41,11 +41,11 @@ CREATE TABLE "TenderBid" (
     "files" TEXT NOT NULL,
     "blocked" BOOLEAN NOT NULL DEFAULT false,
     "blockReason" TEXT,
-    "blockDate" DATETIME,
+    "blockDate" TIMESTAMP(3),
     "contractNumber" TEXT,
-    "contractDate" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "contractDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "TenderBid_inviteId_fkey" FOREIGN KEY ("inviteId") REFERENCES "TenderInvite" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "TenderBid_tenderId_fkey" FOREIGN KEY ("tenderId") REFERENCES "Tender" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "TenderBid_subcontractorId_fkey" FOREIGN KEY ("subcontractorId") REFERENCES "Subcontractor" ("id") ON DELETE CASCADE ON UPDATE CASCADE

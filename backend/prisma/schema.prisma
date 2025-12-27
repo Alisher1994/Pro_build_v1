@@ -230,6 +230,7 @@ model Schedule {
   
   @@index([projectId])
   @@index([blockId])
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 // ========================================
@@ -302,6 +303,8 @@ model Supply {
   items       SupplyItem[]
   
   @@index([projectId])
+  @@index([projectId, status])
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 // ========================================
@@ -570,6 +573,7 @@ model Tender {
   
   @@index([projectId])
   @@index([status])
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 // Приглашение в тендер
@@ -700,4 +704,5 @@ model Employee {
   @@index([positionId])
   @@index([departmentId])
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
 }

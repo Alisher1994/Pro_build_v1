@@ -1,29 +1,49 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import prisma from '../utils/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
+
+const sanitizeEmployee = (emp: any) => {
+    if (!emp) return emp;
+    // remove hashed password before sending to client
+    const { password, ...rest } = emp;
+    return rest;
+};
 
 router.get('/', async (req, res) => {
     try {
-        const { projectId } = req.query;
+        const { projectId, limit, offset } = req.query;
 
         const where: any = {};
         if (projectId) {
             where.projectId = projectId as string;
         }
 
-        const list = await prisma.employee.findMany({
-            where,
-            include: {
-                department: true,
-                position: true,
-                project: true
-            },
-            orderBy: { createdAt: 'desc' }
+        const take = limit ? Math.min(Math.max(Number(limit), 1), 200) : undefined;
+        const skip = offset ? Math.max(Number(offset), 0) : 0;
+
+        const [total, list] = await Promise.all([
+            prisma.employee.count({ where }),
+            prisma.employee.findMany({
+                where,
+                include: {
+                    department: true,
+                    position: true,
+                    project: true
+                },
+                orderBy: { createdAt: 'desc' },
+                take,
+                skip
+            })
+        ]);
+
+        res.json({
+            data: list.map(sanitizeEmployee),
+            total,
+            limit: take ?? null,
+            offset: skip
         });
-        res.json(list);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
@@ -118,7 +138,7 @@ router.post('/', async (req, res) => {
         if (body.passportExpiryDate) data.passportExpiryDate = new Date(body.passportExpiryDate);
 
         const created = await prisma.employee.create({ data });
-        res.status(201).json(created);
+        res.status(201).json(sanitizeEmployee(created));
     } catch (error: any) {
         if (error.code === 'P2002') return res.status(400).json({ error: 'Email уже используется' });
         res.status(500).json({ error: error.message });
@@ -226,7 +246,7 @@ router.put('/:id', async (req, res) => {
             data,
             include: { department: true, position: true, project: true }
         });
-        res.json(updated);
+        res.json(sanitizeEmployee(updated));
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }

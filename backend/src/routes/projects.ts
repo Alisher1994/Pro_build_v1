@@ -1,9 +1,8 @@
 import logger from '../utils/logger';
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Seed: Ensure "Главный офис" exists
 const ensureBaseProject = async () => {
@@ -30,18 +29,27 @@ ensureBaseProject();
 // ========================================
 router.get('/', async (req, res) => {
   try {
-    const projects = await prisma.project.findMany({
-      include: {
-        _count: {
-          select: {
-            blocks: true,
-            estimates: true,
+    const { limit, offset } = req.query;
+    const take = limit ? Math.min(Math.max(Number(limit), 1), 200) : undefined;
+    const skip = offset ? Math.max(Number(offset), 0) : 0;
+
+    const [total, projects] = await Promise.all([
+      prisma.project.count(),
+      prisma.project.findMany({
+        include: {
+          _count: {
+            select: {
+              blocks: true,
+              estimates: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(projects);
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip,
+      })
+    ]);
+    res.json({ data: projects, total, limit: take ?? null, offset: skip });
   } catch (error: any) {
     logger.error('Error fetching projects:', error);
     res.status(500).json({ error: error.message, details: error.stack });

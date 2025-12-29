@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+    <style>
+        /* Кастомный скроллбар для основного контента */
+        .tab-content-container::-webkit-scrollbar {
+            width: 12px !important;
+            height: 12px !important;
+            background: transparent !important;
+        }
+        
+        /* Темная тема - скроллбар */
+        .tab-content-container::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5) !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(51, 65, 85, 0.5) !important;
+            margin: 8px 4px !important;
+        }
+        
+        .tab-content-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-radius: 12px !important;
+            border: 2px solid rgba(30, 41, 59, 0.5) !important;
+            min-height: 40px !important;
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .tab-content-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f91 100%) !important;
+            border-color: rgba(51, 65, 85, 0.7) !important;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+            transform: scale(1.05) !important;
+        }
+        
+        /* Светлая тема - скроллбар */
+        body.theme-light .tab-content-container::-webkit-scrollbar-track {
+            background: #e5e7eb !important;
+            border-radius: 12px !important;
+            border: 1px solid #d1d5db !important;
+            margin: 8px 4px !important;
+        }
+        
+        body.theme-light .tab-content-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-radius: 12px !important;
+            border: 2px solid #e5e7eb !important;
+            min-height: 40px !important;
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        body.theme-light .tab-content-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f91 100%) !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2), 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+            transform: scale(1.05) !important;
+        }
+        
+        /* Для Firefox */
+        .tab-content-container {
+            scrollbar-width: thin !important;
+            scrollbar-color: #667eea rgba(30, 41, 59, 0.5) !important;
+        }
+        
+        body.theme-light .tab-content-container {
+            scrollbar-width: thin !important;
+            scrollbar-color: #667eea #e5e7eb !important;
+        }
+        
+        .tab-content-container::-webkit-scrollbar-corner {
+            background: transparent !important;
+        }
+        
+        /* Стили для модальных окон */
+        body.theme-dark .modal-content {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        
+        body.theme-dark .modal-title {
+            color: #e2e8f0 !important;
+        }
+        
+        body.theme-dark .modal-text {
+            color: #94a3b8 !important;
+        }
+    </style>
+    <style>
+        /* Темный фон для main-content */
+        .game-main-content {
+            background: var(--theme-bg-primary);
+            min-height: 100vh;
+            padding: 0 !important;
+            margin-left: 280px !important;
+            width: calc(100% - 280px) !important;
+        }
+        
+        body.theme-light .game-main-content {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        /* Адаптация при свернутом sidebar */
+        body:has(.sidebar.collapsed) .game-main-content,
+        .sidebar.collapsed ~ .main-content.game-main-content {
+            margin-left: 80px !important;
+            width: calc(100% - 80px) !important;
+        }
+        
+        /* Игровой интерфейс стили */
+        .game-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            height: 100vh;
+            background: var(--theme-bg-primary);
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+        }
+        
+        body.theme-light .game-layout {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        /* Верхняя панель с вкладками */
+        .game-top-bar {
+            padding: 0;
+            background: var(--theme-bg-secondary);
+            border-bottom: 2px solid var(--theme-border);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin: 0;
+            border-bottom: none;
+            background: var(--theme-bg-secondary);
+            padding: 0 24px;
+            height: 100%;
+            align-items: stretch;
+        }
+        
+        .tab {
+            padding: 0 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--theme-text-tertiary);
+            transition: all 0.3s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        
+        .tab:hover {
+            color: var(--theme-text-primary);
+            background: var(--theme-bg-tertiary);
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: var(--theme-bg-secondary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Стили для посещаемости групп */
+        .group-accordion {
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .group-accordion-header {
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        
+        .group-accordion-header:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .group-accordion-header.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .group-header-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .group-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .group-stats {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .group-accordion-icon {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .group-accordion-header.active .group-accordion-icon {
+            transform: rotate(180deg);
+        }
+        
+        .group-accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .group-accordion-content.active {
+            max-height: 5000px;
+            transition: max-height 0.5s ease-in;
+        }
+        
+        .students-grid-container {
+            padding: 24px;
+            background: #f8f9fa;
+        }
+        
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 15px;
+        }
+        
+        .student-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .student-card.attended {
+            border-color: #27ae60;
+        }
+        
+        .student-card.not-attended {
+            opacity: 0.6;
+        }
+        
+        .student-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 8px;
+            display: block;
+            border: 2px solid #3498db;
+        }
+        
+        .student-card.attended .student-photo {
+            border-color: #27ae60;
+        }
+        
+        .student-card.not-attended .student-photo {
+            filter: grayscale(100%);
+            border-color: #95a5a6;
+        }
+        
+        .student-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 11px;
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+        
+        .student-lastname {
+            font-weight: 500;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+        
+        .student-checkin-time {
+            font-size: 11px;
+            color: #27ae60;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        
+        .no-groups-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+            font-size: 16px;
+        }
+        
+        .chart-container {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 12px;
+            box-sizing: border-box;
+        }
+        
+        body.theme-dark .chart-container {
+            background: var(--theme-bg-secondary);
+        }
+        
+        .chart-container canvas {
+            max-width: 100%;
+            width: 100%;
+            height: 300px;
+            display: block;
+        }
+        
+        @media (max-width: 1400px) {
+            .students-grid {
+                grid-template-columns: repeat(8, 1fr);
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .students-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .students-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .students-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include '_sidebar.html' %}
+
+    <div class="main-content game-main-content">
+        <!-- Игровой интерфейс -->
+        <div class="game-layout">
+            <!-- Верхняя панель с вкладками -->
+            <div class="game-top-bar">
+                <div class="tabs">
+                    <button class="tab active" data-tab="finances">💰 Анализ по финансам</button>
+                    <button class="tab" data-tab="finance-details">📊 Финансы детальный</button>
+                    <button class="tab" data-tab="groups-attendance">👥 Посещаемость групп</button>
+                    <button class="tab" data-tab="rating">⭐ Рейтинг учеников</button>
+                    <button class="tab" data-tab="rating-current-month">⭐ Рейтинг учеников текущий месяц</button>
+                </div>
+            </div>
+            
+            <!-- Контент вкладок -->
+            <div class="tab-content-container" style="flex: 1; overflow-y: auto; padding: 24px;">
+
+        <!-- Вкладка: Анализ по финансам -->
+        <div id="finances-tab" class="tab-content active">
+            <div class="form-block" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>📈 Финансы по месяцам</h3>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <label for="yearFilter" style="font-weight: 600; color: #475569;">Год:</label>
+                        <select id="yearFilter" style="padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                            <!-- Years will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="month-grid">
+                    {% set month_names = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'] %}
+                    {% for i in range(12) %}
+                    <div class="month-cell">
+                        <div class="month-title">{{ month_names[i] }}</div>
+                        <div class="bars" data-month-index="{{ i }}">
+                            <div class="bar income" title="Приход"><span class="bar-value"></span></div>
+                            <div class="bar expense" title="Расход"><span class="bar-value"></span></div>
+                            <div class="bar balance" title="Остаток"><span class="bar-value"></span></div>
+                        </div>
+                        <div class="legend">
+                            <span class="legend-item income">Приход</span>
+                            <span class="legend-item expense">Расход</span>
+                            <span class="legend-item balance">Остаток</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Блоки статистики -->
+            <div class="stats-grid" style="margin-top: 40px;">
+                <div class="stat-card">
+                    <h3>Всего учеников</h3>
+                    <p class="stat-number">{{ total_students }}</p>
+                </div>
+                
+                <div class="stat-card warning">
+                    <h3>Мало занятий</h3>
+                    <p class="stat-number">{{ students_low_balance }}</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Сегодня на занятии</h3>
+                    <p class="stat-number">{{ today_attendance }}</p>
+                </div>
+                
+                <div class="stat-card success">
+                    <h3>Доход (месяц)</h3>
+                    <p class="stat-number">{{ "%.0f"|format(month_income) }} сум</p>
+                </div>
+                
+                <div class="stat-card danger">
+                    <h3>Расходы (месяц)</h3>
+                    <p class="stat-number">{{ "%.0f"|format(month_expenses) }} сум</p>
+                </div>
+                
+                <div class="stat-card {% if profit >= 0 %}success{% else %}danger{% endif %}">
+                    <h3>Прибыль (месяц)</h3>
+                    <p class="stat-number">{{ "%.0f"|format(profit) }} сум</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Финансы детальный -->
+        <div id="finance-details-tab" class="tab-content">
+            <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px;">Аналитика по месяцам</h2>
+            
+            <table class="data-table" style="margin-bottom: 16px;">
+                <thead>
+                    <tr>
+                        <th>Месяц</th>
+                        <th>Приход</th>
+                        <th>Расход</th>
+                        <th>Остаток</th>
+                    </tr>
+                </thead>
+                <tbody id="analytics-table-body">
+                    <!-- Заполнится через JS -->
+                </tbody>
+            </table>
+            
+            <div class="chart-container">
+                <canvas id="financeChart" width="400" height="150"></canvas>
+            </div>
+        </div>
+
+        <!-- Вкладка: Посещаемость групп -->
+        <div id="groups-attendance-tab" class="tab-content">
+            <div class="form-block" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h3>👥 Посещаемость групп</h3>
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <label for="attendanceDateYear" style="font-weight: 600; color: #475569;">Год:</label>
+                        <select id="attendanceDateYear" style="padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                            <!-- Years will be populated by JavaScript -->
+                        </select>
+                        <label for="attendanceDateMonth" style="font-weight: 600; color: #475569;">Месяц:</label>
+                        <select id="attendanceDateMonth" style="padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                            <!-- Months will be populated by JavaScript -->
+                        </select>
+                        <label for="attendanceDateDay" style="font-weight: 600; color: #475569;">День:</label>
+                        <select id="attendanceDateDay" style="padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                            <!-- Days will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="groupsAttendanceContent">
+                    <!-- Заполнится через JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Рейтинг учеников -->
+        <div id="rating-tab" class="tab-content">
+            <div class="form-block" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>⭐ История победителей (1 место)</h3>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <label for="ratingYearFilter" style="font-weight: 600; color: #475569;">Год:</label>
+                        <select id="ratingYearFilter" style="padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                            <!-- Years will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="winnersHistoryContent">
+                    <!-- Заполнится через JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Рейтинг учеников текущий месяц -->
+        <div id="rating-current-month-tab" class="tab-content">
+            <div class="form-block" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>⭐ Рейтинг учеников текущий месяц</h3>
+                </div>
+                
+                <div id="currentMonthRatingContent" style="text-align: center; padding: 10px; color: #95a5a6;">
+                    <p>Загрузка рейтинга...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Функция для получения контейнера с прокруткой
+    function getScrollContainer() {
+        return document.querySelector('.tab-content-container');
+    }
+    
+    // Переключение вкладок
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.getAttribute('data-tab');
+            
+            // Убрать активный класс со всех вкладок
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            
+            // Управление прокруткой: отключаем для вкладки finances, включаем для остальных
+            const scrollContainer = getScrollContainer();
+            if (scrollContainer) {
+                if (tabName === 'finances') {
+                    scrollContainer.style.overflowY = 'hidden';
+                    scrollContainer.style.overflow = 'hidden';
+                } else {
+                    scrollContainer.style.overflowY = 'auto';
+                    scrollContainer.style.overflow = 'auto';
+                }
+            }
+            
+            // Активировать выбранную вкладку
+            tab.classList.add('active');
+            const tabElement = document.getElementById(`${tabName}-tab`);
+            if (tabElement) {
+                tabElement.classList.add('active');
+                
+                // Загрузить историю победителей при переключении на вкладку рейтинга
+                if (tabName === 'rating') {
+                    setTimeout(() => {
+                        const year = parseInt(ratingYearFilter.value);
+                        loadWinnersHistory(year);
+                    }, 100);
+                }
+                
+                // Загрузить рейтинг текущего месяца при переключении на вкладку
+                if (tabName === 'rating-current-month') {
+                    setTimeout(() => {
+                        loadCurrentMonthRating();
+                    }, 100);
+                }
+                
+                // Загрузить статистику посещаемости групп при переключении на вкладку
+                if (tabName === 'groups-attendance') {
+                    setTimeout(() => {
+                        loadGroupsAttendance();
+                    }, 100);
+                }
+                
+                // Загрузить аналитику финансов при переключении на вкладку
+                if (tabName === 'finance-details') {
+                    setTimeout(() => {
+                        loadAnalytics();
+                    }, 100);
+                }
+            }
+        });
+    });
+    
+    // Устанавливаем начальное состояние прокрутки для активной вкладки
+    document.addEventListener('DOMContentLoaded', () => {
+        const scrollContainer = getScrollContainer();
+        if (scrollContainer) {
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab) {
+                const tabName = activeTab.getAttribute('data-tab');
+                if (tabName === 'finances') {
+                    scrollContainer.style.overflowY = 'hidden';
+                    scrollContainer.style.overflow = 'hidden';
+                }
+            }
+        }
+    });
+    
+    // Функция загрузки аналитики финансов
+    async function loadAnalytics() {
+        try {
+            const response = await fetch('/api/finances/analytics');
+            const data = await response.json();
+            
+            // Таблица
+            const tbody = document.getElementById('analytics-table-body');
+            if (!tbody) return;
+            
+            if (data.months.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #95a5a6;">Нет данных</td></tr>';
+                return;
+            }
+            
+            // Подсчёт итогов
+            const totalIncome = data.months.reduce((acc, m) => acc + Number(m.income || 0), 0);
+            const totalExpense = data.months.reduce((acc, m) => acc + Number(m.expense || 0), 0);
+            const totalBalance = totalIncome - totalExpense;
+
+            const rows = data.months.map(m => {
+                const balance = m.income - m.expense;
+                const balanceColor = balance >= 0 ? '#27ae60' : '#e74c3c';
+                
+                return `
+                    <tr>
+                        <td><strong>${m.month_name}</strong></td>
+                        <td style="color: #27ae60;">${m.income.toLocaleString('ru-RU')} сум</td>
+                        <td style="color: #e74c3c;">${m.expense.toLocaleString('ru-RU')} сум</td>
+                        <td style="color: ${balanceColor}; font-weight: bold;">
+                            ${balance >= 0 ? '+' : ''}${balance.toLocaleString('ru-RU')} сум
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalRow = `
+                <tr style="background: #f8f9fa; font-weight: bold;">
+                    <td>Итого за 12 мес.</td>
+                    <td style="color: #27ae60;">${totalIncome.toLocaleString('ru-RU')} сум</td>
+                    <td style="color: #e74c3c;">${totalExpense.toLocaleString('ru-RU')} сум</td>
+                    <td style="color: ${totalBalance >= 0 ? '#27ae60' : '#e74c3c'};">
+                        ${totalBalance >= 0 ? '+' : ''}${totalBalance.toLocaleString('ru-RU')} сум
+                    </td>
+                </tr>
+            `;
+
+            tbody.innerHTML = rows + totalRow;
+            
+            // График
+            drawSimpleChart(data.months);
+        } catch (error) {
+            console.error('Ошибка загрузки аналитики:', error);
+        }
+    }
+
+    // Простой график на Canvas
+    function drawSimpleChart(months) {
+        const canvas = document.getElementById('financeChart');
+        if (!canvas) return;
+        
+        // Получаем реальную ширину контейнера
+        const container = canvas.parentElement;
+        const containerWidth = container ? container.clientWidth : 800;
+        
+        // Устанавливаем размеры canvas с учетом DPI
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = containerWidth * dpr;
+        canvas.height = 300 * dpr;
+        canvas.style.width = containerWidth + 'px';
+        canvas.style.height = '300px';
+        
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        
+        // Очищаем canvas
+        ctx.clearRect(0, 0, containerWidth, 300);
+        
+        if (months.length === 0) {
+            ctx.fillStyle = '#95a5a6';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Нет данных для отображения', containerWidth / 2, 150);
+            return;
+        }
+        
+        const leftPadding = 60;
+        const rightPadding = 20;
+        const topPadding = 40;
+        const bottomPadding = 45; // Место для подписей месяцев
+        const chartWidth = containerWidth - leftPadding - rightPadding;
+        const chartHeight = 300 - topPadding - bottomPadding;
+        
+        const maxValueRaw = Math.max(...months.map(m => Math.max(m.income || 0, m.expense || 0)));
+        const maxValue = maxValueRaw > 0 ? maxValueRaw : 1;
+        
+        // Расчет: для каждого месяца 2 столбца (приход + расход) + промежуток между группами
+        const barsPerMonth = 2;
+        const gapBetweenBars = 4; // Промежуток между столбцами прихода и расхода
+        const gapBetweenMonthGroups = Math.max(8, chartWidth / (months.length * 20)); // Промежуток между группами месяцев
+        
+        // Доступная ширина для столбцов
+        const totalGapsWidth = (months.length - 1) * gapBetweenMonthGroups;
+        const availableWidth = chartWidth - totalGapsWidth;
+        const barWidth = Math.max(8, (availableWidth / (months.length * barsPerMonth)) - gapBetweenBars);
+        
+        // Отрисовка столбцов
+        months.forEach((m, i) => {
+            // Позиция начала группы столбцов для месяца
+            const groupWidth = barWidth * barsPerMonth + gapBetweenBars;
+            const groupStartX = leftPadding + i * (groupWidth + gapBetweenMonthGroups);
+            const groupCenterX = groupStartX + groupWidth / 2;
+            
+            // Приход (зелёный) - левый столбец
+            const incomeHeight = ((m.income || 0) / maxValue) * chartHeight;
+            if (incomeHeight > 0) {
+                ctx.fillStyle = '#27ae60';
+                ctx.fillRect(groupStartX, topPadding + chartHeight - incomeHeight, barWidth, incomeHeight);
+            }
+            
+            // Расход (красный) - правый столбец
+            const expenseHeight = ((m.expense || 0) / maxValue) * chartHeight;
+            if (expenseHeight > 0) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(groupStartX + barWidth + gapBetweenBars, topPadding + chartHeight - expenseHeight, barWidth, expenseHeight);
+            }
+            
+            // Подпись месяца (под группой столбцов)
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const monthText = m.month_name || '';
+            ctx.fillText(monthText, groupCenterX, topPadding + chartHeight + 8);
+        });
+        
+        // Легенда вверху
+        const legendY = 15;
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(leftPadding, legendY, 18, 12);
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = '13px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Приход', leftPadding + 23, legendY + 6);
+        
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(leftPadding + 90, legendY, 18, 12);
+        ctx.fillText('Расход', leftPadding + 113, legendY + 6);
+    }
+    
+    // Populate year filter
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    const currentDay = new Date().getDate();
+    
+    const yearFilter = document.getElementById('yearFilter');
+    const ratingYearFilter = document.getElementById('ratingYearFilter');
+    const attendanceDateYear = document.getElementById('attendanceDateYear');
+    const attendanceDateMonth = document.getElementById('attendanceDateMonth');
+    const attendanceDateDay = document.getElementById('attendanceDateDay');
+    
+    // Заполняем годы
+    for (let year = currentYear; year >= currentYear - 5; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        if (year === currentYear) option.selected = true;
+        yearFilter.appendChild(option);
+        
+        const option2 = document.createElement('option');
+        option2.value = year;
+        option2.textContent = year;
+        if (year === currentYear) option2.selected = true;
+        ratingYearFilter.appendChild(option2);
+        
+        const option3 = document.createElement('option');
+        option3.value = year;
+        option3.textContent = year;
+        if (year === currentYear) option3.selected = true;
+        attendanceDateYear.appendChild(option3);
+    }
+    
+    // Заполняем месяцы
+    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                       'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    for (let month = 1; month <= 12; month++) {
+        const option = document.createElement('option');
+        option.value = month;
+        option.textContent = monthNames[month - 1];
+        if (month === currentMonth) option.selected = true;
+        attendanceDateMonth.appendChild(option);
+    }
+    
+    // Функция для заполнения дней в зависимости от месяца и года
+    function populateDays(year, month) {
+        attendanceDateDay.innerHTML = '';
+        const daysInMonth = new Date(year, month, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const option = document.createElement('option');
+            option.value = day;
+            option.textContent = day;
+            if (day === currentDay && month === currentMonth && year === currentYear) {
+                option.selected = true;
+            }
+            attendanceDateDay.appendChild(option);
+        }
+    }
+    
+    // Инициализируем дни
+    populateDays(currentYear, currentMonth);
+    
+    // Обновляем дни при изменении года или месяца
+    attendanceDateYear.addEventListener('change', () => {
+        const year = parseInt(attendanceDateYear.value);
+        const month = parseInt(attendanceDateMonth.value);
+        populateDays(year, month);
+        loadGroupsAttendance();
+    });
+    
+    attendanceDateMonth.addEventListener('change', () => {
+        const year = parseInt(attendanceDateYear.value);
+        const month = parseInt(attendanceDateMonth.value);
+        populateDays(year, month);
+        loadGroupsAttendance();
+    });
+    
+    attendanceDateDay.addEventListener('change', () => {
+        loadGroupsAttendance();
+    });
+
+    // Fetch and render monthly finance data
+    async function loadFinances(year) {
+        try {
+            const res = await fetch(`/api/finances/monthly?year=${year}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data || !Array.isArray(data.months)) return;
+            const months = data.months;
+            const maxVal = Math.max(1, ...months.flatMap(m => [m.income||0, m.expense||0, m.balance||0]));
+            
+            // Render each month
+            document.querySelectorAll('.bars').forEach((barsEl, idx) => {
+                const m = months[idx] || { income: 0, expense: 0, balance: 0 };
+                const items = [
+                    { cls: '.income', val: m.income || 0 },
+                    { cls: '.expense', val: m.expense || 0 },
+                    { cls: '.balance', val: m.balance || 0 }
+                ];
+                items.forEach(item => {
+                    const bar = barsEl.querySelector(item.cls);
+                    if (bar) {
+                        const pct = Math.min(100, Math.round((item.val / maxVal) * 100));
+                        bar.style.height = pct + '%';
+                        const valEl = bar.querySelector('.bar-value');
+                        if (valEl) {
+                            valEl.textContent = item.val ? new Intl.NumberFormat('ru-RU').format(item.val) : '';
+                        }
+                    }
+                });
+            });
+        } catch (e) {
+            console.warn('Не удалось загрузить финансы по месяцам', e);
+        }
+    }
+
+    // Load initial data
+    loadFinances(currentYear);
+
+    // Reload on year change
+    yearFilter.addEventListener('change', (e) => {
+        loadFinances(parseInt(e.target.value));
+    });
+
+    // Загрузка истории победителей
+    async function loadWinnersHistory(year) {
+        try {
+            const res = await fetch(`/api/rating/winners-history?year=${year}`);
+            if (!res.ok) {
+                document.getElementById('winnersHistoryContent').innerHTML = '<p style="text-align: center; padding: 40px; color: #95a5a6;">Ошибка загрузки данных</p>';
+                return;
+            }
+            const data = await res.json();
+            
+            if (!data.groups || data.groups.length === 0) {
+                document.getElementById('winnersHistoryContent').innerHTML = '<p style="text-align: center; padding: 40px; color: #95a5a6;">Нет данных для отображения</p>';
+                return;
+            }
+            
+            renderWinnersHistory(data.groups, data.year);
+        } catch (e) {
+            console.warn('Не удалось загрузить историю победителей', e);
+            document.getElementById('winnersHistoryContent').innerHTML = '<p style="text-align: center; padding: 40px; color: #e74c3c;">Ошибка загрузки данных</p>';
+        }
+    }
+
+    // Отрисовка истории победителей
+    function renderWinnersHistory(groups, year) {
+        const container = document.getElementById('winnersHistoryContent');
+        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        const medals = ['🥇', '🥈', '🥉'];
+        
+        let html = '';
+        
+        groups.forEach(group => {
+            html += `
+                <div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h4 style="margin-bottom: 20px; color: #1a202c; font-size: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
+                        👨‍👩‍👦 ${group.group_name}
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; overflow-x: visible;">
+            `;
+            
+            group.winners.forEach(winner => {
+                const monthName = monthNames[winner.month - 1];
+                
+                if (winner.is_empty || !winner.students || winner.students.length === 0) {
+                    html += `
+                        <div style="text-align: center; padding: 10px; border: 2px dashed #e0e0e0; border-radius: 10px; background: #f8f9fa; min-width: 90px;">
+                            <div style="font-size: 11px; color: #95a5a6; margin-bottom: 8px; font-weight: 600;">${monthName}</div>
+                            <div style="font-size: 20px; color: #cbd5e0;">-</div>
+                            <div style="font-size: 10px; color: #95a5a6; margin-top: 5px;">Нет данных</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div style="text-align: center; padding: 10px; border: 2px solid #f39c12; border-radius: 10px; background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%); min-width: 90px;">
+                            <div style="font-size: 11px; color: #856404; margin-bottom: 10px; font-weight: 600;">${monthName}</div>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                    `;
+                    
+                    winner.students.forEach((student, index) => {
+                        const photoUrl = student.photo_path ? 
+                            `/static/${student.photo_path.replace('frontend/static/', '').replace(/\\/g, '/')}` : 
+                            null;
+                        const medal = medals[index] || '⭐';
+                        const placeholderId = `placeholder-${group.group_id}-${winner.month}-${index}`;
+                        
+                        html += `
+                            <div style="position: relative;">
+                                <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 20px; z-index: 10;">${medal}</div>
+                                ${photoUrl ? 
+                                    `<img src="${photoUrl}" alt="${student.full_name}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12; margin: 6px auto 4px; display: block; box-shadow: 0 2px 4px rgba(243,156,18,0.3);" onerror="document.getElementById('${placeholderId}').style.display='flex'; this.style.display='none';">` : 
+                                    ''
+                                }
+                                <div id="${placeholderId}" style="width: 35px; height: 35px; border-radius: 50%; margin: 6px auto 4px; display: ${photoUrl ? 'none' : 'flex'}; align-items: center; justify-content: center; background: #ffe69c; font-size: 14px; border: 2px solid #f39c12; box-shadow: 0 2px 4px rgba(243,156,18,0.3);">👤</div>
+                                <div style="font-weight: bold; color: #2c3e50; font-size: 9px; margin-bottom: 2px; word-wrap: break-word; line-height: 1.2; max-height: 28px; overflow: hidden; text-overflow: ellipsis;">${student.full_name}</div>
+                                <div style="font-size: 11px; color: #f39c12; font-weight: bold;">⭐ ${student.points}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // Reload on year change для рейтинга
+    if (ratingYearFilter) {
+        ratingYearFilter.addEventListener('change', (e) => {
+            loadWinnersHistory(parseInt(e.target.value));
+        });
+    }
+    
+    // Загрузка статистики посещаемости групп
+    async function loadGroupsAttendance() {
+        try {
+            const year = parseInt(attendanceDateYear.value);
+            const month = parseInt(attendanceDateMonth.value);
+            const day = parseInt(attendanceDateDay.value);
+            
+            const res = await fetch(`/api/attendance/groups-statistics?year=${year}&month=${month}&day=${day}`);
+            if (!res.ok) {
+                document.getElementById('groupsAttendanceContent').innerHTML = 
+                    '<div class="no-groups-message">Ошибка загрузки данных</div>';
+                return;
+            }
+            
+            const data = await res.json();
+            renderGroupsAttendance(data);
+        } catch (e) {
+            console.warn('Не удалось загрузить статистику посещаемости групп', e);
+            document.getElementById('groupsAttendanceContent').innerHTML = 
+                '<div class="no-groups-message">Ошибка загрузки данных</div>';
+        }
+    }
+    
+    // Функция для экранирования HTML
+    // Функция для экранирования HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Функция для экранирования строки для использования в JavaScript (в атрибутах onclick и т.д.)
+    function escapeJsString(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
+    }
+    
+    // Отрисовка статистики посещаемости групп
+    function renderGroupsAttendance(data) {
+        const container = document.getElementById('groupsAttendanceContent');
+        
+        if (!data.groups || data.groups.length === 0) {
+            container.innerHTML = '<div class="no-groups-message">На выбранную дату нет занятий</div>';
+            return;
+        }
+        
+        let html = '';
+        let firstGroup = true;
+        
+        data.groups.forEach((group, index) => {
+            const isActive = firstGroup;
+            firstGroup = false;
+            
+            html += `
+                <div class="group-accordion">
+                    <div class="group-accordion-header ${isActive ? 'active' : ''}" data-group-id="${group.group_id}">
+                        <div class="group-header-info">
+                            <div>
+                                <div class="group-title">${group.group_name}</div>
+                                <div class="group-stats">
+                                    Пришло: ${group.attended_count} из ${group.total_students} учеников
+                                    ${group.schedule_time ? ` • Время: ${group.schedule_time}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="group-accordion-icon">▼</div>
+                    </div>
+                    <div class="group-accordion-content ${isActive ? 'active' : ''}">
+                        <div class="students-grid-container">
+                            <div class="students-grid">
+            `;
+            
+            if (group.students.length === 0) {
+                html += `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #95a5a6;">
+                        В этой группе нет учеников
+                    </div>
+                `;
+            } else {
+                group.students.forEach(student => {
+                    // Логируем данные ученика для отладки
+                    console.log('Обработка ученика:', {
+                        id: student.id,
+                        full_name: student.full_name,
+                        has_attended: student.has_attended,
+                        attendance_id: student.attendance_id,
+                        check_in_time: student.check_in_time
+                    });
+                    
+                    let photoUrl = null;
+                    if (student.photo_path) {
+                        // Обрабатываем разные форматы путей
+                        let path = student.photo_path.replace(/\\/g, '/');
+                        if (path.startsWith('frontend/static/')) {
+                            path = path.replace('frontend/static/', '');
+                        } else if (path.startsWith('static/')) {
+                            path = path.replace('static/', '');
+                        } else if (!path.startsWith('/')) {
+                            // Если путь относительный, добавляем static/
+                            path = path;
+                        }
+                        photoUrl = `/static/${path}`;
+                    }
+                    
+                    const cardClass = student.has_attended ? 'attended' : 'not-attended';
+                    let checkInTime = '';
+                    let isLate = student.is_late || false;
+                    if (student.check_in_time) {
+                        try {
+                            checkInTime = new Date(student.check_in_time).toLocaleTimeString('ru-RU', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            });
+                        } catch (e) {
+                            console.warn('Ошибка форматирования времени:', e);
+                        }
+                    }
+                    
+                    const placeholderId = `photo-placeholder-${student.id}-${group.group_id}`;
+                    const year = parseInt(attendanceDateYear.value);
+                    const month = parseInt(attendanceDateMonth.value);
+                    const day = parseInt(attendanceDateDay.value);
+                    
+                    // Правильно обрабатываем attendance_id (может быть null, undefined или числом)
+                    const attendanceId = (student.attendance_id !== null && student.attendance_id !== undefined) ? student.attendance_id : null;
+                    
+                    console.log('Сформированные данные для кнопки:', {
+                        attendanceId,
+                        studentId: student.id,
+                        studentName: student.full_name
+                    });
+                    
+                    html += `
+                        <div class="student-card ${cardClass}">
+                            ${photoUrl ? 
+                                `<img src="${photoUrl}" alt="${student.full_name}" class="student-photo" onerror="document.getElementById('${placeholderId}').style.display='flex'; this.style.display='none';">` :
+                                ''
+                            }
+                            <div id="${placeholderId}" class="student-photo photo-placeholder" style="background: #e0e0e0; display: ${photoUrl ? 'none' : 'flex'}; align-items: center; justify-content: center; font-size: 20px; border-radius: 50%; width: 50px; height: 50px; margin: 0 auto 8px; border: 2px solid ${student.has_attended ? '#27ae60' : '#95a5a6'};">👤</div>
+                            <div class="student-name">${escapeHtml(student.first_name)}</div>
+                            ${student.last_name ? `<div class="student-lastname">${escapeHtml(student.last_name)}</div>` : ''}
+                            ${student.has_attended ? 
+                                `
+                                ${checkInTime ? `<div class="student-checkin-time" style="color: ${isLate ? '#e74c3c' : '#27ae60'}; font-weight: 600; margin-bottom: 8px;">${checkInTime}</div>` : '<div style="font-size: 11px; color: #27ae60; margin-top: 6px; font-weight: 500; margin-bottom: 8px;">Присутствует</div>'}
+                                <button class="remove-attendance-btn" 
+                                        onclick="confirmRemoveAttendance(${student.id}, '${escapeJsString(student.full_name)}', ${attendanceId !== null ? attendanceId : 'null'}, ${year}, ${month}, ${day})"
+                                        style="
+                                            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+                                            color: white;
+                                            border: none;
+                                            border-radius: 8px;
+                                            padding: 8px 16px;
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                            width: 100%;
+                                        "
+                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(248, 113, 113, 0.4)';"
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                                    Отменить
+                                </button>
+                                ` : 
+                                (!student.has_attended ? `
+                                    <div style="font-size: 11px; color: #95a5a6; margin-top: 6px; font-weight: 500; margin-bottom: 8px;">Нет явки</div>
+                                    <button class="mark-attendance-btn" 
+                                            onclick="confirmMarkAttendance(${student.id}, '${escapeJsString(student.full_name)}', ${year}, ${month}, ${day}, ${group.group_id})"
+                                            style="
+                                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                                color: white;
+                                                border: none;
+                                                border-radius: 8px;
+                                                padding: 8px 16px;
+                                                font-size: 12px;
+                                                font-weight: 600;
+                                                cursor: pointer;
+                                                transition: all 0.2s ease;
+                                                width: 100%;
+                                                margin-top: 4px;
+                                            "
+                                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                                        ✓ Отметить
+                                    </button>
+                                ` : '')
+                            }
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Добавляем обработчики для аккордеона
+        document.querySelectorAll('.group-accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const isActive = this.classList.contains('active');
+                
+                // Закрываем все остальные аккордеоны
+                document.querySelectorAll('.group-accordion-header').forEach(h => {
+                    h.classList.remove('active');
+                    h.nextElementSibling.classList.remove('active');
+                });
+                
+                // Открываем/закрываем текущий
+                if (!isActive) {
+                    this.classList.add('active');
+                    content.classList.add('active');
+                }
+            });
+        });
+    }
+    
+    // Модальное окно подтверждения отметки посещения
+    function confirmMarkAttendance(studentId, studentName, year, month, day, groupId) {
+        const now = new Date();
+        const currentTime = now.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        const currentDate = `${day}.${month}.${year}`;
+        
+        // Показываем модальное окно
+        const modal = document.getElementById('attendance-confirm-modal');
+        const modalText = document.getElementById('attendance-confirm-text');
+        const confirmBtn = document.getElementById('attendance-confirm-yes');
+        const cancelBtn = document.getElementById('attendance-confirm-no');
+        
+        modalText.textContent = `Отметить ${studentName} в ${currentTime} (${currentDate})?`;
+        
+        // Удаляем старые обработчики
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Добавляем новые обработчики
+        newConfirmBtn.onclick = () => {
+            modal.style.display = 'none';
+            markStudentAttendance(studentId, year, month, day, groupId);
+        };
+        newCancelBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+        
+        modal.style.display = 'flex';
+    }
+    
+    // Функция для ручной отметки посещения ученика
+    async function markStudentAttendance(studentId, year, month, day, groupId) {
+        try {
+            // Убедиться, что параметры - числа
+            const requestData = {
+                student_id: parseInt(studentId),
+                year: parseInt(year),
+                month: parseInt(month),
+                day: parseInt(day)
+            };
+            
+            console.log('Отправка запроса на фиксацию посещения:', requestData);
+            
+            const response = await fetch('/api/attendance/manual-checkin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Ошибка HTTP:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Ответ сервера:', data);
+            
+            if (data.success) {
+                // Показать сообщение об успехе
+                console.log('Посещение успешно зафиксировано:', data);
+                // Перезагрузить данные посещаемости
+                loadGroupsAttendance();
+            } else {
+                console.error('Ошибка API:', data);
+                alert('Ошибка: ' + (data.message || 'Не удалось отметить посещение'));
+            }
+        } catch (error) {
+            console.error('Ошибка отметки посещения:', error);
+            alert('Ошибка при отметке посещения: ' + error.message);
+        }
+    }
+    
+    // Модальное окно подтверждения снятия явки
+    function confirmRemoveAttendance(studentId, studentName, attendanceId, year, month, day) {
+        console.log('confirmRemoveAttendance вызвана:', { studentId, studentName, attendanceId, year, month, day });
+        
+        // Проверяем, что attendanceId не null и не undefined
+        if (attendanceId === null || attendanceId === undefined || attendanceId === 'null') {
+            console.error('attendanceId отсутствует:', attendanceId);
+            alert('Ошибка: не найден ID записи посещения. Попробуйте обновить страницу.');
+            return;
+        }
+        
+        // Показываем модальное окно
+        const modal = document.getElementById('attendance-remove-modal');
+        const modalText = document.getElementById('attendance-remove-text');
+        const confirmBtn = document.getElementById('attendance-remove-yes');
+        const cancelBtn = document.getElementById('attendance-remove-no');
+        
+        modalText.textContent = `Снять явку у ${studentName}?`;
+        
+        // Удаляем старые обработчики
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Добавляем новые обработчики
+        newConfirmBtn.onclick = () => {
+            modal.style.display = 'none';
+            removeAttendance(attendanceId, year, month, day);
+        };
+        newCancelBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+        
+        modal.style.display = 'flex';
+    }
+    
+    // Функция для снятия явки
+    async function removeAttendance(attendanceId, year, month, day) {
+        try {
+            console.log('Отправка запроса на удаление посещения:', attendanceId);
+            
+            const response = await fetch(`/api/attendance/delete/${attendanceId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Ошибка HTTP:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Ответ сервера:', data);
+            
+            if (data.success) {
+                // Показать сообщение об успехе
+                console.log('Посещение успешно удалено:', data);
+                // Перезагрузить данные посещаемости
+                loadGroupsAttendance();
+            } else {
+                console.error('Ошибка API:', data);
+                alert('Ошибка: ' + (data.message || 'Не удалось снять явку'));
+            }
+        } catch (error) {
+            console.error('Ошибка снятия явки:', error);
+            alert('Ошибка при снятии явки: ' + error.message);
+        }
+    }
+    
+    // Загрузка рейтинга текущего месяца
+    async function loadCurrentMonthRating() {
+        try {
+            const response = await fetch('/api/rating/all-groups');
+            const data = await response.json();
+            
+            if (!data.groups || data.groups.length === 0) {
+                document.getElementById('currentMonthRatingContent').innerHTML = '<p style="text-align: center; padding: 40px; color: #95a5a6;">Нет данных для отображения рейтинга</p>';
+                return;
+            }
+            
+            renderCurrentMonthRating(data.groups);
+        } catch (error) {
+            console.error('Ошибка загрузки рейтинга:', error);
+            document.getElementById('currentMonthRatingContent').innerHTML = '<p style="text-align: center; padding: 40px; color: #e74c3c;">Ошибка загрузки рейтинга</p>';
+        }
+    }
+    
+    // Отрисовка рейтинга текущего месяца (упрощенная версия без пьедестала)
+    function renderCurrentMonthRating(groups) {
+        const container = document.getElementById('currentMonthRatingContent');
+        
+        let html = '';
+        
+        groups.forEach(group => {
+            if (!group.rating || group.rating.length === 0) {
+                html += `
+                    <div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h4 style="margin-bottom: 20px; color: #1a202c; font-size: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
+                            👨‍👩‍👦 ${group.group_name}
+                        </h4>
+                        <p style="text-align: center; padding: 40px; color: #95a5a6;">Нет данных для отображения</p>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h4 style="margin-bottom: 20px; color: #1a202c; font-size: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
+                            👨‍👩‍👦 ${group.group_name}
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                `;
+                
+                group.rating.forEach((student, index) => {
+                    const place = index + 1;
+                    const photoUrl = student.photo_path ? 
+                        `/static/${student.photo_path.replace('frontend/static/', '').replace(/\\/g, '/')}` : 
+                        null;
+                    const placeholderId = `current-rating-${student.student_id}-${group.group_id}`;
+                    
+                    html += `
+                        <div style="text-align: center; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; background: ${place <= 3 ? '#fffbf0' : '#fff'};">
+                            <div style="font-size: 24px; margin-bottom: 8px;">
+                                ${place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : `${place}.`}
+                            </div>
+                            ${photoUrl ? 
+                                `<img src="${photoUrl}" alt="${student.full_name}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12; margin: 0 auto 8px; display: block; box-shadow: 0 2px 6px rgba(243,156,18,0.3);" onerror="document.getElementById('${placeholderId}').style.display='flex'; this.style.display='none';">` : 
+                                ''
+                            }
+                            <div id="${placeholderId}" style="width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 8px; display: ${photoUrl ? 'none' : 'flex'}; align-items: center; justify-content: center; background: #ffe69c; font-size: 24px; border: 2px solid #f39c12; box-shadow: 0 2px 6px rgba(243,156,18,0.3);">👤</div>
+                            <div style="font-weight: bold; color: #2c3e50; font-size: 12px; margin-bottom: 5px; word-wrap: break-word; line-height: 1.2;">${student.full_name}</div>
+                            <div style="font-size: 14px; color: #f39c12; font-weight: bold;">⭐ ${student.points}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        container.innerHTML = html;
+    }
+    </script>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно подтверждения отметки посещения -->
+    <div id="attendance-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; align-items: center; justify-content: center;" onclick="if(event.target === this) this.style.display='none';">
+        <div class="modal-content" style="background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);" onclick="event.stopPropagation();">
+            <h3 class="modal-title" style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #1e293b;">Подтверждение</h3>
+            <p id="attendance-confirm-text" class="modal-text" style="margin: 0 0 24px 0; font-size: 14px; color: #64748b; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="attendance-confirm-no" style="
+                    background: #e2e8f0;
+                    color: #475569;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='#cbd5e1';" onmouseout="this.style.background='#e2e8f0';">
+                    Нет
+                </button>
+                <button id="attendance-confirm-yes" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    Да
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно подтверждения снятия явки -->
+    <div id="attendance-remove-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; align-items: center; justify-content: center;" onclick="if(event.target === this) this.style.display='none';">
+        <div class="modal-content" style="background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);" onclick="event.stopPropagation();">
+            <h3 class="modal-title" style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #1e293b;">Подтверждение</h3>
+            <p id="attendance-remove-text" class="modal-text" style="margin: 0 0 24px 0; font-size: 14px; color: #64748b; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="attendance-remove-no" style="
+                    background: #e2e8f0;
+                    color: #475569;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='#cbd5e1';" onmouseout="this.style.background='#e2e8f0';">
+                    Нет
+                </button>
+                <button id="attendance-remove-yes" style="
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    Да
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mobile-menu.js') }}"></script>
+</body>
+</html>

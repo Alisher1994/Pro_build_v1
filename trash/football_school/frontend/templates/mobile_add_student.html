@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Добавить ученика - Мобильная версия</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Мобильный дизайн */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .mobile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .mobile-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .mobile-header .user-info {
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .mobile-container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+
+        .step-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #2d3748;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .photo-upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f7fafc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .photo-upload-area:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #718096;
+        }
+
+        .photo-select-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .photo-select-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-header">
+        <a href="/logout" class="logout-btn">Выход</a>
+        <h1>➕ Добавить ученика</h1>
+        <div class="user-info">{{ current_user.username }}</div>
+    </div>
+
+    <div class="mobile-container">
+        <div class="success-message" id="successMessage"></div>
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="addStudentForm" enctype="multipart/form-data">
+            <!-- Основная информация -->
+            <div class="step-container">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Основная информация</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Фамилия *</label>
+                    <input type="text" name="last_name" id="last_name" required placeholder="Иванов">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Имя *</label>
+                        <input type="text" name="first_name" id="first_name" required placeholder="Иван">
+                    </div>
+                    <div class="form-group">
+                        <label>Отчество</label>
+                        <input type="text" name="middle_name" id="middle_name" placeholder="Иванович">
+                    </div>
+                </div>
+
+                <input type="hidden" name="full_name" id="full_name_hidden">
+
+                <div class="form-group">
+                    <label>№ школы</label>
+                    <input type="text" name="school_number" placeholder="Школа № 12">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Телефон ученика</label>
+                        <input type="tel" name="phone" placeholder="+998 XX XXX XX XX">
+                    </div>
+                    <div class="form-group">
+                        <label>Телефон родителя</label>
+                        <input type="tel" name="parent_phone" placeholder="+998 XX XXX XX XX">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Фото *</label>
+                    <div class="photo-upload-area" id="photo-upload-area">
+                        <input type="file" name="photo" id="photo_input" accept="image/*" required style="display: none;">
+                        <div class="photo-preview" id="photo-preview">
+                            <div class="photo-placeholder">
+                                <div class="photo-select-icon">📷</div>
+                                <div class="photo-select-text">Нажмите, чтобы выбрать фото</div>
+                                <small style="margin-top: 8px; display: block;">Фото должно чётко показывать лицо</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Учебные данные -->
+            <div class="step-container">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Учебные данные</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Номер ученика *</label>
+                    <input type="text" name="student_number" required placeholder="ST0001">
+                    <small>Введите уникальный номер, который присваивает администратор</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Дата принятия</label>
+                    <input type="date" name="admission_date" id="admission_date">
+                </div>
+
+                <div class="form-group">
+                    <label>Группа</label>
+                    <select name="group_id" id="groupSelect">
+                        <option value="">Без группы</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Тариф *</label>
+                    <select name="tariff_id" id="tariffSelect" required>
+                        <option value="">Загрузка...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="club_funded" value="true">
+                        <span>Финансирование за счёт клуба</span>
+                    </label>
+                    <small>Ученик может посещать занятия без списания баланса</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select name="status" id="statusSelect">
+                        <option value="active">Активный</option>
+                        <option value="inactive">Неактивный</option>
+                        <option value="blacklist">Чёрный список</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="blacklistReasonBlock">
+                    <label>Причина добавления в чёрный список</label>
+                    <textarea name="blacklist_reason" rows="3" placeholder="Опишите причину..."></textarea>
+                </div>
+            </div>
+
+            <!-- Кнопка отправки -->
+            <button type="submit" class="btn-primary" id="submitBtn">Добавить ученика</button>
+        </form>
+    </div>
+
+    <!-- Мобильное меню навигации -->
+    <div class="mobile-nav">
+        <a href="/mobile-payments" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-label">Оплаты</span>
+        </a>
+        <a href="/mobile-dashboard" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Главная</span>
+        </a>
+        <a href="/mobile-add-student" class="nav-item active">
+            <span class="nav-icon">➕</span>
+            <span class="nav-label">Ученик</span>
+        </a>
+    </div>
+
+    <style>
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .mobile-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #718096;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .mobile-nav .nav-item.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .mobile-nav .nav-icon {
+            font-size: 24px;
+        }
+
+        .mobile-nav .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .mobile-container {
+            padding-bottom: 80px;
+        }
+    </style>
+
+    <script>
+        // Построение полного имени
+        function buildFullName(lastName, firstName, middleName) {
+            const parts = [lastName, firstName];
+            if (middleName && middleName.trim()) {
+                parts.push(middleName);
+            }
+            return parts.join(' ');
+        }
+
+        // Загрузка данных для формы
+        async function loadFormData() {
+            // Загрузить группы
+            try {
+                const groupsResponse = await fetch('/api/groups');
+                const groups = await groupsResponse.json();
+                
+                const groupSelect = document.getElementById('groupSelect');
+                groupSelect.innerHTML = '<option value="">Без группы</option>' +
+                    groups.map(g => {
+                        const currentCount = g.active_student_count || 0;
+                        const maxCount = g.max_students || '∞';
+                        const timeStr = g.schedule_time || '--:--';
+                        return `<option value="${g.id}">${g.name} - ${timeStr} - ${currentCount}/${maxCount}</option>`;
+                    }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки групп:', error);
+            }
+
+            // Загрузить тарифы
+            try {
+                const tariffsResponse = await fetch('/api/tariffs');
+                const tariffs = await tariffsResponse.json();
+                
+                const tariffSelect = document.getElementById('tariffSelect');
+                tariffSelect.innerHTML = '<option value="">Без тарифа</option>' +
+                    tariffs.map(t => `<option value="${t.id}">${t.name} - ${t.price ? parseFloat(t.price).toLocaleString('ru-RU') + ' сум/мес' : 'не указана цена'}</option>`).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки тарифов:', error);
+            }
+        }
+
+        // Загрузка фото
+        const photoInput = document.getElementById('photo_input');
+        const photoPreview = document.getElementById('photo-preview');
+        const photoUploadArea = document.getElementById('photo-upload-area');
+
+        photoUploadArea.addEventListener('click', () => {
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    photoPreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Переключение причины чёрного списка
+        document.getElementById('statusSelect').addEventListener('change', function() {
+            const blacklistBlock = document.getElementById('blacklistReasonBlock');
+            if (this.value === 'blacklist') {
+                blacklistBlock.classList.remove('hidden');
+            } else {
+                blacklistBlock.classList.add('hidden');
+            }
+        });
+
+        // Обновление полного имени при изменении ФИО
+        ['last_name', 'first_name', 'middle_name'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateFullName);
+        });
+
+        function updateFullName() {
+            const lastName = document.getElementById('last_name').value;
+            const firstName = document.getElementById('first_name').value;
+            const middleName = document.getElementById('middle_name').value;
+            const fullName = buildFullName(lastName, firstName, middleName);
+            document.getElementById('full_name_hidden').value = fullName;
+        }
+
+        // Отправка формы
+        document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const lastName = document.getElementById('last_name').value;
+            const firstName = document.getElementById('first_name').value;
+            const middleName = document.getElementById('middle_name').value;
+            const fullName = buildFullName(lastName, firstName, middleName);
+            document.getElementById('full_name_hidden').value = fullName;
+            
+            // Проверка фото
+            if (!photoInput.files || photoInput.files.length === 0) {
+                showError('Пожалуйста, загрузите фото ученика');
+                return;
+            }
+            
+            const formData = new FormData(e.target);
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Сохранение...';
+            
+            try {
+                const response = await fetch('/api/students/add', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Ученик успешно добавлен!');
+                    setTimeout(() => {
+                        // Можно оставить на этой странице или перейти на оплаты
+                        // window.location.href = '/mobile-payments';
+                        document.getElementById('addStudentForm').reset();
+                        photoPreview.innerHTML = `
+                            <div class="photo-placeholder">
+                                <div class="photo-select-icon">📷</div>
+                                <div class="photo-select-text">Нажмите, чтобы выбрать фото</div>
+                                <small style="margin-top: 8px; display: block;">Фото должно чётко показывать лицо</small>
+                            </div>
+                        `;
+                    }, 2000);
+                } else {
+                    showError('Ошибка: ' + (data.message || 'не удалось добавить ученика'));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Добавить ученика';
+                }
+            } catch (error) {
+                showError('Ошибка соединения: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Добавить ученика';
+            }
+        });
+
+        // Сообщения
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 3000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
+
+        // Установить сегодняшнюю дату по умолчанию
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('admission_date').value = today;
+
+        // Инициализация
+        loadFormData();
+    </script>
+</body>
+</html>
+

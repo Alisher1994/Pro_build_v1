@@ -1,0 +1,4058 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Портал субподрядчика · ProBIM</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            background-color: var(--gray-100);
+            color: var(--gray-900);
+            -webkit-font-smoothing: antialiased;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow: hidden;
+            background: var(--gray-900);
+        }
+
+        #login-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        #login-screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            /* Overlay for readability */
+            z-index: 2;
+        }
+
+        .login-card {
+            position: relative;
+            z-index: 10;
+            background: var(--white);
+            padding: 40px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-title {
+            font-size: 18px;
+            color: var(--gray-600);
+            margin-bottom: 32px;
+        }
+
+        .code-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .code-input-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .split-inputs {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .code-input-single {
+            width: 50px;
+            height: 60px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 28px;
+            text-align: center;
+            font-weight: 700;
+            font-family: var(--font-family);
+            color: var(--gray-900);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .code-input-single:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-lighter);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* --- Dashboard Screen --- */
+        #portal-screen {
+            display: none;
+            /* Shown after login */
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .portal-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .portal-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .portal-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tender-info-chip {
+            background: var(--gray-100);
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .btn-sm {
+            height: var(--height-button-sm);
+            font-size: var(--font-size-sm);
+            padding: 0 var(--spacing-md);
+        }
+
+        /* --- Offer Mapping Modal --- */
+        .offer-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 37, 42, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .offer-modal {
+            width: 100%;
+            max-width: 98vw;
+            max-height: calc(100vh - 40px);
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .offer-modal-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--gray-50);
+        }
+
+        .offer-modal-title {
+            font-weight: 700;
+            color: var(--gray-900);
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .offer-modal-summary {
+            font-size: 12px;
+            color: var(--gray-600);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            padding-top: 2px;
+        }
+
+        .offer-modal-body {
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 14px;
+            overflow: hidden;
+        }
+
+        .offer-panel {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 360px;
+        }
+
+        .offer-panel-header {
+            padding: 10px 12px;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .offer-panel-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gray-800);
+        }
+
+        .offer-panel-hint {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .offer-table-wrap {
+            overflow: auto;
+            background: var(--white);
+            flex: 1;
+        }
+
+        .offer-table {
+            width: auto;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        /* Prevent browser from redistributing extra width differently between tables */
+        #offer-expected-table {
+            width: 700px; /* 60 + 80 + 400 + 70 + 90 */
+        }
+
+        #offer-uploaded-table {
+            width: 920px; /* 60 + 80 + 400 + 70 + 90 + 110 + 110 */
+        }
+
+        .offer-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gray-700);
+            padding: 8px 10px;
+            text-align: left;
+            white-space: nowrap;
+            box-shadow: inset 0 -1px 0 var(--gray-200);
+        }
+
+        .offer-table tbody td {
+            border-bottom: 1px solid var(--gray-100);
+            padding: 8px 10px;
+            font-size: 12px;
+            color: var(--gray-800);
+            vertical-align: top;
+            word-break: break-word;
+        }
+
+        .offer-row {
+            cursor: pointer;
+        }
+
+        .offer-row:hover {
+            background: var(--gray-50);
+        }
+
+        .offer-row.selected {
+            background: rgba(43, 122, 120, 0.1);
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+
+        .offer-row.mirror-hover {
+            box-shadow: inset 0 0 0 2px var(--primary-light);
+        }
+
+        .offer-row.level-work {
+            background: #f0f9f5;
+        }
+
+        .offer-row.level-work:hover {
+            background: #e6f6ee;
+        }
+
+        .offer-row.level-stage {
+            background: var(--gray-50);
+        }
+
+        .offer-row.level-stage td {
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .offer-row.status-conflict {
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .offer-row.status-missing,
+        .offer-row.status-extra {
+            border-left: 3px solid var(--gray-300);
+        }
+
+        /* Right table: highlight non-matching rows with very light red */
+        #offer-uploaded-table tbody tr.offer-row.status-conflict,
+        #offer-uploaded-table tbody tr.offer-row.status-extra {
+            background: #fff1f2;
+        }
+
+        #offer-uploaded-table tbody tr.offer-row.status-conflict:hover,
+        #offer-uploaded-table tbody tr.offer-row.status-extra:hover {
+            background: #ffe4e6;
+        }
+
+        .offer-modal-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--white);
+        }
+
+        .offer-modal-issues {
+            font-size: 12px;
+            color: var(--gray-600);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .offer-modal-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 980px) {
+            .offer-modal-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Column widths (must match both tables)
+           № = 40px, Шифр = 80px, Наименование = 400px */
+        #offer-expected-table thead th:nth-child(1),
+        #offer-expected-table tbody td:nth-child(1),
+        #offer-uploaded-table thead th:nth-child(1),
+        #offer-uploaded-table tbody td:nth-child(1) {
+            width: 60px;
+        }
+
+        #offer-expected-table thead th:nth-child(2),
+        #offer-expected-table tbody td:nth-child(2),
+        #offer-uploaded-table thead th:nth-child(2),
+        #offer-uploaded-table tbody td:nth-child(2) {
+            width: 80px;
+        }
+
+        #offer-expected-table thead th:nth-child(3),
+        #offer-expected-table tbody td:nth-child(3),
+        #offer-uploaded-table thead th:nth-child(3),
+        #offer-uploaded-table tbody td:nth-child(3) {
+            width: 400px;
+        }
+
+        #offer-expected-table thead th:nth-child(4),
+        #offer-expected-table tbody td:nth-child(4),
+        #offer-uploaded-table thead th:nth-child(4),
+        #offer-uploaded-table tbody td:nth-child(4) {
+            width: 70px;
+        }
+
+        #offer-expected-table thead th:nth-child(5),
+        #offer-expected-table tbody td:nth-child(5),
+        #offer-uploaded-table thead th:nth-child(5),
+        #offer-uploaded-table tbody td:nth-child(5) {
+            width: 90px;
+        }
+
+        #offer-uploaded-table thead th:nth-child(6),
+        #offer-uploaded-table tbody td:nth-child(6) {
+            width: 110px;
+        }
+
+        #offer-uploaded-table thead th:nth-child(7),
+        #offer-uploaded-table tbody td:nth-child(7) {
+            width: 110px;
+        }
+
+        @media (min-width: 1500px) {
+            .offer-modal {
+                max-width: 1800px;
+            }
+        }
+
+        /* --- Reset confirmation modal --- */
+        .confirm-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 37, 42, 0.5);
+            z-index: 2100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .confirm-modal {
+            width: 100%;
+            max-width: 620px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .confirm-modal-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .confirm-modal-body {
+            padding: 12px 14px;
+            color: var(--gray-700);
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .confirm-modal-footer {
+            padding: 12px 14px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* --- Stats Bar --- */
+        .stats-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 12px 32px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .stat-input {
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .stat-input:focus {
+            border-color: var(--primary);
+        }
+
+        .countdown-timer {
+            color: #E11D48;
+            font-family: inherit;
+        }
+
+        /* --- Main Content Split --- */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr auto;
+            overflow: hidden;
+            background: var(--gray-50);
+            padding: 24px;
+            gap: 24px;
+        }
+
+        /* Right panel (3D + Files) like /#estimate */
+        #sub-right-panel-container {
+            width: 420px;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #sub-right-panel-container.right-panel-container.collapsed {
+            width: 48px;
+        }
+
+        /* --- Requisites Bar --- */
+        .requisites-bar {
+            background: #fff;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 8px 32px;
+            display: flex;
+            gap: 24px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        .req-item strong {
+            color: var(--gray-800);
+            margin-right: 4px;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            border-radius: 4px;
+            box-shadow: none;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .panel-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Keep header height consistent even when there are no action buttons */
+            min-height: calc(var(--height-button) + 20px);
+            box-sizing: border-box;
+        }
+
+        .panel-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .panel-header-actions .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .panel-header-actions .btn svg {
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Keep padding for the left list panel only */
+        #sections-list.panel-body {
+            padding: 0;
+        }
+
+        /* --- Sections list: match tender-prototype block-group style --- */
+        #sections-list .block-group {
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        #sections-list .block-group-header {
+            padding: 10px 12px;
+            background: var(--gray-100);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-900);
+            border-bottom: 1px solid var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        #sections-list .block-group-header:hover {
+            background: var(--gray-200);
+        }
+
+        #sections-list .block-group-header .chevron {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            display: inline-flex;
+        }
+
+        #sections-list .block-group-header .chevron svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        #sections-list .block-group-header.collapsed .chevron {
+            transform: rotate(-90deg);
+        }
+
+        #sections-list .block-estimates {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        #sections-list .block-estimates.collapsed {
+            max-height: 0 !important;
+        }
+
+        /* Override existing .estimate-item only inside the left sections list */
+        #sections-list .estimate-item {
+            padding: 8px 12px 8px 24px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 12px;
+            color: var(--gray-700);
+            transition: background 0.1s;
+            border-radius: 0;
+            margin-bottom: 0;
+        }
+
+        #sections-list .estimate-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        #sections-list .estimate-item.active {
+            background: var(--primary-lighter);
+            color: var(--primary);
+            font-weight: 500;
+            border: 0;
+        }
+
+        #sections-list .empty-note {
+            padding: 8px 12px 8px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 11px;
+            color: var(--gray-500);
+        }
+
+        /* Details table should expand to available width */
+        #details-estimate-table {
+            width: 100%;
+        }
+
+        #details-estimate-table thead th:nth-child(3),
+        #details-estimate-table tbody td:nth-child(3) {
+            width: auto;
+        }
+
+        .stage-card {
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+        }
+
+        .stage-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .stage-meta {
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 600;
+        }
+
+        .stage-body {
+            padding: 8px 10px 12px 10px;
+        }
+
+        .work-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--gray-100);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background: #fff;
+        }
+
+        .row-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .row-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--gray-700);
+        }
+
+        .code-badge {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            border: 1px solid var(--gray-200);
+            min-width: 48px;
+            text-align: center;
+        }
+
+        .work-name {
+            font-weight: 600;
+            color: var(--gray-800);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .qty-chip {
+            font-size: 12px;
+            color: #22c55e;
+            background: #ecfdf3;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .price-chip {
+            font-size: 12px;
+            color: var(--gray-600);
+            background: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .res-list {
+            margin-top: 6px;
+            margin-left: 28px;
+            border-left: 2px solid var(--gray-100);
+            padding-left: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .res-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border: 1px solid var(--gray-100);
+            border-radius: 4px;
+        }
+
+        .res-name {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--gray-700);
+        }
+
+        .res-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 700;
+        }
+
+        .chevron-sm {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .section-group {
+            border: 1px solid var(--gray-100);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: var(--white);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .section-group .list-item {
+            border-bottom: none;
+        }
+
+        .nested-list {
+            padding: 0 8px 8px 14px;
+            background: var(--gray-50);
+        }
+
+        .nested-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 6px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .nested-item:hover {
+            border-color: var(--primary-light);
+            background: #f5fbf7;
+        }
+
+        .nested-item.active {
+            border-color: var(--primary);
+            background: var(--primary-lighter);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .chevron {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .empty-note {
+            padding: 8px 10px;
+            color: var(--gray-400);
+            font-size: 12px;
+        }
+
+        /* --- List Styles --- */
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-50);
+            transition: background 0.1s;
+        }
+
+        .list-item:hover {
+            background: var(--gray-50);
+        }
+
+        .item-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        /* --- Upload Area --- */
+        .upload-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--gray-300);
+            border-radius: 4px;
+            margin: 12px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .upload-container:hover,
+        .upload-container.dragover {
+            border-color: var(--primary);
+            background: var(--primary-lighter);
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        /* --- Toast Notification --- */
+        #toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--gray-900);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            z-index: 2000;
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* --- Tree View Styles --- */
+        .tree-stage {
+            margin-bottom: 20px;
+        }
+
+        .tree-stage-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gray-900);
+            padding: 10px 14px;
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tree-work {
+            margin-left: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-100);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .tree-work:hover {
+            border-color: var(--primary-light);
+        }
+
+        .tree-work-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .tree-resources {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border-top: 1px dashed var(--gray-200);
+            padding-top: 8px;
+        }
+
+        .tree-resource {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--gray-600);
+            padding: 2px 0;
+        }
+
+        .res-type-tag {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: var(--radius-md);
+            margin-right: 8px;
+            background: var(--gray-100);
+            color: var(--gray-500);
+            width: 80px;
+            text-align: center;
+        }
+
+        .res-type-material {
+            background: #E0F2FE;
+            color: #0369A1;
+        }
+
+        .res-type-work {
+            background: #F0FDF4;
+            color: #15803D;
+        }
+
+        .res-type-equipment {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .res-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .res-qty {
+            width: 70px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .res-unit {
+            width: 40px;
+            text-align: right;
+            color: var(--gray-400);
+            font-weight: 500;
+        }
+
+        .estimate-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: var(--radius-md);
+            margin-bottom: 4px;
+        }
+
+        .estimate-item:hover {
+            background: var(--primary-lighter);
+        }
+
+        .estimate-item.active {
+            background: var(--primary-lighter);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .estimate-item.active .item-name {
+            color: var(--primary);
+        }
+
+        .section-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: var(--radius-md);
+            margin-bottom: 4px;
+        }
+
+        .section-item:hover {
+            background: var(--gray-100);
+        }
+
+        .section-item.active {
+            background: var(--primary-lighter);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .section-item.active .item-name {
+            color: var(--primary);
+        }
+
+        .caret {
+            display: inline-block;
+            transition: transform 0.2s;
+            cursor: pointer;
+            color: var(--gray-400);
+            width: 14px;
+            text-align: center;
+            font-size: 11px;
+            user-select: none;
+        }
+
+        .tree-stage-title,
+        .tree-work-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tree-stage-title:hover {
+            background: var(--gray-100);
+        }
+
+        .tree-work-header:hover {
+            color: var(--primary);
+        }
+
+        .res-icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        /* Shadow for work items */
+        .shadow-sm {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        /* Status Steps */
+        .status-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /*
+          Important: the connector line must align with the circle center.
+          Because labels increase the step item's height, we top-align the row
+          and push the line down to the circle center via margin-top.
+        */
+        .status-steps {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            flex: 1;
+            gap: 0;
+            min-width: 0;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 86px;
+        }
+
+        .status-step {
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            font-weight: 700;
+            font-size: 12px;
+            line-height: 1;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .status-step.done {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--white);
+        }
+
+        .status-step.active {
+            background: var(--primary-lighter);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .status-step.winner {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--white);
+        }
+
+        .status-step.next {
+            background: var(--white);
+            border: 2px solid var(--accent-orange);
+            color: var(--accent-orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .status-step.next svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+        .status-step.failed {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: var(--white);
+        }
+
+        .status-line {
+            width: 44px;
+            height: 3px;
+            border-radius: 999px;
+            background: var(--gray-200);
+            margin: 14px 6px 0 6px;
+            flex: 0 0 auto;
+        }
+
+        .status-line.done {
+            background: var(--primary);
+        }
+
+        .status-line.active {
+            background: linear-gradient(90deg, var(--primary) 50%, var(--gray-200) 50%);
+        }
+
+        .step-label {
+            font-size: 10px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.15;
+            min-height: 24px;
+            max-width: 90px;
+            user-select: none;
+        }
+
+        .step-label.done {
+            color: var(--primary);
+        }
+
+        .step-label.active {
+            color: var(--primary);
+        }
+
+        .step-label.next {
+            color: var(--accent-orange);
+        }
+
+        .step-label.winner {
+            color: var(--primary);
+        }
+
+        /* Rating & Score */
+        .rating-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 16px;
+            border-left: 1px solid var(--gray-200);
+            margin-left: 8px;
+        }
+
+        .rating-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+        }
+
+        .rating-cubes {
+            display: flex;
+            gap: 2px;
+        }
+
+        .rating-cube {
+            width: 8px;
+            height: 14px;
+            background: var(--gray-200);
+            border-radius: 4px;
+        }
+
+        .rating-cube.active:nth-child(1),
+        .rating-cube.active:nth-child(2),
+        .rating-cube.active:nth-child(3) {
+            background: #ef4444;
+        }
+
+        .rating-cube.active:nth-child(4),
+        .rating-cube.active:nth-child(5),
+        .rating-cube.active:nth-child(6),
+        .rating-cube.active:nth-child(7) {
+            background: #f59e0b;
+        }
+
+        .rating-cube.active:nth-child(8),
+        .rating-cube.active:nth-child(9),
+        .rating-cube.active:nth-child(10) {
+            background: #22c55e;
+        }
+
+        .rating-value {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--gray-900);
+        }
+
+        .mc-rating {
+            background: var(--primary-lighter);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        /* Documents Section */
+        .documents-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 16px;
+            border-left: 1px solid var(--gray-200);
+        }
+
+        .doc-upload-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .doc-upload-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px dashed var(--gray-300);
+            background: var(--gray-50);
+            color: var(--gray-600);
+        }
+
+        .doc-upload-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-lighter);
+            color: var(--primary);
+        }
+
+        .doc-upload-btn.uploaded {
+            border: 1px solid var(--accent-green);
+            background: var(--primary-lighter);
+            color: var(--accent-green);
+            border-style: solid;
+        }
+
+        .doc-upload-btn input[type="file"] {
+            display: none;
+        }
+
+        .doc-upload-btn.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .right-panel-toggle-collapsed {
+            margin-bottom: 12px;
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gray-600);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.15s ease;
+        }
+
+        .right-panel-toggle-collapsed:hover {
+            background: var(--gray-50);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        #sub-chat-input {
+            flex: 1;
+            border: none;
+            padding: 8px;
+            font-size: var(--font-size-base);
+            outline: none;
+            background: transparent;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <video autoplay muted loop playsinline id="login-video">
+            <source src="src/media/Login.mp4" type="video/mp4">
+        </video>
+        <div class="login-card">
+            <div class="login-logo" style="text-transform: uppercase;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                PROBIM PORTAL
+            </div>
+            <div class="login-title"
+                style="font-size: 11px; font-weight: 700; color: var(--gray-400); letter-spacing: 0.1em; text-transform: uppercase; margin-top: -4px;">
+                МОДУЛЬ ТЕНДЕРА</div>
+
+            <div class="code-input-group" style="margin-top: 32px;">
+                <label>Введите 4-значный код</label>
+                <div class="split-inputs">
+                    <input type="text" class="code-input-single" maxlength="1" pattern="\d*" inputmode="numeric"
+                        autofocus>
+                    <input type="text" class="code-input-single" maxlength="1" pattern="\d*" inputmode="numeric">
+                    <input type="text" class="code-input-single" maxlength="1" pattern="\d*" inputmode="numeric">
+                    <input type="text" class="code-input-single" maxlength="1" pattern="\d*" inputmode="numeric">
+                </div>
+            </div>
+
+            <button id="btn-login" class="btn btn-primary btn-block">Войти в систему</button>
+            <div id="login-error" style="color: var(--accent-red); font-size: 13px; margin-top: 16px; display: none;">Неверный код
+                доступа</div>
+        </div>
+    </div>
+
+    <!-- Portal Screen -->
+    <div id="portal-screen">
+        <header class="portal-header">
+            <div class="portal-brand">
+                <div class="portal-logo">ProBIM</div>
+                <div class="tender-info-chip" id="tender-title-chip">Загрузка...</div>
+            </div>
+            <div class="portal-actions" style="display:flex; gap:12px;">
+                <button class="btn btn-secondary" id="btn-save">Сохранить черновик</button>
+                <button class="btn btn-primary" id="btn-submit">Отправить оферту</button>
+                <button class="btn btn-danger" onclick="logout()" style="display:flex; align-items:center; gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Выйти
+                </button>
+            </div>
+        </header>
+
+        <!-- Status Steps, Rating, Documents Bar -->
+        <section class="status-bar" id="status-bar">
+            <!-- Status Steps -->
+            <div class="status-steps" id="status-steps">
+                <!-- Will be populated by JS -->
+            </div>
+
+            <!-- Documents Upload -->
+            <div class="documents-section">
+                <span class="rating-label">Документы</span>
+                <div class="doc-upload-group">
+                    <label class="doc-upload-btn" id="cert-upload-btn">
+                        <input type="file" id="certificate-file" accept="image/*,.pdf"
+                            onchange="uploadDocument('certificate', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        <span>Сертификат</span>
+                    </label>
+                    <label class="doc-upload-btn" id="license-upload-btn">
+                        <input type="file" id="license-file" accept="image/*,.pdf"
+                            onchange="uploadDocument('license', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                        <span>Лицензия</span>
+                    </label>
+                    <label class="doc-upload-btn" id="mtb-upload-btn">
+                        <input type="file" id="mtb-file" accept="image/*,.pdf" onchange="uploadDocument('mtb', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="7.5 4.21 12 6.81 16.5 4.21" />
+                            <polyline points="7.5 19.79 7.5 14.63 3 12" />
+                            <polyline points="21 12 16.5 14.63 16.5 19.79" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                        <span>МТБ</span>
+                    </label>
+                    <label class="doc-upload-btn" id="tr-upload-btn">
+                        <input type="file" id="tr-file" accept="image/*,.pdf" onchange="uploadDocument('tr', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span>Трудовые ресурсы</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- MC Rating -->
+            <div class="rating-section">
+                <span class="rating-label">Ваш рейтинг в reyting.mc.uz</span>
+                <span class="mc-rating" id="mc-rating">—</span>
+            </div>
+        </section>
+
+        <section class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Общая сумма предложения</div>
+                <input type="text" id="total-price" class="stat-input" placeholder="0,00" inputmode="decimal">
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Срок выполнения (дней)</div>
+                <input type="number" id="completion-days" class="stat-input" placeholder="0">
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Дата начала лота</div>
+                <div class="stat-value" id="start-date-val">—</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Дата окончания</div>
+                <div class="stat-value" id="deadline-val">—</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">До завершения</div>
+                <div class="stat-value countdown-timer" id="timer-val">—</div>
+            </div>
+        </section>
+
+        <section class="requisites-bar" id="sub-requisites">
+            <!-- Subcontractor requisites will be here -->
+        </section>
+
+        <main class="main-content">
+            <!-- Секции + сметы в иерархии -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Секции и сметы</div>
+                </div>
+                <div class="panel-body" id="sections-list">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- Детальный просмотр & загрузка -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title" id="details-title">Просмотр сметы</div>
+                    <div class="panel-header-actions">
+                        <button class="btn btn-secondary" id="top-btn-download" style="display: none;"
+                            onclick="downloadEstimate()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Скачать CSV
+                        </button>
+                        <button class="btn btn-primary" id="top-btn-upload-offer" style="display:flex; align-items:center;"
+                            onclick="document.getElementById('file-upload').click()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                            Загрузить оферту в систему CSV
+                        </button>
+                        <button class="btn btn-secondary" id="top-btn-reset-offer" style="display: none;"
+                            onclick="openResetOfferConfirm()">
+                            Вернуть в исходную
+                        </button>
+                        <button class="btn btn-secondary" id="top-btn-view-contract" style="display:none;" onclick="openContractModal()">
+                            Посмотреть договор
+                        </button>
+                        <input type="file" id="file-upload" accept=".csv" style="display: none;"
+                            onchange="handleFiles(this.files)">
+                    </div>
+                </div>
+                <div class="panel-body" id="details-view">
+                    <div style="text-align: center; color: var(--gray-400); margin-top: 40px;">Выберите смету для
+                        просмотра деталей</div>
+                </div>
+                <div id="file-status"
+                    style="margin: 0 20px 20px 20px; padding: 10px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; display: none; background: var(--gray-100);">
+                </div>
+            </div>
+
+            <!-- Правая панель: 3D + файлы (как на /#estimate) -->
+            <div class="right-panel-container" id="sub-right-panel-container">
+                <!-- Табы в свернутом состоянии -->
+                <div class="right-panel-tabs-collapsed">
+                    <button class="right-panel-toggle-collapsed" onclick="SubRightPanel.toggleRightPanel(event)" title="Развернуть панель">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div class="right-panel-tab-collapsed" data-tab="3d" onclick="SubRightPanel.switchRightPanelTab('3d')">3D Вид</div>
+                    <div class="right-panel-tab-collapsed" data-tab="files" onclick="SubRightPanel.switchRightPanelTab('files')">Файлы</div>
+                    <div class="right-panel-tab-collapsed" data-tab="chat" onclick="SubRightPanel.switchRightPanelTab('chat')">Чат</div>
+                </div>
+
+                <div class="right-panel-content">
+                    <!-- Табы в развернутом состоянии -->
+                    <div class="right-panel-tabs-expanded" style="display: flex; align-items: stretch; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                        <div style="display: flex; align-items: stretch;">
+                            <div class="right-panel-tab-expanded" data-tab="3d" onclick="SubRightPanel.switchRightPanelTab('3d')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                </svg>
+                                3D Вид
+                            </div>
+                            <div class="right-panel-tab-expanded" data-tab="files" onclick="SubRightPanel.switchRightPanelTab('files')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                    <polyline points="13 2 13 9 20 9"></polyline>
+                                </svg>
+                                Файлы
+                            </div>
+                            <div class="right-panel-tab-expanded" data-tab="chat" onclick="SubRightPanel.switchRightPanelTab('chat')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+                                </svg>
+                                Чат
+                            </div>
+                        </div>
+                        <button class="right-panel-toggle" id="sub-right-panel-toggle" title="Свернуть панель" style="position: static; margin-right: 8px; flex-shrink: 0; align-self: center;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 5 15 12 9 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Контент: 3D -->
+                    <div id="sub-right-panel-content-3d" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                        <div id="ifc-viewer-panel" style="flex: 1; position: relative; overflow: hidden;">
+                            <canvas id="ifc-canvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
+                            <canvas id="ifc-navcube-canvas" class="ifc-navcube-canvas" aria-label="Куб навигации"></canvas>
+                            <div id="ifc-viewer-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                                <div style="text-align: center; color: var(--gray-400); padding: 16px;">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px;">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                    </svg>
+                                    <p style="font-size: 16px; margin-bottom: 8px;">3D Просмотр модели</p>
+                                    <p id="ifc-status-text" style="font-size: 13px; color: var(--gray-500);">Выберите смету для просмотра 3D</p>
+                                </div>
+                            </div>
+
+                            <div id="viewer-controls" class="viewer-controls">
+                                <div class="viewer-control-row">
+                                    <button onclick="SubRightPanel.viewerZoomIn()" class="viewer-btn" title="Приблизить">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <circle cx="12" cy="12" r="8"/>
+                                            <line x1="12" y1="8" x2="12" y2="16"/>
+                                            <line x1="8" y1="12" x2="16" y2="12"/>
+                                        </svg>
+                                    </button>
+                                    <button onclick="SubRightPanel.viewerZoomOut()" class="viewer-btn" title="Отдалить">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <circle cx="12" cy="12" r="8"/>
+                                            <line x1="8" y1="12" x2="16" y2="12"/>
+                                        </svg>
+                                    </button>
+                                    <button onclick="SubRightPanel.viewerFitToView()" class="viewer-btn" title="Центрировать модель">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <circle cx="12" cy="12" r="9"/>
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </button>
+                                    <button id="toggle-spaces-btn" onclick="SubRightPanel.toggleSpacesVisibility()" class="viewer-btn" title="Показать/скрыть помещения" style="background: var(--gray-200);">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                            <line x1="3" y1="9" x2="21" y2="9"/>
+                                            <line x1="9" y1="21" x2="9" y2="9"/>
+                                        </svg>
+                                    </button>
+                                    <button id="toggle-section-btn" onclick="SubRightPanel.toggleSectionCut()" class="viewer-btn viewer-btn-mode" title="Разрез">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <circle cx="6" cy="6" r="2" />
+                                            <circle cx="6" cy="18" r="2" />
+                                            <path d="M20 4L8.5 11.5" />
+                                            <path d="M20 20L8.5 12.5" />
+                                            <path d="M8.5 11.5L7.5 10.5" />
+                                            <path d="M8.5 12.5L7.5 13.5" />
+                                        </svg>
+                                    </button>
+                                    <button id="toggle-measure-btn" onclick="SubRightPanel.toggleDistanceMeasure()" class="viewer-btn viewer-btn-mode" title="Замер (2 клика)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                            <path d="M4 12h16" />
+                                            <path d="M7 9l-3 3 3 3" />
+                                            <path d="M17 9l3 3-3 3" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Контент: Файлы -->
+                    <div id="sub-right-panel-content-files" style="flex: 1; display: none; flex-direction: column; overflow: hidden; background: var(--white);">
+                        <div id="sub-estimate-files-container" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                            <div style="padding: 40px; text-align: center; color: var(--gray-500);">Выберите смету</div>
+                        </div>
+                    </div>
+
+                    <!-- Контент: Чат -->
+                    <div id="sub-right-panel-content-chat" style="flex: 1; display: none; flex-direction: column; overflow: hidden; background: var(--white);">
+                        <div class="chat-conversation-header" style="flex-shrink: 0;">
+                            <div class="chat-conversation-info">
+                                <div class="name" id="sub-chat-title">Чат по смете</div>
+                                <div class="status" id="sub-chat-subtitle">Выберите смету</div>
+                            </div>
+                        </div>
+
+                        <div id="sub-chat-messages" class="chat-messages-area">
+                            <div style="padding: 40px; text-align: center; color: var(--gray-500); font-size: 12px;">Выберите смету</div>
+                        </div>
+
+                        <div class="chat-input-area" style="flex-shrink: 0;">
+                            <input type="text" id="sub-chat-input" placeholder="Сообщение..." autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast">Уведомление</div>
+
+    <div id="offer-modal-overlay" class="offer-modal-overlay" onclick="offerModalOverlayClick(event)">
+        <div class="offer-modal" role="dialog" aria-modal="true" aria-label="Сопоставление сметы">
+            <div class="offer-modal-header">
+                <div>
+                    <div class="offer-modal-title">Сопоставление сметы</div>
+                    <div class="offer-modal-summary" id="offer-modal-summary"></div>
+                </div>
+                <div class="offer-modal-actions">
+                    <button class="btn btn-secondary btn-sm" type="button" title="Закрыть" onclick="closeOfferModal()">Закрыть</button>
+                </div>
+            </div>
+
+            <div class="offer-modal-body">
+                <div class="offer-panel">
+                    <div class="offer-panel-header">
+                        <div class="offer-panel-title">Исходная смета</div>
+                        <div class="offer-panel-hint">Без цен</div>
+                    </div>
+                    <div class="offer-table-wrap" id="offer-expected-wrap">
+                        <table class="offer-table" id="offer-expected-table">
+                            <colgroup>
+                                <col style="width: 60px;">
+                                <col style="width: 80px;">
+                                <col style="width: 400px;">
+                                <col style="width: 70px;">
+                                <col style="width: 90px;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">№</th>
+                                    <th style="width: 80px;">Шифр</th>
+                                    <th style="width: 400px;">Наименование</th>
+                                    <th style="width: 70px;">Ед</th>
+                                    <th style="width: 90px;">Кол-во</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="offer-panel">
+                    <div class="offer-panel-header">
+                        <div class="offer-panel-title">Загруженный CSV</div>
+                        <div class="offer-panel-hint">С ценами/суммами</div>
+                    </div>
+                    <div class="offer-table-wrap" id="offer-uploaded-wrap">
+                        <table class="offer-table" id="offer-uploaded-table">
+                            <colgroup>
+                                <col style="width: 60px;">
+                                <col style="width: 80px;">
+                                <col style="width: 400px;">
+                                <col style="width: 70px;">
+                                <col style="width: 90px;">
+                                <col style="width: 110px;">
+                                <col style="width: 110px;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">№</th>
+                                    <th style="width: 80px;">Шифр</th>
+                                    <th style="width: 400px;">Наименование</th>
+                                    <th style="width: 70px;">Ед</th>
+                                    <th style="width: 90px;">Кол-во</th>
+                                    <th style="width: 110px;">Цена</th>
+                                    <th style="width: 110px;">Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="offer-modal-footer">
+                <div class="offer-modal-issues" id="offer-modal-issues">Выберите строку для просмотра статуса</div>
+                <div class="offer-modal-actions">
+                    <button class="btn-primary" type="button" id="offer-modal-apply" onclick="applyOfferFromModal()">Применить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-reset-overlay" class="confirm-modal-overlay" style="display:none;" onclick="confirmResetOverlayClick(event)">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-label="Подтверждение">
+            <div class="confirm-modal-header">
+                <div class="confirm-modal-title">Подтвердите действие</div>
+            </div>
+            <div class="confirm-modal-body">
+                <div style="font-weight: 700; margin-bottom: 8px;">Вернуть оферту в исходную смету?</div>
+                <div style="color: var(--gray-600); font-size: 13px; line-height: 1.35;">
+                    Будут удалены все цены и суммы из вашей оферты. Исходная смета (без цен) останется.
+                </div>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn btn-secondary btn-sm" type="button" onclick="closeResetOfferConfirm()">Отмена</button>
+                <button class="btn-primary" type="button" onclick="confirmResetOffer()">Вернуть</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="contract-modal-overlay" class="confirm-modal-overlay" style="display:none;" onclick="contractModalOverlayClick(event)">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-label="Договор">
+            <div class="confirm-modal-header">
+                <div class="confirm-modal-title">Договор</div>
+            </div>
+            <div class="confirm-modal-body" id="contract-modal-body"></div>
+            <div class="confirm-modal-footer">
+                <button class="btn btn-secondary btn-sm" type="button" onclick="closeContractModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- xeokit SDK - ES module exposes window.xeokit -->
+    <script type="module" src="js/xeokit-loader.js"></script>
+    <script src="js/ifcViewer.js"></script>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = (() => {
+            const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            if (isLocalHost && window.location.port === '8000') {
+                return 'http://localhost:3001';
+            }
+            return window.location.origin;
+        })();
+
+        // State
+        const urlParams = new URLSearchParams(window.location.search);
+        let token = urlParams.get('token');
+        let tenderId = urlParams.get('tenderId');
+        let authCode = localStorage.getItem('sub_authCode') || null;
+        let tenderData = null;
+        let timerInterval = null;
+        let activeBlockName = null;
+        let activeEstimateId = null;
+
+        const SubEstimateChat = {
+            initialized: false,
+            _tenderId: null,
+            _tenderName: null,
+            _estimateName: null,
+            _pollTimer: null,
+            _lastMarkReadAt: 0,
+
+            init() {
+                if (this.initialized) return;
+                this.initialized = true;
+
+                const input = document.getElementById('sub-chat-input');
+                if (input) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            this.sendMessage(String(input.value || ''));
+                            input.value = '';
+                        }
+                    });
+                }
+            },
+
+            setContext({ tenderId, tenderName, estimateName }) {
+                this._tenderId = tenderId ? String(tenderId) : null;
+                this._tenderName = tenderName ? String(tenderName) : null;
+                this._estimateName = estimateName ? String(estimateName) : null;
+
+                const titleEl = document.getElementById('sub-chat-title');
+                const subtitleEl = document.getElementById('sub-chat-subtitle');
+
+                if (titleEl) titleEl.textContent = 'Чат лота';
+                const subtitle = this._estimateName || this._tenderName || 'Лот';
+                if (subtitleEl) subtitleEl.textContent = subtitle;
+            },
+
+            renderPlaceholder() {
+                const container = document.getElementById('sub-chat-messages');
+                if (!container) return;
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray-500); font-size: 12px;">Чат недоступен</div>';
+            },
+
+            setActive(isActive) {
+                const active = Boolean(isActive);
+                if (!active) {
+                    if (this._pollTimer) {
+                        clearInterval(this._pollTimer);
+                        this._pollTimer = null;
+                    }
+                    return;
+                }
+
+                if (this._pollTimer) return;
+
+                this._pollTimer = setInterval(() => {
+                    if (SubRightPanel?.currentTab === 'chat') {
+                        this.loadAndRender({ silent: true });
+                    }
+                }, 4000);
+            },
+
+            async _fetchMessages() {
+                if (!token || !authCode) return null;
+                const url = `${API_BASE_URL}/api/tenders/invites/${encodeURIComponent(token)}/chat?code=${encodeURIComponent(authCode)}`;
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    const txt = await resp.text();
+                    throw new Error(`Chat fetch failed: ${resp.status} ${txt}`);
+                }
+                return await resp.json();
+            },
+
+            async _markRead() {
+                if (!token || !authCode) return;
+                const nowMs = Date.now();
+                if (nowMs - this._lastMarkReadAt < 1500) return;
+                this._lastMarkReadAt = nowMs;
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/api/tenders/invites/${encodeURIComponent(token)}/chat/read`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: authCode })
+                    });
+                    // ignore non-OK (chat still usable)
+                    if (!resp.ok) return;
+                } catch {
+                    // ignore
+                }
+            },
+
+            async loadAndRender({ silent } = {}) {
+                if (!token || !authCode) {
+                    this.renderPlaceholder();
+                    return;
+                }
+
+                const container = document.getElementById('sub-chat-messages');
+                if (!container) return;
+
+                if (!silent) {
+                    container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray-500); font-size: 12px;">Загрузка...</div>';
+                }
+
+                let data;
+                try {
+                    data = await this._fetchMessages();
+                } catch (e) {
+                    if (!silent) {
+                        container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--accent-red); font-size: 12px;">Ошибка загрузки чата</div>`;
+                    }
+                    return;
+                }
+
+                // Update subtitle with tender name if available
+                if (data?.tenderName) {
+                    this._tenderName = String(data.tenderName);
+                    const subtitleEl = document.getElementById('sub-chat-subtitle');
+                    const subtitle = this._estimateName || this._tenderName || 'Лот';
+                    if (subtitleEl) subtitleEl.textContent = subtitle;
+                }
+
+                const messages = Array.isArray(data?.messages) ? data.messages : [];
+                container.innerHTML = '';
+
+                const dateSep = document.createElement('div');
+                dateSep.className = 'chat-date-separator';
+                dateSep.innerHTML = '<span>Сегодня</span>';
+                container.appendChild(dateSep);
+
+                if (!messages.length) {
+                    const hint = document.createElement('div');
+                    hint.style.padding = '24px';
+                    hint.style.textAlign = 'center';
+                    hint.style.color = 'var(--gray-500)';
+                    hint.style.fontSize = '12px';
+                    hint.textContent = 'Напишите сообщение — тендерный отдел ответит здесь.';
+                    container.appendChild(hint);
+                }
+
+                messages.forEach((m) => {
+                    const sender = String(m?.sender || '').toUpperCase();
+                    const dir = sender === 'SUBCONTRACTOR' ? 'outgoing' : 'incoming';
+                    const msgEl = document.createElement('div');
+                    msgEl.className = `chat-msg ${dir === 'outgoing' ? 'outgoing' : 'incoming'}`;
+                    const time = new Date(m?.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    msgEl.innerHTML = `
+                        <div class="chat-bubble">
+                            ${escapeHtml(String(m?.text || ''))}
+                            <span class="chat-msg-time">${escapeHtml(time)}</span>
+                        </div>
+                    `;
+                    container.appendChild(msgEl);
+                });
+
+                container.scrollTop = container.scrollHeight;
+                await this._markRead();
+            },
+
+            async sendMessage(text) {
+                const trimmed = String(text || '').trim();
+                if (!trimmed) return;
+                if (!token || !authCode) return;
+
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/api/tenders/invites/${encodeURIComponent(token)}/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: authCode, text: trimmed })
+                    });
+                    if (!resp.ok) {
+                        const t = await resp.text();
+                        throw new Error(t || `HTTP ${resp.status}`);
+                    }
+                } catch (e) {
+                    console.error('Chat send failed', e);
+                    showToast('Ошибка отправки сообщения');
+                    return;
+                }
+
+                await this.loadAndRender({ silent: true });
+            }
+        };
+
+        const SubRightPanel = {
+            initialized: false,
+            currentTab: localStorage.getItem('subRightPanelTab') || 'files',
+            collapsed: localStorage.getItem('subRightPanelCollapsed') === 'true',
+            currentEstimateDbId: null,
+            _context: null,
+            _files: [],
+            _viewerReady: false,
+            _lastXktUrl: null,
+
+            init() {
+                if (this.initialized) return;
+                this.initialized = true;
+
+                SubEstimateChat.init();
+
+                const container = document.getElementById('sub-right-panel-container');
+                const toggleBtn = document.getElementById('sub-right-panel-toggle');
+                if (!container) return;
+
+                if (this.collapsed) {
+                    container.classList.add('collapsed');
+                }
+
+                if (toggleBtn) {
+                    toggleBtn.onclick = (e) => this.toggleRightPanel(e);
+                }
+
+                this.updateRightPanelContent();
+            },
+
+            async setEstimateContext(ctx) {
+                const safeCtx = ctx && typeof ctx === 'object' ? ctx : null;
+                this._context = safeCtx;
+
+                // Resolve estimateId if missing
+                let nextId = safeCtx?.estimateId ? String(safeCtx.estimateId) : null;
+                if (!nextId && safeCtx?.projectId && (safeCtx?.blockId || safeCtx?.blockName) && safeCtx?.estimateName) {
+                    try {
+                        nextId = await this.resolveEstimateIdByName(safeCtx);
+                    } catch (e) {
+                        console.warn('SubRightPanel: resolveEstimateIdByName failed', e);
+                    }
+                }
+
+                const next = nextId ? String(nextId) : null;
+                if (this.currentEstimateDbId === next) {
+                    SubEstimateChat.setContext({
+                        estimateId: next,
+                        estimateName: safeCtx?.estimateName
+                    });
+                    this.updateRightPanelContent();
+                    return;
+                }
+
+                this.currentEstimateDbId = next;
+                this._files = [];
+                this._viewerReady = false;
+                this._lastXktUrl = null;
+
+                if (typeof IFCViewerManager !== 'undefined' && IFCViewerManager && typeof IFCViewerManager.destroy === 'function') {
+                    try { IFCViewerManager.destroy(); } catch (e) { /* ignore */ }
+                }
+
+                SubEstimateChat.setContext({
+                    estimateId: this.currentEstimateDbId,
+                    estimateName: safeCtx?.estimateName
+                });
+
+                this.updateRightPanelContent();
+            },
+
+            async resolveEstimateIdByName(ctx) {
+                const projectId = String(ctx.projectId || '').trim();
+                const estimateName = String(ctx.estimateName || '').trim();
+                const blockIdFromCtx = String(ctx.blockId || '').trim();
+                const blockNameFromCtx = String(ctx.blockName || '').trim();
+                if (!projectId || !estimateName) return null;
+
+                let blockId = blockIdFromCtx;
+                if (!blockId && blockNameFromCtx) {
+                    const blocksResp = await fetch(`${API_BASE_URL}/api/blocks?projectId=${encodeURIComponent(projectId)}`);
+                    if (blocksResp.ok) {
+                        const blocks = await blocksResp.json();
+                        const match = Array.isArray(blocks)
+                            ? blocks.find(b => String(b?.name || '').trim() === blockNameFromCtx)
+                            : null;
+                        blockId = match?.id ? String(match.id) : '';
+                    }
+                }
+
+                if (!blockId) return null;
+
+                const estResp = await fetch(`${API_BASE_URL}/api/estimates?projectId=${encodeURIComponent(projectId)}&blockId=${encodeURIComponent(blockId)}`);
+                if (!estResp.ok) return null;
+                const estimates = await estResp.json();
+                const found = Array.isArray(estimates)
+                    ? estimates.find(e => String(e?.name || '').trim() === estimateName)
+                    : null;
+                return found?.id ? String(found.id) : null;
+            },
+
+            toggleRightPanel(e) {
+                if (e) e.stopPropagation();
+                const container = document.getElementById('sub-right-panel-container');
+                if (!container) return;
+                const isCollapsed = container.classList.toggle('collapsed');
+                this.collapsed = isCollapsed;
+                localStorage.setItem('subRightPanelCollapsed', String(isCollapsed));
+                if (!isCollapsed) {
+                    // If expanded, ensure content is up to date
+                    this.updateRightPanelContent();
+                }
+                // Resize viewer canvas
+                if (typeof IFCViewerManager !== 'undefined' && IFCViewerManager && IFCViewerManager.viewer && typeof IFCViewerManager.refreshViewport === 'function') {
+                    setTimeout(() => { try { IFCViewerManager.refreshViewport(); } catch (e2) { /* ignore */ } }, 200);
+                }
+                window.dispatchEvent(new Event('resize'));
+            },
+
+            switchRightPanelTab(tabId) {
+                this.currentTab = tabId;
+                localStorage.setItem('subRightPanelTab', tabId);
+
+                // auto-expand when user switches tab from collapsed mode
+                const container = document.getElementById('sub-right-panel-container');
+                if (container && container.classList.contains('collapsed')) {
+                    container.classList.remove('collapsed');
+                    this.collapsed = false;
+                    localStorage.setItem('subRightPanelCollapsed', 'false');
+                }
+
+                this.updateRightPanelContent();
+            },
+
+            updateRightPanelContent() {
+                const content3d = document.getElementById('sub-right-panel-content-3d');
+                const contentFiles = document.getElementById('sub-right-panel-content-files');
+                const contentChat = document.getElementById('sub-right-panel-content-chat');
+
+                document.querySelectorAll('#sub-right-panel-container .right-panel-tab-expanded').forEach(t => {
+                    t.classList.toggle('active', t.dataset.tab === this.currentTab);
+                });
+                document.querySelectorAll('#sub-right-panel-container .right-panel-tab-collapsed').forEach(t => {
+                    t.classList.toggle('active', t.dataset.tab === this.currentTab);
+                });
+
+                if (this.currentTab === '3d') {
+                    if (content3d) content3d.style.display = 'flex';
+                    if (contentFiles) contentFiles.style.display = 'none';
+                    if (contentChat) contentChat.style.display = 'none';
+                    SubEstimateChat.setActive(false);
+                    this.load3D();
+                } else if (this.currentTab === 'chat') {
+                    if (content3d) content3d.style.display = 'none';
+                    if (contentFiles) contentFiles.style.display = 'none';
+                    if (contentChat) contentChat.style.display = 'flex';
+                    SubEstimateChat.setContext({
+                        tenderId: (tenderData?.tender?.id || tenderId || null),
+                        tenderName: (tenderData?.tender?.name || null),
+                        estimateName: this._context?.estimateName
+                    });
+                    SubEstimateChat.setActive(true);
+                    SubEstimateChat.loadAndRender();
+                } else {
+                    if (content3d) content3d.style.display = 'none';
+                    if (contentFiles) contentFiles.style.display = 'flex';
+                    if (contentChat) contentChat.style.display = 'none';
+                    SubEstimateChat.setActive(false);
+                    this.loadFiles();
+                }
+            },
+
+            async fetchEstimateMeta() {
+                if (!this.currentEstimateDbId) return null;
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/api/estimates/${encodeURIComponent(this.currentEstimateDbId)}`);
+                    if (!resp.ok) return null;
+                    return await resp.json();
+                } catch (e) {
+                    console.warn('Failed to fetch estimate meta', e);
+                    return null;
+                }
+            },
+
+            normalizeUploadPath(url) {
+                const s = String(url || '').trim();
+                if (!s) return '';
+                if (s.startsWith('http://') || s.startsWith('https://')) return s;
+                if (s.startsWith('/')) return s;
+                if (s.startsWith('uploads/')) return '/' + s;
+                return '/' + s;
+            },
+
+            async load3D() {
+                const statusText = document.getElementById('ifc-status-text');
+                const overlay = document.getElementById('ifc-viewer-overlay');
+                const controls = document.getElementById('viewer-controls');
+
+                if (!this.currentEstimateDbId) {
+                    if (statusText) statusText.textContent = 'Выберите смету для просмотра 3D';
+                    if (overlay) overlay.style.display = 'flex';
+                    if (controls) controls.classList.remove('is-visible');
+                    return;
+                }
+
+                if (statusText) statusText.textContent = 'Проверка наличия 3D модели...';
+                if (overlay) overlay.style.display = 'flex';
+                if (controls) controls.classList.remove('is-visible');
+
+                // Prefer hint from invite payload if present
+                const hintXktUrl = this._context?.estimateXktFileUrl;
+                const meta = hintXktUrl ? null : await this.fetchEstimateMeta();
+                const xktUrl = String(hintXktUrl || (meta?.xktFileUrl || meta?.xkt_file_url || '')).trim();
+                const hasXkt = !!String(xktUrl || '').trim();
+
+                if (!hasXkt) {
+                    if (statusText) statusText.textContent = '3D модель отсутствует для выбранной сметы';
+                    if (overlay) overlay.style.display = 'flex';
+                    return;
+                }
+
+                const xktPath = this.normalizeUploadPath(xktUrl);
+                if (this._viewerReady && this._lastXktUrl === xktPath) {
+                    if (overlay) overlay.style.display = 'none';
+                    if (controls) controls.classList.add('is-visible');
+                    return;
+                }
+
+                // Re-init viewer to avoid stale canvas bindings
+                if (typeof IFCViewerManager === 'undefined') {
+                    if (statusText) statusText.textContent = '3D модуль не загружен (ifcViewer.js)';
+                    return;
+                }
+
+                try {
+                    if (IFCViewerManager && typeof IFCViewerManager.destroy === 'function') {
+                        try { IFCViewerManager.destroy(); } catch (e) { /* ignore */ }
+                    }
+
+                    if (statusText) statusText.textContent = 'Загрузка 3D модели...';
+                    const ok = await IFCViewerManager.init('ifc-canvas', null);
+                    if (!ok) {
+                        if (statusText) statusText.textContent = 'Не удалось инициализировать 3D просмотр';
+                        return;
+                    }
+
+                    await IFCViewerManager.loadXKT(xktPath, `estimate-${this.currentEstimateDbId}`, (p) => {
+                        if (statusText) statusText.textContent = `Загрузка 3D модели: ${Math.round(Number(p) || 0)}%`;
+                    });
+
+                    this._viewerReady = true;
+                    this._lastXktUrl = xktPath;
+                    if (overlay) overlay.style.display = 'none';
+                    if (controls) controls.classList.add('is-visible');
+                } catch (e) {
+                    console.error('3D load error', e);
+                    if (statusText) statusText.textContent = `Ошибка загрузки 3D: ${e.message || e}`;
+                    if (overlay) overlay.style.display = 'flex';
+                }
+            },
+
+            async loadFiles() {
+                const container = document.getElementById('sub-estimate-files-container');
+                if (!container) return;
+
+                if (!this.currentEstimateDbId) {
+                    container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray-500);">Выберите смету</div>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div style="padding: 16px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; background: var(--gray-50);">
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--gray-700);">Файлы проекта</h3>
+                    </div>
+                    <div id="sub-files-content-area" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                        <div id="sub-files-list" style="flex: 1; overflow-y: auto; padding: 8px;">
+                            <div style="text-align: center; padding: 40px; color: var(--gray-400);">Загрузка...</div>
+                        </div>
+                    </div>
+                `;
+
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/api/estimates/${encodeURIComponent(this.currentEstimateDbId)}/files`);
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({}));
+                        throw new Error(err.error || 'Не удалось загрузить файлы');
+                    }
+                    const files = await resp.json();
+                    this._files = Array.isArray(files) ? files : [];
+                    this.renderFilesList();
+                } catch (e) {
+                    console.error('Files load error', e);
+                    const list = document.getElementById('sub-files-list');
+                    if (list) list.innerHTML = `<div style="color: var(--red-500); padding: 20px;">Ошибка загрузки: ${escapeHtml(e.message || e)}</div>`;
+                }
+            },
+
+            renderFilesList() {
+                const list = document.getElementById('sub-files-list');
+                const contentArea = document.getElementById('sub-files-content-area');
+                if (!list || !contentArea) return;
+
+                const files = this._files;
+                if (!files || files.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray-400);">Файлы не загружены</div>';
+                    return;
+                }
+
+                list.innerHTML = files.map(file => {
+                    const name = String(file?.name || '');
+                    const ext = (name.split('.').pop() || '').toLowerCase();
+                    let iconHtml = '';
+                    if (ext === 'pdf') {
+                        iconHtml = `<img src="img/pdf.png" style="width: 32px; height: 32px; object-fit: contain;" alt="PDF">`;
+                    } else if (ext === 'dwg' || ext === 'dxf') {
+                        iconHtml = `<img src="img/dwg.png" style="width: 32px; height: 32px; object-fit: contain;" alt="DWG">`;
+                    } else {
+                        iconHtml = `<div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--gray-100); color: var(--gray-500); border-radius: 4px; font-size: 10px; font-weight: bold;">${escapeHtml(ext.toUpperCase() || 'FILE')}</div>`;
+                    }
+
+                    const sizeMb = Number(file?.fileSize || 0) / 1024 / 1024;
+                    const meta = `${Number.isFinite(sizeMb) ? sizeMb.toFixed(2) : '0.00'} MB`;
+
+                    return `
+                        <div class="file-item" style="display: flex; align-items: center; padding: 10px; border-radius: var(--radius-md); margin-bottom: 4px; transition: background 0.2s; border: 1px solid transparent; cursor: pointer;" 
+                             onmouseover="this.style.background='var(--gray-50)'; this.style.borderColor='var(--gray-200)'" 
+                             onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'"
+                             onclick="SubRightPanel.viewProjectFile('${escapeHtml(file.id)}')">
+                            <div style="width: 32px; height: 32px; margin-right: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">${iconHtml}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 500; color: var(--gray-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+                                <div style="font-size: 11px; color: var(--gray-500);">${escapeHtml(meta)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            viewProjectFile(fileId) {
+                const file = this._files.find(f => String(f?.id) === String(fileId));
+                if (!file) return;
+
+                const contentArea = document.getElementById('sub-files-content-area');
+                if (!contentArea) return;
+
+                const fileUrl = this.normalizeUploadPath(file.fileUrl);
+                const previewUrl = file.previewUrl ? this.normalizeUploadPath(file.previewUrl) : '';
+                const name = String(file.name || 'Файл');
+                const ext = (name.split('.').pop() || '').toLowerCase();
+
+                const canPreviewPdf = ext === 'pdf' || !!previewUrl;
+
+                contentArea.innerHTML = `
+                    <div style="display: flex; flex-direction: column; height: 100%; background: #f8fafc;">
+                        <div style="padding: 8px 16px; background: white; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 12px;">
+                            <button class="btn btn-sm" onclick="SubRightPanel.backToFilesList()" style="padding: 4px; display: flex; align-items: center; gap: 4px; color: var(--gray-600);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                                Назад
+                            </button>
+                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(name)}</div>
+                            </div>
+                            <a href="${escapeHtml(fileUrl)}" download="${escapeHtml(name)}" class="btn btn-secondary btn-sm" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 4px;" title="Скачать">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </a>
+                        </div>
+                        <div style="flex: 1; position: relative; overflow: hidden; display: flex; align-items: stretch; justify-content: stretch;">
+                            ${canPreviewPdf ? `
+                                <iframe src="${escapeHtml((previewUrl || fileUrl))}#toolbar=0" style="width: 100%; height: 100%; border: none;"></iframe>
+                            ` : `
+                                <div style="text-align: center; padding: 40px; color: var(--gray-500); width: 100%;">
+                                    <h4 style="margin: 0 0 8px; color: var(--gray-800);">Превью недоступно</h4>
+                                    <p style="font-size: 13px; margin-bottom: 20px;">Скачайте файл для просмотра.</p>
+                                    <a href="${escapeHtml(fileUrl)}" download="${escapeHtml(name)}" class="btn btn-secondary">Скачать файл</a>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            },
+
+            backToFilesList() {
+                const container = document.getElementById('sub-estimate-files-container');
+                if (!container) return;
+                // Re-render list in-place
+                this.loadFiles();
+            },
+
+            viewerZoomIn() {
+                try { IFCViewerManager?.zoomIn?.(); } catch (e) { /* ignore */ }
+            },
+            viewerZoomOut() {
+                try { IFCViewerManager?.zoomOut?.(); } catch (e) { /* ignore */ }
+            },
+            viewerFitToView() {
+                try { IFCViewerManager?.fitToView?.(); } catch (e) { /* ignore */ }
+            },
+            toggleSpacesVisibility() {
+                try { IFCViewerManager?.toggleSpaces?.(); } catch (e) { /* ignore */ }
+            },
+            toggleSectionCut() {
+                try { IFCViewerManager?.toggleSectionCut?.(); } catch (e) { /* ignore */ }
+            },
+            toggleDistanceMeasure() {
+                try { IFCViewerManager?.toggleDistanceMeasure?.(); } catch (e) { /* ignore */ }
+            },
+        };
+
+        // Auto-login if we have saved credentials
+        window.addEventListener('load', async () => {
+            const savedToken = localStorage.getItem('sub_token');
+            const savedCode = localStorage.getItem('sub_authCode');
+            if (savedToken && savedCode) {
+                token = savedToken;
+                authCode = savedCode;
+                // If tenderId was not in URL, try to get it from localStorage
+                if (!tenderId) {
+                    tenderId = localStorage.getItem('sub_tenderId');
+                }
+                loadPortal();
+            }
+        });
+
+        // UI Elements
+        const loginScreen = document.getElementById('login-screen');
+        const portalScreen = document.getElementById('portal-screen');
+        const splitInputs = document.querySelectorAll('.code-input-single');
+        const btnLogin = document.getElementById('btn-login');
+        const loginError = document.getElementById('login-error');
+        const toast = document.getElementById('toast');
+
+        // Initial check
+        if (!token && !tenderId) {
+            alert('Ссылка недействительна (отсутствует токен или ID тендера)');
+        }
+
+        // --- Logic ---
+
+        function clearAuth(reason) {
+            console.warn('Clearing saved auth:', reason || 'unknown');
+            localStorage.removeItem('sub_token');
+            localStorage.removeItem('sub_authCode');
+            localStorage.removeItem('sub_tenderId');
+            token = null;
+            authCode = null;
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function parseMoneyInput(value) {
+            if (value == null) return 0;
+            let s = String(value).trim();
+            if (!s) return 0;
+            s = s.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ');
+            s = s.replace(/ /g, '');
+            s = s.replace(/,/g, '.');
+            s = s.replace(/[^0-9.\-]/g, '');
+            const n = parseFloat(s);
+            return Number.isFinite(n) ? n : 0;
+        }
+
+        function formatMoneyDisplay(value) {
+            const n = Number(value);
+            const safe = Number.isFinite(n) ? n : 0;
+            return safe.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Status Steps Configuration
+        const STATUS_STEPS = [
+            { key: 'invited', label: 'Приглашён', icon: '1' },
+            { key: 'login', label: 'Вход', icon: '2' },
+            { key: 'draft', label: 'Черновик', icon: '3' },
+            { key: 'submitted', label: 'Подано', icon: '4' },
+            { key: 'winner', label: 'Победит.', icon: '★' },
+            {
+                key: 'contract',
+                label: 'Договор',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>'
+            }
+        ];
+
+        function renderStatusSteps(currentStatus) {
+            const container = document.getElementById('status-steps');
+            const statusOrder = STATUS_STEPS.map(s => s.key);
+            const currentIdx = statusOrder.indexOf(currentStatus);
+
+                        const loaderSvg = (id) => `
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+                                <radialGradient id="${id}" cx=".66" fx=".66" cy=".3125" fy=".3125" gradientTransform="scale(1.5)">
+                                    <stop offset="0" stop-color="var(--accent-orange)"></stop>
+                                    <stop offset=".3" stop-color="var(--accent-orange)" stop-opacity=".9"></stop>
+                                    <stop offset=".6" stop-color="var(--accent-orange)" stop-opacity=".6"></stop>
+                                    <stop offset=".8" stop-color="var(--accent-orange)" stop-opacity=".3"></stop>
+                                    <stop offset="1" stop-color="var(--accent-orange)" stop-opacity="0"></stop>
+                                </radialGradient>
+                                <circle transform-origin="center" fill="none" stroke="url(#${id})" stroke-width="16" stroke-linecap="round" stroke-dasharray="200 1000" stroke-dashoffset="0" cx="100" cy="100" r="70">
+                                    <animateTransform type="rotate" attributeName="transform" calcMode="spline" dur="1.2s" values="0;360" keyTimes="0;1" keySplines="0.2 0 0.8 1" repeatCount="indefinite"></animateTransform>
+                                </circle>
+                                <circle transform-origin="center" fill="none" opacity=".18" stroke="var(--accent-orange)" stroke-width="16" stroke-linecap="round" cx="100" cy="100" r="70"></circle>
+                            </svg>
+                        `;
+
+            let html = '';
+            STATUS_STEPS.forEach((step, idx) => {
+                const isDone = idx < currentIdx;
+                const isActive = idx === currentIdx;
+                const isNext = idx === currentIdx + 1;
+                const isWinner = step.key === 'winner' && currentStatus === 'winner';
+
+                let stepClass = '';
+                if (isWinner) stepClass = 'winner';
+                else if (isDone) stepClass = 'done';
+                else if (isActive) stepClass = 'active';
+                else if (isNext) stepClass = 'next';
+
+                let labelClass = '';
+                if (isWinner) labelClass = 'winner';
+                else if (isDone) labelClass = 'done';
+                else if (isActive) labelClass = 'active';
+                else if (isNext) labelClass = 'next';
+
+                const loaderId = `status-next-${step.key}`;
+                const stepContent = isDone ? '✓' : (isNext ? loaderSvg(loaderId) : step.icon);
+
+                html += `
+                    <div class="step-item">
+                        <div class="status-step ${stepClass}">
+                            ${stepContent}
+                        </div>
+                        <span class="step-label ${labelClass}">${step.label}</span>
+                    </div>
+                `;
+
+                // Add line between steps (except after last)
+                if (idx < STATUS_STEPS.length - 1) {
+                    let lineClass = '';
+                    if (idx < currentIdx) lineClass = 'done';
+                    else if (idx === currentIdx) lineClass = 'active';
+                    html += `<div class="status-line ${lineClass}"></div>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function normalizeBidStatusToStepKey(status) {
+            const s = String(status || '').trim().toLowerCase();
+            if (!s) return 'login';
+            if (s === 'parsing') return 'draft';
+            if (s === 'parsed') return 'submitted';
+            if (s === 'contract') return 'contract';
+            if (s === 'winner') return 'winner';
+            if (s === 'draft') return 'draft';
+            if (s === 'submitted') return 'submitted';
+            if (s === 'login') return 'login';
+            if (s === 'invited') return 'invited';
+            return 'login';
+        }
+
+        function isLotClosed() {
+            const tenderStatus = String(tenderData?.tender?.status || '').toLowerCase();
+            const bidStatus = String(tenderData?.bid?.status || '').toLowerCase();
+            return tenderStatus === 'closed' || bidStatus === 'contract';
+        }
+
+        function applyClosedLotUI() {
+            const closed = isLotClosed();
+            const uploadBtn = document.getElementById('top-btn-upload-offer');
+            const resetBtn = document.getElementById('top-btn-reset-offer');
+            const fileInput = document.getElementById('file-upload');
+            const totalInput = document.getElementById('total-price');
+            const daysInput = document.getElementById('completion-days');
+            const saveBtn = document.getElementById('btn-save');
+            const submitBtn = document.getElementById('btn-submit');
+
+            if (uploadBtn) uploadBtn.disabled = closed;
+            if (resetBtn) resetBtn.disabled = closed;
+            if (fileInput) fileInput.disabled = closed;
+            if (totalInput) totalInput.disabled = closed;
+            if (daysInput) daysInput.disabled = closed;
+            if (saveBtn) saveBtn.disabled = closed;
+            if (submitBtn) submitBtn.disabled = closed;
+
+            // Documents upload lock
+            const docButtons = document.querySelectorAll('.doc-upload-btn');
+            docButtons.forEach((el) => {
+                if (closed) el.classList.add('disabled');
+                else el.classList.remove('disabled');
+            });
+            const docInputs = document.querySelectorAll('.doc-upload-btn input[type="file"]');
+            docInputs.forEach((inp) => {
+                inp.disabled = closed;
+            });
+
+            // Countdown label
+            if (closed) {
+                const timerEl = document.getElementById('timer-val');
+                if (timerEl) timerEl.textContent = 'Лот закрыт';
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
+        }
+
+        // Rating Cubes
+        function renderRatingCubes(score) {
+            const container = document.getElementById('rating-cubes');
+            const ratingValue = document.getElementById('rating-value');
+
+            const numScore = parseFloat(score) || 0;
+            let html = '';
+            for (let i = 0; i < 10; i++) {
+                html += `<div class="rating-cube ${i < numScore ? 'active' : ''}"></div>`;
+            }
+            container.innerHTML = html;
+            ratingValue.textContent = numScore.toFixed(1);
+        }
+
+        // Document Upload
+        async function uploadDocument(docType, input) {
+            if (!input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('docType', docType);
+            formData.append('token', token);
+            formData.append('code', authCode);
+
+            let btnId = `${docType}-upload-btn`;
+            if (docType === 'certificate') btnId = 'cert-upload-btn';
+            const btn = document.getElementById(btnId);
+
+            try {
+                btn.classList.add('uploading');
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/upload-doc`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    btn.classList.add('uploaded');
+                    const labelMap = { certificate: 'Сертификат', license: 'Лицензия', mtb: 'МТБ', tr: 'Трудовые ресурсы' };
+                    showToast(`${labelMap[docType] || docType} загружен успешно!`);
+                    // Reload data to sync
+                    loadPortal();
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('Ошибка загрузки документа');
+            } finally {
+                btn.classList.remove('uploading');
+            }
+        }
+
+        // Update document button status
+        function updateDocumentButtons() {
+            if (!tenderData || !tenderData.bid) return;
+
+            const bid = tenderData.bid;
+            const certBtn = document.getElementById('cert-upload-btn');
+            const licenseBtn = document.getElementById('license-upload-btn');
+            const mtbBtn = document.getElementById('mtb-upload-btn');
+            const trBtn = document.getElementById('tr-upload-btn');
+
+            if (bid.certificatePhoto) certBtn.classList.add('uploaded');
+            if (bid.licensePhoto) licenseBtn.classList.add('uploaded');
+            if (bid.mtbPhoto) mtbBtn.classList.add('uploaded');
+            if (bid.trPhoto) trBtn.classList.add('uploaded');
+        }
+
+        // OTP Input Logic
+        const focusFirstEmpty = () => {
+            for (let input of splitInputs) {
+                if (!input.value) {
+                    input.focus();
+                    return;
+                }
+            }
+            splitInputs[splitInputs.length - 1].focus();
+        };
+
+        if (splitInputs.length > 0) focusFirstEmpty();
+
+        // Redirect clicks on login screen to the appropriate input
+        loginScreen.addEventListener('click', (e) => {
+            // Only redirect if not clicking on the login button or other interactive elements
+            if (e.target.closest('#btn-login') || e.target.closest('.code-input-single')) return;
+            focusFirstEmpty();
+        });
+
+        splitInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1) {
+                    if (index < splitInputs.length - 1) {
+                        splitInputs[index + 1].focus();
+                    } else {
+                        btnLogin.focus();
+                    }
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    splitInputs[index - 1].focus();
+                }
+            });
+
+            // Prevent focusing a field if a previous one is empty
+            input.addEventListener('focus', () => {
+                for (let i = 0; i < index; i++) {
+                    if (!splitInputs[i].value) {
+                        splitInputs[i].focus();
+                        break;
+                    }
+                }
+            });
+        });
+
+        // Auth
+        btnLogin.addEventListener('click', async () => {
+            const code = Array.from(splitInputs).map(i => i.value).join('');
+            if (code.length !== 4) return;
+
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Проверка...';
+            loginError.style.display = 'none';
+
+            try {
+                let response;
+                if (token) {
+                    // Auth by token + code
+                    response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/auth`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                } else if (tenderId) {
+                    // Auth by tenderId + code
+                    response = await fetch(`${API_BASE_URL}/api/tenders/auth`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tenderId, code })
+                    });
+                }
+
+                if (response && response.ok) {
+                    const resData = await response.json();
+                    authCode = code;
+                    token = resData.token; // Update token from server if we had none
+
+                    if (!token) throw new Error('Сервер не вернул token');
+
+                    // Save to persistent storage
+                    localStorage.setItem('sub_token', token);
+                    localStorage.setItem('sub_authCode', authCode);
+                    if (tenderId) localStorage.setItem('sub_tenderId', tenderId);
+
+                    await loadPortal();
+                } else {
+                    loginError.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка соединения с сервером');
+            } finally {
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Войти в систему';
+            }
+        });
+
+        async function loadPortal() {
+            try {
+                // Если токен потерян (перезагрузка по tenderId), пробуем восстановить через /auth
+                if (!token && tenderId && authCode) {
+                    const resp = await fetch(`${API_BASE_URL}/api/tenders/auth`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tenderId, code: authCode })
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        token = data.token;
+                        if (token) {
+                            localStorage.setItem('sub_token', token);
+                            localStorage.setItem('sub_tenderId', tenderId);
+                        }
+                    }
+                }
+
+                if (!token || !authCode) {
+                    throw new Error('Отсутствует токен или код');
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/details?code=${authCode}`);
+                if (!response.ok) {
+                    const errText = await response.text();
+
+                    // Если токен/код устарели или приглашение удалено — очищаем и показываем экран логина
+                    if (response.status === 401 || response.status === 404) {
+                        clearAuth(`loadPortal failed ${response.status}`);
+                        loginScreen.style.display = 'flex';
+                        portalScreen.style.display = 'none';
+                        loginError.style.display = 'block';
+                        loginError.textContent = 'Код или ссылка устарели. Введите код снова.';
+                        throw new Error(`Failed to load details: ${response.status} ${errText}`);
+                    }
+
+                    throw new Error(`Failed to load details: ${response.status} ${errText}`);
+                }
+
+                tenderData = await response.json();
+
+                // Hide login, show portal
+                loginScreen.style.display = 'none';
+                portalScreen.style.display = 'flex';
+
+                renderUI();
+                startCountdown();
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при загрузке данных тендера');
+            }
+        }
+
+        window.logout = () => {
+            clearAuth('user logout');
+            window.location.reload();
+        };
+
+        function renderUI() {
+            const { tender, items, bid, subcontractor, workTypes, selectedSections } = tenderData;
+
+            console.log('=== RENDER UI DEBUG ===');
+            console.log('Items:', items);
+            console.log('Items[0]:', items[0]);
+            console.log('WorkTypes:', workTypes);
+            console.log('WorkTypes[0]:', workTypes[0]);
+            console.log('selectedSections:', selectedSections);
+
+            document.getElementById('tender-title-chip').textContent = tender.name;
+            document.getElementById('start-date-val').textContent = formatDate(tender.startDate);
+            document.getElementById('deadline-val').textContent = formatDate(tender.deadline);
+
+            // Render status steps based on bid status or invite status
+            const currentStatus = normalizeBidStatusToStepKey(bid?.status || 'login');
+            renderStatusSteps(currentStatus);
+
+            // Contract button
+            const viewContractBtn = document.getElementById('top-btn-view-contract');
+            const hasContract = String(bid?.status || '').toLowerCase() === 'contract' || !!bid?.contractNumber;
+            if (viewContractBtn) {
+                viewContractBtn.style.display = hasContract ? 'flex' : 'none';
+            }
+
+            // Render MC rating
+            const mcRating = subcontractor?.rating || '—';
+            document.getElementById('mc-rating').textContent = mcRating;
+
+            // Update document buttons
+            updateDocumentButtons();
+
+            if (bid) {
+                document.getElementById('total-price').value = formatMoneyDisplay(bid.priceTotal);
+                document.getElementById('completion-days').value = bid.completionDate;
+            }
+
+            // Subcontractor Requisites
+            const requisitesContainer = document.getElementById('sub-requisites');
+            requisitesContainer.innerHTML = `
+                <div class="req-item"><strong>Организация:</strong> ${subcontractor.company}</div>
+                <div class="req-item"><strong>ИНН:</strong> ${subcontractor.inn || '—'}</div>
+                <div class="req-item"><strong>Телефон:</strong> ${subcontractor.phone || '—'}</div>
+                <div class="req-item"><strong>Адрес:</strong> ${subcontractor.address || '—'}</div>
+            `;
+
+            // Sections List with nested estimates
+            const blocks = [...new Set(items.map(i => i.blockName || i.blockId))].filter(Boolean);
+            const sectionsContainer = document.getElementById('sections-list');
+
+            const chevronSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+            let sectionsHtml = blocks.map(bName => {
+                const firstBlockItem = items.find(i => (i.blockName || i.blockId) === bName);
+                const blockId = firstBlockItem?.blockId || firstBlockItem?.block_id || null;
+                const blockKey = blockId || bName;
+
+                const estimates = [...new Set(items
+                    .filter(i => (i.blockName || i.blockId) === bName)
+                    .map(i => i.estimateName)
+                )].filter(Boolean);
+
+                const isActiveBlock = activeBlockName === bName;
+
+                const estimatesHtml = estimates.map(eName => {
+                    const isActiveEstimate = isActiveBlock && activeEstimateId === eName;
+                    return `
+                        <div class="estimate-item ${isActiveEstimate ? 'active' : ''}" data-id="${escapeHtml(String(eName))}" onclick='selectEstimateFromBlock(${JSON.stringify(bName)}, ${JSON.stringify(eName)}, event)'>
+                            <span class="item-name">${escapeHtml(String(eName))}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                const itemCount = Math.max(estimates.length, 1);
+                const maxHeight = isActiveBlock ? (itemCount * 40 + 20) + 'px' : '0';
+
+                return `
+                    <div class="block-group" data-block-id="${escapeHtml(String(blockKey))}">
+                        <div class="block-group-header ${isActiveBlock ? '' : 'collapsed'}" data-block-id="${escapeHtml(String(blockKey))}" onclick='selectSection(${JSON.stringify(bName)})'>
+                            <span class="chevron">${chevronSvg}</span>
+                            <span>${escapeHtml(String(bName))}</span>
+                        </div>
+                        <div class="block-estimates ${isActiveBlock ? '' : 'collapsed'}" data-block-id="${escapeHtml(String(blockKey))}" style="max-height: ${maxHeight}">
+                            ${estimatesHtml || '<div class="empty-note">Сметы не найдены</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            sectionsContainer.innerHTML = sectionsHtml || '<div class="empty-note">Нет доступных секций</div>';
+
+            // Auto-select first section & estimate if nothing chosen
+            if (!activeBlockName && blocks.length > 0) {
+                activeBlockName = blocks[0];
+            }
+
+            if (!activeEstimateId) {
+                const firstEstimates = items.filter(i => (i.blockName || i.blockId) === activeBlockName).map(i => i.estimateName).filter(Boolean);
+                if (firstEstimates.length > 0) {
+                    activeEstimateId = firstEstimates[0];
+                }
+            }
+
+            // Render detail if estimate is chosen
+            if (activeEstimateId) {
+                document.getElementById('top-btn-download').style.display = 'flex';
+                document.getElementById('top-btn-reset-offer').style.display = 'flex';
+                renderEstimateDetails(activeEstimateId);
+            }
+
+            // Right panel (3D + files): bind to selected estimateId from DB
+            SubRightPanel.init();
+            SubRightPanel.setEstimateContext(getSelectedEstimateContext());
+
+            applyClosedLotUI();
+        }
+
+        function getSelectedEstimateContext() {
+            if (!tenderData || !activeEstimateId) {
+                return {
+                    projectId: tenderData?.tender?.projectId || tenderData?.tender?.project?.id || null,
+                    blockName: activeBlockName,
+                    estimateName: activeEstimateId,
+                    estimateId: null,
+                    blockId: null,
+                    estimateXktFileUrl: null
+                };
+            }
+
+            const items = Array.isArray(tenderData.items) ? tenderData.items : [];
+            const match = items.find(i =>
+                (String(i?.estimateName ?? i?.estimate_name ?? '').trim() === String(activeEstimateId).trim()) &&
+                (String((i?.blockName || i?.blockId || i?.block_name || i?.block_id) ?? '').trim() === String(activeBlockName ?? '').trim())
+            ) || items.find(i => String(i?.estimateName ?? i?.estimate_name ?? '').trim() === String(activeEstimateId).trim());
+
+            return {
+                projectId: tenderData?.tender?.projectId || tenderData?.tender?.project?.id || null,
+                blockName: activeBlockName,
+                blockId: match?.blockId || match?.block_id || null,
+                estimateName: activeEstimateId,
+                estimateId: match?.estimateId || match?.estimate_id || null,
+                estimateXktFileUrl: match?.estimateXktFileUrl || match?.estimate_xkt_file_url || null
+            };
+        }
+
+        window.selectSection = (bName) => {
+            activeBlockName = bName;
+            // сбрасываем выбранную смету до первой доступной в секции
+            const firstEstimates = tenderData.items
+                .filter(i => (i.blockName || i.blockId) === activeBlockName)
+                .map(i => i.estimateName)
+                .filter(Boolean);
+            activeEstimateId = firstEstimates[0] || null;
+            renderUI();
+        };
+
+        window.selectEstimateFromBlock = (bName, eId, ev) => {
+            if (ev) ev.stopPropagation();
+            activeBlockName = bName;
+            activeEstimateId = eId;
+            document.getElementById('top-btn-download').style.display = 'flex';
+            document.getElementById('top-btn-reset-offer').style.display = 'flex';
+            renderUI();
+        };
+
+        function renderEstimateDetails(estimateName) {
+            const { tender, items, workTypes } = tenderData;
+            const container = document.getElementById('details-view');
+            const titleEl = document.getElementById('details-title');
+
+            // Filter by estimateName AND activeBlockName to get correct items
+            const estimateItems = items.filter(i =>
+                i.estimateName === estimateName &&
+                (i.blockName || i.blockId) === activeBlockName
+            );
+
+            console.log('Rendering estimate:', estimateName, 'for block:', activeBlockName);
+            console.log('Found items:', estimateItems.length);
+
+            if (estimateItems.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--gray-400);">Нет работ в этой смете</div>';
+                return;
+            }
+
+            titleEl.textContent = `Раздел сметы: ${estimateName}`;
+
+            // Map workTypes for easy lookup
+            const wtMap = new Map();
+            workTypes.forEach(wt => {
+                wtMap.set(wt.id, wt);
+            });
+
+            const bidByRef = getBidItemsByRef();
+            const fmtMoney = (n) => {
+                const v = Number(n || 0);
+                if (!Number.isFinite(v)) return '0';
+                return v.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            };
+            const parseNum = (v) => {
+                if (v == null) return 0;
+                const s = String(v).trim().replace(',', '.');
+                const n = parseFloat(s);
+                return Number.isFinite(n) ? n : 0;
+            };
+
+            const icons = {
+                material: '<span class="code-badge" style="min-width:36px; background:#eef2ff; color:#312e81;">Мат</span>',
+                equipment: '<span class="code-badge" style="min-width:36px; background:#fff7ed; color:#9a3412;">Мех</span>',
+                labor: '<span class="code-badge" style="min-width:36px; background:#faf5ff; color:#6b21a8;">Труд</span>',
+                service: '<span class="code-badge" style="min-width:36px; background:#f5f3ff; color:#4c1d95;">Усл</span>'
+            };
+
+            const formatNum = (n) => (n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+            const entries = estimateItems
+                .map(item => ({ item, wt: wtMap.get(item.workTypeId) }))
+                .filter(x => x.wt);
+
+            entries.sort((a, b) => {
+                const ao = Number(a.wt?.stage?.orderIndex ?? 0);
+                const bo = Number(b.wt?.stage?.orderIndex ?? 0);
+                if (ao !== bo) return ao - bo;
+                const aStageName = String(a.wt?.stage?.name || '');
+                const bStageName = String(b.wt?.stage?.name || '');
+                const ns = aStageName.localeCompare(bStageName, 'ru');
+                if (ns !== 0) return ns;
+                const awo = Number(a.wt?.orderIndex ?? 0);
+                const bwo = Number(b.wt?.orderIndex ?? 0);
+                if (awo !== bwo) return awo - bwo;
+                return String(a.item?.name || '').localeCompare(String(b.item?.name || ''), 'ru');
+            });
+
+            const stageGroups = [];
+            const stageIndexById = new Map();
+            entries.forEach(ent => {
+                const stageId = ent.wt.stageId || ent.item.stageId || (ent.item.stageName || ent.item.section || ent.item.stage || 'stage');
+                if (!stageIndexById.has(stageId)) {
+                    stageIndexById.set(stageId, stageGroups.length);
+                    stageGroups.push({
+                        id: stageId,
+                        name: ent.wt?.stage?.name || ent.item.stageName || ent.item.section || ent.item.stage || 'Этап',
+                        items: []
+                    });
+                }
+                stageGroups[stageIndexById.get(stageId)].items.push(ent);
+            });
+
+            const rows = [];
+            let stageIdx = 1;
+            let counter = 1;
+
+            stageGroups.forEach((stage) => {
+                let displayName = String(stage.name || 'Этап');
+                displayName = displayName.replace(/^ЭТАП\s+\d+:\s*/i, '').replace(/^STAGE\s+\d+:\s*/i, '');
+
+                rows.push({
+                    level: 'stage',
+                    stageIdx,
+                    name: `Этап ${stageIdx}: ${displayName}`
+                });
+
+                stage.items.forEach((ent) => {
+                    const item = ent.item;
+                    const wt = ent.wt;
+                    const resources = (wt?.resources || []).slice().sort((a, b) => Number(a.orderIndex ?? 0) - Number(b.orderIndex ?? 0));
+                    const code = item.itemCode || item.code || item.cipher || '';
+
+                    const workRefNo = String(counter);
+                    const bidWork = bidByRef.get(workRefNo);
+                    const workQty = parseNum(item.volume ?? item.quantity ?? 0);
+                    const workUnitPrice = Number(bidWork?.price ?? 0);
+                    const workLineTotal = Number(bidWork?.total ?? (workQty * workUnitPrice));
+
+                    rows.push({
+                        level: 'work',
+                        ref: workRefNo,
+                        cipher: code || '—',
+                        name: item.name || '',
+                        unit: item.unit || '',
+                        qty: workQty,
+                        price: workUnitPrice,
+                        total: workLineTotal
+                    });
+
+                    resources.forEach((res, rIdx) => {
+                        const resRefNo = `${workRefNo}.${rIdx + 1}`;
+                        const bidRes = bidByRef.get(resRefNo);
+                        const resQty = parseNum(res.quantity || 0);
+                        const resNormPerUnit = parseNum(
+                            res.normPerUnit ??
+                            res.norm_per_unit ??
+                            res.normPer1 ??
+                            res.norm ??
+                            res.rate ??
+                            res.norma
+                        );
+                        const resUnitPrice = Number(bidRes?.price ?? 0);
+                        const resLineTotal = Number(bidRes?.total ?? (resQty * resUnitPrice));
+
+                        const resCode = res.cipher || res.code || res.resourceCode || res.itemCode || res.article || '';
+                        rows.push({
+                            level: 'resource',
+                            ref: resRefNo,
+                            cipher: resCode || '—',
+                            name: res.name || '',
+                            unit: res.unit || '',
+                            normPerUnit: resNormPerUnit,
+                            qty: resQty,
+                            price: resUnitPrice,
+                            total: resLineTotal
+                        });
+                    });
+
+                    counter++;
+                });
+
+                stageIdx++;
+            });
+
+            const tableHtml = `
+                <div class="offer-panel">
+                    <div class="offer-panel-header">
+                        <div class="offer-panel-title">Смета</div>
+                        <div class="offer-panel-hint">Позиции лота</div>
+                    </div>
+                    <div class="offer-table-wrap">
+                        <table class="offer-table" id="details-estimate-table">
+                            <colgroup>
+                                <col style="width: 60px;">
+                                <col style="width: 80px;">
+                                <col>
+                                <col style="width: 70px;">
+                                <col style="width: 90px;">
+                                <col style="width: 90px;">
+                                <col style="width: 110px;">
+                                <col style="width: 110px;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">№</th>
+                                    <th style="width: 80px;">Шифр</th>
+                                    <th>Наименование</th>
+                                    <th style="width: 70px;">Ед</th>
+                                    <th style="width: 90px;">Норма</th>
+                                    <th style="width: 90px;">Кол-во</th>
+                                    <th style="width: 110px;">Цена</th>
+                                    <th style="width: 110px;">Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows.map(r => {
+                                    if (r.level === 'stage') {
+                                        return `
+                                            <tr class="offer-row level-stage">
+                                                <td colspan="8">${escapeHtml(r.name)}</td>
+                                            </tr>
+                                        `;
+                                    }
+
+                                    const levelClass = r.level === 'work' ? 'level-work' : 'level-resource';
+                                    const normValue = (r.level === 'resource' && Number.isFinite(Number(r.normPerUnit)))
+                                        ? formatNum(Number(r.normPerUnit))
+                                        : '';
+                                    return `
+                                        <tr class="offer-row ${levelClass}" data-ref="${escapeHtml(r.ref)}">
+                                            <td>${escapeHtml(r.ref)}</td>
+                                            <td>${escapeHtml(r.cipher || '')}</td>
+                                            <td>${escapeHtml(r.name || '')}</td>
+                                            <td>${escapeHtml(r.unit || '')}</td>
+                                            <td>${escapeHtml(normValue)}</td>
+                                            <td>${escapeHtml(formatNum(Number(r.qty) || 0))}</td>
+                                            <td>${escapeHtml(fmtMoney(Number(r.price) || 0))}</td>
+                                            <td>${escapeHtml(fmtMoney(Number(r.total) || 0))}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = rows.length ? tableHtml : '<div style="text-align: center; color: var(--gray-400); margin-top: 40px;">Данные не найдены</div>';
+            container.scrollTop = 0;
+        }
+
+        window.toggleTreeItem = (id) => {
+            const el = document.getElementById(id);
+            const caret = document.getElementById('caret-' + id);
+            if (!el || !caret) return;
+            if (el.style.display === 'none') {
+                el.style.display = id.startsWith('stage') ? 'block' : 'flex';
+                caret.style.transform = 'rotate(0deg)';
+                caret.textContent = '▼';
+            } else {
+                el.style.display = 'none';
+                caret.style.transform = 'rotate(-90deg)';
+                caret.textContent = '▶';
+            }
+        };
+
+
+        function formatDate(d) {
+            if (!d) return '—';
+            const date = new Date(d);
+            const pad = (n) => String(n).padStart(2, '0');
+            const day = pad(date.getDate());
+            const month = pad(date.getMonth() + 1);
+            const year = String(date.getFullYear()).slice(-2);
+            const hours = pad(date.getHours());
+            const minutes = pad(date.getMinutes());
+            const seconds = pad(date.getSeconds());
+            return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Simple countdown timer - matches tender-prototype.html logic exactly
+        function startCountdown() {
+            if (!tenderData || !tenderData.tender) {
+                console.log('No tender data for countdown');
+                return;
+            }
+
+            if (isLotClosed()) {
+                const timerEl = document.getElementById('timer-val');
+                if (timerEl) timerEl.textContent = 'Лот закрыт';
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                return;
+            }
+
+            const deadlineRaw = tenderData.tender.deadline;
+            console.log('=== COUNTDOWN DEBUG ===');
+            console.log('Raw deadline from server:', deadlineRaw);
+
+            if (!deadlineRaw) {
+                document.getElementById('timer-val').textContent = '—';
+                return;
+            }
+
+            // Extract just the date part (YYYY-MM-DD) and add T23:59:59
+            // This matches exactly what tender-prototype.html does
+            let dateOnly;
+            if (deadlineRaw.includes('T')) {
+                // ISO format like 2025-12-31T00:00:00.000Z - extract just the date
+                dateOnly = deadlineRaw.split('T')[0];
+            } else {
+                dateOnly = deadlineRaw;
+            }
+
+            // Now add T23:59:59 to get end of day (same as tender-prototype.html)
+            const deadlineStr = dateOnly + 'T23:59:59';
+            const deadline = new Date(deadlineStr);
+
+            console.log('Date only:', dateOnly);
+            console.log('Deadline string:', deadlineStr);
+            console.log('Deadline parsed:', deadline);
+            console.log('Deadline timestamp:', deadline.getTime());
+
+            if (isNaN(deadline.getTime())) {
+                console.error('Could not parse deadline:', deadlineRaw);
+                document.getElementById('timer-val').textContent = 'Ошибка даты';
+                return;
+            }
+
+            const deadlineMs = deadline.getTime();
+
+            function updateTimer() {
+                const now = Date.now();
+                const diff = deadlineMs - now;
+
+                if (diff <= 0) {
+                    document.getElementById('timer-val').textContent = 'Прием завершен';
+                    if (timerInterval) clearInterval(timerInterval);
+                    return;
+                }
+
+                // Calculate time parts (same formula as tender-prototype.html)
+                const totalSeconds = Math.floor(diff / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const mins = Math.floor((totalSeconds % 3600) / 60);
+                const secs = totalSeconds % 60;
+
+                document.getElementById('timer-val').textContent = `${days}д ${hours}ч ${mins}м ${secs}с`;
+            }
+
+            // Clear any existing interval
+            if (timerInterval) clearInterval(timerInterval);
+
+            // Run immediately and then every second
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Upload Logic
+        const fileUploadInput = document.getElementById('file-upload');
+        const fileStatus = document.getElementById('file-status');
+
+        let offerPreviewState = null;
+        let offerSelectedRef = null;
+        let offerSyncScrolling = false;
+
+        if (fileUploadInput) {
+            fileUploadInput.onchange = (e) => handleFiles(e.target.files);
+        }
+
+        function escapeHtml(v) {
+            return String(v ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function fmtMoney(v) {
+            const n = Number(v);
+            if (!Number.isFinite(n)) return '';
+            return n.toFixed(2);
+        }
+
+        function offerModalOverlayClick(ev) {
+            if (ev && ev.target && ev.target.id === 'offer-modal-overlay') {
+                closeOfferModal();
+            }
+        }
+
+        function closeOfferModal() {
+            const overlay = document.getElementById('offer-modal-overlay');
+            overlay.style.display = 'none';
+            offerPreviewState = null;
+            offerSelectedRef = null;
+            const issues = document.getElementById('offer-modal-issues');
+            if (issues) issues.textContent = 'Выберите строку для просмотра статуса';
+        }
+
+        function selectOfferRow(ref) {
+            offerSelectedRef = String(ref);
+            if (!offerPreviewState) return;
+
+            const rows = document.querySelectorAll('#offer-expected-table tbody tr.offer-row, #offer-uploaded-table tbody tr.offer-row');
+            rows.forEach(tr => {
+                if (tr && tr.dataset && tr.dataset.ref === offerSelectedRef) tr.classList.add('selected');
+                else tr.classList.remove('selected');
+            });
+
+            // scroll into view in both tables if present (avoid CSS.escape dependency)
+            const findRow = (tableId) => {
+                const trList = document.querySelectorAll(`#${tableId} tbody tr.offer-row`);
+                for (const tr of trList) {
+                    if (tr && tr.dataset && tr.dataset.ref === offerSelectedRef) return tr;
+                }
+                return null;
+            };
+            const expRow = findRow('offer-expected-table');
+            const upRow = findRow('offer-uploaded-table');
+            if (expRow && expRow.scrollIntoView) expRow.scrollIntoView({ block: 'nearest' });
+            if (upRow && upRow.scrollIntoView) upRow.scrollIntoView({ block: 'nearest' });
+
+            // issues
+            const issuesEl = document.getElementById('offer-modal-issues');
+            if (!issuesEl) return;
+
+            const match = offerPreviewState._matchesByRef?.get(offerSelectedRef);
+            if (!match) {
+                // extra row
+                if (offerPreviewState._expectedByRef && !offerPreviewState._expectedByRef.has(offerSelectedRef)) {
+                    issuesEl.textContent = 'Лишняя строка: отсутствует в исходной смете';
+                    return;
+                }
+                issuesEl.textContent = 'Статус строки неизвестен';
+                return;
+            }
+
+            if (match.status === 'ok') {
+                issuesEl.textContent = 'OK: строка совпадает';
+            } else if (match.status === 'missing') {
+                issuesEl.textContent = (match.issues && match.issues.length) ? match.issues.join(' · ') : 'Строка отсутствует в загруженном файле';
+            } else if (match.status === 'conflict') {
+                issuesEl.textContent = (match.issues && match.issues.length) ? match.issues.join(' · ') : 'Конфликт';
+            } else {
+                issuesEl.textContent = String(match.status || '');
+            }
+        }
+
+        function openOfferModal(preview) {
+            offerPreviewState = preview;
+            offerSelectedRef = null;
+
+            const matchesByRef = new Map();
+            (preview.matches || []).forEach(m => {
+                if (m && m.ref) matchesByRef.set(String(m.ref), m);
+            });
+            const expectedByRef = new Map();
+            (preview.expectedRows || []).forEach(r => {
+                if (r && r.ref) expectedByRef.set(String(r.ref), r);
+            });
+            offerPreviewState._matchesByRef = matchesByRef;
+            offerPreviewState._expectedByRef = expectedByRef;
+
+            const summary = preview.summary || {};
+            const summaryEl = document.getElementById('offer-modal-summary');
+            if (summaryEl) {
+                summaryEl.innerHTML = [
+                    `Исходная смета: <b>${escapeHtml(summary.expectedCount ?? (preview.expectedRows || []).length)}</b>`,
+                    `Загружено: <b>${escapeHtml(summary.uploadedCount ?? (preview.uploadedRows || []).length)}</b>`,
+                    `OK: <b>${escapeHtml(summary.okCount ?? 0)}</b>`,
+                    `Конфликт: <b>${escapeHtml(summary.conflictCount ?? 0)}</b>`,
+                    `Отсутствует: <b>${escapeHtml(summary.missingCount ?? 0)}</b>`,
+                    `Лишние: <b>${escapeHtml(summary.extraCount ?? 0)}</b>`
+                ].join(' <span style="color: var(--gray-400)">|</span> ');
+            }
+
+            const expTbody = document.querySelector('#offer-expected-table tbody');
+            const upTbody = document.querySelector('#offer-uploaded-table tbody');
+            if (!expTbody || !upTbody) return;
+
+            expTbody.innerHTML = (preview.expectedRows || []).map(r => {
+                const ref = String(r.ref || '').trim();
+                const match = matchesByRef.get(ref);
+                const status = match?.status || 'missing';
+                const level = String(r.level || ( /^\d+$/.test(ref) ? 'work' : 'resource'));
+                return `
+                    <tr class="offer-row status-${escapeHtml(status)} level-${escapeHtml(level)}" data-ref="${escapeHtml(ref)}">
+                        <td>${escapeHtml(ref)}</td>
+                        <td>${escapeHtml(r.cipher || '')}</td>
+                        <td>${escapeHtml(r.name || '')}</td>
+                        <td>${escapeHtml(r.unit || '')}</td>
+                        <td>${escapeHtml((Number(r.quantity) || 0).toString())}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            upTbody.innerHTML = (preview.uploadedRows || []).map(r => {
+                const ref = String(r.ref || '').trim();
+                const inExpected = expectedByRef.has(ref);
+                const match = matchesByRef.get(ref);
+                const status = inExpected ? (match?.status || 'conflict') : 'extra';
+                const level = /^\d+$/.test(ref) ? 'work' : 'resource';
+                return `
+                    <tr class="offer-row status-${escapeHtml(status)} level-${escapeHtml(level)}" data-ref="${escapeHtml(ref)}">
+                        <td>${escapeHtml(ref)}</td>
+                        <td>${escapeHtml(r.cipher || '')}</td>
+                        <td>${escapeHtml(r.name || '')}</td>
+                        <td>${escapeHtml(r.unit || '')}</td>
+                        <td>${escapeHtml((Number(r.quantity) || 0).toString())}</td>
+                        <td>${escapeHtml(fmtMoney(r.price))}</td>
+                        <td>${escapeHtml(fmtMoney(r.total))}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const getRowByRef = (tbody, ref) => {
+                const trList = tbody ? tbody.querySelectorAll('tr.offer-row') : [];
+                for (const tr of trList) {
+                    if (tr && tr.dataset && tr.dataset.ref === ref) return tr;
+                }
+                return null;
+            };
+
+            const clearMirrorHover = () => {
+                const rows = document.querySelectorAll('#offer-expected-table tbody tr.offer-row.mirror-hover, #offer-uploaded-table tbody tr.offer-row.mirror-hover');
+                rows.forEach(tr => tr.classList.remove('mirror-hover'));
+            };
+
+            const applyMirrorHover = (ref) => {
+                clearMirrorHover();
+                const r = String(ref || '').trim();
+                if (!r) return;
+                const expRow = getRowByRef(expTbody, r);
+                const upRow = getRowByRef(upTbody, r);
+                if (expRow) expRow.classList.add('mirror-hover');
+                if (upRow) upRow.classList.add('mirror-hover');
+            };
+
+            // click + hover handlers (delegation for reliability)
+            expTbody.onclick = (ev) => {
+                const tr = ev?.target?.closest ? ev.target.closest('tr.offer-row') : null;
+                if (tr && tr.dataset && tr.dataset.ref) selectOfferRow(tr.dataset.ref);
+            };
+            upTbody.onclick = (ev) => {
+                const tr = ev?.target?.closest ? ev.target.closest('tr.offer-row') : null;
+                if (tr && tr.dataset && tr.dataset.ref) selectOfferRow(tr.dataset.ref);
+            };
+
+            expTbody.onmouseover = (ev) => {
+                const tr = ev?.target?.closest ? ev.target.closest('tr.offer-row') : null;
+                if (tr && tr.dataset && tr.dataset.ref) applyMirrorHover(tr.dataset.ref);
+            };
+            upTbody.onmouseover = (ev) => {
+                const tr = ev?.target?.closest ? ev.target.closest('tr.offer-row') : null;
+                if (tr && tr.dataset && tr.dataset.ref) applyMirrorHover(tr.dataset.ref);
+            };
+
+            expTbody.onmouseleave = () => clearMirrorHover();
+            upTbody.onmouseleave = () => clearMirrorHover();
+
+            // synced scrolling
+            const expWrap = document.getElementById('offer-expected-wrap');
+            const upWrap = document.getElementById('offer-uploaded-wrap');
+            if (expWrap && upWrap) {
+                expWrap.onscroll = () => {
+                    if (offerSyncScrolling) return;
+                    offerSyncScrolling = true;
+                    upWrap.scrollTop = expWrap.scrollTop;
+                    upWrap.scrollLeft = expWrap.scrollLeft;
+                    offerSyncScrolling = false;
+                };
+                upWrap.onscroll = () => {
+                    if (offerSyncScrolling) return;
+                    offerSyncScrolling = true;
+                    expWrap.scrollTop = upWrap.scrollTop;
+                    expWrap.scrollLeft = upWrap.scrollLeft;
+                    offerSyncScrolling = false;
+                };
+            }
+
+            const applyBtn = document.getElementById('offer-modal-apply');
+            const hasIssues = (Number(summary.conflictCount || 0) > 0) || (Number(summary.missingCount || 0) > 0) || (Number(summary.extraCount || 0) > 0);
+            if (applyBtn) {
+                applyBtn.disabled = hasIssues;
+            }
+            const issuesEl = document.getElementById('offer-modal-issues');
+            if (issuesEl) {
+                issuesEl.textContent = hasIssues
+                    ? 'Есть несоответствия — исправьте CSV и загрузите заново'
+                    : 'Нажмите «Применить», чтобы сохранить цены/суммы';
+            }
+
+            const overlay = document.getElementById('offer-modal-overlay');
+            overlay.style.display = 'flex';
+        }
+
+        async function applyOfferFromModal() {
+            if (!offerPreviewState) return;
+            try {
+                const applyBtn = document.getElementById('offer-modal-apply');
+                if (applyBtn) applyBtn.disabled = true;
+
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/offer/apply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: authCode,
+                        rows: offerPreviewState.uploadedRows || []
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Apply failed');
+                }
+
+                const res = await response.json();
+                closeOfferModal();
+
+                const detailsResp = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/details?code=${authCode}`);
+                if (detailsResp.ok) {
+                    tenderData = await detailsResp.json();
+                }
+
+                renderEstimateDetails(activeEstimateId);
+                document.getElementById('total-price').value = formatMoneyDisplay(res.totalPrice || 0);
+                fileStatus.textContent = 'Цены применены';
+                fileStatus.style.display = 'block';
+                fileStatus.style.color = 'var(--primary)';
+                showToast('Цены и суммы сохранены');
+            } catch (err) {
+                console.error(err);
+                showToast(`Ошибка: ${err.message}`);
+            }
+        }
+
+        function confirmResetOverlayClick(ev) {
+            if (ev && ev.target && ev.target.id === 'confirm-reset-overlay') {
+                closeResetOfferConfirm();
+            }
+        }
+
+        function openResetOfferConfirm() {
+            const overlay = document.getElementById('confirm-reset-overlay');
+            if (overlay) overlay.style.display = 'flex';
+        }
+
+        function closeResetOfferConfirm() {
+            const overlay = document.getElementById('confirm-reset-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        async function confirmResetOffer() {
+            closeResetOfferConfirm();
+            await resetOffer();
+        }
+
+        function contractModalOverlayClick(ev) {
+            if (ev && ev.target && ev.target.id === 'contract-modal-overlay') {
+                closeContractModal();
+            }
+        }
+
+        function openContractModal() {
+            const overlay = document.getElementById('contract-modal-overlay');
+            const body = document.getElementById('contract-modal-body');
+            const bid = tenderData?.bid;
+            const n = bid?.contractNumber || '—';
+            const d = bid?.contractDate ? formatDate(bid.contractDate) : '—';
+            if (body) {
+                body.innerHTML = `
+                    <div style="margin-bottom: 10px;"><strong>№ договора:</strong> ${escapeHtml(n)}</div>
+                    <div style="margin-bottom: 10px;"><strong>Дата:</strong> ${escapeHtml(d)}</div>
+                `;
+            }
+            if (overlay) overlay.style.display = 'flex';
+        }
+
+        function closeContractModal() {
+            const overlay = document.getElementById('contract-modal-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        async function resetOffer() {
+            try {
+                fileStatus.textContent = 'Восстановление исходной сметы...';
+                fileStatus.style.display = 'block';
+                fileStatus.style.color = 'var(--gray-500)';
+
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/offer/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: authCode })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Reset failed');
+                }
+
+                const detailsResp = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/details?code=${authCode}`);
+                if (detailsResp.ok) {
+                    tenderData = await detailsResp.json();
+                }
+
+                if (activeEstimateId) renderEstimateDetails(activeEstimateId);
+                document.getElementById('total-price').value = formatMoneyDisplay(0);
+                fileStatus.textContent = 'Исходная смета восстановлена';
+                fileStatus.style.color = 'var(--primary)';
+                showToast('Оферта сброшена');
+            } catch (err) {
+                console.error(err);
+                fileStatus.textContent = `Ошибка: ${err.message}`;
+                fileStatus.style.color = 'var(--accent-red)';
+            }
+        }
+
+        async function handleFiles(files) {
+            if (files.length === 0) return;
+            const file = files[0];
+            if (!file.name.endsWith('.csv')) {
+                alert('Пожалуйста, выберите CSV файл');
+                return;
+            }
+
+            fileStatus.textContent = `Загрузка: ${file.name}...`;
+            fileStatus.style.display = 'block';
+            fileStatus.style.color = 'var(--gray-500)';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('code', authCode);
+
+            try {
+                const previewUrl = `${API_BASE_URL}/api/tenders/invites/${token}/offer/preview`;
+                const response = await fetch(previewUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const res = await response.json();
+                    fileStatus.textContent = 'Файл загружен. Открыто сопоставление';
+                    fileStatus.style.color = 'var(--primary)';
+                    openOfferModal(res);
+                    showToast('Проверьте сопоставление');
+                } else {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Upload failed');
+                }
+            } catch (err) {
+                console.error(err);
+                fileStatus.textContent = `Ошибка: ${err.message}`;
+                fileStatus.style.color = 'var(--accent-red)';
+            } finally {
+                // allow re-uploading same file
+                if (fileUploadInput) fileUploadInput.value = '';
+            }
+        }
+
+        function getBidItemsByRef() {
+            try {
+                const raw = tenderData?.bid?.items;
+                if (!raw) return new Map();
+                const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (!Array.isArray(arr)) return new Map();
+
+                const map = new Map();
+                arr.forEach(it => {
+                    if (it && it.ref) map.set(String(it.ref), it);
+                });
+                return map;
+            } catch (e) {
+                console.warn('Failed to parse bid.items', e);
+                return new Map();
+            }
+        }
+
+        // Download estimate as CSV
+        async function downloadEstimate() {
+            if (!activeEstimateId) {
+                showToast('Пожалуйста, выберите смету');
+                return;
+            }
+
+            // Find estimateId for the selected estimateName
+            const itemWithId = tenderData.items.find(i => i.estimateName === activeEstimateId);
+            const estimateId = itemWithId ? (itemWithId.estimateId || activeEstimateId) : activeEstimateId;
+
+
+            try {
+                showToast('Подготовка файла...');
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/export-csv/${encodeURIComponent(estimateId)}?code=${authCode}`);
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Export failed');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fileName = `${activeBlockName}_${activeEstimateId}`.replace(/[<>:"/\\|?*]/g, '_');
+                a.download = `${fileName}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+
+                showToast('CSV файл скачан');
+            } catch (err) {
+                console.error('Export error:', err);
+                showToast(`Ошибка экспорта: ${err.message}`);
+            }
+        }
+
+        async function saveBid(status = 'parsing') {
+            const totalPriceRaw = document.getElementById('total-price').value;
+            let totalPrice = parseMoneyInput(totalPriceRaw);
+            const completionDays = document.getElementById('completion-days').value;
+
+            // If user filled позиционные цены/суммы (bid.items), but left total empty/0,
+            // auto-calculate total to avoid false validation errors.
+            if (!(totalPrice > 0)) {
+                try {
+                    const raw = tenderData?.bid?.items;
+                    const arr = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+                    if (Array.isArray(arr) && arr.length) {
+                        const computed = arr.reduce((sum, it) => {
+                            const lineTotal = Number(it?.total);
+                            if (Number.isFinite(lineTotal)) return sum + lineTotal;
+                            const qty = parseMoneyInput(it?.qty ?? it?.quantity ?? 0);
+                            const price = parseMoneyInput(it?.price ?? it?.unitPrice ?? 0);
+                            const fallback = qty * price;
+                            return Number.isFinite(fallback) ? (sum + fallback) : sum;
+                        }, 0);
+
+                        if (computed > 0) {
+                            totalPrice = computed;
+                            const totalEl = document.getElementById('total-price');
+                            if (totalEl) totalEl.value = formatMoneyDisplay(totalPrice);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to auto-calc total from bid.items', e);
+                }
+            }
+
+            if (!(totalPrice > 0) || !completionDays) {
+                alert('Пожалуйста, заполните сумму и срок выполнения');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tenders/invites/${token}/bid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: authCode,
+                        priceTotal: totalPrice,
+                        completionDate: completionDays,
+                        status: status
+                    })
+                });
+
+                if (response.ok) {
+                    const bid = await response.json();
+                    if (tenderData) {
+                        tenderData.bid = bid;
+                    }
+                    renderStatusSteps(normalizeBidStatusToStepKey(bid?.status));
+                    document.getElementById('total-price').value = formatMoneyDisplay(bid?.priceTotal ?? totalPrice);
+                    showToast(status === 'parsed' ? 'Оферта успешно отправлена!' : 'Черновик сохранен');
+                    if (status === 'parsed') {
+                        document.getElementById('btn-submit').disabled = true;
+                    }
+                } else {
+                    alert('Ошибка при сохранении');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка соединения');
+            }
+        }
+
+        // Форматирование суммы с разделителями тысяч
+        (() => {
+            const el = document.getElementById('total-price');
+            if (!el) return;
+            el.addEventListener('blur', () => {
+                const n = parseMoneyInput(el.value);
+                el.value = formatMoneyDisplay(n);
+            });
+        })();
+
+        document.getElementById('btn-save').onclick = () => saveBid('parsing');
+        document.getElementById('btn-submit').onclick = () => saveBid('parsed');
+    </script>
+</body>
+
+</html>

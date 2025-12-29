@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\KDFX Modes\\Desktop\\App\\Pro_build_v1.23\\backend\\logs\\.82706d7f96d07e757d527a3c9076959f2bbce1dd-audit.json",
+    "files": [
+        {
+            "date": 1766922022493,
+            "name": "C:\\Users\\KDFX Modes\\Desktop\\App\\Pro_build_v1.23\\backend\\logs\\combined-2025-12-28.log",
+            "hash": "2d2bd3238eb30167df3a94e4da470a723c9d799633ce406bdc2835f6e188c026"
+        },
+        {
+            "date": 1766968260120,
+            "name": "C:\\Users\\KDFX Modes\\Desktop\\App\\Pro_build_v1.23\\backend\\logs\\combined-2025-12-29.log",
+            "hash": "11d0b0e039587df7bb3e241a052fa937d293fae5192946fad854db5909d33358"
+        }
+    ],
+    "hashType": "sha256"
+}

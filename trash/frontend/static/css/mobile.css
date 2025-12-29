@@ -1,0 +1,397 @@
+/* ============================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ
+   ============================================ */
+
+/* Брейкпоинт для мобильных устройств */
+@media (max-width: 768px) {
+    
+    /* ============================================
+       МОБИЛЬНОЕ МЕНЮ (Hamburger)
+       ============================================ */
+    
+    /* Скрываем стандартный sidebar на мобильных */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1001;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Кнопка hamburger меню */
+    .mobile-menu-toggle {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 1002;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-menu-toggle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    }
+    
+    .mobile-menu-toggle span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background: white;
+        margin: 4px 0;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+    
+    .mobile-menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(6px, 6px);
+    }
+    
+    .mobile-menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .mobile-menu-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(6px, -6px);
+    }
+    
+    /* Overlay для закрытия меню */
+    .mobile-menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .mobile-menu-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+    
+    /* Скрываем лишние пункты меню на мобильных */
+    .sidebar nav a[data-mobile-hide="true"] {
+        display: none;
+    }
+    
+    /* Адаптация main-content для мобильных */
+    .main-content,
+    .game-main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-top: 80px !important; /* Отступ для кнопки меню */
+    }
+    
+    /* ============================================
+       АДАПТАЦИЯ DASHBOARD (Главная)
+       ============================================ */
+    
+    .game-top-bar {
+        padding: 0 !important;
+    }
+    
+    /* Мобильные вкладки - горизонтальная прокрутка */
+    .tabs {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+        padding: 0 16px;
+        gap: 8px;
+    }
+    
+    .tabs::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    
+    .tab {
+        padding: 12px 20px;
+        white-space: nowrap;
+        font-size: 14px;
+        min-width: auto;
+        flex-shrink: 0;
+    }
+    
+    /* Контент вкладок */
+    .tab-content-container {
+        padding: 16px;
+        overflow-y: auto;
+        height: calc(100vh - 200px);
+    }
+    
+    /* Статистические карточки на мобильных */
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-card .value {
+        font-size: 20px;
+    }
+    
+    /* График на мобильных */
+    .chart-container {
+        padding: 16px !important;
+        margin-top: 16px !important;
+        overflow-x: auto;
+    }
+    
+    /* ============================================
+       АДАПТАЦИЯ ФИНАНСЫ
+       ============================================ */
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 16px;
+        padding: 16px;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+        margin: 0;
+    }
+    
+    /* Кнопка добавления оплаты - полная ширина на мобильных */
+    .btn-primary,
+    .btn-success {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Таблица финансов - адаптация */
+    .data-table {
+        font-size: 14px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px 4px;
+    }
+    
+    /* Модальное окно добавления оплаты - мобильная версия */
+    .modal-content {
+        width: 95% !important;
+        max-width: 100% !important;
+        margin: 10px auto !important;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 16px;
+        position: relative;
+    }
+    
+    .modal-header-fixed {
+        padding: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        background: var(--theme-card-bg);
+        z-index: 10;
+        border-bottom: 1px solid var(--theme-border);
+    }
+    
+    .modal-header-fixed h2 {
+        font-size: 20px;
+        margin: 0;
+        width: 100%;
+    }
+    
+    .modal-body-scrollable {
+        padding: 16px;
+        max-height: calc(90vh - 140px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Форма оплаты - вертикальное расположение */
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-group label {
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* Предотвращает zoom на iOS */
+        padding: 12px 16px;
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 8px;
+        border: 1px solid var(--theme-input-border);
+        background: var(--theme-input-bg);
+        color: var(--theme-text-primary);
+    }
+    
+    /* Кнопки в формах */
+    .modal-header-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+    }
+    
+    .modal-header-actions button {
+        width: 100%;
+        margin: 0;
+    }
+    
+    /* Выбор способа оплаты на мобильных */
+    .payment-method-selector {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .payment-method-label {
+        padding: 16px;
+    }
+    
+    /* ============================================
+       АДАПТАЦИЯ ДОБАВЛЕНИЯ УЧЕНИКА
+       ============================================ */
+    
+    /* Форма добавления ученика */
+    .form-card {
+        padding: 20px !important;
+        margin: 16px;
+        border-radius: 16px;
+    }
+    
+    .form-columns {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    
+    /* Загрузка фото - адаптация */
+    .photo-upload-container {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .photo-preview {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    /* Кнопки действий */
+    .form-actions {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0;
+    }
+    
+    .form-actions button {
+        width: 100%;
+    }
+    
+    /* ============================================
+       ОБЩИЕ АДАПТАЦИИ
+       ============================================ */
+    
+    /* Заголовки страниц */
+    h1 {
+        font-size: 24px !important;
+        line-height: 1.3;
+    }
+    
+    /* Кнопки */
+    button {
+        min-height: 44px; /* Минимальная область нажатия для мобильных */
+        font-size: 16px;
+    }
+    
+    /* Таблицы - горизонтальная прокрутка на мобильных */
+    .data-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+    
+    .data-table table {
+        min-width: 600px; /* Минимальная ширина для удобства */
+    }
+    
+    /* Скрываем некоторые колонки на очень маленьких экранах */
+    @media (max-width: 480px) {
+        .data-table th:nth-child(n+4),
+        .data-table td:nth-child(n+4) {
+            display: none;
+        }
+    }
+    
+    /* Модальные окна - полный экран на очень маленьких устройствах */
+    @media (max-width: 480px) {
+        .modal-content {
+            width: 100% !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+        }
+    }
+    
+    /* Улучшение скролла на мобильных */
+    .tab-content-container,
+    .modal-body-scrollable {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 480px) {
+    .mobile-menu-toggle {
+        top: 12px;
+        left: 12px;
+        width: 44px;
+        height: 44px;
+    }
+    
+    .main-content,
+    .game-main-content {
+        padding-top: 70px !important;
+    }
+    
+    .page-header {
+        padding: 12px;
+    }
+    
+    .page-header h1 {
+        font-size: 20px;
+    }
+}
+

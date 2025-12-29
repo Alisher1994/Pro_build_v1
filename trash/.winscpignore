@@ -1,0 +1,33 @@
+# Файлы и папки, которые НЕ нужно загружать на сервер через WinSCP
+
+# Виртуальное окружение (создаётся на сервере)
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# База данных (создаётся на сервере)
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Логи
+*.log
+
+# Временные файлы
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE файлы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Системные файлы
+desktop.ini
+

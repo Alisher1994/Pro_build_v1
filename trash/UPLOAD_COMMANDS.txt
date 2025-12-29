@@ -1,0 +1,29 @@
+========================================
+КОМАНДЫ ДЛЯ ЗАГРУЗКИ ИСПРАВЛЕНИЯ ГРУППЫ
+========================================
+
+Скопируйте и вставьте эти команды в PowerShell:
+
+# Переход в директорию проекта
+cd "C:\Users\LOQ\Desktop\App\CAM\football_school"
+
+# Загрузка файлов
+scp frontend\static\js\groups.js root@45.92.173.37:/opt/football_school/frontend/static/js/groups.js
+scp app.py root@45.92.173.37:/opt/football_school/app.py
+
+# Пароль: 12345678
+
+# После загрузки подключитесь к серверу и перезапустите сервис:
+ssh root@45.92.173.37
+systemctl restart football_school
+
+========================================
+АЛЬТЕРНАТИВНЫЙ СПОСОБ (из любой директории)
+========================================
+
+scp "C:\Users\LOQ\Desktop\App\CAM\football_school\frontend\static\js\groups.js" root@45.92.173.37:/opt/football_school/frontend/static/js/groups.js
+
+scp "C:\Users\LOQ\Desktop\App\CAM\football_school\app.py" root@45.92.173.37:/opt/football_school/app.py
+
+Пароль: 12345678
+

@@ -1,0 +1,642 @@
+// ========================================
+// ProBIM Database Schema (SQLite dev)
+// Полная иерархия: Объект > Блок > Смета > Разделы > Этапы > Виды работ > Ресурсы
+// ========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// 1. ОБЪЕКТ (Проект)
+// ========================================
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  photo       String?
+  genplan     String?
+  render      String?
+  client      String?
+  manager     String?
+  deputy      String?
+  customer    String?
+  contractor  String?
+  currency    String   @default("RUB")
+  shiftDuration Int    @default(8)
+  workWeek     String   @default("5_2")
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("active")
+  isDeletable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  blocks      Block[]
+  estimates   Estimate[]
+  schedules   Schedule[]
+  supplies    Supply[]
+  finances    Finance[]
+  ganttTasks  GanttTask[]
+  tenders     Tender[]
+  employees   Employee[]
+}
+
+// ========================================
+// 2. БЛОК (Здание/Корпус)
+// ========================================
+model Block {
+  id                String   @id @default(uuid())
+  projectId         String
+  name              String
+  description       String?
+  floors            Int      @default(1)
+  undergroundFloors Int      @default(0)
+  area              Float?
+  orderIndex        Int      @default(0)
+  constructionPhase Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  estimates         Estimate[]
+  @@index([projectId])
+}
+
+// ========================================
+// 3. СМЕТА (для блока)
+// ========================================
+model Estimate {
+  id          String   @id @default(uuid())
+  projectId   String
+  blockId     String
+  name        String
+  description String?
+  totalCost   Float    @default(0)
+  status      String   @default("draft")
+  ifcFileUrl  String?
+  xktFileUrl  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  block       Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  sections    EstimateSection[]
+  files       ProjectFile[]
+  @@index([projectId])
+  @@index([blockId])
+}
+
+// ========================================
+// 3.1 ФАЙЛЫ ПРОЕКТА (PDF, DWG)
+// ========================================
+model ProjectFile {
+  id          String   @id @default(uuid())
+  estimateId  String
+  name        String
+  fileUrl     String
+  previewUrl  String?  // URL для PDF-превью (для DWG)
+  fileType    String   // 'pdf', 'dwg', etc.
+  fileSize    Int?
+  createdAt   DateTime @default(now())
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  @@index([estimateId])
+}
+
+// ========================================
+// 4. РАЗДЕЛ СМЕТЫ
+// ========================================
+model EstimateSection {
+  id          String   @id @default(uuid())
+  estimateId  String
+  code        String
+  name        String
+  description String?
+  ifcFileUrl  String?
+  xktFileUrl  String?
+  totalCost   Float    @default(0)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  stages      EstimateStage[]
+  @@index([estimateId])
+}
+
+// ========================================
+// 5. ЭТАП РАБОТ (Вид работ)
+// ========================================
+model EstimateStage {
+  id          String   @id @default(uuid())
+  sectionId   String
+  name        String
+  description String?
+  unit        String?
+  quantity    Float?
+  unitCost    Float?
+  totalCost   Float    @default(0)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  section     EstimateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  workTypes   WorkType[]
+  @@index([sectionId])
+}
+
+// ========================================
+// 6. ВИД РАБОТ
+// ========================================
+model WorkType {
+  id            String   @id @default(uuid())
+  stageId       String
+  code          String?
+  cipher        String?
+  name          String
+  description   String?
+  unit          String?
+  quantity      Float?
+  normPerUnit   Float?
+  unitCost      Float?
+  totalCost     Float    @default(0)
+  ifcElements   String?
+  ifcProperties String?
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  stage         EstimateStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  resources     Resource[]
+  @@index([stageId])
+}
+
+// ========================================
+// 7. РЕСУРС
+// ========================================
+model Resource {
+  id              String   @id @default(uuid())
+  workTypeId      String
+  name            String
+  code            String?
+  cipher          String?
+  unit            String
+  quantity        Float
+  normPerUnit     Float?
+  unitPrice       Float
+  totalCost       Float
+  resourceType    String   @default("material")
+  ifcElements     String?
+  ifcProperties   String?
+  description     String?
+  orderIndex      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  workType        WorkType @relation(fields: [workTypeId], references: [id], onDelete: Cascade)
+  supplyItems     SupplyItem[]
+  @@index([workTypeId])
+  @@index([resourceType])
+}
+
+// ========================================
+// 8. ГРАФИК ПРР
+// ========================================
+model Schedule {
+  id          String   @id @default(uuid())
+  projectId   String
+  blockId     String?
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       ScheduleTask[]
+  @@index([projectId])
+  @@index([blockId])
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+// ========================================
+// 9. ЗАДАЧА ГПР
+// ========================================
+model ScheduleTask {
+  id              String   @id @default(uuid())
+  scheduleId      String
+  stageId         String?
+  stageName       String
+  floor           String?
+  zone            String?
+  unit            String?
+  quantity        Float    @default(0)
+  startDate       DateTime?
+  endDate         DateTime?
+  duration        Int?
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  actualQuantity  Float    @default(0)
+  progress        Float    @default(0)
+  status          String   @default("not_started")
+  predecessorIds  String?
+  ifcElements     String?
+  notes           String?
+  orderIndex      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  schedule        Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  @@index([scheduleId])
+  @@index([stageId])
+  @@index([floor])
+  @@index([status])
+}
+
+// ========================================
+// 10. СНАБЖЕНИЕ
+// ========================================
+model Supply {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  status      String   @default("planning")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items       SupplyItem[]
+  @@index([projectId])
+  @@index([projectId, status])
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+// ========================================
+// 11. ПОЗИЦИЯ СНАБЖЕНИЯ
+// ========================================
+model SupplyItem {
+  id               String   @id @default(uuid())
+  supplyId         String
+  resourceId       String
+  requiredDate     DateTime
+  requiredQuantity Float
+  orderedDate      DateTime?
+  orderedQuantity  Float    @default(0)
+  deliveredDate    DateTime?
+  deliveredQuantity Float   @default(0)
+  supplier         String?
+  purchasePrice    Float?
+  status           String   @default("not_ordered")
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  supply           Supply   @relation(fields: [supplyId], references: [id], onDelete: Cascade)
+  resource         Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  @@index([supplyId])
+  @@index([resourceId])
+  @@index([status])
+}
+
+// ========================================
+// 12. ФИНАНСЫ
+// ========================================
+model Finance {
+  id          String   @id @default(uuid())
+  projectId   String
+  type        String
+  category    String
+  amount      Float
+  date        DateTime
+  description String?
+  reference   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  @@index([projectId])
+  @@index([type])
+  @@index([date])
+}
+
+// ========================================
+// 13. СУБПОДРЯДЧИКИ
+// ========================================
+model Subcontractor {
+  id              String   @id @default(uuid())
+  company         String   @unique
+  lastName        String
+  firstName       String
+  middleName      String?
+  phone           String
+  email           String?
+  password        String
+  status          String   @default("active")
+  mfo             String?
+  inn             String?  @unique
+  bankName        String?
+  account         String?
+  workTypes       String?
+  address         String?
+  companyPhoto    String?
+  directorPhoto   String?
+  certificatePhoto String?
+  licensePhoto    String?
+  mtbPhoto        String?
+  trPhoto         String?
+  rating          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  tenderInvites   TenderInvite[]
+  tenderBids      TenderBid[]
+  tenderChatThreads TenderChatThread[]
+  @@index([status])
+}
+
+// ========================================
+// 13. ЭЛЕМЕНТЫ IFC МОДЕЛИ
+// ========================================
+model IFCElement {
+  id          String   @id @default(uuid())
+  elementId   String
+  sectionId   String?
+  globalId    String?
+  type        String?
+  name        String?
+  description String?
+  floor       Int?
+  category    String?
+  properties  String?
+  geometry    String?
+  status      String   @default("not_planned")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@unique([elementId, sectionId])
+  @@index([sectionId])
+  @@index([type])
+  @@index([status])
+}
+
+// ========================================
+// 14. ГРАФИК Gantt
+// ========================================
+model GanttTask {
+  id               String   @id @default(uuid())
+  projectId        String
+  text             String
+  start_date       DateTime?
+  duration         Int      @default(1)
+  progress         Float    @default(0)
+  parent           String?
+  type             String   @default("task")
+  blockId          String?
+  estimateSectionId String?
+  quantity         Float?
+  unit             String?
+  plannedWork      Float?
+  resourceIntensity Float?
+  durationType     String   @default("fixed_duration")
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  linksSource      GanttLink[] @relation("SourceTask")
+  linksTarget      GanttLink[] @relation("TargetTask")
+  @@index([projectId])
+  @@index([parent])
+}
+
+model GanttLink {
+  id         String   @id @default(uuid())
+  source     String
+  target     String
+  type       String   @default("0")
+  lag        Int      @default(0)
+  sourceTask GanttTask @relation("SourceTask", fields: [source], references: [id], onDelete: Cascade)
+  targetTask GanttTask @relation("TargetTask", fields: [target], references: [id], onDelete: Cascade)
+  @@index([source])
+  @@index([target])
+}
+
+// ========================================
+// 15. СПРАВОЧНИК ВИДОВ РАБОТ (НАСТРОЙКИ)
+// ========================================
+model WorkTypeGroup {
+  id           String   @id @default(uuid())
+  name         String
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  workTypeItems WorkTypeItem[]
+}
+
+model WorkTypeItem {
+  id            String   @id @default(uuid())
+  groupId       String
+  name          String
+  unit          String
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  group         WorkTypeGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  instructions  InstructionWorkType[]
+  @@index([groupId])
+}
+
+// ========================================
+// 16. СПРАВОЧНИК ИНСТРУКЦИЙ
+// ========================================
+model Instruction {
+  id        String   @id @default(uuid())
+  code      String
+  name      String
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  workTypes InstructionWorkType[]
+}
+
+model InstructionWorkType {
+  id             String   @id @default(uuid())
+  instructionId  String
+  workTypeItemId String
+  instruction    Instruction  @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  workTypeItem   WorkTypeItem @relation(fields: [workTypeItemId], references: [id], onDelete: Cascade)
+  @@unique([instructionId, workTypeItemId])
+  @@index([instructionId])
+  @@index([workTypeItemId])
+}
+
+// ========================================
+// 17. ТЕНДЕРЫ (ЛОТЫ)
+// ========================================
+model Tender {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  blockIds    String
+  sectionIds  String
+  startDate   DateTime
+  deadline    DateTime
+  status      String   @default("open")
+  items       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invites     TenderInvite[]
+  bids        TenderBid[]
+  chatThreads TenderChatThread[]
+  @@index([projectId])
+  @@index([status])
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+model TenderInvite {
+  id              String   @id @default(uuid())
+  tenderId        String
+  subcontractorId String
+  token           String   @unique
+  expiresAt       DateTime
+  status          String   @default("pending")
+  inviteCode      String?
+  createdAt       DateTime @default(now())
+  tender          Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  bid             TenderBid?
+  @@index([tenderId])
+  @@index([subcontractorId])
+  @@index([token])
+}
+
+model TenderBid {
+  id              String   @id @default(uuid())
+  inviteId        String   @unique
+  tenderId        String
+  subcontractorId String
+  status          String   @default("parsed")
+  priceTotal      Float
+  completionDate  String?
+  score           Int?
+  items           String
+  files           String
+  blocked         Boolean  @default(false)
+  blockReason     String?
+  blockDate       DateTime?
+  contractNumber  String?
+  contractDate    DateTime?
+  certificatePhoto String?
+  licensePhoto     String?
+  mtbPhoto         String?
+  trPhoto          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  invite          TenderInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  tender          Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  @@index([tenderId])
+  @@index([subcontractorId])
+  @@index([status])
+}
+
+model TenderChatThread {
+  id              String   @id @default(uuid())
+  tenderId        String
+  subcontractorId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tender          Tender        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  messages        TenderChatMessage[]
+
+  @@unique([tenderId, subcontractorId])
+  @@index([tenderId])
+  @@index([subcontractorId])
+}
+
+model TenderChatMessage {
+  id                    String   @id @default(uuid())
+  threadId              String
+  sender                String
+  text                  String
+  readByAdminAt         DateTime?
+  readBySubcontractorAt DateTime?
+  createdAt             DateTime @default(now())
+
+  thread                TenderChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([threadId, createdAt(sort: Asc)])
+  @@index([readByAdminAt])
+  @@index([readBySubcontractorAt])
+}
+
+// ========================================
+// 18. ОТДЕЛЫ
+// ========================================
+model Department {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  employees Employee[]
+  positions Position[]
+}
+
+// ========================================
+// 19. ДОЛЖНОСТИ
+// ========================================
+model Position {
+  id          String   @id @default(uuid())
+  departmentId String?
+  name        String   @unique
+  isHead      Boolean  @default(false)
+  isSystem    Boolean  @default(false)
+  privileges  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  department  Department? @relation(fields: [departmentId], references: [id])
+  employees   Employee[]
+}
+
+// ========================================
+// 20. СОТРУДНИКИ
+// ========================================
+model Employee {
+  id              String   @id @default(uuid())
+  lastName        String
+  firstName       String
+  middleName      String?
+  photo           String?
+  phone           String
+  corporatePhone  String?
+  password        String
+  email           String   @unique
+  positionId      String
+  hireDate        DateTime?
+  terminationDate DateTime?
+  score           Int      @default(0)
+  projectId       String?
+  education       String?
+  departmentId    String?
+  isHead          Boolean  @default(false)
+  status          String   @default("active")
+  gender          String?
+  pinfl           String?
+  passportSeries  String?
+  passportNumber  String?
+  passportIssuedBy String?
+  passportIssueDate DateTime?
+  passportExpiryDate DateTime?
+  nationality     String?
+  position        Position @relation(fields: [positionId], references: [id])
+  department      Department? @relation(fields: [departmentId], references: [id])
+  project         Project?    @relation(fields: [projectId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([positionId])
+  @@index([departmentId])
+  @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
+}

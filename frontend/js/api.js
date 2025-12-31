@@ -428,7 +428,13 @@ class ApiService {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(task),
         });
-        if (!response.ok) throw new Error('Failed to update task');
+        if (!response.ok) throw new Error('Failed to update gantt task');
+        return await response.json();
+    }
+
+    async getGanttTaskHistory(taskId) {
+        const response = await fetch(`${API_BASE_URL}/gantt/task/${encodeURIComponent(taskId)}/history`);
+        if (!response.ok) throw new Error('Failed to fetch task history');
         return await response.json();
     }
 
@@ -723,6 +729,29 @@ class ApiService {
         if (!response.ok) throw new Error('Failed to fetch all subcontractors');
         const json = await response.json();
         return json?.data || [];
+    }
+
+    // ========================================
+    // Resources
+    // ========================================
+    async updateResource(resourceId, data) {
+        const response = await fetch(`${API_BASE_URL}/resources/${resourceId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to update resource');
+        return await response.json();
+    }
+
+    async updateTaskResourceAssignment(taskId, resourceId, data) {
+        const response = await fetch(`${API_BASE_URL}/gantt/tasks/${taskId}/resources/${resourceId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to update task resource assignment');
+        return await response.json();
     }
 }
 

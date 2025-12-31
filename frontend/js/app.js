@@ -29,7 +29,7 @@ class ProBIMApp {
 
     getInitialRibbonTab() {
         // Убрали 'analytics' из списка разрешенных
-        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'timesheet', 'settings']);
+        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'timesheet', 'settings', 'ui-kit']);
 
         // Принудительно открываем Дашборд при обновлении
         // Если в URL есть хеш, его можно оставить для глубокой навигации, 
@@ -380,6 +380,11 @@ class ProBIMApp {
             case 'timesheet':
                 this.loadTimesheetTab();
                 break;
+            case 'ui-kit':
+                // UI Kit should be full width like other iframe-based tabs
+                contentArea.style.padding = '0';
+                this.loadUiKitTab();
+                break;
             case 'settings':
                 const project = this.projects.find(p => p.id === this.currentProjectId);
                 if (project?.name === 'Главный офис') {
@@ -476,6 +481,9 @@ class ProBIMApp {
             else if (this.currentRibbonTab === 'timesheet') {
                 label = 'Табель';
             }
+            else if (this.currentRibbonTab === 'ui-kit') {
+                label = 'UI Kit';
+            }
             else if (this.currentRibbonTab === 'settings') {
                 if (document.getElementById('subcontractors-btn')?.classList.contains('active')) label = 'Субподряд';
                 else if (document.getElementById('hr-management-btn')?.classList.contains('active')) label = 'Штат (Кадры)';
@@ -557,6 +565,21 @@ class ProBIMApp {
                 });
             }
         };
+    }
+
+    loadUiKitTab() {
+        this.currentRibbonTab = 'ui-kit';
+        this.applyRibbonTabToUI('ui-kit');
+
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.style.padding = '0';
+            contentArea.innerHTML = `
+                <iframe id="ui-kit-frame" src="ui-kit.html" style="width: 100%; height: 100%; border: none;"></iframe>
+            `;
+        }
+
+        this.updateBreadcrumbs();
     }
 
     loadSupplyTab() {
@@ -1374,17 +1397,34 @@ class ProBIMApp {
         });
 
         // Schedule view tools (expand/collapse all)
+        document.getElementById('schedule-toggle-volumes-btn')?.addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const isActive = btn.classList.toggle('active');
+            ScheduleManager.toggleVolumeColumns(isActive);
+        });
+
+        document.getElementById('schedule-toggle-estimate-btn')?.addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const isActive = btn.classList.toggle('active');
+            ScheduleManager.toggleEstimateColumns(isActive);
+        });
+
         document.getElementById('schedule-expand-all-btn')?.addEventListener('click', () => {
-            if (this.currentRibbonTab !== 'schedule') return;
             ScheduleManager.expandAll();
         });
 
         document.getElementById('schedule-collapse-all-btn')?.addEventListener('click', () => {
-            if (this.currentRibbonTab !== 'schedule') return;
             ScheduleManager.collapseAll();
         });
 
         document.getElementById('schedule-project-settings-btn')?.addEventListener('click', () => {
+            if (!this.currentProjectId) {
+                UI.showNotification('Сначала выберите проект', 'error');
+                return;
+            }
+            if (typeof GPRManager !== 'undefined') {
+                GPRManager.currentProjectId = this.currentProjectId;
+            }
             GPRManager.showProjectSettingsModal();
         });
 

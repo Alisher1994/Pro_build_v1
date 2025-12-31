@@ -1055,6 +1055,9 @@ router.post('/assign-worktype', async (req, res) => {
         unit: workType.unit || '',
         plannedWork,
         resourceIntensity,
+        shiftsPerDay: 1,
+        resourceCount: 1,
+        calculationMode: 'manual',
         durationType,
         sortOrder: 999999
       },
@@ -1142,6 +1145,11 @@ router.get('/:projectId', async (req, res) => {
         estimateSectionId: t.estimateSectionId,
         quantity: t.quantity,
         unit: t.unit,
+        shiftsPerDay: t.shiftsPerDay,
+        resourceCount: t.resourceCount,
+        calculationMode: t.calculationMode,
+        plannedWork: t.plannedWork,
+        leadingResourceId: t.leadingResourceId,
         norm: (() => {
           const workTypeId = extractWorkTypeIdFromTaskId(t.id);
           if (!workTypeId) return null;
@@ -1209,7 +1217,11 @@ router.delete('/:projectId', async (req, res) => {
 router.put('/task/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { text, start_date, duration, progress, parent, quantity, unit } = req.body;
+    const {
+      text, start_date, duration, progress, parent, quantity, unit,
+      shiftsPerDay, resourceCount, calculationMode, plannedWork, leadingResourceId,
+      completedQuantity, addedQuantity, executionDate
+    } = req.body;
     const parsedDate = start_date ? new Date(start_date) : undefined;
 
     const toFiniteNumber = (value: any) => {
@@ -1220,7 +1232,11 @@ router.put('/task/:id', async (req, res) => {
 
     const existing = await (prisma.ganttTask as any).findUnique({
       where: { id },
-      select: { duration: true, plannedWork: true, resourceIntensity: true, durationType: true, projectId: true, parent: true }
+      include: {
+        project: {
+          select: { shiftDuration: true }
+        }
+      }
     });
 
     if (!existing) {
@@ -1233,53 +1249,94 @@ router.put('/task/:id', async (req, res) => {
     if (progress !== undefined) data.progress = toFiniteNumber(progress);
     if (quantity !== undefined) data.quantity = toFiniteNumber(quantity);
     if (unit !== undefined) data.unit = unit === null ? null : String(unit);
+    if (shiftsPerDay !== undefined) data.shiftsPerDay = Number(shiftsPerDay);
+    if (resourceCount !== undefined) data.resourceCount = toFiniteNumber(resourceCount);
+    if (calculationMode !== undefined) data.calculationMode = String(calculationMode);
+    if (leadingResourceId !== undefined) data.leadingResourceId = leadingResourceId === null ? null : String(leadingResourceId);
+    if (completedQuantity !== undefined) data.completedQuantity = toFiniteNumber(completedQuantity);
 
-    // Логика "Золотого треугольника" (Primavera P6 style)
-    let curWork = toFiniteNumber(req.body.plannedWork) ?? Number(existing.plannedWork || 0);
-    let curIntensity = toFiniteNumber(req.body.resourceIntensity) ?? Number(existing.resourceIntensity || 8);
-    let curDuration = toFiniteNumber(req.body.duration) ?? Number(existing.duration || 1);
-    const mode = req.body.durationType || existing.durationType || 'fixed_duration';
-
-    data.durationType = mode;
-
-    const workChanged = req.body.plannedWork !== undefined;
-    const intensityChanged = req.body.resourceIntensity !== undefined;
-    const durationChanged = req.body.duration !== undefined;
-
-    if (mode === 'fixed_units') {
-      // Фиксированный объем: меняем или интенсивность -> меняется длительность, или длительность -> меняется интенсивность
-      if (intensityChanged) {
-        curDuration = Math.max(1, Math.ceil(curWork / Math.max(0.1, curIntensity)));
-      } else if (durationChanged) {
-        curIntensity = curWork / Math.max(1, curDuration);
-      } else if (workChanged) {
-        curDuration = Math.max(1, Math.ceil(curWork / Math.max(0.1, curIntensity)));
+    // Recording history if addedQuantity is provided
+    if (addedQuantity !== undefined && Number(addedQuantity) !== 0) {
+      const q = Number(addedQuantity);
+      const p = progress !== undefined ? toFiniteNumber(progress) : existing.progress;
+      let d = new Date();
+      if (executionDate) {
+        const parsed = new Date(executionDate);
+        if (!isNaN(parsed.getTime())) d = parsed;
       }
-    } else if (mode === 'fixed_duration') {
-      // Фиксированные сроки: меняем объем -> меняется интенсивность; меняем интенсивность -> меняется объем
-      if (workChanged) {
-        curIntensity = curWork / Math.max(1, curDuration);
-      } else if (intensityChanged) {
-        curWork = curIntensity * curDuration;
-      } else if (durationChanged) {
-        // При изменении длины полоски в этом режиме обычно меняется объем (или интенсивность, если объем зафиксирован)
-        // Но пользователь сказал: "Fixed Duration: Changing Intensity updates Work."
-        curWork = curIntensity * curDuration;
-      }
-    } else if (mode === 'fixed_intensity') {
-      // Фиксированная производительность: меняем объем -> меняется срок; меняем срок -> меняется объем
-      if (workChanged) {
-        curDuration = Math.max(1, Math.ceil(curWork / Math.max(0.1, curIntensity)));
-      } else if (durationChanged) {
-        curWork = curIntensity * curDuration;
-      } else if (intensityChanged) {
-        curDuration = Math.max(1, Math.ceil(curWork / Math.max(0.1, curIntensity)));
+
+      try {
+        await (prisma as any).taskProgress.create({
+          data: {
+            taskId: id,
+            date: d,
+            quantity: q,
+            progress: p || 0
+          }
+        });
+      } catch (e) {
+        logger.error('Failed to create TaskProgress:', e);
       }
     }
 
+    // --- NEW CALCULATION LOGIC ---
+    const shiftHours = existing.project?.shiftDuration || 8;
+    const curShifts = toFiniteNumber(shiftsPerDay) ?? Number(existing.shiftsPerDay || 1);
+    const curResCount = toFiniteNumber(resourceCount) ?? Number(existing.resourceCount || 1);
+    const curCalcMode = calculationMode || existing.calculationMode || 'manual';
+
+    // Workload calculation
+    let curWork = toFiniteNumber(plannedWork) ?? Number(existing.plannedWork || 0);
+    const curQty = toFiniteNumber(quantity) ?? Number(existing.quantity || 0);
+    const curLeadingId = leadingResourceId !== undefined ? leadingResourceId : existing.leadingResourceId;
+
+    let usedShifts = curShifts;
+
+    // If we have a leading resource, its norm defines the work for the "Golden Triangle" calculation
+    if (curLeadingId) {
+      const resource = await (prisma.resource as any).findUnique({
+        where: { id: curLeadingId },
+        select: { normPerUnit: true, shiftsPerDay: true }
+      });
+      if (resource) {
+        if (resource.normPerUnit) {
+          curWork = curQty * Number(resource.normPerUnit);
+        }
+        if (resource.shiftsPerDay) {
+          usedShifts = resource.shiftsPerDay;
+        }
+      }
+    } else if (plannedWork === undefined && quantity !== undefined && existing.quantity && existing.plannedWork) {
+      // Fallback: If quantity changed but no leading resource, scale current work proportionally
+      const norm = Number(existing.plannedWork) / Number(existing.quantity);
+      curWork = curQty * norm;
+    }
     data.plannedWork = curWork;
-    data.resourceIntensity = curIntensity;
-    data.duration = Math.max(1, Math.round(curDuration));
+
+    let finalDuration = toFiniteNumber(duration) ?? Number(existing.duration || 1);
+    let finalResCount = curResCount;
+
+    if (curCalcMode === 'auto_duration') {
+      // Duration = Work / (ResCount * Shifts * ShiftHours)
+      const dailyProductivity = curResCount * usedShifts * shiftHours;
+      if (dailyProductivity > 0) {
+        finalDuration = Math.max(1, Math.ceil(curWork / dailyProductivity));
+      }
+    } else if (curCalcMode === 'auto_resources') {
+      // ResCount = Work / (Duration * Shifts * ShiftHours)
+      const totalShiftHours = finalDuration * usedShifts * shiftHours;
+      if (totalShiftHours > 0) {
+        finalResCount = curWork / totalShiftHours;
+        // Round to 2 decimals for display
+        finalResCount = Math.round(finalResCount * 100) / 100;
+      }
+    } else {
+      // manual or old durationType logic
+      // fallback to existing resourceIntensity logic if needed, but we prefer the new fields
+    }
+
+    data.duration = Math.max(1, Math.round(finalDuration));
+    data.resourceCount = finalResCount;
 
     await (prisma.ganttTask as any).update({
       where: { id },
@@ -1355,6 +1412,22 @@ router.delete('/task/:id', async (req, res) => {
   }
 });
 
+// GET /api/gantt/task/:id/history
+// Получение истории выполнения задачи
+router.get('/task/:id/history', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const history = await (prisma as any).taskProgress.findMany({
+      where: { taskId: id },
+      orderBy: { date: 'desc' }
+    });
+    res.json(history);
+  } catch (error: any) {
+    logger.error('Error fetching task history:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/gantt/link
 // Создание связи
 router.post('/link', async (req, res) => {
@@ -1388,6 +1461,30 @@ router.delete('/link/:id', async (req, res) => {
     res.json({ status: "ok" });
   } catch (error: any) {
     logger.error('Error deleting link:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/gantt/tasks/:taskId/resources/:resourceId
+// Обновление назначения ресурса на задачу (например, сменность)
+router.put('/tasks/:taskId/resources/:resourceId', async (req, res) => {
+  try {
+    const { taskId, resourceId } = req.params;
+    const { shiftsPerDay } = req.body;
+
+    logger.info(`Updating resource shifts: task=${taskId}, resource=${resourceId}, shiftsPerDay=${shiftsPerDay}`);
+
+    // Обновляем сменность в таблице Resource
+    const updated = await prisma.resource.update({
+      where: { id: resourceId },
+      data: {
+        shiftsPerDay: shiftsPerDay !== undefined ? Number(shiftsPerDay) : undefined
+      }
+    });
+
+    res.json({ status: 'ok', resource: updated });
+  } catch (error: any) {
+    logger.error('Error updating resource shifts:', error);
     res.status(500).json({ error: error.message });
   }
 });

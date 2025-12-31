@@ -4,7 +4,7 @@ if (typeof THREE === 'undefined') {
     console.error('ThreeDxf requires THREE to be defined globally.');
 } else if (typeof THREE.Geometry === 'undefined') {
     console.warn('THREE.Geometry is undefined. Attempting to polyfill for three-dxf...');
-    THREE.Geometry = function() {
+    THREE.Geometry = function () {
         this.vertices = [];
         this.faces = [];
         this.colors = [];
@@ -12,8 +12,8 @@ if (typeof THREE === 'undefined') {
     };
     THREE.Geometry.prototype = {
         constructor: THREE.Geometry,
-        computeBoundingSphere: function() {},
-        computeBoundingBox: function() {},
+        computeBoundingSphere: function () { },
+        computeBoundingBox: function () { },
         verticesNeedUpdate: true,
         elementsNeedUpdate: true,
         morphTargetsNeedUpdate: true,
@@ -32,21 +32,21 @@ if (typeof THREE === 'undefined') {
  * @param  {Object} p2 end point of the vector
  * @return {Number} the angle
  */
-THREE.Math.angle2 = function(p1, p2) {
-	var v1 = new THREE.Vector2(p1.x, p1.y);
-	var v2 = new THREE.Vector2(p2.x, p2.y);
-	v2.sub(v1); // sets v2 to be our chord
-	v2.normalize();
-	if(v2.y < 0) return -Math.acos(v2.x);
-	return Math.acos(v2.x);
+THREE.Math.angle2 = function (p1, p2) {
+    var v1 = new THREE.Vector2(p1.x, p1.y);
+    var v2 = new THREE.Vector2(p2.x, p2.y);
+    v2.sub(v1); // sets v2 to be our chord
+    v2.normalize();
+    if (v2.y < 0) return -Math.acos(v2.x);
+    return Math.acos(v2.x);
 };
 
 
-THREE.Math.polar = function(point, distance, angle) {
-	var result = {};
-	result.x = point.x + distance * Math.cos(angle);
-	result.y = point.y + distance * Math.sin(angle);
-	return result;
+THREE.Math.polar = function (point, distance, angle) {
+    var result = {};
+    result.x = point.x + distance * Math.cos(angle);
+    result.y = point.y + distance * Math.sin(angle);
+    return result;
 };
 
 /**
@@ -56,101 +56,90 @@ THREE.Math.polar = function(point, distance, angle) {
  * @param bulge - a value indicating how much to curve
  * @param segments - number of segments between the two given points
  */
-THREE.BulgeGeometry = function ( startPoint, endPoint, bulge, segments ) {
+THREE.BulgeGeometry = function (startPoint, endPoint, bulge, segments) {
+    var vertex, i,
+        center, p0, p1, angle,
+        radius, startAngle,
+        thetaAngle;
 
-	var vertex, i,
-		center, p0, p1, angle,
-		radius, startAngle,
-		thetaAngle;
+    this.vertices = [];
+    this.startPoint = p0 = startPoint ? new THREE.Vector2(startPoint.x, startPoint.y) : new THREE.Vector2(0, 0);
+    this.endPoint = p1 = endPoint ? new THREE.Vector2(endPoint.x, endPoint.y) : new THREE.Vector2(1, 0);
+    this.bulge = bulge = bulge || 1;
 
-	if (THREE.Geometry) {
-        THREE.Geometry.call( this );
-    } else if (THREE.BufferGeometry) {
-        THREE.BufferGeometry.call( this );
+    angle = 4 * Math.atan(bulge);
+    radius = p0.distanceTo(p1) / 2 / Math.sin(angle / 2);
+    center = THREE.Math.polar(startPoint, radius, THREE.Math.angle2(p0, p1) + (Math.PI / 2 - angle / 2));
+
+    this.segments = segments = segments || Math.max(Math.abs(Math.ceil(angle / (Math.PI / 18))), 6); // By default want a segment roughly every 10 degrees
+    startAngle = THREE.Math.angle2(center, p0);
+    thetaAngle = angle / segments;
+
+    this.vertices.push(new THREE.Vector3(p0.x, p0.y, 0));
+
+    for (i = 1; i <= segments - 1; i++) {
+        vertex = THREE.Math.polar(center, Math.abs(radius), startAngle + thetaAngle * i);
+        this.vertices.push(new THREE.Vector3(vertex.x, vertex.y, 0));
     }
-
-	this.startPoint = p0 = startPoint ? new THREE.Vector2(startPoint.x, startPoint.y) : new THREE.Vector2(0,0);
-	this.endPoint = p1 = endPoint ? new THREE.Vector2(endPoint.x, endPoint.y) : new THREE.Vector2(1,0);
-	this.bulge = bulge = bulge || 1;
-
-	angle = 4 * Math.atan(bulge);
-	radius = p0.distanceTo(p1) / 2 / Math.sin(angle/2);
-	center = THREE.Math.polar(startPoint, radius, THREE.Math.angle2(p0,p1) + (Math.PI / 2 - angle/2));
-
-	this.segments = segments = segments || Math.max( Math.abs(Math.ceil(angle/(Math.PI/18))), 6); // By default want a segment roughly every 10 degrees
-	startAngle = THREE.Math.angle2(center, p0);
-	thetaAngle = angle / segments;
-
-
-	this.vertices.push(new THREE.Vector3(p0.x, p0.y, 0));
-
-	for(i = 1; i <= segments - 1; i++) {
-
-		vertex = THREE.Math.polar(center, Math.abs(radius), startAngle + thetaAngle * i);
-
-		this.vertices.push(new THREE.Vector3(vertex.x, vertex.y, 0));
-
-	}
-
 };
 
-THREE.BulgeGeometry.prototype = Object.create( (THREE.Geometry || THREE.BufferGeometry || {prototype: {}}).prototype );
+THREE.BulgeGeometry.prototype = { constructor: THREE.BulgeGeometry };
 
 var ThreeDxf = window.ThreeDxf || {};
 window.ThreeDxf = ThreeDxf; // Set it early
-(function(ThreeDxf) {
+(function (ThreeDxf) {
     window.ThreeDxf = ThreeDxf; // Ensure it's on window immediately
 
-    
+
     var Helpers;
-    (function(Helpers) {
-        
+    (function (Helpers) {
+
         var RENDER_MODE_2D = 0;
-        
+
         /**
          * 
          * @param {object} dxf - the full dxf object
          * @param {number} aspectRatio - the aspect ratio of the view we are geting the initial camera position for 
          */
-        Helpers.getCameraParametersFromDxf = function(dxf, aspectRatio) {
+        Helpers.getCameraParametersFromDxf = function (dxf, aspectRatio) {
             var upperRightCorner, lowerLeftCorner, center,
                 dxfAspectRatio, vpUpperRightCorner, vpLowerLeftCorner,
                 width, height, header, i, viewports, viewport,
                 dir;
-            
+
             // First try the viewport table
             if (!upperRightCorner && dxf.tables && dxf.tables.viewPort) {
                 viewports = dxf.tables.viewPort.viewPorts;
-                for(i in viewports) {
+                for (i in viewports) {
                     viewport = viewports[i];
-                    
+
                     // If this is a 2D front-facing viewport, use the viewport values
                     dir = viewport.viewDirectionFromTarget;
-                    if(viewport.center && 
+                    if (viewport.center &&
                         (viewport.renderMode === RENDER_MODE_2D ||
-                        (dir && dir.x === 0 && dir.y === 0 && dir.z === 1))) {
+                            (dir && dir.x === 0 && dir.y === 0 && dir.z === 1))) {
                         center = viewport.center;
                         vpUpperRightCorner = viewport.upperRightCorner;
                         vpLowerLeftCorner = viewport.lowerLeftCorner;
-                        
+
                         upperRightCorner = { x: vpUpperRightCorner.x, y: vpUpperRightCorner.y };
                         lowerLeftCorner = { x: vpLowerLeftCorner.x, y: vpLowerLeftCorner.y };
                         break;
                     }
                 }
             }
-            
+
             // Second try header for extents
-            if(!upperRightCorner && dxf.header) {
+            if (!upperRightCorner && dxf.header) {
                 header = dxf.header;
-                if(header.$EXTMIN && header.$EXTMAX) {
+                if (header.$EXTMIN && header.$EXTMAX) {
                     upperRightCorner = header.$EXTMAX;
                     lowerLeftCorner = header.$EXTMIN;
                 }
             }
-            
+
             // If nothing found in dxf, use some abitrary defaults
-            if(!lowerLeftCorner || !upperRightCorner) {
+            if (!lowerLeftCorner || !upperRightCorner) {
                 var halfWidth = 15 * aspectRatio;
                 var halfHeight = 15 * (1 / aspectRatio);
                 upperRightCorner = {
@@ -162,7 +151,7 @@ window.ThreeDxf = ThreeDxf; // Set it early
                     y: -halfHeight
                 };
             };
-            
+
             // Now that we have the corners, figure the current viewport extents
             width = upperRightCorner.x - lowerLeftCorner.x;
             height = upperRightCorner.y - lowerLeftCorner.y;
@@ -173,12 +162,12 @@ window.ThreeDxf = ThreeDxf; // Set it early
             console.log(lowerLeftCorner, upperRightCorner, center);
             // fit DXF ViewPort into current ThreeDXF viewer
             dxfAspectRatio = width / height;
-            if(aspectRatio > dxfAspectRatio) {
+            if (aspectRatio > dxfAspectRatio) {
                 width = height * aspectRatio;
             } else {
                 height = width / aspectRatio;
             }
-            
+
             return {
                 bottom: -height / 2,
                 left: -width / 2,
@@ -190,10 +179,10 @@ window.ThreeDxf = ThreeDxf; // Set it early
                 }
             }
         };
-        
+
     })(Helpers = ThreeDxf.Helpers || (ThreeDxf.Helpers = {}));
-    
-    
+
+
     /**
      * Viewer class for a dxf object.
      * @param {Object} data - the dxf object
@@ -202,7 +191,7 @@ window.ThreeDxf = ThreeDxf; // Set it early
      * @param {Number} height - height of the rendering canvas in pixels
      * @constructor
      */
-    ThreeDxf.Viewer = function(data, parent, width, height) {
+    ThreeDxf.Viewer = function (data, parent, width, height) {
         var $parent = $(parent);
 
         var scene = new THREE.Scene();
@@ -220,9 +209,9 @@ window.ThreeDxf = ThreeDxf; // Set it early
         width = width || $parent.innerWidth();
         height = height || $parent.innerHeight();
         var aspectRatio = width / height;
-        
+
         var viewPort = Helpers.getCameraParametersFromDxf(data, aspectRatio);
-        
+
         var camera = new THREE.OrthographicCamera(viewPort.left, viewPort.right, viewPort.top, viewPort.bottom, 1, 19);
         camera.position.z = 10;
         camera.position.x = viewPort.center.x;
@@ -248,7 +237,7 @@ window.ThreeDxf = ThreeDxf; // Set it early
         this.camera = camera;
         this.renderer = renderer;
 
-        this.resetView = function() {
+        this.resetView = function () {
             if (!dxfGroup || !camera || !controls) return;
             var box = new THREE.Box3().setFromObject(dxfGroup);
             if (box.isEmpty()) return;
@@ -294,17 +283,17 @@ window.ThreeDxf = ThreeDxf; // Set it early
 
         var i, entity;
 
-        for(i = 0; i < data.entities.length; i++) {
+        for (i = 0; i < data.entities.length; i++) {
             entity = data.entities[i];
 
-            if(entity.type === 'DIMENSION') {
-                if(entity.block) {
+            if (entity.type === 'DIMENSION') {
+                if (entity.block) {
                     var block = data.blocks[entity.block];
-                    if(!block) {
+                    if (!block) {
                         console.error('Missing block reference "' + entity.block + '"');
                         continue;
                     }
-                    for(var j = 0; j < block.entities.length; j++) {
+                    for (var j = 0; j < block.entities.length; j++) {
                         drawEntity(block.entities[j], data);
                     }
                 } else {
@@ -315,7 +304,7 @@ window.ThreeDxf = ThreeDxf; // Set it early
             }
         }
 
-        this.render = function() {
+        this.render = function () {
             renderer.render(scene, camera);
         };
 
@@ -323,15 +312,14 @@ window.ThreeDxf = ThreeDxf; // Set it early
         this.render();
         this.resetView();
 
-        $parent.on('click', function(event) {
+        $parent.on('click', function (event) {
             var $el = $(renderer.domElement);
 
             var vector = new THREE.Vector3(
-                ( (event.pageX - $el.offset().left) / $el.innerWidth() ) * 2 - 1,
-                -( (event.pageY - $el.offset().top) / $el.innerHeight() ) * 2 + 1,
+                ((event.pageX - $el.offset().left) / $el.innerWidth()) * 2 - 1,
+                -((event.pageY - $el.offset().top) / $el.innerHeight()) * 2 + 1,
                 0.5);
-            var projector = new THREE.Projector();
-            projector.unprojectVector(vector, camera);
+            vector.unproject(camera);
 
             var dir = vector.sub(camera.position).normalize();
 
@@ -342,7 +330,7 @@ window.ThreeDxf = ThreeDxf; // Set it early
             console.log(pos.x, pos.y); // Position in cad that is clicked
         });
 
-        this.resize = function(width, height) {
+        this.resize = function (width, height) {
             var originalWidth = renderer.domElement.width;
             var originalHeight = renderer.domElement.height;
 
@@ -355,7 +343,7 @@ window.ThreeDxf = ThreeDxf; // Set it early
             camera.left = (hscale * camera.left);
             camera.right = (hscale * camera.right);
 
-    //        camera.updateProjectionMatrix();
+            //        camera.updateProjectionMatrix();
 
             renderer.setSize(width, height);
             renderer.setClearColor(0xf7f7f7, 1);
@@ -363,72 +351,56 @@ window.ThreeDxf = ThreeDxf; // Set it early
         };
 
         function drawEntity(entity, data) {
-            if(entity.type === 'CIRCLE' || entity.type === 'ARC') {
+            if (entity.type === 'CIRCLE' || entity.type === 'ARC') {
                 drawCircle(entity, data);
-            } else if(entity.type === 'LWPOLYLINE' || entity.type === 'LINE' || entity.type === 'POLYLINE') {
+            } else if (entity.type === 'LWPOLYLINE' || entity.type === 'LINE' || entity.type === 'POLYLINE') {
                 drawLine(entity, data);
-            } else if(entity.type === 'TEXT') {
+            } else if (entity.type === 'TEXT') {
                 drawText(entity, data);
-            } else if(entity.type === 'SOLID') {
+            } else if (entity.type === 'SOLID') {
                 drawSolid(entity, data);
-            } else if(entity.type === 'POINT') {
+            } else if (entity.type === 'POINT') {
                 drawPoint(entity, data);
             }
         }
 
         function drawLine(entity, data) {
-            var geometry = new THREE.Geometry(),
+            var points = [],
                 color = getColor(entity, data),
                 material, lineType, vertex, startPoint, endPoint, bulgeGeometry,
                 bulge, i, line;
 
             // create geometry
-            for(i = 0; i < entity.vertices.length; i++) {
+            for (i = 0; i < entity.vertices.length; i++) {
 
-                if(entity.vertices[i].bulge) {
+                if (entity.vertices[i].bulge) {
                     bulge = entity.vertices[i].bulge;
                     startPoint = entity.vertices[i];
-                    endPoint = i + 1 < entity.vertices.length ? entity.vertices[i + 1] : geometry.vertices[0];
+                    endPoint = i + 1 < entity.vertices.length ? entity.vertices[i + 1] : entity.vertices[0];
 
                     bulgeGeometry = new THREE.BulgeGeometry(startPoint, endPoint, bulge);
 
-                    geometry.vertices.push.apply(geometry.vertices, bulgeGeometry.vertices);
+                    points.push.apply(points, bulgeGeometry.vertices);
                 } else {
                     vertex = entity.vertices[i];
-                    geometry.vertices.push(new THREE.Vector3(vertex.x, vertex.y, 0));
+                    points.push(new THREE.Vector3(vertex.x, vertex.y, 0));
                 }
 
             }
-            if(entity.shape) geometry.vertices.push(geometry.vertices[0]);
+            if (entity.shape) points.push(points[0]);
 
+            var geometry = new THREE.BufferGeometry().setFromPoints(points);
 
             // set material
-            if(entity.lineType) {
+            if (entity.lineType) {
                 lineType = data.tables.lineType.lineTypes[entity.lineType];
             }
 
-            if(lineType && lineType.pattern && lineType.pattern.length !== 0) {
-                material = new THREE.LineDashedMaterial({ color: color, gapSize: 4, dashSize: 4});
+            if (lineType && lineType.pattern && lineType.pattern.length !== 0) {
+                material = new THREE.LineDashedMaterial({ color: color, gapSize: 4, dashSize: 4 });
             } else {
                 material = new THREE.LineBasicMaterial({ linewidth: 1, color: color });
             }
-
-            // if(lineType && lineType.pattern && lineType.pattern.length !== 0) {
-
-            //           geometry.computeLineDistances();
-
-            //           // Ugly hack to add diffuse to this. Maybe copy the uniforms object so we
-            //           // don't add diffuse to a material.
-            //           lineType.material.uniforms.diffuse = { type: 'c', value: new THREE.Color(color) };
-
-            // 	material = new THREE.ShaderMaterial({
-            // 		uniforms: lineType.material.uniforms,
-            // 		vertexShader: lineType.material.vertexShader,
-            // 		fragmentShader: lineType.material.fragmentShader
-            // 	});
-            // }else {
-            // 	material = new THREE.LineBasicMaterial({ linewidth: 1, color: color });
-            // }
 
             line = new THREE.Line(geometry, material);
             dxfGroup.add(line);
@@ -436,9 +408,12 @@ window.ThreeDxf = ThreeDxf; // Set it early
 
         function drawCircle(entity, data) {
             var geometry, material, circle;
+            var startAngle = entity.startAngle || 0;
+            var endAngle = startAngle + (entity.angleLength || Math.PI * 2);
 
-            geometry = new THREE.CircleGeometry(entity.radius, 32, entity.startAngle, entity.angleLength);
-            geometry.vertices.shift();
+            var curve = new THREE.ArcCurve(0, 0, entity.radius, startAngle, endAngle, false);
+            var points = curve.getPoints(32);
+            geometry = new THREE.BufferGeometry().setFromPoints(points);
 
             material = new THREE.LineBasicMaterial({ color: getColor(entity, data) });
 
@@ -451,33 +426,36 @@ window.ThreeDxf = ThreeDxf; // Set it early
         }
 
         function drawSolid(entity, data) {
-            var material, mesh, verts,
-                geometry = new THREE.Geometry();
+            var material, mesh;
+            var geometry = new THREE.BufferGeometry();
 
-            verts = geometry.vertices;
-            verts.push(new THREE.Vector3(entity.points[0].x, entity.points[0].y, entity.points[0].z));
-            verts.push(new THREE.Vector3(entity.points[1].x, entity.points[1].y, entity.points[1].z));
-            verts.push(new THREE.Vector3(entity.points[2].x, entity.points[2].y, entity.points[2].z));
-            verts.push(new THREE.Vector3(entity.points[3].x, entity.points[3].y, entity.points[3].z));
+            var vertices = new Float32Array([
+                entity.points[0].x, entity.points[0].y, entity.points[0].z,
+                entity.points[1].x, entity.points[1].y, entity.points[1].z,
+                entity.points[2].x, entity.points[2].y, entity.points[2].z,
+                entity.points[3].x, entity.points[3].y, entity.points[3].z
+            ]);
 
             // Calculate which direction the points are facing (clockwise or counter-clockwise)
-            var vector1 = new THREE.Vector3();
-            var vector2 = new THREE.Vector3();
-            vector1.subVectors(verts[1], verts[0]);
-            vector2.subVectors(verts[2], verts[0]);
+            var v0 = new THREE.Vector3(entity.points[0].x, entity.points[0].y, entity.points[0].z);
+            var v1 = new THREE.Vector3(entity.points[1].x, entity.points[1].y, entity.points[1].z);
+            var v2 = new THREE.Vector3(entity.points[2].x, entity.points[2].y, entity.points[2].z);
+
+            var vector1 = new THREE.Vector3().subVectors(v1, v0);
+            var vector2 = new THREE.Vector3().subVectors(v2, v0);
             vector1.cross(vector2);
 
-            // If z < 0 then we must draw these in reverse order
-            if(vector1.z < 0) {
-                geometry.faces.push(new THREE.Face3(2, 1, 0));
-                geometry.faces.push(new THREE.Face3(2, 3, 0));
+            var indices;
+            if (vector1.z < 0) {
+                indices = [2, 1, 0, 2, 3, 0];
             } else {
-                geometry.faces.push(new THREE.Face3(0, 1, 2));
-                geometry.faces.push(new THREE.Face3(0, 3, 2));
+                indices = [0, 1, 2, 3, 2, 0];
             }
 
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setIndex(indices);
 
-            material = new THREE.MeshBasicMaterial({ color: getColor(entity, data) });
+            material = new THREE.MeshBasicMaterial({ color: getColor(entity, data), side: THREE.DoubleSide });
 
             mesh = new THREE.Mesh(geometry, material);
             dxfGroup.add(mesh);
@@ -486,7 +464,19 @@ window.ThreeDxf = ThreeDxf; // Set it early
         function drawText(entity, data) {
             var geometry, material, text;
 
-            geometry = new THREE.TextGeometry(entity.text, { height: 0, size: entity.textHeight || 12 });
+            if (!THREE.TextGeometry) {
+                console.warn('THREE.TextGeometry not found. Skipping text:', entity.text);
+                return;
+            }
+
+            try {
+                // In modern Three.js, TextGeometry requires a font instance in the parameters.
+                // If it's missing or not loaded, this will fail.
+                geometry = new THREE.TextGeometry(entity.text, { height: 0, size: entity.textHeight || 12 });
+            } catch (e) {
+                console.warn('Failed to create THREE.TextGeometry. Possibly missing font.', e);
+                return;
+            }
 
             material = new THREE.MeshBasicMaterial({ color: getColor(entity, data) });
 
@@ -501,35 +491,22 @@ window.ThreeDxf = ThreeDxf; // Set it early
         function drawPoint(entity, data) {
             var geometry, material, point;
 
-            geometry = new THREE.Geometry();
+            geometry = new THREE.BufferGeometry();
+            var vertices = new Float32Array([entity.position.x, entity.position.y, entity.position.z]);
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-            geometry.vertices.push(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
-
-            // TODO: could be more efficient. PointCloud per layer?
-
-            var numPoints = 1;
-
-            var color = getColor(entity, data);
-            var colors = new Float32Array( numPoints*3 );
-            colors[0] = color.r;
-            colors[1] = color.g;
-            colors[2] = color.b;
-
-            geometry.colors = colors;
-            geometry.computeBoundingBox();
-
-            material = new THREE.PointCloudMaterial( { size: 0.05, vertexColors: THREE.VertexColors } );
-            point = new THREE.PointCloud(geometry, material);
+            material = new THREE.PointsMaterial({ size: 0.05, vertexColors: false, color: getColor(entity, data) });
+            point = new THREE.Points(geometry, material);
             dxfGroup.add(point);
         }
 
         function getColor(entity, data) {
             var color = 0x000000; //default
-            if(entity.color) color = entity.color;
-            else if(data.tables && data.tables.layer && data.tables.layer.layers[entity.layer])
+            if (entity.color) color = entity.color;
+            else if (data.tables && data.tables.layer && data.tables.layer.layers[entity.layer])
                 color = data.tables.layer.layers[entity.layer].color;
-                
-            if(color == null || color === 0xffffff) {
+
+            if (color == null || color === 0xffffff) {
                 color = 0x000000;
             }
             return color;
@@ -537,12 +514,12 @@ window.ThreeDxf = ThreeDxf; // Set it early
 
         function createLineTypeShaders(data) {
             var ltype, type;
-            if(!data.tables || !data.tables.lineType) return;
+            if (!data.tables || !data.tables.lineType) return;
             var ltypes = data.tables.lineType.lineTypes;
 
-            for(type in ltypes) {
+            for (type in ltypes) {
                 ltype = ltypes[type];
-                if(!ltype.pattern) continue;
+                if (!ltype.pattern) continue;
                 ltype.material = createDashedLineShader(ltype.pattern);
             }
         }
@@ -552,14 +529,14 @@ window.ThreeDxf = ThreeDxf; // Set it early
                 dashedLineShader = {},
                 totalLength = 0.0;
 
-            for(i = 0; i < pattern.length; i++) {
+            for (i = 0; i < pattern.length; i++) {
                 totalLength += Math.abs(pattern[i]);
             }
 
             dashedLineShader.uniforms = THREE.UniformsUtils.merge([
 
-                THREE.UniformsLib[ 'common' ],
-                THREE.UniformsLib[ 'fog' ],
+                THREE.UniformsLib['common'],
+                THREE.UniformsLib['fog'],
 
                 {
                     'pattern': { type: 'fv1', value: pattern },
@@ -573,11 +550,11 @@ window.ThreeDxf = ThreeDxf; // Set it early
 
                 'varying float vLineDistance;',
 
-                THREE.ShaderChunk[ 'color_pars_vertex' ],
+                THREE.ShaderChunk['color_pars_vertex'],
 
                 'void main() {',
 
-                THREE.ShaderChunk[ 'color_vertex' ],
+                THREE.ShaderChunk['color_vertex'],
 
                 'vLineDistance = lineDistance;',
 
@@ -595,8 +572,8 @@ window.ThreeDxf = ThreeDxf; // Set it early
 
                 'varying float vLineDistance;',
 
-                THREE.ShaderChunk[ 'color_pars_fragment' ],
-                THREE.ShaderChunk[ 'fog_pars_fragment' ],
+                THREE.ShaderChunk['color_pars_fragment'],
+                THREE.ShaderChunk['fog_pars_fragment'],
 
                 'void main() {',
 
@@ -614,8 +591,8 @@ window.ThreeDxf = ThreeDxf; // Set it early
 
                 '}',
 
-                THREE.ShaderChunk[ 'color_fragment' ],
-                THREE.ShaderChunk[ 'fog_fragment' ],
+                THREE.ShaderChunk['color_fragment'],
+                THREE.ShaderChunk['fog_fragment'],
 
                 '}'
             ].join('\n');
@@ -624,12 +601,12 @@ window.ThreeDxf = ThreeDxf; // Set it early
         }
 
     }
-    
+
 })(ThreeDxf || (ThreeDxf = {}));
 
 window.ThreeDxf = ThreeDxf;
 console.log('three-dxf.js loaded, ThreeDxf:', window.ThreeDxf);
-        
+
 
 
 

@@ -1,0 +1,36 @@
+/* ========================================
+   Gantt Column Group Toggle Styles
+   ======================================== */
+
+.gantt-column-group-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gantt-group-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    transition: all 0.2s ease;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.gantt-group-toggle:hover {
+    background: var(--primary-dark);
+    transform: scale(1.1);
+}
+
+.gantt-group-toggle:active {
+    transform: scale(0.95);
+}

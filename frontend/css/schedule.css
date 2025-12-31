@@ -600,3 +600,106 @@
     background-color: #FFF9C4 !important;
     /* Yellow selection like P6 */
 }
+
+/* COMPACT MODE STYLES */
+.gantt_row,
+.gantt_task_row {
+    line-height: 24px !important;
+    /* Matches new row_height */
+}
+
+.gantt_cell {
+    font-size: 12px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 24px !important;
+}
+
+.gantt_tree_content {
+    font-size: 12px !important;
+    line-height: 24px !important;
+}
+
+/* Adjust icons position for compact rows */
+.gantt_tree_icon {
+    background-position: center center !important;
+}
+
+/* --- Bottom Panel Resizer --- */
+.schedule-bottom-resizer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: ns-resize;
+    z-index: 1000;
+    background: transparent;
+    transition: background 0.2s;
+}
+
+.schedule-bottom-resizer:hover {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+.schedule-bottom-resizer::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 2px;
+    background: var(--gray-300);
+    border-radius: 1px;
+}
+
+/* --- Gantt Internal Resizer (Grid/Timeline) --- */
+/* --- Gantt Internal Resizer (Grid/Timeline) --- */
+.gantt_resizer,
+.gantt_layout_resizer,
+.gantt_layout_resizer_v {
+    background-color: #e0e0e0 !important;
+    width: 6px !important;
+    border-left: 1px solid #ccc !important;
+    border-right: 1px solid #ccc !important;
+    transition: background 0.2s, box-shadow 0.2s;
+    cursor: col-resize !important;
+    position: relative;
+    z-index: 50;
+    box-sizing: border-box;
+}
+
+.gantt_resizer:hover,
+.gantt_layout_resizer:hover,
+.gantt_layout_resizer_v:hover {
+    background-color: #2196F3 !important;
+    /* Bright blue on hover */
+    border-color: #1976D2 !important;
+    box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+}
+
+/* Центральная "ручка" для подхвата */
+.gantt_resizer::after,
+.gantt_layout_resizer::after,
+.gantt_layout_resizer_v::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 30px;
+    background: #9aa0a6;
+    border-radius: 2px;
+    transition: all 0.2s;
+    pointer-events: none;
+    /* Let clicks pass through to parent */
+}
+
+.gantt_resizer:hover::after,
+.gantt_layout_resizer:hover::after,
+.gantt_layout_resizer_v:hover::after {
+    background: white;
+    height: 40px;
+}

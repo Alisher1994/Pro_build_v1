@@ -191,6 +191,7 @@ model Resource {
   ifcElements     String?
   ifcProperties   String?
   description     String?
+  shiftsPerDay    Int      @default(1)
   orderIndex      Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -392,8 +393,16 @@ model GanttTask {
   estimateSectionId String?
   quantity         Float?
   unit             String?
+  completedQuantity Float?  @default(0)
+  dailyPlan        Float?   @default(0)
   plannedWork      Float?
   resourceIntensity Float?
+  shiftsPerDay     Int      @default(1)
+  resourceCount    Float    @default(1)
+  calculationMode  String   @default("manual")
+  plannedWorkload  Float?   @default(0)
+  leadingResourceId String?
+  subcontractorId  String?
   durationType     String   @default("fixed_duration")
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
@@ -401,8 +410,25 @@ model GanttTask {
   project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   linksSource      GanttLink[] @relation("SourceTask")
   linksTarget      GanttLink[] @relation("TargetTask")
+  progressHistory  TaskProgress[]
   @@index([projectId])
   @@index([parent])
+}
+
+model TaskProgress {
+  id              String   @id @default(uuid())
+  taskId          String
+  date            DateTime @default(now())
+  quantity        Float    // Количество за этот период
+  progress        Float    // Процент выполнения (накопленный)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  task            GanttTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([date])
 }
 
 model GanttLink {

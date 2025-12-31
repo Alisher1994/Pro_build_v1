@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProBIM UI Kit</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      background: var(--gray-100);
+      color: var(--gray-900);
+      font-family: var(--font-family);
+      padding: 24px;
+      display: block;
+      height: auto;
+      overflow: auto;
+    }
+
+    .kit-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .kit-title {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kit-title h1 {
+      font-size: 18px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .kit-title p {
+      margin: 0;
+      color: var(--gray-700);
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 900px;
+    }
+
+    .kit-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .kit-card {
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .kit-card-header {
+      padding: 12px 14px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .kit-card-header h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-800);
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+
+    .kit-card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .kit-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .kit-row-label {
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .kit-inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .kit-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kit-field label {
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .kit-input,
+    .kit-select,
+    .kit-textarea {
+      height: var(--height-input);
+      padding: 0 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      background: var(--white);
+      color: var(--gray-900);
+      font-size: 13px;
+      font-family: var(--font-family);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      outline: none;
+    }
+
+    .kit-textarea {
+      height: auto;
+      min-height: 88px;
+      padding: 10px;
+      resize: vertical;
+    }
+
+    .kit-input:focus,
+    .kit-select:focus,
+    .kit-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .kit-help {
+      font-size: 11px;
+      color: var(--gray-600);
+    }
+
+    .kit-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-300);
+      background: var(--gray-50);
+      color: var(--gray-800);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      gap: 6px;
+    }
+
+    .kit-badge.success {
+      border-color: #d1f2dc;
+      background: #e8f8ec;
+      color: var(--accent-green);
+    }
+
+    .kit-badge.warning {
+      border-color: #ffe2c2;
+      background: #fff3e6;
+      color: var(--accent-orange);
+    }
+
+    .kit-badge.danger {
+      border-color: #fbd2d2;
+      background: #fdecec;
+      color: var(--accent-red);
+    }
+
+    .kit-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 2px 0;
+    }
+
+    .kit-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .kit-table th,
+    .kit-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 12px;
+      vertical-align: middle;
+      text-align: left;
+    }
+
+    .kit-table thead th {
+      background: var(--gray-50);
+      color: var(--gray-800);
+      font-weight: 700;
+    }
+
+    .kit-table tr:hover td {
+      background: var(--primary-lighter);
+    }
+
+    .kit-steps {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .kit-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .kit-step-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-700);
+    }
+
+    .kit-step.active .kit-step-dot {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    .kit-step-label {
+      font-size: 12px;
+      color: var(--gray-800);
+      font-weight: 600;
+    }
+
+    .kit-step-line {
+      width: 26px;
+      height: 1px;
+      background: var(--gray-300);
+      margin: 0 2px;
+    }
+
+    .kit-step.active + .kit-step-line {
+      background: var(--primary);
+    }
+
+    .kit-note {
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .kit-small {
+      font-size: 11px;
+      color: var(--gray-600);
+    }
+
+    .kit-section-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .kit-disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .kit-table-state {
+      display: grid;
+      gap: 10px;
+    }
+
+    .kit-table-selected {
+      background: var(--primary-lighter);
+    }
+
+    .kit-table-empty,
+    .kit-table-loading {
+      padding: 12px;
+      font-size: 12px;
+      color: var(--gray-700);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .kit-grid-wide {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      align-items: start;
+      margin-top: 16px;
+    }
+
+    .kit-typo-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      align-items: baseline;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--gray-200);
+    }
+
+    .kit-typo-row:last-child {
+      border-bottom: none;
+    }
+
+    .kit-typo-label {
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+
+    .kit-swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .kit-swatch {
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kit-swatch-color {
+      height: 44px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .kit-swatch-meta {
+      padding: 10px;
+      font-size: 12px;
+      color: var(--gray-800);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .kit-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      color: var(--gray-700);
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 2px 6px;
+      width: fit-content;
+    }
+
+    .kit-icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .kit-icon-tile {
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-lg);
+      background: var(--white);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .kit-icon-tile svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .kit-icon-name {
+      font-size: 12px;
+      color: var(--gray-800);
+      font-weight: 600;
+    }
+
+    /* Stepper (project: tender-prototype.html) */
+    .status-steps {
+      display: flex;
+      align-items: flex-start;
+      font-size: 10px;
+      color: var(--gray-700);
+      width: 100%;
+      justify-content: space-between;
+      gap: 2px;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 42px;
+      position: relative;
+    }
+
+    .status-step {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid var(--gray-300);
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-600);
+      z-index: 2;
+    }
+
+    .status-step.done {
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      background: #e8f7ed;
+    }
+
+    .status-step.active {
+      border-color: var(--gray-500);
+      color: var(--gray-700);
+      background: var(--gray-200);
+    }
+
+    .status-step.failed {
+      border-color: var(--gray-500);
+      color: var(--gray-700);
+      background: var(--gray-200);
+    }
+
+    .status-step.winner {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+      background: #fff7ed;
+      animation: radar 2s infinite;
+    }
+
+    @keyframes radar {
+      0% {
+        box-shadow: 0 0 0 0 rgba(202, 80, 16, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px rgba(202, 80, 16, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(202, 80, 16, 0);
+      }
+    }
+
+    .status-line {
+      width: 4px;
+      flex: 1;
+      height: 1px;
+      background: var(--gray-300);
+      margin-top: 9px;
+    }
+
+    .status-line.done {
+      background: var(--accent-green);
+    }
+
+    .status-line.active {
+      background: var(--gray-400);
+    }
+
+    .status-line.failed {
+      background: var(--gray-400);
+    }
+
+    .status-line.winner {
+      background: var(--accent-orange);
+    }
+
+    .step-label {
+      margin-top: 4px;
+      font-size: 7.5px;
+      text-align: center;
+      line-height: 1.1;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .step-label.active {
+      color: var(--gray-800);
+      font-weight: 400;
+    }
+
+    .step-label.done {
+      color: var(--accent-green);
+      font-weight: 400;
+    }
+
+    .step-label.failed {
+      color: var(--gray-700);
+      font-weight: 400;
+    }
+
+    .step-label.winner {
+      color: var(--accent-orange);
+      font-weight: 400;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="kit-header">
+    <div class="kit-title">
+      <h1>UI Kit / Style Guide</h1>
+      <p>
+        Эталонная страница компонентов для ProBIM. Цель: единый визуальный язык и одинаковые состояния.
+        Правило радиусов (жёсткое): контролы = 4px, карточки = 6px, крупные контейнеры = 8px (максимум).
+      </p>
+    </div>
+    <div class="kit-section-actions">
+      <span class="kit-badge">Radius: 2 / 4 / 6 / 8</span>
+      <span class="kit-badge">Height: 32px</span>
+      <span class="kit-badge">Font: Segoe UI</span>
+    </div>
+  </div>
+
+  <div class="kit-grid">
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Buttons</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Primary / Secondary</div>
+          <div class="kit-inline">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-secondary">Secondary</button>
+            <button class="btn btn-danger">Danger</button>
+            <button class="btn btn-primary" disabled>Disabled</button>
+          </div>
+        </div>
+        <div class="kit-divider"></div>
+        <div class="kit-row">
+          <div class="kit-row-label">Ribbon buttons</div>
+          <div class="kit-inline">
+            <button class="ribbon-btn" style="width:60px;height:60px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14" /><path d="M5 12h14" />
+              </svg>
+              <span>Action</span>
+            </button>
+            <button class="ribbon-btn active" style="width:60px;height:60px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              <span>Active</span>
+            </button>
+            <button class="ribbon-btn" style="width:60px;height:60px;" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3h18v18H3z" />
+              </svg>
+              <span>Disabled</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Dropdown (project)</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Status dropdown</div>
+          <div class="kit-inline">
+            <div class="status-dropdown" id="kit-status-dropdown">
+              <div class="status-dropdown-selected" data-dropdown-trigger>
+                <span class="status-icon status-draft">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </span>
+                <span class="status-text" data-dropdown-value>Черновик</span>
+                <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+              <div class="status-dropdown-options">
+                <div class="status-dropdown-option selected" data-label="Черновик">
+                  <span class="status-icon status-draft">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </span>
+                  <span class="status-text">Черновик</span>
+                </div>
+                <div class="status-dropdown-option" data-label="На согласовании">
+                  <span class="status-icon status-pending">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 3" />
+                    </svg>
+                  </span>
+                  <span class="status-text">На согласовании</span>
+                </div>
+                <div class="status-dropdown-option" data-label="Утверждено">
+                  <span class="status-icon status-approved">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m5 13 4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span class="status-text">Утверждено</span>
+                </div>
+                <div class="status-dropdown-option" data-label="Отменено">
+                  <span class="status-icon status-cancelled">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </span>
+                  <span class="status-text">Отменено</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="kit-help">Это реальный компонент проекта `.status-dropdown` (как в смете). Клик вне области закрывает.</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Icon-only actions (project)</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Actions</div>
+          <div class="kit-inline">
+            <button class="btn-icon" title="Открыть" aria-label="Открыть">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 3h7v7" />
+                <path d="M10 14 21 3" />
+                <path d="M21 14v7H3V3h7" />
+              </svg>
+            </button>
+            <button class="btn-icon" title="Изменить" aria-label="Изменить">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </button>
+            <button class="btn-icon" title="Блокировать" aria-label="Блокировать">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </button>
+            <button class="btn-icon" title="Закрыть" aria-label="Закрыть">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+            <button class="btn-icon btn-delete" title="Удалить" aria-label="Удалить">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18" />
+                <path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="kit-help">Это `.btn-icon` и `.btn-icon.btn-delete` из `style.css`.</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Inputs</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Text</div>
+          <div class="kit-inline">
+            <input class="kit-input" type="text" placeholder="Введите текст" value="" />
+            <input class="kit-input" type="text" placeholder="Disabled" value="" disabled />
+          </div>
+        </div>
+        <div class="kit-row">
+          <div class="kit-row-label">Select</div>
+          <div class="kit-inline">
+            <select class="kit-select">
+              <option>Опция 1</option>
+              <option>Опция 2</option>
+              <option>Опция 3</option>
+            </select>
+            <select class="kit-select" disabled>
+              <option>Disabled</option>
+            </select>
+          </div>
+        </div>
+        <div class="kit-row">
+          <div class="kit-row-label">Textarea</div>
+          <div class="kit-inline" style="width:100%">
+            <textarea class="kit-textarea" placeholder="Комментарий..."></textarea>
+          </div>
+        </div>
+        <div class="kit-help">Фокус: `border-color: --primary` + `box-shadow: 0 0 0 2px --primary-light`</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Checkbox / Radio / Switch</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Checkbox</div>
+          <div class="kit-inline">
+            <label class="kit-inline"><input type="checkbox" checked /> <span class="kit-note">Согласен</span></label>
+            <label class="kit-inline"><input type="checkbox" /> <span class="kit-note">Не согласен</span></label>
+            <label class="kit-inline kit-disabled"><input type="checkbox" checked disabled /> <span class="kit-note">Disabled</span></label>
+          </div>
+        </div>
+        <div class="kit-row">
+          <div class="kit-row-label">Radio</div>
+          <div class="kit-inline">
+            <label class="kit-inline"><input type="radio" name="r1" checked /> <span class="kit-note">Option A</span></label>
+            <label class="kit-inline"><input type="radio" name="r1" /> <span class="kit-note">Option B</span></label>
+          </div>
+        </div>
+        <div class="kit-help">Чекбоксы/радио используют `accent-color: --primary` (как в основном стиле)</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Badges / Status</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Neutral</div>
+          <div class="kit-inline">
+            <span class="kit-badge">Draft</span>
+            <span class="kit-badge">New</span>
+          </div>
+        </div>
+        <div class="kit-row">
+          <div class="kit-row-label">Success / Warning / Danger</div>
+          <div class="kit-inline">
+            <span class="kit-badge success">Approved</span>
+            <span class="kit-badge warning">Attention</span>
+            <span class="kit-badge danger">Blocked</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Table</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-table-state">
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Лот</th>
+                  <th>Статус</th>
+                  <th>Сумма</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Тендер #1021</td>
+                  <td><span class="kit-badge">Draft</span></td>
+                  <td>—</td>
+                  <td>
+                    <button class="btn-icon" title="Открыть" aria-label="Открыть">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 3h7v7" />
+                        <path d="M10 14 21 3" />
+                        <path d="M21 14v7H3V3h7" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr class="kit-table-selected">
+                  <td>Тендер #1022</td>
+                  <td><span class="kit-badge success">Approved</span></td>
+                  <td>1 240 000</td>
+                  <td>
+                    <button class="btn-icon" title="Редактировать" aria-label="Редактировать">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Тендер #1023</td>
+                  <td><span class="kit-badge danger">Blocked</span></td>
+                  <td>980 000</td>
+                  <td>
+                    <button class="btn-icon btn-delete" title="Удалить" aria-label="Удалить">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Пустое состояние</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="kit-table-empty">Нет данных</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Loading состояние</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="kit-table-loading">Загрузка…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="kit-small">Таблица проекта: `.data-table` из `style.css`. Hover — системный `tbody tr:hover`.</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Steps</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Tender stepper</div>
+          <div class="kit-inline" style="width: 100%;">
+            <div class="status-steps" style="max-width: 340px;">
+              <div class="step-item">
+                <div class="status-step done">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                </div>
+                <div class="step-label done">Вход</div>
+              </div>
+              <div class="status-line done"></div>
+              <div class="step-item">
+                <div class="status-step done">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div class="step-label done">Документы</div>
+              </div>
+              <div class="status-line active"></div>
+              <div class="step-item">
+                <div class="status-step active">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><polyline points="8 8 12 4 16 8"></polyline><rect x="4" y="16" width="16" height="4" rx="1"></rect></svg>
+                </div>
+                <div class="step-label active">Загрузка</div>
+              </div>
+              <div class="status-line"></div>
+              <div class="step-item">
+                <div class="status-step">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div class="step-label">Разобрано</div>
+              </div>
+              <div class="status-line winner"></div>
+              <div class="step-item">
+                <div class="status-step winner">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </div>
+                <div class="step-label winner">Победитель</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="kit-help">Твой реальный степпер (как в `tender-prototype.html`): `.status-steps / .status-step / .status-line / .step-label`.</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Cards / Panels</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-row">
+          <div class="kit-row-label">Card</div>
+          <div class="kit-inline" style="width:100%">
+            <div style="width:100%; padding: 14px; border: 1px solid var(--gray-300); border-radius: var(--radius-lg); background: var(--white); box-shadow: var(--shadow-sm);">
+              <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px;">Заголовок карточки</div>
+              <div style="font-size: 12px; color: var(--gray-700);">Описание. Card radius = 6px. Container radius = 8px.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="kit-grid-wide">
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Typography (tokens)</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-typo-row">
+          <div class="kit-typo-label">--font-size-xs</div>
+          <div style="font-size: var(--font-size-xs);">XS: пример текста (11px)</div>
+        </div>
+        <div class="kit-typo-row">
+          <div class="kit-typo-label">--font-size-sm</div>
+          <div style="font-size: var(--font-size-sm);">SM: пример текста (12px)</div>
+        </div>
+        <div class="kit-typo-row">
+          <div class="kit-typo-label">--font-size-base</div>
+          <div style="font-size: var(--font-size-base);">Base: пример текста (14px)</div>
+        </div>
+        <div class="kit-typo-row">
+          <div class="kit-typo-label">--font-size-md</div>
+          <div style="font-size: var(--font-size-md);">MD: пример текста (15px)</div>
+        </div>
+        <div class="kit-typo-row">
+          <div class="kit-typo-label">--font-size-lg</div>
+          <div style="font-size: var(--font-size-lg);">LG: пример текста (16px)</div>
+        </div>
+        <div class="kit-typo-row">
+          <div class="kit-typo-label">--font-size-xl</div>
+          <div style="font-size: var(--font-size-xl); font-weight: 700;">XL: заголовок (18px)</div>
+        </div>
+        <div class="kit-help">Системные размеры из `style.css` (`:root`).</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>Colors (system)</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-swatches">
+          <div class="kit-swatch">
+            <div class="kit-swatch-color" style="background: var(--primary);"></div>
+            <div class="kit-swatch-meta">
+              <div>Primary</div>
+              <div class="kit-code">var(--primary)</div>
+            </div>
+          </div>
+          <div class="kit-swatch">
+            <div class="kit-swatch-color" style="background: var(--primary-hover);"></div>
+            <div class="kit-swatch-meta">
+              <div>Primary Hover</div>
+              <div class="kit-code">var(--primary-hover)</div>
+            </div>
+          </div>
+          <div class="kit-swatch">
+            <div class="kit-swatch-color" style="background: var(--primary-light);"></div>
+            <div class="kit-swatch-meta">
+              <div>Primary Light</div>
+              <div class="kit-code">var(--primary-light)</div>
+            </div>
+          </div>
+          <div class="kit-swatch">
+            <div class="kit-swatch-color" style="background: var(--accent-green);"></div>
+            <div class="kit-swatch-meta">
+              <div>Accent Green</div>
+              <div class="kit-code">var(--accent-green)</div>
+            </div>
+          </div>
+          <div class="kit-swatch">
+            <div class="kit-swatch-color" style="background: var(--accent-orange);"></div>
+            <div class="kit-swatch-meta">
+              <div>Accent Orange</div>
+              <div class="kit-code">var(--accent-orange)</div>
+            </div>
+          </div>
+          <div class="kit-swatch">
+            <div class="kit-swatch-color" style="background: var(--accent-red);"></div>
+            <div class="kit-swatch-meta">
+              <div>Accent Red</div>
+              <div class="kit-code">var(--accent-red)</div>
+            </div>
+          </div>
+        </div>
+        <div class="kit-help">Если хочешь, добавлю второй ряд со всеми `--gray-50..900`.</div>
+      </div>
+    </section>
+
+    <section class="kit-card">
+      <div class="kit-card-header">
+        <h2>System icons (SVG)</h2>
+      </div>
+      <div class="kit-card-body">
+        <div class="kit-icon-grid">
+          <div class="kit-icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+            <div class="kit-icon-name">delete</div>
+          </div>
+          <div class="kit-icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+            <div class="kit-icon-name">edit</div>
+          </div>
+          <div class="kit-icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            <div class="kit-icon-name">close</div>
+          </div>
+          <div class="kit-icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7" /><path d="M10 14 21 3" /><path d="M21 14v7H3V3h7" /></svg>
+            <div class="kit-icon-name">open</div>
+          </div>
+          <div class="kit-icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+            <div class="kit-icon-name">lock</div>
+          </div>
+          <div class="kit-icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /><path d="M6 11l6 6 6-6" /><path d="M5 19h14" /></svg>
+            <div class="kit-icon-name">download</div>
+          </div>
+        </div>
+        <div class="kit-help">Иконки показаны SVG-ками (тот же стиль, что ты используешь в проекте).</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const dropdown = document.getElementById('kit-status-dropdown');
+      if (!dropdown) return;
+
+      const trigger = dropdown.querySelector('[data-dropdown-trigger]');
+      const valueEl = dropdown.querySelector('[data-dropdown-value]');
+
+      const closeAll = () => {
+        document.querySelectorAll('.status-dropdown.active').forEach(d => d.classList.remove('active'));
+      };
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.status-dropdown')) closeAll();
+      });
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = dropdown.classList.contains('active');
+        closeAll();
+        dropdown.classList.toggle('active', !isActive);
+      });
+
+      dropdown.querySelectorAll('.status-dropdown-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.querySelectorAll('.status-dropdown-option.selected').forEach(x => x.classList.remove('selected'));
+          opt.classList.add('selected');
+          if (valueEl) valueEl.textContent = opt.getAttribute('data-label') || opt.textContent.trim();
+          dropdown.classList.remove('active');
+        });
+      });
+    })();
+  </script>
+</body>
+
+</html>

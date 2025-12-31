@@ -7,7 +7,7 @@ const router = Router();
 router.get('/', async (req, res) => {
   try {
     const { workTypeId, resourceType } = req.query;
-    
+
     const where: any = {};
     if (workTypeId) where.workTypeId = String(workTypeId);
     if (resourceType) where.resourceType = String(resourceType);

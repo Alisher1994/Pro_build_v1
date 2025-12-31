@@ -466,10 +466,16 @@ model GanttTask {
   // Объемы и единицы измерения
   quantity       Float?
   unit           String?
+  completedQuantity Float?  @default(0)
+  dailyPlan      Float?     @default(0)
 
   // Поля для профессионального планирования (Primavera P6 logic)
   plannedWork       Float?    // Общий объем работ (чел-час / маш-час)
   resourceIntensity Float?    // Интенсивность (чел-час в день / кол-во людей)
+  resourceCount     Float?    // Количество ресурсов
+  shiftsPerDay      Int?      @default(1)
+  calculationMode   String?   @default("manual") // manual, auto_duration, auto_resources
+  leadingResourceId String?   // ID ведущего ресурса
   durationType     String   @default("fixed_duration") // fixed_units, fixed_duration, fixed_intensity
 
   createdAt      DateTime @default(now())
@@ -479,9 +485,26 @@ model GanttTask {
   
   linksSource    GanttLink[] @relation("SourceTask")
   linksTarget    GanttLink[] @relation("TargetTask")
+  progressHistory TaskProgress[]
 
   @@index([projectId])
   @@index([parent])
+}
+
+model TaskProgress {
+  id              String   @id @default(uuid())
+  taskId          String
+  date            DateTime @default(now())
+  quantity        Float    // Количество за этот период
+  progress        Float    // Процент выполнения (накопленный)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  task            GanttTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([date])
 }
 
 model GanttLink {

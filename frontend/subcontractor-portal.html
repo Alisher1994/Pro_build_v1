@@ -1963,6 +1963,11 @@
     <!-- xeokit SDK - ES module exposes window.xeokit -->
     <script type="module" src="js/xeokit-loader.js"></script>
     <script src="js/ifcViewer.js"></script>
+    <script src="js/libs/jquery.min.js"></script>
+    <script src="js/libs/three.min.js"></script>
+    <script src="js/libs/OrbitControls.js"></script>
+    <script src="js/libs/dxf-parser.js"></script>
+    <script src="js/libs/three-dxf.js"></script>
 
     <script>
         // API Configuration
@@ -2514,12 +2519,15 @@
                 const contentArea = document.getElementById('sub-files-content-area');
                 if (!contentArea) return;
 
-                const fileUrl = this.normalizeUploadPath(file.fileUrl);
-                const previewUrl = file.previewUrl ? this.normalizeUploadPath(file.previewUrl) : '';
+                const filePath = this.normalizeUploadPath(file.fileUrl);
+                const previewPath = file.previewUrl ? this.normalizeUploadPath(file.previewUrl) : '';
+                const fileUrl = filePath.startsWith('/') ? `${API_BASE_URL}${filePath}` : filePath;
+                const previewUrl = previewPath ? (previewPath.startsWith('/') ? `${API_BASE_URL}${previewPath}` : previewPath) : '';
                 const name = String(file.name || 'Файл');
                 const ext = (name.split('.').pop() || '').toLowerCase();
 
                 const canPreviewPdf = ext === 'pdf' || !!previewUrl;
+                const isDxf = ext === 'dxf';
 
                 contentArea.innerHTML = `
                     <div style="display: flex; flex-direction: column; height: 100%; background: #f8fafc;">
@@ -2541,10 +2549,21 @@
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
                             </a>
+                            ${isDxf ? `
+                                <button class="btn btn-secondary btn-sm" onclick="SubRightPanel.centerDxfView()" style="height: 28px; display: flex; align-items: center; gap: 6px; border-radius: 4px;" title="Центрировать">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span>Центрировать</span>
+                                </button>
+                            ` : ''}
                         </div>
                         <div style="flex: 1; position: relative; overflow: hidden; display: flex; align-items: stretch; justify-content: stretch;">
                             ${canPreviewPdf ? `
                                 <iframe src="${escapeHtml((previewUrl || fileUrl))}#toolbar=0" style="width: 100%; height: 100%; border: none;"></iframe>
+                            ` : isDxf ? `
+                                <div id="sub-dxf-viewer-container" style="width: 100%; height: 100%; background: #222;"></div>
                             ` : `
                                 <div style="text-align: center; padding: 40px; color: var(--gray-500); width: 100%;">
                                     <h4 style="margin: 0 0 8px; color: var(--gray-800);">Превью недоступно</h4>
@@ -2555,6 +2574,77 @@
                         </div>
                     </div>
                 `;
+
+                if (isDxf) {
+                    setTimeout(() => this.initDxfViewer(fileUrl), 100);
+                }
+            },
+
+            async initDxfViewer(fileUrl) {
+                const container = document.getElementById('sub-dxf-viewer-container');
+                if (!container) return;
+
+                try {
+                    if (typeof THREE === 'undefined') {
+                        container.innerHTML = '<div style="color: white; padding: 20px;">Ошибка: Three.js не загружен</div>';
+                        return;
+                    }
+
+                    if (typeof DxfParser === 'undefined') {
+                        container.innerHTML = '<div style="color: white; padding: 20px;">Ошибка: DxfParser не загружен</div>';
+                        return;
+                    }
+
+                    container.innerHTML = '<div style="color: white; padding: 20px;">Загрузка и обработка чертежа...</div>';
+
+                    const response = await fetch(fileUrl);
+                    if (!response.ok) {
+                        throw new Error('Не удалось загрузить DXF файл');
+                    }
+                    const data = await response.text();
+
+                    const parser = new DxfParser();
+                    const dxf = parser.parseSync(data);
+
+                    container.innerHTML = '';
+
+                    const DxfViewerLib = window.ThreeDxf;
+                    if (!DxfViewerLib || !DxfViewerLib.Viewer) {
+                        throw new Error('Библиотека ThreeDxf не загружена');
+                    }
+
+                    const viewer = new DxfViewerLib.Viewer(dxf, container, container.clientWidth, container.clientHeight);
+                    this.currentDxfViewer = viewer;
+                    if (typeof viewer.resetView === 'function') viewer.resetView();
+
+                    if (viewer.renderer && viewer.renderer.setClearColor) {
+                        viewer.renderer.setClearColor(0xf7f7f7, 1);
+                    }
+
+                    let recolored = 0;
+                    viewer.scene?.traverse((obj) => {
+                        const materials = Array.isArray(obj.material) ? obj.material : obj.material ? [obj.material] : [];
+                        materials.forEach((m) => {
+                            if (m && m.color && typeof m.color.getHex === 'function' && m.color.getHex() === 0xffffff) {
+                                m.color.set(0x111111);
+                                recolored += 1;
+                            }
+                        });
+                    });
+
+                    showToast('Чертеж DXF загружен');
+                } catch (error) {
+                    console.error('DXF Viewer Error:', error);
+                    container.innerHTML = `<div style="color: #ef4444; padding: 20px;">Ошибка при чтении DXF: ${escapeHtml(error.message || error)}</div>`;
+                }
+            },
+
+            centerDxfView() {
+                if (this.currentDxfViewer && typeof this.currentDxfViewer.resetView === 'function') {
+                    this.currentDxfViewer.resetView();
+                } else {
+                    showToast('Вьюер DXF ещё не инициализировался');
+                }
             },
 
             backToFilesList() {

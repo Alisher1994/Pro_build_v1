@@ -53,6 +53,7 @@
     --radius-sm: 2px;
     --radius-md: 4px;
     --radius-lg: 6px;
+    --radius-xl: 8px;
 
     /* Shadows */
     --shadow-sm: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.11);
@@ -1484,6 +1485,13 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     color: var(--primary);
 }
 
+.ribbon-btn-rect.active {
+    background: var(--primary-lighter);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary-light);
+}
+
 .ribbon-btn-rect svg {
     width: 14px !important;
     height: 14px !important;
@@ -1574,7 +1582,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .permit-column {
     background: #f8f9fb;
     border: 1px solid var(--gray-200);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     padding: 12px;
     display: flex;
     flex-direction: column;
@@ -1901,7 +1909,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     font-weight: 700;
     color: var(--primary);
     padding: 6px 10px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: var(--primary-light);
     border: 1px solid var(--gray-200);
     line-height: 1;
@@ -2539,7 +2547,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     align-items: center;
     gap: 8px;
     padding: 12px 10px;
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     background: rgba(255, 255, 255, 0.9);
     box-shadow: var(--shadow-md);
     transform: translateY(-8px);
@@ -2914,7 +2922,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .document-type-card {
     position: relative;
     border: 2px solid var(--gray-300);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -3682,7 +3690,7 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
 .chat-avatar {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius: var(--radius-md);
     object-fit: cover;
     background: var(--gray-200);
 }
@@ -3791,7 +3799,7 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
     color: var(--white);
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     padding: 4px 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     font-size: 11px;
     font-weight: 600;
 }
@@ -3812,7 +3820,7 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
 
 .chat-bubble {
     padding: 8px 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     font-size: 13px;
     line-height: 1.4;
     position: relative;

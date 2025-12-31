@@ -99,15 +99,23 @@
 /* Block */
 .gantt_row.row_block .gantt_cell {
     background-color: var(--gantt-block-color) !important;
-    color: #000 !important;
+    color: #fff !important;
     font-weight: bold;
+}
+
+.gantt_row.row_block .gantt_tree_content {
+    color: #fff !important;
 }
 
 /* Floor */
 .gantt_row.row_floor .gantt_cell {
     background-color: var(--gantt-floor-color) !important;
-    color: #000 !important;
+    color: #fff !important;
     font-weight: bold;
+}
+
+.gantt_row.row_floor .gantt_tree_content {
+    color: #fff !important;
 }
 
 /* Other group rows */
@@ -132,4 +140,68 @@
     background-color: transparent !important;
     color: inherit !important;
     font-weight: inherit !important;
+}
+
+/* ==========================================================================
+   PRIMAVERA-STYLE SUMMARY BARS (BRACKETS)
+   User requested "vehi" (milestones/summaries) to look like brackets.
+   We transform all "Project" (summary) tasks into thin brackets.
+   ========================================================================== */
+
+/* 1. Reset the default bar look for projects */
+.gantt_bar_project {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.gantt_bar_project .gantt_task_content {
+    display: none !important;
+    /* Hide text inside the bracket */
+}
+
+/* 2. Draw the Bracket using ::after */
+.gantt_bar_project::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    /* Adjust vertical position */
+    left: 0;
+    right: 0;
+    height: 6px;
+
+    /* The Bracket Shape */
+    border-top: 2px solid #000;
+    border-left: 2px solid #000;
+    border-right: 2px solid #000;
+    box-sizing: border-box;
+
+    /* Default Color (Dark Gray) */
+    border-color: #444;
+}
+
+/* 3. Colorize Brackets based on Level/Type (Classes injected via task_class) */
+
+/* Phase (Очередь) - Green Bracket */
+.gantt_bar_project.row_phase::after {
+    border-color: var(--gantt-phase-color);
+    border-top-width: 3px;
+    /* Make phases slightly thicker */
+}
+
+/* Block (Секция) - Muted Green Bracket */
+.gantt_bar_project.row_block::after {
+    border-color: var(--gantt-block-color);
+}
+
+/* Floor (Этаж) - Light Green Bracket */
+.gantt_bar_project.row_floor::after {
+    border-color: #7f8c8d;
+    /* Neutral gray for floors to reduce visual noise */
+}
+
+/* Hover Effect for Brackets */
+.gantt_bar_project:hover::after {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    border-width: 3px;
 }

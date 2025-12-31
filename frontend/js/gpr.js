@@ -876,7 +876,10 @@ const GPRManager = {
     },
 
     async showProjectSettingsModal() {
-        if (!this.currentProjectId) return;
+        if (!this.currentProjectId) {
+            UI.showNotification('Сначала выберите проект', 'error');
+            return;
+        }
 
         UI.showLoading(true, 'Загрузка настроек...');
         let project;

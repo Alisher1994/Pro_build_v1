@@ -6,8 +6,6 @@ const ScheduleManager = {
     version: '20251219-2',
     currentProjectId: null,
     isInitialized: false,
-    showEstimate: false,
-    showVolume: false,
     todayMarkerId: null,
     isAutoUpdatingParents: false,
     bottomPanel: {
@@ -134,6 +132,25 @@ const ScheduleManager = {
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px;">
                     <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="font-size:12px; font-weight:600; color:var(--gray-600);">СМЕННОСТЬ</label>
+                        <select id="task-shifts" style="padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;">
+                            <option value="1" ${task.shiftsPerDay == 1 ? 'selected' : ''}>1 смена (8ч)</option>
+                            <option value="2" ${task.shiftsPerDay == 2 ? 'selected' : ''}>2 смены (16ч)</option>
+                            <option value="3" ${task.shiftsPerDay == 3 ? 'selected' : ''}>3 смены (24ч)</option>
+                        </select>
+                        <span style="font-size:11px; color:var(--gray-500);">Количество рабочих смен в сутки</span>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="font-size:12px; font-weight:600; color:var(--gray-600);">ИНТЕНСИВНОСТЬ (ЕД. В СМЕНУ)</label>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="number" id="task-resource-count" value="${task.resourceCount || 1}" step="0.1" min="0.1" style="flex:1; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;">
+                            <span style="font-size: 13px; color: var(--gray-600);">ед.</span>
+                        </div>
+                        <span style="font-size:11px; color:var(--gray-500);">Количество людей/машин одновременно</span>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:8px;">
                         <label style="font-size:12px; font-weight:600; color:var(--gray-600);">РЕЖИМ РАСЧЕТА</label>
                         <select id="task-calc-mode" style="padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px;">
                             <option value="manual" ${task.calculationMode === 'manual' ? 'selected' : ''}>Вручную (фиксированно)</option>
@@ -157,6 +174,8 @@ const ScheduleManager = {
         const statusEl = pane.querySelector('#settings-save-status');
 
         saveBtn.addEventListener('click', async () => {
+            const shifts = parseInt(pane.querySelector('#task-shifts').value);
+            const count = parseFloat(pane.querySelector('#task-resource-count').value);
             const mode = pane.querySelector('#task-calc-mode').value;
 
             saveBtn.disabled = true;
@@ -165,11 +184,15 @@ const ScheduleManager = {
 
             try {
                 await api.updateGanttTask(task.id, {
+                    shiftsPerDay: shifts,
+                    resourceCount: count,
                     calculationMode: mode
                 });
 
                 // Update local task object
                 const t = gantt.getTask(task.id);
+                t.shiftsPerDay = shifts;
+                t.resourceCount = count;
                 t.calculationMode = mode;
 
                 // If auto mode is on, we might need a separate call or logic to trigger recalculation
@@ -249,10 +272,6 @@ const ScheduleManager = {
             return config[t] || config.material;
         };
 
-        const task = gantt.getTask(this.resourcesPane.selectedTaskId);
-        const taskQty = Number(task.quantity || 0);
-        const duration = Number(task.duration || 1);
-
         const rows = list.map((r, idx) => {
             const b = getBadge(r.resourceType);
             const name = this.escapeHtml(r?.name || '—');
@@ -260,191 +279,70 @@ const ScheduleManager = {
             const unit = this.escapeHtml(r?.unit || '');
             const displayNo = r.code || (idx + 1);
             const norm = r.normPerUnit !== null ? Number(r.normPerUnit) : 0;
+            const task = gantt.getTask(this.resourcesPane.selectedTaskId);
+            const taskQty = Number(task.quantity || 0);
             const totalHours = norm * taskQty;
+            const duration = Number(task.duration || 1);
+            const shifts = Number(task.shiftsPerDay || 1);
             const resShifts = Number(r.shiftsPerDay || 1);
-
-            // ПРИОРИТЕТ: настройки ресурса → настройки задачи → глобальные настройки
-            // Часов в смене может быть задано на уровне ресурса, задачи или проекта
-            const shiftHrs = Number(r.shiftDuration) ||
-                Number(task.shiftDuration) ||
-                (this.projectSettings?.shiftDuration) ||
-                8;
-
-            // DEBUG: Логируем для первого ресурса
-            if (idx === 0) {
-                console.log('=== INTENSITY CALCULATION DEBUG ===');
-                console.log('Resource:', r.name);
-                console.log('Unit:', r.unit);
-                console.log('Norm per unit:', norm, 'чел-ч');
-                console.log('Task quantity:', taskQty, task.unit);
-                console.log('Total hours:', totalHours, 'чел-ч');
-                console.log('Duration:', duration, 'дней');
-                console.log('Resource shifts per day:', resShifts);
-                console.log('Hours per shift (priority: resource → task → project):', shiftHrs);
-                console.log('  - Resource shiftDuration:', r.shiftDuration || 'not set');
-                console.log('  - Task shiftDuration:', task.shiftDuration || 'not set');
-                console.log('  - Project shiftDuration:', this.projectSettings?.shiftDuration || 'not set');
-                console.log('Formula: totalHours / (duration × resShifts × shiftHrs)');
-                console.log('Formula:', totalHours, '/ (', duration, '×', resShifts, '×', shiftHrs, ')');
-            }
+            const shiftHrs = (this.projectSettings?.shiftDuration) || 8;
 
             // Intensity = Total Hours / (Duration * Shifts * ShiftHours)
             let intensity = 0;
-            let intensityDisplay = '—';
-            let intensityStyle = '';
-
             if (duration > 0 && resShifts > 0 && shiftHrs > 0 && (r.resourceType === 'labor' || r.resourceType === 'equipment')) {
-                const rawIntensity = totalHours / (duration * resShifts * shiftHrs);
-
-                if (idx === 0) {
-                    console.log('Raw intensity:', rawIntensity);
-                    console.log('Rounded intensity:', Math.ceil(rawIntensity));
-                    console.log('===================================');
-                }
-
-                // Округляем до целого числа (нельзя иметь 0.947 человека!)
-                intensity = Math.ceil(rawIntensity); // Округляем вверх
-
-                // Определяем единицу измерения
-                const unit = r.resourceType === 'labor' ? 'чел' : 'маш';
-
-                if (task.calculationMode === 'auto_duration') {
-                    // В режиме "Считать дни" показываем инпут. 
-                    // Если это ведущий ресурс или его интенсивность была только что изменена, 
-                    // мы можем использовать task.resourceCount для отображения точного числа, которое ввел пользователь.
-                    const displayIntensity = (idx === 0 && task.resourceCount) ? Math.ceil(task.resourceCount) : intensity;
-
-                    intensityDisplay = `
-                        <div style="display:flex; align-items:center; justify-content:flex-end; gap:5px;">
-                            <input type="number" class="res-intensity-input" value="${displayIntensity}" min="1" step="1" 
-                                   style="width: 45px; padding: 2px 4px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px; text-align: right; background: #fff; color: #000;">
-                            <span style="font-size: 11px; color: inherit; opacity: 0.8;">${unit}</span>
-                        </div>
-                    `;
-                    intensityStyle = 'background: rgba(40, 167, 69, 0.05);';
-                } else if (rawIntensity < 1) {
-                    // Предупреждение если интенсивность слишком низкая (в ручном режиме)
-                    intensityDisplay = `<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span style="color: var(--accent-orange); font-size: 14px;" title="Работа растянута по времени">⚠️</span><span>${intensity} ${unit}</span></div>`;
-                    intensityStyle = 'background: rgba(255, 165, 0, 0.1); padding: 4px 8px !important;';
-                } else {
-                    intensityDisplay = `${intensity} ${unit}`;
-                }
+                intensity = totalHours / (duration * resShifts * shiftHrs);
             }
 
             const isLeading = task.leadingResourceId === r.id;
 
             return `
-                <tr class="resource-row" 
-                    data-resource-id="${r.id}" 
-                    data-norm="${norm}"
-                    data-total-hours="${totalHours}"
-                    data-shifts="${resShifts}"
-                    data-shift-duration="${shiftHrs}"
-                    style="color: ${b.color}; font-weight: 400;">
-                    <td style="text-align: center; color: var(--gray-500); font-size: 11px;">${displayNo}</td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" class="leading-checkbox" 
-                               ${task.leadingResourceId === r.id ? 'checked' : ''} 
-                               ${task.leadingResourceId && task.leadingResourceId !== r.id ? 'disabled' : ''}
-                               style="cursor:pointer; width: 16px; height: 16px; accent-color: var(--primary);">
+                <tr class="resource-row ${isLeading ? 'is-leading' : ''}" data-resource-id="${r.id}">
+                    <td style="width: 40px; color: var(--gray-500); text-align: center; font-size: 11px;">${this.escapeHtml(displayNo)}</td>
+                    <td style="width: 32px; text-align: center;">
+                        <input type="radio" name="leading-resource-${task.id}" class="leading-radio" ${isLeading ? 'checked' : ''} 
+                               ${(r.resourceType !== 'labor' && r.resourceType !== 'equipment') ? 'disabled' : ''} 
+                               title="Сделать ведущим ресурсом">
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 24px; height: 24px; border-radius: 4px; background: ${b.bg}; color: ${b.color}; display: flex; align-items: center; justify-content: center; border: 1px solid ${b.border};">
+                    <td style="width: 24px; text-align: center;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: ${b.bg}; color: ${b.color}; border: 1px solid ${b.border};">
                             ${b.icon}
-                        </div>
+                        </span>
                     </td>
-                    <td style="font-size: 13px;">${this.escapeHtml(r?.name || '—')}</td>
-                    <td style="padding: 0; position: relative;">
-                        <div class="custom-shift-dropdown" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 4px 0; font-size: 11px; transition: background 0.2s;" data-value="${resShifts}">
-                            ${resShifts} см
-                            <div class="custom-shift-options" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #fff; border: 1px solid var(--gray-300); box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; overflow: hidden;">
-                                <div class="shift-opt" data-val="1" style="padding: 6px; text-align: center; border-bottom: 1px solid var(--gray-100);">1 см</div>
-                                <div class="shift-opt" data-val="2" style="padding: 6px; text-align: center; border-bottom: 1px solid var(--gray-100);">2 см</div>
-                                <div class="shift-opt" data-val="3" style="padding: 6px; text-align: center;">3 см</div>
-                            </div>
-                        </div>
+                    <td style="color: ${b.color}; font-weight: 500;">${name}</td>
+                    <td style="color: var(--gray-600); font-size: 11px;">
+                        <select class="res-shift-select" style="padding: 2px 4px; border-radius: 4px; border: 1px solid var(--gray-300); font-size: 11px;" 
+                                ${(r.resourceType !== 'labor' && r.resourceType !== 'equipment') ? 'disabled' : ''}>
+                            <option value="1" ${resShifts === 1 ? 'selected' : ''}>1 см</option>
+                            <option value="2" ${resShifts === 2 ? 'selected' : ''}>2 см</option>
+                            <option value="3" ${resShifts === 3 ? 'selected' : ''}>3 см</option>
+                        </select>
                     </td>
-                    <td style="color: inherit; opacity: 0.7; font-size: 12px; white-space:nowrap;">${unit}</td>
-                    <td style="text-align:left; color: inherit; white-space:nowrap; font-size: 11px;">${norm > 0 ? this.formatQty(norm) : '—'}</td>
-                    <td style="text-align:left; color: inherit; white-space:nowrap; font-size: 11px;">${totalHours > 0 ? this.formatQty(totalHours) : '—'}</td>
-                    <td style="text-align:left; color: inherit; white-space:nowrap; font-size: 11px; ${intensityStyle}">${intensityDisplay}</td>
-                    <td style="padding: 2px 4px;">
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <!-- Permit Status Icon (only for labor/equipment, empty for materials) -->
-                            ${r.resourceType === 'material' ?
-                    '<div style="width: 16px; height: 16px; flex-shrink: 0;"></div>' :
-                    `<div class="permit-status" title="${r.hasPermit ? 'Допуск получен' : 'Допуск не получен'}" style="flex-shrink: 0; cursor: pointer;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${r.hasPermit ? '#22c55e' : 'none'}" stroke="${r.hasPermit ? '#16a34a' : '#9ca3af'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                        ${r.hasPermit ? '<path d="m9 12 2 2 4-4" stroke="white" stroke-width="2"/>' : ''}
-                                    </svg>
-                                </div>`
-                }
-                            <div class="contractor-dropdown" data-resource-id="${r.id}" style="display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; cursor: pointer; font-size: 11px; color: var(--gray-600); flex: 1;">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                <span class="contractor-name">${r.contractorName ? this.escapeHtml(r.contractorName) : 'Не назначен'}</span>
-                            </div>
-                        </div>
-                    </td>
+                    <td style="color: var(--gray-600); font-size: 12px; white-space:nowrap;">${unit}</td>
+                    <td style="text-align:right; font-weight:600; color: ${b.color}; white-space:nowrap;">${norm > 0 ? this.formatQty(norm) : '—'}</td>
+                    <td style="text-align:right; font-weight:600; color: ${b.color}; white-space:nowrap;">${totalHours > 0 ? this.formatQty(totalHours) : '—'}</td>
+                    <td style="text-align:right; font-weight:700; color: var(--primary); white-space:nowrap; background: rgba(32, 115, 69, 0.05);">${intensity > 0 ? this.formatQty(intensity) : '—'}</td>
                 </tr>
             `;
         }).join('');
 
         pane.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 12px;">
-                    <div style="font-weight:600; color: var(--gray-900); display: flex; align-items: center; gap: 8px;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                        Состав ресурсов: ${safeTask}
-                    </div>
-                    
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase;">Режим расчета:</span>
-                        <div class="calc-mode-toggle-group" style="display: flex; background: var(--gray-100); padding: 2px; border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div class="calc-mode-btn ${task.calculationMode === 'auto_duration' ? 'active' : ''}" data-value="auto_duration" 
-                                 style="padding: 4px 12px; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: all 0.2s; ${task.calculationMode === 'auto_duration' ? 'background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1);' : 'color: var(--gray-500);'}">
-                                Считать дни (от людей)
-                            </div>
-                            <div class="calc-mode-btn ${task.calculationMode !== 'auto_duration' ? 'active' : ''}" data-value="auto_resources" 
-                                 style="padding: 4px 12px; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: all 0.2s; ${task.calculationMode !== 'auto_duration' ? 'background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1);' : 'color: var(--gray-500);'}">
-                                Считать людей (от сроков)
-                            </div>
-                        </div>
-                    </div>
+                <div style="font-weight:600; color: var(--gray-900); display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    Состав ресурсов: ${safeTask}
                 </div>
-
-                ${task.calculationMode !== 'auto_duration' ? `
-                <div class="target-duration-row" style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--primary-lighter); border-radius: 6px; margin-top: 4px;">
-                    <label style="font-size: 12px; font-weight: 500; color: var(--gray-700); white-space: nowrap;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        Целевой срок (дней):
-                    </label>
-                    <input type="number" 
-                           class="target-duration-input" 
-                           value="${duration}" 
-                           min="1" 
-                           style="width: 80px; padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 13px; font-weight: 600; text-align: center; background: #fff;"
-                           title="Введите количество дней для завершения работы. Интенсивность ресурсов пересчитается автоматически."
-                    />
-                    <span style="font-size: 11px; color: var(--gray-500);">Ресурсы будут рассчитаны автоматически</span>
-                </div>
-                ` : ''}
-
                 <table class="schedule-resources-table">
                     <thead>
                         <tr>
-                            <th style="width: 40px; text-align: center; color: #000;">№</th>
-                            <th style="width: 32px; text-align: center; color: #000;" title="Ведущий ресурс">Ведущ.</th>
-                            <th style="width: 24px; color: #000;"></th>
-                            <th style="color: #000;">Ресурс</th>
-                            <th style="width: 50px; color: #000;">Смены</th>
-                            <th style="width: 50px; color: #000;">Ед.изм</th>
-                            <th style="width: 55px; color: #000;">Норма</th>
-                            <th style="width: 55px; color: #000;">Всего</th>
-                            <th style="width: 70px; color: #000; font-weight: 600;">Потребн.</th>
-                            <th style="color: #000;">Исполнитель</th>
+                            <th style="width: 40px; text-align: center;">№</th>
+                            <th style="width: 32px; text-align: center;" title="Ведущий ресурс">Ведущ.</th>
+                            <th style="width: 24px;"></th>
+                            <th>Ресурс</th>
+                            <th style="width: 60px;">Смены</th>
+                            <th style="width: 60px;">Ед.изм</th>
+                            <th style="text-align:right;">Норма (ч)</th>
+                            <th style="text-align:right;">Всего (ч)</th>
+                            <th style="text-align:right; color: var(--primary);">Интенсивность (чел/маш)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -454,125 +352,28 @@ const ScheduleManager = {
             </div>
         `;
 
-        // Handle calculation mode change (New Toggle Group)
-        const calcBtns = pane.querySelectorAll('.calc-mode-btn');
-        calcBtns.forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const mode = btn.dataset.value;
-                const taskId = this.resourcesPane.selectedTaskId;
-
-                try {
-                    UI.showNotification('Обновление режима расчета...', 'info');
-                    await api.updateGanttTask(taskId, { calculationMode: mode });
-
-                    const task = gantt.getTask(taskId);
-                    task.calculationMode = mode;
-
-                    gantt.updateTask(taskId);
-                    gantt.render();
-
-                    // Перерисовываем список ресурсов, чтобы инпуты появились/исчезли
-                    await this.loadAndShowResourcesForTask(taskId);
-
-                    UI.showNotification('Режим расчета изменен', 'success');
-                } catch (err) {
-                    console.error('Failed to update calc mode', err);
-                    UI.showNotification('Ошибка при смене режима', 'error');
-                }
-            });
-        });
-
-        // Handle intensity change (for Resource Driven mode)
-        const intensityInputs = pane.querySelectorAll('.res-intensity-input');
-        intensityInputs.forEach(input => {
-            input.addEventListener('change', async (e) => {
-                const newVal = parseInt(e.target.value);
-                if (isNaN(newVal) || newVal < 1) return;
-
-                const row = input.closest('.resource-row');
-                const resourceId = row.dataset.resourceId;
-                const taskId = this.resourcesPane.selectedTaskId;
-                const task = gantt.getTask(taskId);
-
-                // Берем данные прямо из атрибутов строки, чтобы избежать рассинхрона
-                const totalHours = Number(row.dataset.totalHours || 0);
-                const resShifts = Number(row.dataset.shifts || 1);
-                const shiftHrs = Number(row.dataset.shiftDuration || 8);
-
-                try {
-                    UI.showNotification('Пересчет длительности...', 'info');
-
-                    if (totalHours <= 0) {
-                        console.warn('Total hours is 0, cannot recalc duration');
-                        return;
-                    }
-
-                    // Формула: Duration = TotalHours / (Intensity * Shifts * ShiftHrs)
-                    // Гарантируем, что длительность не может быть меньше 1 дня
-                    const calculatedDays = Math.ceil(totalHours / (newVal * resShifts * shiftHrs));
-                    const newDuration = Math.max(1, calculatedDays);
-
-                    console.log(`[Recalc Duration] Intensity: ${newVal}, Hours: ${totalHours}, Shifts: ${resShifts}, ShiftHrs: ${shiftHrs}, New Duration: ${newDuration}`);
-
-                    // Обновляем задачу: и длительность, и resourceCount (интенсивность)
-                    await api.updateGanttTask(taskId, {
-                        duration: newDuration,
-                        resourceCount: newVal
-                    });
-
-                    // Явно обновляем объект в Gantt
-                    task.duration = newDuration;
-                    task.resourceCount = newVal;
-
-                    // Конец даты обновится автоматически в Ганте при изменении длительности
-                    const end = gantt.date.add(task.start_date, newDuration, "day");
-                    task.end_date = end;
-
-                    gantt.updateTask(taskId);
-                    gantt.refreshTask(taskId); // Дополнительное принудительное обновление
-                    gantt.render();
-
-                    // Небольшая пауза перед перерисовкой списка ресурсов для синхронизации
-                    setTimeout(async () => {
-                        await this.loadAndShowResourcesForTask(taskId);
-                        UI.showNotification('Длительность пересчитана: ' + newDuration + ' дн.', 'success');
-                    }, 50);
-                } catch (err) {
-                    console.error('Failed to update duration', err);
-                    UI.showNotification('Ошибка при пересчете длительности', 'error');
-                }
-            });
-        });
-
-        // Add event listeners for leading resource checkboxes
-        const checkboxes = pane.querySelectorAll('.leading-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', async (e) => {
+        // Add event listeners for radio buttons
+        const radios = pane.querySelectorAll('.leading-radio');
+        radios.forEach(radio => {
+            radio.addEventListener('change', async (e) => {
                 const row = e.target.closest('.resource-row');
                 const resourceId = row.dataset.resourceId;
                 const taskId = this.resourcesPane.selectedTaskId;
-                const isChecked = e.target.checked;
 
                 try {
                     UI.showNotification('Обновление ведущего ресурса...', 'info');
-
-                    // Если сняли галочку - убираем ведущий ресурс
-                    const newLeaderId = isChecked ? resourceId : null;
-
-                    await api.updateGanttTask(taskId, { leadingResourceId: newLeaderId });
+                    await api.updateGanttTask(taskId, { leadingResourceId: resourceId });
 
                     // Update local gantt task
                     const t = gantt.getTask(taskId);
-                    t.leadingResourceId = newLeaderId;
+                    t.leadingResourceId = resourceId;
 
                     // Refresh data
                     gantt.updateTask(taskId);
                     gantt.render();
 
-                    // Перерисовываем список ресурсов для обновления состояния чекбоксов
-                    await this.loadAndShowResourcesForTask(taskId);
-
-                    UI.showNotification(isChecked ? 'Ведущий ресурс назначен' : 'Ведущий ресурс снят', 'success');
+                    // Re-render the resource list to update intensities
+                    UI.showNotification('Ведущий ресурс изменен', 'success');
                 } catch (err) {
                     console.error('Failed to update leading resource', err);
                     UI.showNotification('Ошибка при смене ведущего ресурса', 'error');
@@ -580,94 +381,34 @@ const ScheduleManager = {
             });
         });
 
-        // Custom shift dropdown logic
-        const dropdowns = pane.querySelectorAll('.custom-shift-dropdown');
-        dropdowns.forEach(dd => {
-            const options = dd.querySelector('.custom-shift-options');
-
-            dd.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Close all other dropdowns
-                pane.querySelectorAll('.custom-shift-options').forEach(o => {
-                    if (o !== options) o.style.display = 'none';
-                });
-                options.style.display = options.style.display === 'block' ? 'none' : 'block';
-            });
-
-            options.querySelectorAll('.shift-opt').forEach(opt => {
-                opt.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const newVal = parseInt(opt.dataset.val);
-                    options.style.display = 'none';
-
-                    const row = dd.closest('.resource-row');
-                    const resourceId = row.dataset.resourceId;
-                    const taskId = this.resourcesPane.selectedTaskId;
-
-                    try {
-                        UI.showNotification('Обновление сменности...', 'info');
-                        await api.updateTaskResourceAssignment(taskId, resourceId, { shiftsPerDay: newVal });
-
-                        const task = gantt.getTask(taskId);
-                        if (task.leadingResourceId === resourceId) {
-                            await api.updateGanttTask(taskId, { shiftsPerDay: newVal });
-                            task.shiftsPerDay = newVal;
-                            gantt.updateTask(taskId);
-                        }
-
-                        await this.loadAndShowResourcesForTask(taskId);
-                        gantt.render();
-                        UI.showNotification('Сменность обновлена', 'success');
-                    } catch (err) {
-                        console.error('Failed to update shifts', err);
-                        UI.showNotification('Ошибка при смене сменности', 'error');
-                    }
-                });
-            });
-        });
-
-        // Handle target duration change (for auto_resources mode)
-        const targetDurationInput = pane.querySelector('.target-duration-input');
-        if (targetDurationInput) {
-            targetDurationInput.addEventListener('change', async (e) => {
-                const newDuration = parseInt(e.target.value);
-                if (isNaN(newDuration) || newDuration < 1) {
-                    e.target.value = 1;
-                    return;
-                }
-
+        // Add event listeners for shifts dropdowns
+        const shiftSelects = pane.querySelectorAll('.res-shift-select');
+        shiftSelects.forEach(select => {
+            select.addEventListener('change', async (e) => {
+                const row = e.target.closest('.resource-row');
+                const resourceId = row.dataset.resourceId;
                 const taskId = this.resourcesPane.selectedTaskId;
-                const task = gantt.getTask(taskId);
+                const shifts = parseInt(e.target.value);
 
                 try {
-                    UI.showNotification('Обновление срока...', 'info');
+                    UI.showNotification('Обновление сменности...', 'info');
+                    await api.updateResource(resourceId, { shiftsPerDay: shifts });
 
-                    // Обновляем задачу в БД
-                    await api.updateGanttTask(taskId, { duration: newDuration });
+                    const task = gantt.getTask(taskId);
+                    if (task.leadingResourceId === resourceId) {
+                        await api.updateGanttTask(taskId, { shiftsPerDay: shifts });
+                    }
 
-                    // Обновляем локально в Gantt
-                    // Используем getEndByStart для корректного расчета с учетом рабочего календаря
-                    task.duration = newDuration;
-                    task.end_date = gantt.calculateEndDate(task.start_date, newDuration);
-
+                    this.loadAndShowResourcesForTask(taskId);
                     gantt.updateTask(taskId);
                     gantt.render();
-
-                    // Перерисовываем список ресурсов (интенсивности пересчитаются)
-                    await this.loadAndShowResourcesForTask(taskId);
-
-                    UI.showNotification(`Срок изменен: ${newDuration} дн. Ресурсы пересчитаны.`, 'success');
+                    UI.showNotification('Сменность ресурса обновлена', 'success');
                 } catch (err) {
-                    console.error('Failed to update duration', err);
-                    UI.showNotification('Ошибка при обновлении срока', 'error');
+                    console.error('Failed to update resource shifts', err);
+                    UI.showNotification('Ошибка при смене сменности', 'error');
                 }
             });
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', () => {
-            pane.querySelectorAll('.custom-shift-options').forEach(o => o.style.display = 'none');
-        }, { once: true });
+        });
     },
 
     async loadTaskDetails(taskId) {
@@ -676,8 +417,6 @@ const ScheduleManager = {
         // Load data for all panes that need it
         this.loadAndShowResourcesForTask(taskId);
         this.loadAndShowSettingsForTask(taskId);
-        this.renderTaskDetailsPanel(taskId);
-        await this.renderExecutionPane(taskId);
 
         // Ensure current active tab is set
         if (!this.bottomPanel.activeTab) {
@@ -686,309 +425,6 @@ const ScheduleManager = {
 
         // Open the panel to show details
         this.setBottomPanelState(true, this.bottomPanel.activeTab);
-    },
-
-    renderTaskDetailsPanel(taskId) {
-        const container = document.getElementById('task-details-content');
-        if (!container) return;
-
-        if (!taskId || typeof gantt === 'undefined') {
-            container.innerHTML = `
-                <div style="color: var(--gray-500); font-size: 13px; text-align: center; padding: 24px;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom: 8px;">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 16v-4"/>
-                        <path d="M12 8h.01"/>
-                    </svg>
-                    <div>Выберите задачу для просмотра деталей</div>
-                </div>
-            `;
-            return;
-        }
-
-        try {
-            const task = gantt.getTask(taskId);
-            if (!task) return;
-
-            const formatDate = (d) => {
-                if (!d) return '—';
-                const date = new Date(d);
-                return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            };
-
-            const progress = Math.round((task.progress || 0) * 100);
-            const duration = task.duration || 0;
-            const taskType = task.type === 'project' ? 'Сводная' : 'Задача';
-            const quantity = task.quantity ? this.formatQty(task.quantity) : '—';
-            const unit = task.unit || '';
-
-            container.innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <!-- Название -->
-                    <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                        <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Название</div>
-                        <div style="font-size: 13px; font-weight: 600; color: var(--gray-900);">${this.escapeHtml(task.text)}</div>
-                    </div>
-                    
-                    <!-- Даты -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Начало</div>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--gray-900);">${formatDate(task.start_date)}</div>
-                        </div>
-                        <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Окончание</div>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--gray-900);">${formatDate(task.end_date)}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Длительность и Прогресс -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Длительность</div>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--gray-900);">${duration} дн.</div>
-                        </div>
-                        <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Прогресс</div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="flex: 1; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden;">
-                                    <div style="height: 100%; width: ${progress}%; background: ${progress >= 100 ? 'var(--accent-green)' : 'var(--primary)'}; border-radius: 3px;"></div>
-                                </div>
-                                <span style="font-size: 12px; font-weight: 600; color: ${progress >= 100 ? 'var(--accent-green)' : 'var(--gray-900)'};">${progress}%</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Тип и Объем -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Тип</div>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--gray-900);">${taskType}</div>
-                        </div>
-                        <div style="padding: 8px; background: var(--white); border-radius: 6px; border: 1px solid var(--gray-200);">
-                            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 4px;">Объем</div>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--gray-900);">${quantity} ${this.escapeHtml(unit)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } catch (e) {
-            console.error('renderTaskDetailsPanel error:', e);
-        }
-    },
-
-    async renderExecutionPane(taskId) {
-        const pane = document.getElementById('execution-pane');
-        if (!pane) return;
-
-        if (!taskId || typeof gantt === 'undefined') {
-            pane.innerHTML = `
-                <div style="color: var(--gray-500); text-align: center; padding: 24px;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom: 8px;">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                    <div>Выберите задачу для учета выполнения</div>
-                </div>
-            `;
-            return;
-        }
-
-        try {
-            const task = gantt.getTask(taskId);
-            if (!task || task.type === 'project') {
-                pane.innerHTML = `
-                    <div style="color: var(--gray-500); text-align: center; padding: 24px;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom: 8px;">
-                            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                        </svg>
-                        <div>Учет выполнения доступен только для видов работ</div>
-                    </div>
-                `;
-                return;
-            }
-
-            // Загружаем историю из бекенда
-            let history = [];
-            try {
-                history = await api.getGanttTaskHistory(taskId);
-            } catch (e) {
-                console.warn('Failed to fetch history:', e);
-            }
-
-            const rawQty = Number(task.quantity || 0);
-            const unit = task.unit || 'ед.';
-            const physicalVolume = this.calculatePhysicalVolume(rawQty, unit);
-            const completed = Number(task.completedQuantity || 0);
-            const remaining = Math.max(0, physicalVolume - completed);
-            const progress = physicalVolume > 0 ? Math.round((completed / physicalVolume) * 100) : 0;
-            const cleanUnit = unit.replace(/^\d+\s*/, '').trim() || 'ед.';
-            const dailyPlan = Number(task.dailyPlan || 0);
-
-            pane.innerHTML = `
-                <div style="display: flex; height: 100%; gap: 20px; padding: 4px;">
-                    <!-- Левая часть: "Баночка" (Круговой прогресс) и Статистика -->
-                    <div style="width: 140px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; border-right: 1px solid var(--gray-100); padding-right: 15px;">
-                        <!-- Круг -->
-                        <div style="position: relative; width: 100px; height: 100px; margin-bottom: 16px;">
-                            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f3f3f3" stroke-width="3" />
-                                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="${progress >= 100 ? 'var(--accent-green)' : 'var(--primary)'}" stroke-width="3" 
-                                        stroke-dasharray="${progress} 100" stroke-linecap="round" />
-                            </svg>
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; font-weight: 700; color: var(--gray-900);">
-                                ${progress}%
-                            </div>
-                        </div>
-                        
-                        <!-- Статистика снизу (миниатюрная) -->
-                        <div style="width: 100%; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-                            <div style="display: flex; justify-content: space-between; gap: 4px;">
-                                <span style="color: var(--gray-500);">Всего</span>
-                                <span style="font-weight: 600; color: var(--gray-900); white-space: nowrap;">${this.formatQty(physicalVolume)} ${cleanUnit}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; gap: 4px;">
-                                <span style="color: var(--accent-green);">Выполнено</span>
-                                <span style="font-weight: 600; color: var(--accent-green); white-space: nowrap;">${this.formatQty(completed)} ${cleanUnit}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; gap: 4px;">
-                                <span style="color: var(--accent-orange);">Остаток</span>
-                                <span style="font-weight: 600; color: var(--accent-orange); white-space: nowrap;">${this.formatQty(remaining)} ${cleanUnit}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Правая часть: Название, Форма, История -->
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
-                        <!-- Название задачи (title) -->
-                        <div style="font-size: 11px; font-weight: 600; color: var(--gray-600); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; border-bottom: 1px solid var(--gray-100);">
-                            ${this.escapeHtml(task.text)}
-                        </div>
-                        
-                        <!-- Форма ввода (в одну строку) -->
-                        <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: flex-end;">
-                            <div style="flex: 1; min-width: 0;">
-                                <label style="font-size: 10px; color: var(--gray-500); display: block; margin-bottom: 2px;">Кол-во (${cleanUnit})</label>
-                                <div style="display: flex; gap: 4px; align-items: center;">
-                                    <input type="number" id="execution-qty-input" placeholder="0" step="0.01" 
-                                           style="width: 100%; padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 13px; height: 30px;">
-                                    ${dailyPlan > 0 ? `
-                                    <button id="execution-daily-plan-btn" title="Подставить норму/сутки (${this.formatQty(dailyPlan)})" 
-                                            style="padding: 4px; background: white; border: 1px solid var(--gray-300); border-radius: 4px; cursor: pointer; height: 30px; display: flex; align-items: center;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray-500)" stroke-width="2">
-                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                                        </svg>
-                                    </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            <div style="width: 50px;">
-                                <label style="font-size: 10px; color: var(--gray-500); display: block; margin-bottom: 2px;">%</label>
-                                <input type="number" id="execution-percent-input" placeholder="0" min="0" max="100" step="0.1" 
-                                       style="width: 100%; padding: 4px 4px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 13px; height: 30px; text-align: center;">
-                            </div>
-                            <div style="width: 110px;">
-                                <label style="font-size: 10px; color: var(--gray-500); display: block; margin-bottom: 2px;">Дата</label>
-                                <input type="date" id="execution-date-input" value="${new Date().toISOString().split('T')[0]}" 
-                                       style="width: 100%; padding: 4px 6px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px; height: 30px;">
-                            </div>
-                            <button id="execution-save-btn" style="padding: 0 16px; background: var(--primary); color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; height: 30px; white-space: nowrap;">
-                                Записать
-                            </button>
-                        </div>
-                        
-                        <!-- История (Таблица) -->
-                        <div style="flex: 1; overflow-y: auto; border: 1px solid var(--gray-100); border-radius: 4px;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                                <thead style="background: var(--gray-50); border-bottom: 1px solid var(--gray-200); position: sticky; top: 0;">
-                                    <tr>
-                                        <th style="text-align: left; padding: 6px 10px; color: var(--gray-500); font-weight: 500;">Дата</th>
-                                        <th style="text-align: right; padding: 6px 10px; color: var(--gray-500); font-weight: 500;">Кол-во</th>
-                                        <th style="text-align: right; padding: 6px 10px; color: var(--gray-500); font-weight: 500;">%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${history.length === 0 ? `
-                                    <tr>
-                                        <td colspan="3" style="text-align: center; color: var(--gray-400); padding: 20px;">История пуста</td>
-                                    </tr>
-                                    ` : history.map(h => `
-                                    <tr style="border-bottom: 1px solid var(--gray-100);">
-                                        <td style="padding: 6px 10px;">${new Date(h.date).toLocaleDateString('ru-RU')}</td>
-                                        <td style="text-align: right; padding: 6px 10px; font-weight: 500;">+${this.formatQty(h.quantity)} ${cleanUnit}</td>
-                                        <td style="text-align: right; padding: 6px 10px; color: var(--gray-500);">${(h.progress * 100).toFixed(1)}%</td>
-                                    </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Обработчики событий
-            const dailyBtn = document.getElementById('execution-daily-plan-btn');
-            const qtyInp = document.getElementById('execution-qty-input');
-            const pctInp = document.getElementById('execution-percent-input');
-            const dateInp = document.getElementById('execution-date-input');
-            const saveBtn = document.getElementById('execution-save-btn');
-
-            if (dailyBtn && qtyInp) {
-                dailyBtn.addEventListener('click', () => {
-                    qtyInp.value = dailyPlan;
-                    if (pctInp && physicalVolume > 0) {
-                        pctInp.value = ((dailyPlan / physicalVolume) * 100).toFixed(1);
-                    }
-                });
-            }
-
-            if (qtyInp && pctInp && physicalVolume > 0) {
-                qtyInp.addEventListener('input', () => {
-                    const q = parseFloat(qtyInp.value) || 0;
-                    pctInp.value = q > 0 ? ((q / physicalVolume) * 100).toFixed(1) : '';
-                });
-                pctInp.addEventListener('input', () => {
-                    const p = parseFloat(pctInp.value) || 0;
-                    qtyInp.value = p > 0 ? ((p / 100) * physicalVolume).toFixed(2) : '';
-                });
-            }
-
-            if (saveBtn) {
-                saveBtn.addEventListener('click', async () => {
-                    const val = parseFloat(qtyInp.value);
-                    const executionDate = dateInp.value;
-
-                    if (isNaN(val) || val <= 0) {
-                        UI.showNotification('Введите количество', 'error');
-                        return;
-                    }
-
-                    const newComp = completed + val;
-                    const newProg = physicalVolume > 0 ? Math.min(1, newComp / physicalVolume) : 0;
-
-                    try {
-                        UI.showNotification('Сохранение...', 'info');
-                        await api.updateGanttTask(taskId, {
-                            completedQuantity: newComp,
-                            progress: newProg,
-                            addedQuantity: val,
-                            executionDate: executionDate
-                        });
-                        task.completedQuantity = newComp;
-                        task.progress = newProg;
-                        gantt.updateTask(taskId);
-                        gantt.render();
-                        this.renderExecutionPane(taskId);
-                        this.renderTaskDetailsPanel(taskId);
-                        UI.showNotification('Выполнение записано', 'success');
-                    } catch (e) {
-                        console.error(e);
-                        UI.showNotification('Ошибка сохранения', 'error');
-                    }
-                });
-            }
-        } catch (e) {
-            console.error('renderExecutionPane error:', e);
-        }
     },
 
     async loadAndShowResourcesForTask(taskId) {
@@ -1045,129 +481,49 @@ const ScheduleManager = {
     },
 
     toggleEstimateColumns(show) {
-        this.showEstimate = !!show;
-        this.updateColumns();
-    },
+        console.log('[toggleEstimateColumns] Called with show =', show);
+        console.log('[toggleEstimateColumns] isInitialized =', this.isInitialized);
+        console.log('[toggleEstimateColumns] gantt defined =', typeof gantt !== 'undefined');
 
-    toggleVolumeColumns(show) {
-        this.showVolume = !!show;
-        this.updateColumns();
-    },
-
-    updateColumns() {
-        if (!this.isInitialized || typeof gantt === 'undefined') return;
-
-        try {
-            // Базовые колонки (всегда видны)
-            const baseColumns = [
-                { name: "text", label: "Название задачи", tree: true, width: 360, resize: true },
-                { name: "start_date", label: "Начало", align: "center", width: 120, resize: true },
-                { name: "end_date", label: "Окончание", align: "center", width: 120, resize: true },
-                { name: "duration", label: "Длит.", align: "center", width: 60, resize: true },
-                {
-                    name: "progress", label: "%", align: "center", width: 50, resize: true,
-                    template: (obj) => Math.round(obj.progress * 100) + "%"
-                }
-            ];
-
-            // Детальные колонки сметы (показываем только если showEstimate = true)
-            const estimateColumns = this.showEstimate ? [
-                { name: "quantity", label: "Объем", align: "center", width: 70, resize: true },
-                { name: "unit", label: "Ед.изм.", align: "center", width: 100, resize: true }
-            ] : [];
-
-            // Колонки объемов и выполнения (показываем только если showVolume = true)
-            const volumeColumns = [];
-
-            if (this.showVolume) {
-                // Колонка физического объема
-                volumeColumns.push({
-                    name: "total_qty",
-                    label: "Физ. объем",
-                    align: "center",
-                    width: 130,
-                    resize: true,
-                    template: (obj) => {
-                        if (obj.type === 'project' || !obj.quantity) return '';
-                        const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                        if (!total) return '';
-                        const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                        return `${this.formatQty(total)} ${cleanUnit}`;
-                    }
-                });
-
-                // Колонка Выполнено
-                volumeColumns.push({
-                    name: "completed_qty",
-                    label: "Выполнено",
-                    align: "center",
-                    width: 100,
-                    resize: true,
-                    template: (obj) => {
-                        if (obj.type === 'project' || !obj.quantity) return '';
-                        const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                        if (!total) return '';
-                        const completed = total * (obj.progress || 0);
-                        const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                        return `<span style="color: var(--success); font-weight: 500;">${this.formatQty(completed)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
-                    }
-                });
-
-                // Колонка Остаток
-                volumeColumns.push({
-                    name: "remaining_qty",
-                    label: "Остаток",
-                    align: "center",
-                    width: 100,
-                    resize: true,
-                    template: (obj) => {
-                        if (obj.type === 'project' || !obj.quantity) return '';
-                        const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                        if (!total) return '';
-                        const completed = total * (obj.progress || 0);
-                        const remaining = total - completed;
-                        const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                        return `<span style="color: var(--accent-orange); font-weight: 500;">${this.formatQty(remaining)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
-                    }
-                });
-
-                // Колонка План/сутки
-                volumeColumns.push({
-                    name: "daily_plan",
-                    label: "План/сутки",
-                    align: "center",
-                    width: 100,
-                    resize: true,
-                    template: (obj) => {
-                        if (obj.type === 'project' || !obj.quantity || !obj.duration) return '';
-                        const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                        if (!total) return '';
-                        const daily = total / obj.duration;
-                        const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                        return `<span style="font-weight: 600; color: var(--primary);"> ${this.formatQty(daily)}</span> <span style="font-size: 11px; opacity: 0.7;">${cleanUnit}</span>`;
-                    }
-                });
-            }
-
-            // Колонка "добавить"
-            const addColumn = { name: "add", label: "", width: 44 };
-
-            // Собираем финальный массив колонок
-            gantt.config.columns = [
-                ...baseColumns,
-                ...estimateColumns,
-                ...volumeColumns,
-                addColumn
-            ];
-
-            // Перерисовываем (без полной переинициализации init, чтобы не ломать layout)
-            gantt.render();
-            this.ensureTodayMarker();
-
-            console.log(`✓ Columns updated: Estimate=${this.showEstimate}, Volumes=${this.showVolume}`);
-        } catch (err) {
-            console.error('updateColumns error:', err);
+        if (!this.isInitialized || typeof gantt === 'undefined') {
+            console.warn('[toggleEstimateColumns] Aborting: not initialized or gantt undefined');
+            return;
         }
+
+        console.log('[toggleEstimateColumns] Current columns config:', gantt.config.columns);
+
+        // Получаем текущую конфигурацию колонок
+        const columns = gantt.config.columns;
+
+        // Обновляем свойство hide для нужных колонок
+        columns.forEach(col => {
+            if (col.name === 'quantity' || col.name === 'unit') {
+                const oldHide = col.hide;
+                col.hide = !show;
+                console.log(`[toggleEstimateColumns] Column "${col.name}" hide: ${oldHide} -> ${col.hide}`);
+            }
+        });
+
+        // ВАЖНО: Переназначаем массив колонок, чтобы Gantt перестроил таблицу
+        gantt.config.columns = [...columns];
+
+        console.log('[toggleEstimateColumns] Updated columns config:', gantt.config.columns);
+
+        // Пробуем разные методы обновления
+        try {
+            if (typeof gantt.resetLayout === 'function') {
+                console.log('[toggleEstimateColumns] Calling resetLayout()');
+                gantt.resetLayout();
+            } else {
+                console.log('[toggleEstimateColumns] Calling render()');
+                gantt.render();
+            }
+        } catch (e) {
+            console.error('[toggleEstimateColumns] Error:', e);
+            gantt.render();
+        }
+
+        console.log('[toggleEstimateColumns] Complete');
     },
 
     collapseAll() {
@@ -1430,18 +786,15 @@ const ScheduleManager = {
                 </div>
             </div>
             <div id="schedule-bottom" class="schedule-bottom-panel" aria-label="Нижняя панель">
-                <!-- Вертикальный ресайзер -->
-                <div class="schedule-bottom-resizer" id="bottom-panel-resizer"></div>
-                
                 <div class="schedule-bottom-header">
                     <div class="schedule-bottom-tabs" role="tablist" aria-label="Нижние вкладки">
                         <button type="button" class="schedule-bottom-tab" data-tab="resources" role="tab" aria-selected="false">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap-icon lucide-zap"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
                             <span>Ресурсы</span>
                         </button>
-                        <button type="button" class="schedule-bottom-tab" data-tab="execution" role="tab" aria-selected="false">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            <span>Выполнение</span>
+                        <button type="button" class="schedule-bottom-tab" data-tab="settings" role="tab" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1V15a2 2 0 0 1-2-2 2 2 0 0 1 2-2v-.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2v.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            <span>Настройки</span>
                         </button>
                         <button type="button" class="schedule-bottom-tab" data-tab="contractors" role="tab" aria-selected="false">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pickaxe-icon lucide-pickaxe"><path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3L11 9.999"/><path d="M15.973 4.027A13 13 0 0 0 5.902 2.373c-1.398.342-1.092 2.158.277 2.601a19.9 19.9 0 0 1 5.822 3.024"/><path d="M16.001 11.999a19.9 19.9 0 0 1 3.024 5.824c.444 1.369 2.26 1.676 2.603.278A13 13 0 0 0 20 8.069"/><path d="M18.352 3.352a1.205 1.205 0 0 0-1.704 0l-5.296 5.296a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l5.296-5.296a1.205 1.205 0 0 0 0-1.704z"/></svg>
@@ -1455,50 +808,14 @@ const ScheduleManager = {
                     </button>
                 </div>
                 <div class="schedule-bottom-content" role="region" aria-label="Содержимое нижней панели">
-                    <div style="display: flex; height: 100%; gap: 12px;">
-                        <!-- Левая колонка: Ресурсы / Выполнение / Подрядчики -->
-                        <div style="flex: 1; min-width: 0; overflow: auto;">
-                            <div class="schedule-bottom-pane" data-pane="resources">
-                                <div style="color: var(--gray-700);">Ресурсы (в разработке)</div>
-                            </div>
-                            <div class="schedule-bottom-pane" data-pane="execution" id="execution-pane">
-                                <div style="color: var(--gray-500); text-align: center; padding: 24px;">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom: 8px;">
-                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                                    </svg>
-                                    <div>Выберите задачу для учета выполнения</div>
-                                </div>
-                            </div>
-                            <div class="schedule-bottom-pane" data-pane="contractors">
-                                <div style="color: var(--gray-700);">Подрядчики (в разработке)</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Правая колонка: Детали задачи -->
-                        <div class="task-details-panel" style="width: 320px; flex-shrink: 0; background: var(--gray-50); border-radius: 8px; border: 1px solid var(--gray-200); overflow: auto;">
-                            <div style="padding: 12px; border-bottom: 1px solid var(--gray-200); background: var(--white); border-radius: 8px 8px 0 0;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
-                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                                        <polyline points="14 2 14 8 20 8"/>
-                                        <line x1="16" y1="13" x2="8" y2="13"/>
-                                        <line x1="16" y1="17" x2="8" y2="17"/>
-                                        <line x1="10" y1="9" x2="8" y2="9"/>
-                                    </svg>
-                                    <span style="font-weight: 600; color: var(--gray-900);">Детали задачи</span>
-                                </div>
-                            </div>
-                            <div id="task-details-content" style="padding: 12px;">
-                                <div style="color: var(--gray-500); font-size: 13px; text-align: center; padding: 24px;">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom: 8px;">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <path d="M12 16v-4"/>
-                                        <path d="M12 8h.01"/>
-                                    </svg>
-                                    <div>Выберите задачу для просмотра деталей</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="schedule-bottom-pane" data-pane="resources">
+                        <div style="color: var(--gray-700);">Ресурсы (в разработке)</div>
+                    </div>
+                    <div class="schedule-bottom-pane" data-pane="settings">
+                        <div style="color: var(--gray-700);">Настройки (в разработке)</div>
+                    </div>
+                    <div class="schedule-bottom-pane" data-pane="contractors">
+                        <div style="color: var(--gray-700);">Подрядчики (в разработке)</div>
                     </div>
                 </div>
             </div>
@@ -1535,38 +852,6 @@ const ScheduleManager = {
             });
         }
 
-        // --- ВЕРТИКАЛЬНЫЙ РЕСАЙЗЕР НИЖНЕЙ ПАНЕЛИ ---
-        const resizer = document.getElementById('bottom-panel-resizer');
-        if (resizer) {
-            let startY, startHeight;
-
-            const onMouseMove = (e) => {
-                const dy = startY - e.clientY;
-                const newHeight = Math.max(100, Math.min(window.innerHeight - 100, startHeight + dy));
-                this.bottomPanel.openHeightPx = newHeight;
-                bottom.style.height = `${newHeight}px`;
-                gantt.setSizes();
-            };
-
-            const onMouseUp = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                document.body.style.cursor = 'default';
-                document.body.style.userSelect = 'auto';
-            };
-
-            resizer.addEventListener('mousedown', (e) => {
-                if (!this.bottomPanel.isOpen) return; // Не ресайзим закрытую панель
-                startY = e.clientY;
-                startHeight = bottom.offsetHeight;
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-                document.body.style.cursor = 'ns-resize';
-                document.body.style.userSelect = 'none';
-                e.preventDefault();
-            });
-        }
         // Начальное состояние: скрыто (только строка вкладок)
         this.setBottomPanelState(false, this.bottomPanel.activeTab);
 
@@ -1712,8 +997,8 @@ const ScheduleManager = {
     },
 
     computeBottomOpenHeightPx() {
-        // Возвращаем динамическую высоту, если она была изменена ресайзером
-        return this.bottomPanel.openHeightPx || 300;
+        // Фиксированная высота для нижней панели
+        return 300;
     },
 
     setBottomPanelState(isOpen, activeTab) {
@@ -1722,8 +1007,6 @@ const ScheduleManager = {
 
         this.bottomPanel.isOpen = !!isOpen;
         if (activeTab) this.bottomPanel.activeTab = activeTab;
-
-        const h = this.computeBottomOpenHeightPx();
 
         // Активная вкладка
         const tabs = Array.from(bottom.querySelectorAll('.schedule-bottom-tab'));
@@ -1740,26 +1023,14 @@ const ScheduleManager = {
             p.classList.toggle('active', isActive);
         });
 
-        // Если открываем вкладку выполнения, удостоверимся что она актуальна
-        if (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'execution' && typeof gantt !== 'undefined') {
-            const selId = gantt.getSelectedId();
-            if (selId) this.renderExecutionPane(selId);
-        }
-
         if (this.bottomPanel.isOpen) {
             bottom.classList.add('is-open');
+            const h = this.computeBottomOpenHeightPx();
             this.bottomPanel.openHeightPx = h;
             bottom.style.height = `${h}px`;
         } else {
             bottom.classList.remove('is-open');
             bottom.style.height = 'var(--schedule-bottom-tabs-height)';
-        }
-
-        // Прячем боковую панель деталей, если открыта вкладка "Выполнение"
-        // Она заменяется на внутренний макет вкладки
-        const detailsPanel = bottom.querySelector('.task-details-panel');
-        if (detailsPanel) {
-            detailsPanel.style.display = (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'execution') ? 'none' : 'block';
         }
 
         // Пересчитать размеры ганта
@@ -1825,12 +1096,8 @@ const ScheduleManager = {
         }
 
         // Настройки шкалы времени (двухуровневая): Месяц+Год сверху, Дни снизу
-        // -----------------------------------------------------------------------
-        // КОМПАКТНЫЙ РЕЖИМ (по запросу пользователя)
-        // -----------------------------------------------------------------------
-        gantt.config.scale_height = 40; // Чуть меньше шапка
-        gantt.config.row_height = 24;   // Высота строки (было 30)
-        gantt.config.bar_height = 16;   // Высота полоски задачи (чтобы влезала)
+        gantt.config.scale_height = 50;
+        gantt.config.row_height = 30;
         gantt.config.min_column_width = 25;
 
         // Совместимо с новыми версиями (gantt.config.scales) и со старыми (scale_unit + subscales)
@@ -1852,34 +1119,26 @@ const ScheduleManager = {
         // Формат даты в таблице
         gantt.config.date_grid = "%d.%m.%Y";
 
-        // Разрешаем перетягивание колонок сетки
-        gantt.config.reorder_grid_columns = true;
-        gantt.config.reorder_grid_columns_keep_nav_buttons = true;
-
         // Разрешаем изменение размера колонок сетки мышкой
         gantt.config.grid_resize = true;
         gantt.config.grid_elastic_columns = false;
 
         // Ресайзер между таблицей (grid) и колбасками (timeline)
-        // ВАЖНО: Определяем layout прямо перед init, чтобы перебить дефолты
+        // Делает явно видимую "перетаскиваемую" границу.
         gantt.config.layout = {
-            css: "gantt_container",
+            css: 'gantt_container',
             rows: [
                 {
                     cols: [
-                        { view: "grid", scrollX: "scrollHor", scrollY: "scrollVer" },
-                        { resizer: true, width: 10 },
-                        { view: "timeline", scrollX: "scrollHor", scrollY: "scrollVer" },
-                        { view: "scrollbar", id: "scrollVer" }
+                        { view: 'grid', scrollX: 'scrollHor', scrollY: 'scrollVer' },
+                        { resizer: true, width: 6 },
+                        { view: 'timeline', scrollX: 'scrollHor', scrollY: 'scrollVer' },
+                        { view: 'scrollbar', id: 'scrollVer' }
                     ]
                 },
-                { view: "scrollbar", id: "scrollHor" }
+                { view: 'scrollbar', id: 'scrollHor' }
             ]
         };
-
-        // Разрешаем изменение ширины грида
-        gantt.config.keep_grid_width = false;
-        gantt.config.grid_resize = true;
 
         // Отключаем стандартное редактирование через Lightbox по двойному клику
         gantt.config.details_on_dblclick = false;
@@ -1902,7 +1161,7 @@ const ScheduleManager = {
                 name: "total_qty",
                 label: "Физ. объем",
                 align: "center",
-                width: 130,
+                width: 110,
                 resize: true,
                 template: (obj) => {
                     if (obj.type === 'project' || !obj.quantity) return '';
@@ -1912,53 +1171,6 @@ const ScheduleManager = {
                     // Убираем множитель из единицы измерения для отображения, например "100 м2" -> "м2"
                     const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
                     return `${this.formatQty(total)} ${cleanUnit}`;
-                }
-            },
-            {
-                name: "completed_qty",
-                label: "Выполнено",
-                align: "center",
-                width: 100,
-                resize: true,
-                template: (obj) => {
-                    if (obj.type === 'project' || !obj.quantity) return '';
-                    const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                    if (!total) return '';
-                    const completed = total * (obj.progress || 0);
-                    const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                    return `<span style="color: var(--success); font-weight: 500;">${this.formatQty(completed)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
-                }
-            },
-            {
-                name: "remaining_qty",
-                label: "Остаток",
-                align: "center",
-                width: 100,
-                resize: true,
-                template: (obj) => {
-                    if (obj.type === 'project' || !obj.quantity) return '';
-                    const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                    if (!total) return '';
-                    const completed = total * (obj.progress || 0);
-                    const remaining = total - completed;
-                    const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                    return `<span style="color: var(--accent-orange); font-weight: 500;">${this.formatQty(remaining)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
-                }
-            },
-            {
-                name: "daily_plan",
-                label: "План/сутки",
-                align: "center",
-                width: 100,
-                resize: true,
-                template: (obj) => {
-                    if (obj.type === 'project' || !obj.quantity || !obj.duration) return '';
-                    const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                    if (!total) return '';
-
-                    const daily = total / obj.duration;
-                    const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
-                    return `<span style="font-weight: 600; color: var(--primary);">${this.formatQty(daily)}</span> <span style="font-size: 11px; opacity: 0.7;">${cleanUnit}</span>`;
                 }
             },
             { name: "add", label: "", width: 44 }
@@ -2327,27 +1539,12 @@ const ScheduleManager = {
             }
         });
 
-        // Обновляем ресурсы при перетаскивании или ресайзе задачи на Ганте
-        gantt.attachEvent("onAfterTaskDrag", (id) => {
-            if (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'resources' && this.resourcesPane.selectedTaskId === id) {
-                console.log('[Gantt Drag] Updating intensities for task:', id);
-                this.loadAndShowResourcesForTask(id);
-            }
-        });
-
-        gantt.attachEvent("onAfterTaskUpdate", (id) => {
-            if (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'resources' && this.resourcesPane.selectedTaskId === id) {
-                this.loadAndShowResourcesForTask(id);
-            }
-        });
-
         // ============= ИНИЦИАЛИЗАЦИЯ (ПОСЛЕДНИЙ ШАГ) =============
         gantt.init("gantt_here");
         this.ensureTodayMarker();
         gantt.render();
 
         this.isInitialized = true;
-
         // По умолчанию скрываем детальные сметные колонки
         this.toggleEstimateColumns(false);
 

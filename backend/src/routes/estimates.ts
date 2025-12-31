@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 250 * 1024 * 1024 }, // 250MB
   fileFilter: (_req, file, cb) => {
     const extOk = path.extname(file.originalname).toLowerCase() === '.ifc';
     const mimeOk = file.mimetype === 'application/octet-stream' || file.mimetype === 'model/ifc' || file.mimetype === '';
@@ -63,7 +63,7 @@ const uploadProjectFile = multer({
 router.get('/', async (req, res) => {
   try {
     const { projectId, blockId } = req.query;
-    
+
     const where: any = {};
     if (projectId) where.projectId = String(projectId);
     if (blockId) where.blockId = String(blockId);
@@ -265,7 +265,7 @@ router.post('/:id/upload-ifc', upload.single('ifc'), async (req, res) => {
     }
 
     const ifcFilePath = req.file.path.replace(/\\/g, '/');
-    
+
     // Конвертируем IFC в XKT
     const xktPath = await convertIfcToXkt({
       ifcPath: ifcFilePath,

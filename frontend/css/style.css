@@ -3942,3 +3942,63 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
     color: var(--gray-400);
     font-size: 10px;
 }
+
+/* ========================================
+   SCHEDULE BOTTOM PANEL PANES
+   ======================================== */
+.schedule-bottom-pane {
+    display: none;
+    height: 100%;
+    overflow: auto;
+}
+
+.schedule-bottom-pane.active {
+    display: block;
+}
+
+#analytics-pane.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================
+   Turbo Loader
+   ======================================== */
+.turbo-loader-container {
+    height: 3px;
+    width: 100%;
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    display: none;
+    z-index: 1000;
+}
+
+.turbo-loader-container.active {
+    display: block;
+}
+
+.turbo-loader-bar {
+    height: 100%;
+    width: 30%;
+    background: var(--primary);
+    position: absolute;
+    left: -30%;
+    animation: turbo-flow 1.5s infinite linear;
+}
+
+@keyframes turbo-flow {
+    0% {
+        left: -30%;
+        width: 10%;
+    }
+
+    50% {
+        width: 40%;
+    }
+
+    100% {
+        left: 100%;
+        width: 10%;
+    }
+}

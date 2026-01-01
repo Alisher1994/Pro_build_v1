@@ -10,7 +10,7 @@ const ALLOWED_OLLAMA_HOSTS = (process.env.OLLAMA_ALLOWED_HOSTS || '')
   .filter(Boolean);
 
 // Конфигурация Ollama
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 // Для инструкций используем отдельную переменную, если не указана - используем общую или дефолт
 const OLLAMA_MODEL = process.env.OLLAMA_INSTRUCTIONS_MODEL || process.env.OLLAMA_MODEL || 'llama3.2:1b'; // Легкая и быстрая модель (1B параметров) для инструкций
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY; // API ключ для Ollama Cloud (если используется)
@@ -62,11 +62,11 @@ router.get('/:id', async (req, res) => {
         }
       }
     });
-    
+
     if (!instruction) {
       return res.status(404).json({ error: 'Инструкция не найдена' });
     }
-    
+
     res.json(instruction);
   } catch (error: any) {
     logger.error('Error fetching instruction:', error);
@@ -78,23 +78,23 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { code, name, text, workTypeItemIds } = req.body;
-    
+
     if (!code) {
       return res.status(400).json({ error: 'Код инструкции обязателен' });
     }
-    
+
     if (!name) {
       return res.status(400).json({ error: 'Название инструкции обязательно' });
     }
-    
+
     if (!text) {
       return res.status(400).json({ error: 'Текст инструкции обязателен' });
     }
-    
+
     if (text.length > 20000) {
       return res.status(400).json({ error: 'Текст инструкции не должен превышать 20 000 символов' });
     }
-    
+
     const instruction = await prisma.instruction.create({
       data: {
         code,
@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
         }
       }
     });
-    
+
     res.status(201).json(instruction);
   } catch (error: any) {
     logger.error('Error creating instruction:', error);
@@ -131,16 +131,16 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { code, name, text, workTypeItemIds } = req.body;
-    
+
     if (text && text.length > 20000) {
       return res.status(400).json({ error: 'Текст инструкции не должен превышать 20 000 символов' });
     }
-    
+
     // Удаляем старые связи с видами работ
     await prisma.instructionWorkType.deleteMany({
       where: { instructionId: id }
     });
-    
+
     // Обновляем инструкцию и создаем новые связи
     const instruction = await prisma.instruction.update({
       where: { id },
@@ -166,7 +166,7 @@ router.put('/:id', async (req, res) => {
         }
       }
     });
-    
+
     res.json(instruction);
   } catch (error: any) {
     logger.error('Error updating instruction:', error);
@@ -178,11 +178,11 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     await prisma.instruction.delete({
       where: { id }
     });
-    
+
     res.json({ success: true });
   } catch (error: any) {
     logger.error('Error deleting instruction:', error);
@@ -263,16 +263,16 @@ router.post('/generate-excerpt', async (req, res) => {
     // Обрезаем до 10000 символов
     excerpt = excerpt.substring(0, 10000).trim();
 
-    res.json({ 
+    res.json({
       excerpt,
       generated: true,
       isAI: true // Всегда true, так как заглушка убрана
     });
   } catch (error: any) {
     logger.error('Error generating instruction excerpt:', error);
-    res.status(500).json({ 
-      error: 'Ошибка генерации текста', 
-      message: error.message 
+    res.status(500).json({
+      error: 'Ошибка генерации текста',
+      message: error.message
     });
   }
 });
@@ -280,19 +280,19 @@ router.post('/generate-excerpt', async (req, res) => {
 // Функция для генерации текста с помощью Ollama
 async function generateWithOllama(prompt: string): Promise<string> {
   // Определяем URL и заголовки в зависимости от типа подключения
-    let apiUrl: string;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+  let apiUrl: string;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
-    if (USE_OLLAMA_CLOUD && OLLAMA_API_KEY) {
-      // Используем Ollama Cloud API
-      apiUrl = 'https://api.ollama.ai/v1/generate';
-      headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
-    } else {
-      // Используем локальный Ollama
-      apiUrl = `${OLLAMA_URL}/api/generate`;
-    }
+  if (USE_OLLAMA_CLOUD && OLLAMA_API_KEY) {
+    // Используем Ollama Cloud API
+    apiUrl = 'https://api.ollama.ai/v1/generate';
+    headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+  } else {
+    // Используем локальный Ollama
+    apiUrl = `${OLLAMA_URL}/api/generate`;
+  }
 
   assertSafeFetchTarget(apiUrl, ALLOWED_OLLAMA_HOSTS);
 
@@ -319,24 +319,24 @@ async function generateWithOllama(prompt: string): Promise<string> {
       signal: controller.signal,
     });
 
-      clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      const typedData = data as { response?: string };
-      return typedData.response || '';
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError' || error.message?.includes('aborted')) {
-        const seconds = Math.round(GENERATION_TIMEOUT_MS / 1000);
-        throw new Error(`Таймаут генерации (${seconds} секунд). Попробуйте уменьшить количество выбранных видов работ или повторить попытку.`);
-      }
-      throw new Error(`Failed to generate with Ollama: ${error.message}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
+
+    const data = await response.json();
+    const typedData = data as { response?: string };
+    return typedData.response || '';
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+      const seconds = Math.round(GENERATION_TIMEOUT_MS / 1000);
+      throw new Error(`Таймаут генерации (${seconds} секунд). Попробуйте уменьшить количество выбранных видов работ или повторить попытку.`);
+    }
+    throw new Error(`Failed to generate with Ollama: ${error.message}`);
+  }
 }
 
 export default router;

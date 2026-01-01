@@ -53,3 +53,4 @@ uploads/
 backend/uploads/
 prisma/dev.db
 prisma/dev.db-journal
+backend/logs/

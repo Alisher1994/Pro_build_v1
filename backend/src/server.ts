@@ -19,13 +19,14 @@ import supplyRoutes from './routes/supplies';
 import financeRoutes from './routes/finances';
 import ganttRoutes from './routes/gantt';
 import instructionRoutes from './routes/instructions';
-import normsRoutes from './routes/norms';
 import workTypeGroupRoutes from './routes/workTypeGroups';
 import subcontractorRoutes from './routes/subcontractors';
 import tenderRoutes from './routes/tenders';
 import departmentRoutes from './routes/departments';
 import positionRoutes from './routes/positions';
 import employeeRoutes from './routes/employees';
+import authRoutes from './routes/auth';
+import { authMiddleware } from './middleware/auth';
 
 dotenv.config();
 
@@ -61,26 +62,28 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // backend/src/server.ts -> ../../frontend
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// API Routes
-app.use('/api/projects', projectRoutes);
-app.use('/api/blocks', blockRoutes);
-app.use('/api/estimates', estimateRoutes);
-app.use('/api/sections', sectionRoutes);
-app.use('/api/stages', stageRoutes);
-app.use('/api/work-types', workTypeRoutes);
-app.use('/api/resources', resourceRoutes);
-app.use('/api/schedules', scheduleRoutes);
-app.use('/api/supplies', supplyRoutes);
-app.use('/api/finances', financeRoutes);
-app.use('/api/gantt', ganttRoutes);
-app.use('/api/instructions', instructionRoutes);
-app.use('/api/norms', normsRoutes);
-app.use('/api/work-type-groups', workTypeGroupRoutes);
-app.use('/api/subcontractors', subcontractorRoutes);
-app.use('/api/tenders', tenderRoutes);
-app.use('/api/departments', departmentRoutes);
-app.use('/api/positions', positionRoutes);
-app.use('/api/employees', employeeRoutes);
+// API Routes - Protected
+app.use('/api/projects', authMiddleware, projectRoutes);
+app.use('/api/blocks', authMiddleware, blockRoutes);
+app.use('/api/estimates', authMiddleware, estimateRoutes);
+app.use('/api/sections', authMiddleware, sectionRoutes);
+app.use('/api/stages', authMiddleware, stageRoutes);
+app.use('/api/work-types', authMiddleware, workTypeRoutes);
+app.use('/api/resources', authMiddleware, resourceRoutes);
+app.use('/api/schedules', authMiddleware, scheduleRoutes);
+app.use('/api/supplies', authMiddleware, supplyRoutes);
+app.use('/api/finances', authMiddleware, financeRoutes);
+app.use('/api/gantt', authMiddleware, ganttRoutes);
+app.use('/api/instructions', authMiddleware, instructionRoutes);
+app.use('/api/work-type-groups', authMiddleware, workTypeGroupRoutes);
+app.use('/api/subcontractors', authMiddleware, subcontractorRoutes);
+app.use('/api/departments', authMiddleware, departmentRoutes);
+app.use('/api/positions', authMiddleware, positionRoutes);
+app.use('/api/employees', authMiddleware, employeeRoutes);
+
+// API Routes - Public or with internal auth
+app.use('/api/tenders', tenderRoutes); // Tender routes handle their own auth for subcontractors
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -283,7 +283,7 @@
                 }
 
                 // Use the parent's API service
-                data = await window.parent.api.getOrgStructure(projectId);
+                data = await window.parent.api.getProjectHierarchy(projectId);
 
                 if (data && data.length > 0) {
                     renderChart();

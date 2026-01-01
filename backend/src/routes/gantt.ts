@@ -14,49 +14,6 @@ const calcDurationDays = (start: Date, end: Date) => {
   return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / MS_PER_DAY));
 };
 
-// Roll up parent task dates in-memory (used during generation before saving).
-const rollupInMemory = (tasksToCreate: any[]) => {
-  const byId = new Map<string, any>();
-  for (const t of tasksToCreate) byId.set(String(t.id), t);
-
-  const childrenByParent = new Map<string, any[]>();
-  for (const t of tasksToCreate) {
-    if (!t?.parent) continue;
-    const parentId = String(t.parent);
-    if (!byId.has(parentId)) continue;
-    const arr = childrenByParent.get(parentId) || [];
-    arr.push(t);
-    childrenByParent.set(parentId, arr);
-  }
-
-  const parentIds = Array.from(childrenByParent.keys());
-  const computeParent = (parentId: string) => {
-    const children = childrenByParent.get(parentId);
-    if (!children || children.length === 0) return;
-
-    let minStart: Date | null = null;
-    let maxEnd: Date | null = null;
-
-    for (const c of children) {
-      const start: Date | undefined = c?.start_date;
-      if (!start || Number.isNaN(start.getTime())) continue;
-      const end = addDays(start, Number(c?.duration || 0));
-      if (!minStart || start < minStart) minStart = start;
-      if (!maxEnd || end > maxEnd) maxEnd = end;
-    }
-
-    if (!minStart || !maxEnd) return;
-    const p = byId.get(parentId);
-    if (!p) return;
-    p.start_date = minStart;
-    p.duration = calcDurationDays(minStart, maxEnd);
-  };
-
-  // Multiple passes to ensure rollup reaches the root.
-  for (let i = 0; i < 6; i++) {
-    for (const pid of parentIds) computeParent(pid);
-  }
-};
 
 // Roll up parent task dates in DB (used after updates).
 const rollupAncestors = async (projectId: string, startId: string | null) => {
@@ -68,26 +25,45 @@ const rollupAncestors = async (projectId: string, startId: string | null) => {
 
     const children = await prisma.ganttTask.findMany({
       where: { projectId, parent: currentId },
-      select: { start_date: true, duration: true },
+      select: { start_date: true, duration: true, progress: true, quantity: true, completedQuantity: true },
     });
 
     if (children.length > 0) {
       let minStart: Date | null = null;
       let maxEnd: Date | null = null;
+      let totalDuration = 0;
+      let weightedProgress = 0;
+      let totalQty = 0;
+      let totalCompletedQty = 0;
 
       for (const c of children) {
         if (!c.start_date || Number.isNaN(c.start_date.getTime())) continue;
         const start = c.start_date;
-        const end = addDays(start, Number(c.duration || 0));
+        const dur = Number(c.duration || 0);
+        const end = addDays(start, dur);
+
         if (!minStart || start < minStart) minStart = start;
         if (!maxEnd || end > maxEnd) maxEnd = end;
+
+        totalDuration += dur;
+        weightedProgress += (c.progress || 0) * dur;
+        totalQty += Number(c.quantity || 0);
+        totalCompletedQty += Number(c.completedQuantity || 0);
       }
 
       if (minStart && maxEnd) {
         const duration = calcDurationDays(minStart, maxEnd);
+        const avgProgress = totalDuration > 0 ? (weightedProgress / totalDuration) : 0;
+
         await prisma.ganttTask.update({
           where: { id: currentId },
-          data: { start_date: minStart, duration },
+          data: {
+            start_date: minStart,
+            duration,
+            progress: avgProgress,
+            quantity: totalQty,
+            completedQuantity: totalCompletedQty
+          },
         });
       }
     }
@@ -120,510 +96,6 @@ const extractWorkTypeIdFromTaskId = (taskId: string): string | null => {
 // ГЕНЕРАЦИЯ ГРАФИКА (Gantt)
 // ========================================
 
-// POST /api/gantt/generate/:projectId
-// Генерирует структуру задач для диаграммы Ганта на основе сметы
-router.post('/generate/:projectId', async (req, res) => {
-  try {
-    const { projectId } = req.params;
-    const { mode, useAI } = req.body;
-
-    const safeJsonArray = (value: any): string[] => {
-      if (value === null || value === undefined || value === '') return [];
-      if (Array.isArray(value)) {
-        return value
-          .map((v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : null))
-          .filter((v): v is string => Boolean(v));
-      }
-      if (typeof value === 'string') {
-        try {
-          const parsed = JSON.parse(value);
-          return safeJsonArray(parsed);
-        } catch {
-          return [];
-        }
-      }
-      return [];
-    };
-
-    const splitIfcArgs = (argsSource: string): string[] => {
-      const args: string[] = [];
-      let current = '';
-      let depth = 0;
-      let inString = false;
-      for (let i = 0; i < argsSource.length; i++) {
-        const ch = argsSource[i];
-        if (ch === "'") {
-          inString = !inString;
-          current += ch;
-          continue;
-        }
-
-        if (!inString) {
-          if (ch === '(') depth++;
-          if (ch === ')') depth = Math.max(0, depth - 1);
-          if (ch === ',' && depth === 0) {
-            args.push(current.trim());
-            current = '';
-            continue;
-          }
-        }
-
-        current += ch;
-      }
-      if (current.trim()) args.push(current.trim());
-      return args;
-    };
-
-    const parseIfcGuidToStorey = (fileContent: string) => {
-      // Decode IFC strings encoded as UTF-16BE hex: \X2\....\X0\
-      const decodeIfcString = (str: string) => {
-        try {
-          return str.replace(/\\X2\\([0-9A-F]+)\\X0\\/g, (match, hex) => {
-            let result = '';
-            for (let i = 0; i < hex.length; i += 4) {
-              const charCode = parseInt(hex.substr(i, 4), 16);
-              result += String.fromCharCode(charCode);
-            }
-            return result;
-          });
-        } catch {
-          return str;
-        }
-      };
-
-      const storeyNameByEntityId = new Map<string, string>();
-      const guidByEntityId = new Map<string, string>();
-      const guidToStoreyName = new Map<string, string>();
-
-      // #123= IFCBUILDINGSTOREY(...,'Name' ...);
-      const storeyRegex = /#(\d+)\s*=\s*IFCBUILDINGSTOREY\s*\([^,]*,\s*[^,]*,\s*'([^']*)'/gi;
-      let match: RegExpExecArray | null;
-      while ((match = storeyRegex.exec(fileContent)) !== null) {
-        const entityId = match[1];
-        const rawName = match[2];
-        storeyNameByEntityId.set(entityId, decodeIfcString(rawName));
-      }
-
-      // Map any entity with a first GUID arg: #45= IFCWALL(... 'GUID' ...)
-      const guidRegex = /#(\d+)\s*=\s*IFC[A-Z0-9_]+\s*\(\s*'([^']+)'/gi;
-      while ((match = guidRegex.exec(fileContent)) !== null) {
-        const entityId = match[1];
-        const guid = match[2];
-        if (!guidByEntityId.has(entityId)) {
-          guidByEntityId.set(entityId, guid);
-        }
-      }
-
-      // Parse containment relationships and connect related element entity IDs to storey entity ID.
-      // #999= IFCRELCONTAINEDINSPATIALSTRUCTURE(...,(#45,#46),#123);
-      const relRegex = /#(\d+)\s*=\s*IFCRELCONTAINEDINSPATIALSTRUCTURE\s*\(([^;]*?)\)\s*;/gi;
-      while ((match = relRegex.exec(fileContent)) !== null) {
-        const argsSource = match[2];
-        const args = splitIfcArgs(argsSource);
-        if (args.length < 6) continue;
-
-        const related = args[4];
-        const relating = args[5];
-
-        const relatingIdMatch = relating.match(/#(\d+)/);
-        if (!relatingIdMatch) continue;
-        const relatingId = relatingIdMatch[1];
-        const storeyName = storeyNameByEntityId.get(relatingId);
-        if (!storeyName) continue; // skip if relating structure is not a storey
-
-        const relatedIds = Array.from(related.matchAll(/#(\d+)/g)).map((m) => m[1]);
-        for (const relatedId of relatedIds) {
-          const guid = guidByEntityId.get(relatedId);
-          if (!guid) continue;
-          if (!guidToStoreyName.has(guid)) {
-            guidToStoreyName.set(guid, storeyName);
-          }
-        }
-      }
-
-      return {
-        storeyNames: Array.from(new Set(storeyNameByEntityId.values())),
-        guidToStoreyName,
-      };
-    };
-
-    // 1. Получаем данные проекта со всей иерархией
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      include: {
-        blocks: {
-          include: {
-            estimates: {
-              where: {
-                status: 'approved',
-              },
-              include: {
-                sections: {
-                  include: {
-                    stages: {
-                      include: {
-                        workTypes: {
-                          include: {
-                            resources: {
-                              select: {
-                                id: true,
-                                ifcElements: true,
-                                unit: true,
-                                quantity: true,
-                              },
-                            },
-                          },
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    // 2. Очищаем существующие задачи Ганта для этого проекта
-    // (В будущем можно сделать умное обновление, но пока полная перегенерация)
-    await prisma.ganttTask.deleteMany({
-      where: { projectId }
-    });
-
-    const tasksToCreate: any[] = [];
-    let sortOrder = 0;
-
-    // 3. Создаем корневую задачу - Проект
-    const projectTaskId = project.id; // Используем ID проекта как ID задачи для удобства
-    tasksToCreate.push({
-      id: projectTaskId,
-      projectId,
-      text: project.name,
-      start_date: project.startDate || new Date(),
-      duration: 1,
-      progress: 0,
-      parent: null, // Корневая задача
-      type: 'project',
-      sortOrder: sortOrder++
-    });
-
-    // 4. Группируем блоки по очередям строительства
-    const phases: { [key: number]: typeof project.blocks } = {};
-    project.blocks.forEach(block => {
-      const phase = block.constructionPhase || 1;
-      if (!phases[phase]) phases[phase] = [];
-      phases[phase].push(block);
-    });
-
-    const sortedPhases = Object.keys(phases).sort((a, b) => Number(a) - Number(b));
-
-    // 5. Создаем задачи для Очередей
-    for (const phaseKey of sortedPhases) {
-      const phaseNum = Number(phaseKey);
-      const phaseBlocks = phases[phaseNum];
-
-      // ID задачи очереди (фиктивный, генерируем)
-      const phaseTaskId = `phase-${projectId}-${phaseNum}`;
-
-      tasksToCreate.push({
-        id: phaseTaskId,
-        projectId,
-        text: `Очередь: ${phaseNum}`,
-        start_date: new Date(), // Default date
-        duration: 1,
-        progress: 0,
-        parent: projectTaskId,
-        type: 'project', // Группирующая задача
-        sortOrder: sortOrder++
-      });
-
-      // 6. Создаем задачи для Блоков
-      for (const block of phaseBlocks) {
-        const blockTaskId = `block-${block.id}`;
-
-        const floorTaskIds: string[] = [];
-        const createdWorktypeTaskIds = new Set<string>();
-
-        tasksToCreate.push({
-          id: blockTaskId,
-          projectId,
-          text: block.name,
-          start_date: new Date(), // Default date
-          duration: 1,
-          progress: 0,
-          parent: phaseTaskId,
-          type: 'project',
-          blockId: block.id,
-          sortOrder: sortOrder++
-        });
-
-        // 6.5. Если режим 'manual', создаем этажи
-        if (mode === 'manual') {
-          // Подземные этажи
-          const undergroundFloors = (block as any).undergroundFloors || 0;
-          for (let i = undergroundFloors; i >= 1; i--) {
-            const floorTaskId = `floor-${block.id}-minus-${i}`;
-            tasksToCreate.push({
-              id: floorTaskId,
-              projectId,
-              text: `Этаж -${i}`,
-              start_date: new Date(),
-              duration: 1,
-              progress: 0,
-              parent: blockTaskId,
-              type: 'project',
-              blockId: block.id,
-              sortOrder: sortOrder++
-            });
-            floorTaskIds.push(floorTaskId);
-          }
-
-          // Надземные этажи
-          const floors = block.floors || 1;
-          for (let i = 1; i <= floors; i++) {
-            const floorTaskId = `floor-${block.id}-${i}`;
-            tasksToCreate.push({
-              id: floorTaskId,
-              projectId,
-              text: `Этаж ${i}`,
-              start_date: new Date(),
-              duration: 1,
-              progress: 0,
-              parent: blockTaskId,
-              type: 'project',
-              blockId: block.id,
-              sortOrder: sortOrder++
-            });
-            floorTaskIds.push(floorTaskId);
-          }
-        } else if (mode === 'bim') {
-          // Пытаемся найти IFC файл в сметах блока
-          let ifcPath = null;
-          for (const estimate of block.estimates) {
-            if (estimate.ifcFileUrl) {
-              ifcPath = path.join(__dirname, '../../', estimate.ifcFileUrl);
-              break;
-            }
-          }
-
-          if (ifcPath && fs.existsSync(ifcPath)) {
-            try {
-              const fileContent = fs.readFileSync(ifcPath, 'utf-8');
-
-              const { storeyNames, guidToStoreyName } = parseIfcGuidToStorey(fileContent);
-
-              // Сортируем этажи (попытка умной сортировки)
-              const storeys = [...storeyNames];
-              storeys.sort((a, b) => {
-                const numA = parseInt(a.replace(/[^0-9-]/g, '')) || 0;
-                const numB = parseInt(b.replace(/[^0-9-]/g, '')) || 0;
-                return numA - numB;
-              });
-
-              const floorTaskIdByStoreyName = new Map<string, string>();
-
-              // Создаем задачи для этажей
-              for (const storeyName of storeys) {
-                const floorTaskId = `floor-${block.id}-${storeyName}`;
-                tasksToCreate.push({
-                  id: floorTaskId,
-                  projectId,
-                  text: storeyName,
-                  start_date: new Date(),
-                  duration: 1,
-                  progress: 0,
-                  parent: blockTaskId,
-                  type: 'project',
-                  blockId: block.id,
-                  sortOrder: sortOrder++,
-                  // Добавляем маркер, что это этаж (можно использовать в description или отдельном поле, если схема позволяет)
-                  // Но пока используем text для определения на фронте, теперь он будет читаемым "Этаж 1"
-                });
-                floorTaskIds.push(floorTaskId);
-                floorTaskIdByStoreyName.set(storeyName, floorTaskId);
-              }
-
-              // Авто-раскладка видов работ по этажам на основе ресурсов с привязкой IFC
-              // Правило: показываем только WorkType, у которого есть хотя бы 1 ресурс с ifcElements,
-              // и только на тех этажах, которые определились из IFC.
-              const workTypesInBlock = block.estimates.flatMap((e: any) =>
-                (e.sections || []).flatMap((s: any) => (s.stages || []).flatMap((st: any) => st.workTypes || []))
-              );
-
-              for (const wt of workTypesInBlock) {
-                const resources: any[] = Array.isArray(wt.resources) ? wt.resources : [];
-
-                // Determine unit: prefer WorkType.unit, else single common unit across linked resources
-                const workTypeUnit = typeof wt.unit === 'string' ? wt.unit : '';
-                const resourceUnits = new Set(
-                  resources
-                    .map((r) => (typeof r.unit === 'string' ? r.unit.trim() : ''))
-                    .filter((u) => Boolean(u))
-                );
-                const computedUnit = workTypeUnit || (resourceUnits.size === 1 ? Array.from(resourceUnits)[0] : '');
-
-                // Accumulate quantity per storey by distributing each resource quantity
-                // proportionally to the count of its linked elements on each storey.
-                const qtyByStorey = new Map<string, number>();
-                let hasAnyLinkedElement = false;
-
-                for (const r of resources) {
-                  const guids = safeJsonArray(r.ifcElements);
-                  if (!guids.length) continue;
-
-                  const qty = Number(r.quantity);
-                  const resourceQty = Number.isFinite(qty) ? qty : 0;
-
-                  const countByStorey = new Map<string, number>();
-                  let totalMapped = 0;
-
-                  for (const guid of guids) {
-                    const storeyName = guidToStoreyName.get(guid);
-                    if (!storeyName) continue;
-                    hasAnyLinkedElement = true;
-                    totalMapped++;
-                    countByStorey.set(storeyName, (countByStorey.get(storeyName) || 0) + 1);
-                  }
-
-                  if (totalMapped === 0) continue;
-                  if (resourceQty === 0) {
-                    // Even if qty=0, keep storey presence (task will be created with qty 0)
-                    for (const [storeyName] of countByStorey) {
-                      qtyByStorey.set(storeyName, qtyByStorey.get(storeyName) || 0);
-                    }
-                    continue;
-                  }
-
-                  for (const [storeyName, count] of countByStorey) {
-                    const portion = (resourceQty * count) / totalMapped;
-                    qtyByStorey.set(storeyName, (qtyByStorey.get(storeyName) || 0) + portion);
-                  }
-                }
-
-                if (!hasAnyLinkedElement) continue;
-
-                for (const [storeyName, storeyQty] of qtyByStorey) {
-                  const floorTaskId = floorTaskIdByStoreyName.get(storeyName);
-                  if (!floorTaskId) continue;
-
-                  const taskId = `worktype-${wt.id}-${floorTaskId}`;
-                  createdWorktypeTaskIds.add(taskId);
-                  tasksToCreate.push({
-                    id: taskId,
-                    projectId,
-                    text: wt.name,
-                    start_date: new Date(),
-                    duration: 1,
-                    progress: 0,
-                    parent: floorTaskId,
-                    type: 'task',
-                    quantity: Number.isFinite(storeyQty) ? storeyQty : 0,
-                    unit: computedUnit,
-                    blockId: block.id,
-                    sortOrder: sortOrder++,
-                  });
-                }
-              }
-            } catch (err) {
-              logger.error('Error parsing IFC for floors:', err);
-            }
-          }
-        }
-
-        // Если этажи не создались (mode не задан / BIM не нашел storeys), создаем один дефолтный этаж
-        if (floorTaskIds.length === 0) {
-          const floorTaskId = `floor-${block.id}-1`;
-          tasksToCreate.push({
-            id: floorTaskId,
-            projectId,
-            text: `Этаж 1`,
-            start_date: new Date(),
-            duration: 1,
-            progress: 0,
-            parent: blockTaskId,
-            type: 'project',
-            blockId: block.id,
-            sortOrder: sortOrder++
-          });
-          floorTaskIds.push(floorTaskId);
-        }
-
-        // 7. Переносим в график утвержденные сметы: создаем задачи по видам работ
-        // Логика:
-        // - В режиме BIM, если по IFC не удалось разложить вид работ по этажам, добавляем его на первый этаж.
-        // - В режиме manual (и прочих), добавляем все виды работ на первый этаж.
-        // Важно: используем id формата `worktype-<workTypeId>-<floorTaskId>`, чтобы фронт корректно подтягивал ресурсы.
-        const defaultFloorTaskIdForWorkTypes = floorTaskIds[0];
-        const approvedWorkTypesInBlock = (block.estimates || []).flatMap((e: any) =>
-          (e.sections || []).flatMap((s: any) => (s.stages || []).flatMap((st: any) => st.workTypes || []))
-        );
-
-        const computeWorkTypeUnit = (wt: any): string => {
-          const workTypeUnit = typeof wt?.unit === 'string' ? wt.unit.trim() : '';
-          if (workTypeUnit) return workTypeUnit;
-          const resources: any[] = Array.isArray(wt?.resources) ? wt.resources : [];
-          const resourceUnits = new Set(
-            resources
-              .map((r) => (typeof r?.unit === 'string' ? r.unit.trim() : ''))
-              .filter((u) => Boolean(u))
-          );
-          return resourceUnits.size === 1 ? Array.from(resourceUnits)[0] : '';
-        };
-
-        // If mode is bim, we may already have created some per-floor worktype tasks.
-        // Ensure the remaining approved work types are still represented in the schedule.
-        for (const wt of approvedWorkTypesInBlock) {
-          if (!wt?.id) continue;
-
-          // In BIM mode, prefer to keep only IFC-distributed tasks if they exist.
-          // If not distributed, fall back to attaching the task to the default floor.
-          if (mode === 'bim') {
-            const anyDistributed = Array.from(createdWorktypeTaskIds).some((id) => id.startsWith(`worktype-${wt.id}-floor-`));
-            if (anyDistributed) continue;
-          }
-
-          const taskId = `worktype-${wt.id}-${defaultFloorTaskIdForWorkTypes}`;
-          if (createdWorktypeTaskIds.has(taskId)) continue;
-          createdWorktypeTaskIds.add(taskId);
-
-          const q = Number(wt.quantity);
-          tasksToCreate.push({
-            id: taskId,
-            projectId,
-            text: wt.name,
-            start_date: new Date(),
-            duration: 1,
-            progress: 0,
-            parent: defaultFloorTaskIdForWorkTypes,
-            type: 'task',
-            quantity: Number.isFinite(q) ? q : 0,
-            unit: computeWorkTypeUnit(wt),
-            blockId: block.id,
-            sortOrder: sortOrder++,
-          });
-        }
-      }
-    }
-
-    // Сохраняем все задачи в БД
-    // Prisma createMany не поддерживает SQLite, поэтому используем транзакцию с create
-    rollupInMemory(tasksToCreate);
-    await prisma.$transaction(
-      tasksToCreate.map(task => prisma.ganttTask.create({ data: task }))
-    );
-
-    res.json({ message: 'Schedule generated successfully', tasksCount: tasksToCreate.length });
-
-  } catch (error: any) {
-    logger.error('Error generating schedule:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // ========================================
 // ПРИВЯЗКА ВИДА РАБОТ К ЭТАЖУ (без дублирования)
@@ -1145,6 +617,8 @@ router.get('/:projectId', async (req, res) => {
         estimateSectionId: t.estimateSectionId,
         quantity: t.quantity,
         unit: t.unit,
+        completedQuantity: t.completedQuantity,
+        dailyPlan: t.dailyPlan,
         shiftsPerDay: t.shiftsPerDay,
         resourceCount: t.resourceCount,
         calculationMode: t.calculationMode,

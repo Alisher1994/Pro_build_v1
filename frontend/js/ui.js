@@ -694,6 +694,24 @@ const UI = {
         Utils.confirm('Подтверждение', message).then(confirmed => {
             if (confirmed) callback();
         });
+    },
+
+    // Turbo Loader (top progress bar)
+    showTurboLoader() {
+        const loader = document.getElementById('turbo-loader');
+        if (loader) {
+            loader.classList.add('active');
+        }
+    },
+
+    hideTurboLoader() {
+        // Добавляем небольшую задержку, чтобы анимация была плавной и заметной
+        setTimeout(() => {
+            const loader = document.getElementById('turbo-loader');
+            if (loader) {
+                loader.classList.remove('active');
+            }
+        }, 500);
     }
 };
 

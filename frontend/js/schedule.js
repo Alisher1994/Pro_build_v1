@@ -16,6 +16,12 @@ const ScheduleManager = {
         openHeightPx: null,
     },
 
+    currentTaskResources: [],
+    charts: {
+        labor: null,
+        equipment: null
+    },
+
     contextMenu: {
         el: null,
         activeTaskId: null,
@@ -854,6 +860,11 @@ const ScheduleManager = {
                                 <span style="color: var(--accent-orange);">Остаток</span>
                                 <span style="font-weight: 600; color: var(--accent-orange); white-space: nowrap;">${this.formatQty(remaining)} ${cleanUnit}</span>
                             </div>
+                            <!-- План/сутки -->
+                            <div style="display: flex; justify-content: space-between; gap: 4px; border-top: 1px solid var(--gray-50); padding-top: 4px; margin-top: 2px;">
+                                <span style="color: var(--primary);">План/сутки</span>
+                                <span style="font-weight: 600; color: var(--primary); white-space: nowrap;">${this.formatQty(dailyPlan > 0 ? dailyPlan : (task.duration > 0 ? physicalVolume / task.duration : 0))} ${cleanUnit}</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -991,6 +1002,154 @@ const ScheduleManager = {
         }
     },
 
+    async renderAnalyticsPane(taskId) {
+        const pane = document.getElementById('analytics-pane');
+        if (!pane || !taskId || typeof gantt === 'undefined') return;
+
+        try {
+            const task = gantt.getTask(taskId);
+            if (!task || task.type === 'project') {
+                pane.innerHTML = `
+                    <div style="color: var(--gray-500); text-align: center; padding: 24px;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" style="margin-bottom: 8px;">
+                            <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                        </svg>
+                        <div>Аналитика доступна только для видов работ</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // If resources aren't loaded, load them
+            if (!this.currentTaskResources || this.resourcesPane.selectedTaskId !== taskId) {
+                const workTypeId = this.extractWorkTypeIdFromTaskId(taskId);
+                if (workTypeId) {
+                    this.currentTaskResources = await api.getResources(workTypeId);
+                    this.resourcesPane.selectedTaskId = taskId;
+                }
+            }
+
+            const resources = this.currentTaskResources || [];
+            const taskQty = Number(task.quantity || 0);
+            const duration = Number(task.duration || 1);
+
+            // Расчет плановой интенсивности для каждого дня
+            const getGroupIntensity = (type) => {
+                return resources
+                    .filter(r => r.resourceType === type)
+                    .reduce((sum, r) => {
+                        const norm = r.normPerUnit !== null ? Number(r.normPerUnit) : 0;
+                        const totalHours = norm * taskQty;
+                        const resShifts = Number(r.shiftsPerDay || 1);
+                        const shiftHrs = Number(r.shiftDuration) || Number(task.shiftDuration) || (this.projectSettings?.shiftDuration) || 8;
+
+                        if (duration > 0 && resShifts > 0 && shiftHrs > 0) {
+                            const rawIntensity = totalHours / (duration * resShifts * shiftHrs);
+                            return sum + Math.ceil(rawIntensity);
+                        }
+                        return sum;
+                    }, 0);
+            };
+
+            const plannedLabor = getGroupIntensity('labor');
+            const plannedEquip = getGroupIntensity('equipment');
+
+            // Подготовка данных для графиков (простая константа на весь срок для плана)
+            const labels = [];
+            const laborData = [];
+            const equipData = [];
+
+            for (let i = 0; i < duration; i++) {
+                let d;
+                if (typeof gantt !== 'undefined' && typeof gantt.addDays === 'function') {
+                    d = gantt.addDays(task.start_date, i);
+                } else {
+                    d = new Date(task.start_date);
+                    d.setDate(d.getDate() + i);
+                }
+
+                const label = d.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                labels.push(label);
+                laborData.push(plannedLabor);
+                equipData.push(plannedEquip);
+            }
+
+            // Рендер чартов
+            this.renderCharts(labels, laborData, equipData);
+
+        } catch (e) {
+            console.error('renderAnalyticsPane error:', e);
+        }
+    },
+
+    renderCharts(labels, laborData, equipData) {
+        if (typeof Chart === 'undefined') {
+            const pane = document.getElementById('analytics-pane');
+            if (pane) pane.innerHTML = '<div style="padding:20px; color:red;">Ошибка: Библиотека Chart.js не загружена</div>';
+            return;
+        }
+
+        const ctxLabor = document.getElementById('chart-labor');
+        const ctxEquip = document.getElementById('chart-equipment');
+        if (!ctxLabor || !ctxEquip) return;
+
+        // Destroy previous instances
+        if (this.charts.labor) this.charts.labor.destroy();
+        if (this.charts.equipment) this.charts.equipment.destroy();
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 10, font: { size: 10 } } },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f1f1' }, ticks: { font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        };
+
+        this.charts.labor = new Chart(ctxLabor, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'План (чел)',
+                    data: laborData,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0,
+                    pointRadius: 2
+                }]
+            },
+            options: commonOptions
+        });
+
+        this.charts.equipment = new Chart(ctxEquip, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'План (маш)',
+                    data: equipData,
+                    borderColor: '#ca5010',
+                    backgroundColor: 'rgba(202, 80, 16, 0.1)',
+                    fill: true,
+                    tension: 0,
+                    pointRadius: 2
+                }]
+            },
+            options: commonOptions
+        });
+    },
+
     async loadAndShowResourcesForTask(taskId) {
         try {
             if (!this.isInitialized || typeof gantt === 'undefined') return;
@@ -1023,6 +1182,7 @@ const ScheduleManager = {
             const resources = await api.getResources(workTypeId);
             if (token !== this.resourcesPane.token) return; // stale
 
+            this.currentTaskResources = resources;
             this.renderResourcesList(task.text, resources);
         } catch (e) {
             console.error('loadAndShowResourcesForTask failed', e);
@@ -1104,10 +1264,9 @@ const ScheduleManager = {
                     width: 100,
                     resize: true,
                     template: (obj) => {
-                        if (obj.type === 'project' || !obj.quantity) return '';
                         const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                        if (!total) return '';
-                        const completed = total * (obj.progress || 0);
+                        const completed = Number(obj.completedQuantity || 0);
+                        if (!total && !completed) return '';
                         const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
                         return `<span style="color: var(--success); font-weight: 500;">${this.formatQty(completed)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
                     }
@@ -1121,11 +1280,10 @@ const ScheduleManager = {
                     width: 100,
                     resize: true,
                     template: (obj) => {
-                        if (obj.type === 'project' || !obj.quantity) return '';
                         const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                        if (!total) return '';
-                        const completed = total * (obj.progress || 0);
-                        const remaining = total - completed;
+                        const completed = Number(obj.completedQuantity || 0);
+                        const remaining = Math.max(0, total - completed);
+                        if (!total && !remaining) return '';
                         const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
                         return `<span style="color: var(--accent-orange); font-weight: 500;">${this.formatQty(remaining)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
                     }
@@ -1223,19 +1381,29 @@ const ScheduleManager = {
 
             let minStart = null;
             let maxEnd = null;
+            let totalDuration = 0;
+            let weightedProgress = 0;
+            let totalQty = 0;
+            let totalCompletedQty = 0;
 
             for (const childId of childIds) {
                 const child = gantt.getTask(childId);
                 if (!child || !child.start_date) continue;
                 const start = child.start_date;
+                const dur = Number(child.duration || 0);
                 const end = child.end_date
                     ? child.end_date
                     : (typeof gantt.calculateEndDate === 'function')
-                        ? gantt.calculateEndDate(start, child.duration || 0)
-                        : new Date(start.getTime() + (Number(child.duration || 0) * 24 * 60 * 60 * 1000));
+                        ? gantt.calculateEndDate(start, dur)
+                        : new Date(start.getTime() + (dur * 24 * 60 * 60 * 1000));
 
                 if (!minStart || start < minStart) minStart = start;
                 if (!maxEnd || end > maxEnd) maxEnd = end;
+
+                totalDuration += dur;
+                weightedProgress += (child.progress || 0) * dur;
+                totalQty += Number(child.quantity || 0);
+                totalCompletedQty += Number(child.completedQuantity || 0);
             }
 
             if (!minStart || !maxEnd) return null;
@@ -1244,7 +1412,15 @@ const ScheduleManager = {
                 ? Math.max(1, gantt.calculateDuration(minStart, maxEnd))
                 : Math.max(1, Math.ceil((maxEnd.getTime() - minStart.getTime()) / (24 * 60 * 60 * 1000)));
 
-            return { start_date: minStart, duration };
+            const progress = totalDuration > 0 ? (weightedProgress / totalDuration) : 0;
+
+            return {
+                start_date: minStart,
+                duration,
+                progress,
+                quantity: totalQty,
+                completedQuantity: totalCompletedQty
+            };
         } catch (err) {
             console.error('computeChildrenBounds error', err);
             return null;
@@ -1327,8 +1503,19 @@ const ScheduleManager = {
                     const parent = gantt.getTask(parentId);
                     const startChanged = !parent.start_date || parent.start_date.getTime() !== bounds.start_date.getTime();
                     const durationChanged = Number(parent.duration || 0) !== Number(bounds.duration || 0);
-                    if (startChanged || durationChanged) {
-                        updates.push({ id: parentId, start_date: bounds.start_date, duration: bounds.duration });
+                    const progressChanged = Math.abs((parent.progress || 0) - (bounds.progress || 0)) > 0.001;
+                    const qtyChanged = Number(parent.quantity || 0) !== Number(bounds.quantity || 0);
+                    const compChanged = Number(parent.completedQuantity || 0) !== Number(bounds.completedQuantity || 0);
+
+                    if (startChanged || durationChanged || progressChanged || qtyChanged || compChanged) {
+                        updates.push({
+                            id: parentId,
+                            start_date: bounds.start_date,
+                            duration: bounds.duration,
+                            progress: bounds.progress,
+                            quantity: bounds.quantity,
+                            completedQuantity: bounds.completedQuantity
+                        });
                     }
                 }
 
@@ -1345,6 +1532,10 @@ const ScheduleManager = {
                     const t = gantt.getTask(u.id);
                     t.start_date = u.start_date;
                     t.duration = u.duration;
+                    t.progress = u.progress;
+                    t.quantity = u.quantity;
+                    t.completedQuantity = u.completedQuantity;
+
                     if (typeof gantt.calculateEndDate === 'function') {
                         t.end_date = gantt.calculateEndDate(t.start_date, t.duration);
                     }
@@ -1358,7 +1549,13 @@ const ScheduleManager = {
                 // Сохраняем пересчитанные родительские задачи на backend
                 for (const u of updates) {
                     try {
-                        await api.updateGanttTask(u.id, { start_date: u.start_date, duration: u.duration });
+                        await api.updateGanttTask(u.id, {
+                            start_date: u.start_date,
+                            duration: u.duration,
+                            progress: u.progress,
+                            quantity: u.quantity,
+                            completedQuantity: u.completedQuantity
+                        });
                     } catch (e) {
                         // Не ломаем UX, просто логируем
                         console.warn('Failed to persist parent rollup', u.id, e);
@@ -1443,6 +1640,10 @@ const ScheduleManager = {
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                             <span>Выполнение</span>
                         </button>
+                        <button type="button" class="schedule-bottom-tab" data-tab="analytics" role="tab" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                            <span>Аналитика</span>
+                        </button>
                         <button type="button" class="schedule-bottom-tab" data-tab="contractors" role="tab" aria-selected="false">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pickaxe-icon lucide-pickaxe"><path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3L11 9.999"/><path d="M15.973 4.027A13 13 0 0 0 5.902 2.373c-1.398.342-1.092 2.158.277 2.601a19.9 19.9 0 0 1 5.822 3.024"/><path d="M16.001 11.999a19.9 19.9 0 0 1 3.024 5.824c.444 1.369 2.26 1.676 2.603.278A13 13 0 0 0 20 8.069"/><path d="M18.352 3.352a1.205 1.205 0 0 0-1.704 0l-5.296 5.296a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l5.296-5.296a1.205 1.205 0 0 0 0-1.704z"/></svg>
                             <span>Подрядчики</span>
@@ -1467,6 +1668,22 @@ const ScheduleManager = {
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                                     </svg>
                                     <div>Выберите задачу для учета выполнения</div>
+                                </div>
+                            </div>
+                            <div class="schedule-bottom-pane" data-pane="analytics" id="analytics-pane">
+                                <div style="display: flex; height: 100%; gap: 16px; padding: 8px;">
+                                    <div style="flex: 1; min-width: 0; background: #fff; border-radius: 8px; border: 1px solid var(--gray-200); padding: 12px; display: flex; flex-direction: column;">
+                                        <div style="font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Трудовые ресурсы (чел.)</div>
+                                        <div style="flex: 1; position: relative;">
+                                            <canvas id="chart-labor"></canvas>
+                                        </div>
+                                    </div>
+                                    <div style="flex: 1; min-width: 0; background: #fff; border-radius: 8px; border: 1px solid var(--gray-200); padding: 12px; display: flex; flex-direction: column;">
+                                        <div style="font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Механизмы (маш.)</div>
+                                        <div style="flex: 1; position: relative;">
+                                            <canvas id="chart-equipment"></canvas>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="schedule-bottom-pane" data-pane="contractors">
@@ -1740,10 +1957,13 @@ const ScheduleManager = {
             p.classList.toggle('active', isActive);
         });
 
-        // Если открываем вкладку выполнения, удостоверимся что она актуальна
-        if (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'execution' && typeof gantt !== 'undefined') {
+        // Если открываем вкладку выполнения или аналитики, удостоверимся что она актуальна
+        if (this.bottomPanel.isOpen && (this.bottomPanel.activeTab === 'execution' || this.bottomPanel.activeTab === 'analytics') && typeof gantt !== 'undefined') {
             const selId = gantt.getSelectedId();
-            if (selId) this.renderExecutionPane(selId);
+            if (selId) {
+                if (this.bottomPanel.activeTab === 'execution') this.renderExecutionPane(selId);
+                if (this.bottomPanel.activeTab === 'analytics') this.renderAnalyticsPane(selId);
+            }
         }
 
         if (this.bottomPanel.isOpen) {
@@ -1759,7 +1979,8 @@ const ScheduleManager = {
         // Она заменяется на внутренний макет вкладки
         const detailsPanel = bottom.querySelector('.task-details-panel');
         if (detailsPanel) {
-            detailsPanel.style.display = (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'execution') ? 'none' : 'block';
+            const hideDetails = this.bottomPanel.isOpen && (this.bottomPanel.activeTab === 'execution' || this.bottomPanel.activeTab === 'analytics');
+            detailsPanel.style.display = hideDetails ? 'none' : 'block';
         }
 
         // Пересчитать размеры ганта
@@ -1921,10 +2142,9 @@ const ScheduleManager = {
                 width: 100,
                 resize: true,
                 template: (obj) => {
-                    if (obj.type === 'project' || !obj.quantity) return '';
                     const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                    if (!total) return '';
-                    const completed = total * (obj.progress || 0);
+                    const completed = Number(obj.completedQuantity || 0);
+                    if (!total && !completed) return '';
                     const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
                     return `<span style="color: var(--success); font-weight: 500;">${this.formatQty(completed)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
                 }
@@ -1936,11 +2156,10 @@ const ScheduleManager = {
                 width: 100,
                 resize: true,
                 template: (obj) => {
-                    if (obj.type === 'project' || !obj.quantity) return '';
                     const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
-                    if (!total) return '';
-                    const completed = total * (obj.progress || 0);
-                    const remaining = total - completed;
+                    const completed = Number(obj.completedQuantity || 0);
+                    const remaining = Math.max(0, total - completed);
+                    if (!total && !remaining) return '';
                     const cleanUnit = String(obj.unit || '').replace(/^\d+\s*/, '').trim();
                     return `<span style="color: var(--accent-orange); font-weight: 500;">${this.formatQty(remaining)}</span> <span style="font-size: 10px; opacity: 0.7;">${cleanUnit}</span>`;
                 }
@@ -3161,124 +3380,6 @@ const ScheduleManager = {
         }
     },
 
-    async generateSchedule() {
-        if (!confirm('Это действие полностью перезапишет текущий график данными из сметы. Продолжить?')) {
-            return;
-        }
-
-        try {
-            UI.showLoading(true);
-            await api.generateGanttSchedule(this.currentProjectId);
-            await this.loadData();
-            UI.showNotification('График успешно сформирован', 'success');
-        } catch (error) {
-            console.error('Error generating schedule:', error);
-            UI.showNotification('Ошибка генерации графика: ' + error.message, 'error');
-        } finally {
-            UI.showLoading(false);
-        }
-    },
-
-    exportToPDF() {
-        gantt.exportToPDF({
-            name: "schedule.pdf",
-            header: "График производства работ",
-            footer: "Сгенерировано в ProBIM"
-        });
-    },
-
-    showGenerationWizard() {
-        const content = `
-            <div class="wizard-step">
-                <p>Выберите способ формирования структуры графика:</p>
-                
-                <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('manual', false)">
-                    <h4>🏗️ Вручную (по параметрам блока)</h4>
-                    <p>Структура этажей будет создана на основе количества этажей, указанных в свойствах блока.</p>
-                </div>
-
-                <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('bim', false)">
-                    <h4>🏢 Из BIM модели (IFC)</h4>
-                    <p>Структура будет взята из IFC файла (IfcBuildingStorey). Требуется загруженная модель.</p>
-                </div>
-
-                <div class="generation-option" onclick="ScheduleManager.selectGenerationModeWithAI()">
-                    <h4>🤖 С ИИ ассистентом</h4>
-                    <p>ИИ сопоставит виды работ из сметы с нормативной базой и автоматически рассчитает длительность задач.</p>
-                    <div style="margin-top: 8px; padding: 8px; background: #f0f9ff; border-radius: 4px; font-size: 12px; color: #0369a1;">
-                        ⚡ Работает только при наличии нормативов в нормативной базе
-                    </div>
-                </div>
-            </div>
-        `;
-
-        if (!document.getElementById('wizard-styles')) {
-            const style = document.createElement('style');
-            style.id = 'wizard-styles';
-            style.innerHTML = `
-                .generation-option {
-                    border: 1px solid #ddd;
-                    padding: 15px;
-                    margin-bottom: 10px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .generation-option:hover {
-                    background: #f5f9ff;
-                    border-color: #2196F3;
-                }
-                .generation-option h4 { margin: 0 0 5px 0; color: #333; }
-                .generation-option p { margin: 0; color: #666; font-size: 0.9em; }
-            `;
-            document.head.appendChild(style);
-        }
-
-        UI.showModal('Мастер генерации графика', content, '<button class="btn btn-secondary" onclick="UI.closeModal()">Отмена</button>');
-    },
-
-    selectGenerationModeWithAI() {
-        const content = `
-            <div style="margin-bottom: 16px;">
-                <p>Выберите источник структуры графика:</p>
-            </div>
-            <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('manual', true)" style="margin-bottom: 12px;">
-                <h4>🏗️ Вручную + ИИ ассистент</h4>
-                <p>Структура создается по параметрам блока, нормативы применяются через ИИ</p>
-            </div>
-            <div class="generation-option" onclick="ScheduleManager.selectGenerationMode('bim', true)">
-                <h4>🏢 Из BIM + ИИ ассистент</h4>
-                <p>Структура из IFC модели, нормативы применяются через ИИ</p>
-            </div>
-        `;
-        UI.showModal('Генерация с ИИ ассистентом', content, '<button class="btn btn-secondary" onclick="ScheduleManager.showGenerationWizard()">Назад</button>');
-    },
-
-    async selectGenerationMode(mode, useAI = false) {
-        UI.closeModal();
-
-        if (!confirm('Внимание! Текущий график будет полностью перезаписан. Продолжить?')) {
-            return;
-        }
-
-        try {
-            UI.showLoading(true);
-            const options = { mode, useAI };
-            await api.generateGanttSchedule(this.currentProjectId, mode, useAI);
-            await this.loadData();
-            UI.showNotification(
-                useAI
-                    ? 'График успешно сформирован с применением нормативов через ИИ ассистента'
-                    : 'График успешно сформирован',
-                'success'
-            );
-        } catch (error) {
-            console.error('Error generating schedule:', error);
-            UI.showNotification('Ошибка генерации графика: ' + error.message, 'error');
-        } finally {
-            UI.showLoading(false);
-        }
-    },
 
     async clearSchedule() {
         if (!confirm('Вы уверены, что хотите полностью очистить график? Это действие нельзя отменить.')) {

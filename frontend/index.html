@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProBIM - Управление строительными проектами</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
     <!-- DHTMLX Gantt -->
     <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
     <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
@@ -110,9 +113,36 @@
     </style>
 </head>
 
-<body>
+<body class="office-theme">
+    <!-- Authentication Overlay -->
+    <div id="login-overlay" class="login-overlay">
+        <video id="login-video-bg" class="login-video-bg" autoplay muted loop playsinline>
+            <source src="src/media/Login.mp4" type="video/mp4">
+        </video>
+        <div class="login-overlay-filter"></div>
+        <div class="login-card">
+            <div class="login-logo">
+                <h1>Вход в систему</h1>
+            </div>
+            <form id="login-form">
+                <div class="login-form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="admin@probim.uz" required>
+                </div>
+                <div class="login-form-group">
+                    <label for="login-password">Пароль</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <div id="login-error" class="login-error"></div>
+                <button type="submit" id="login-btn" class="login-btn">Войти</button>
+            </form>
+            <div class="login-footer">
+                &copy; 2026 ProBIM. Все права защищены.
+            </div>
+        </div>
+    </div>
     <!-- Sidebar с проектами -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar auth-hidden" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <img src="src/logo/Logo horizontal.svg" alt="PROBIM" class="logo-expanded">
@@ -139,7 +169,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content auth-hidden">
         <!-- Title Bar (Quick Access Toolbar) -->
         <div class="office-title-bar">
             <div class="title-bar-left">
@@ -216,16 +246,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="account-switcher" role="button" tabindex="0" aria-label="Переключение аккаунта">
+                <div class="account-switcher" role="button" tabindex="0" aria-label="Переключение аккаунта"
+                    onclick="auth.logout()">
                     <div class="account-icon" aria-hidden="true">
-                        <img src="https://i.pravatar.cc/150?img=11" alt="User"
+                        <img src="https://i.pravatar.cc/150?img=11" alt="User" class="user-photo"
                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                     </div>
                     <div class="account-info">
                         <span class="account-company" id="header-company-name">ООО «PROBIM»</span>
-                        <span class="account-user">Алишер Садыков</span>
+                        <span class="account-user user-name">Загрузка...</span>
                     </div>
-                    <span class="account-caret" aria-hidden="true">▾</span>
+                    <span class="account-caret" aria-hidden="true" title="Выйти">Logout</span>
                 </div>
                 <button class="qat-btn notification-btn" title="Уведомления">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -540,34 +571,15 @@
                 <div class="ribbon-panel" data-panel="schedule">
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button id="generate-schedule-btn" class="ribbon-btn large">
-                                <span style="font-size: 24px;">🪄</span>
-                                <span>Мастер<br>генерации</span>
-                            </button>
-                            <button id="schedule-project-settings-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path
-                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                                    </path>
-                                </svg>
-                                <span>Глобальная<br>настройка</span>
-                            </button>
-                        </div>
-                        <span class="ribbon-group-label">Создание</span>
-                    </div>
-                    <div class="ribbon-separator"></div>
-                    <div class="ribbon-group">
-                        <div class="ribbon-group-content">
                             <button id="assign-work-wizard-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M9 18h6" />
-                                    <path d="M10 22h4" />
-                                    <path d="M12 2v6" />
-                                    <path d="M7 8h10" />
-                                    <path d="M6 8v8a6 6 0 0 0 12 0V8" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-shuffle-icon lucide-shuffle">
+                                    <path d="m18 14 4 4-4 4" />
+                                    <path d="m18 2 4 4-4 4" />
+                                    <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
+                                    <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
+                                    <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
                                 </svg>
                                 <span>Распределить<br>работы</span>
                             </button>
@@ -592,61 +604,34 @@
                         </div>
                         <span class="ribbon-group-label">Управление</span>
                     </div>
-                    <div class="ribbon-separator"></div>
-                    <div class="ribbon-group">
-                        <div class="ribbon-group-content">
-                            <button id="export-schedule-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                <span>Экспорт<br>в PDF</span>
-                            </button>
-                        </div>
-                        <span class="ribbon-group-label">Экспорт</span>
-                    </div>
 
-                    <div class="ribbon-separator"></div>
-                    <div class="ribbon-group">
-                        <div class="ribbon-group-content">
-                            <button id="norms-settings-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-                                </svg>
-                                <span>Нормативная<br>база</span>
-                            </button>
-                        </div>
-                        <span class="ribbon-group-label">Справочники</span>
-                    </div>
 
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group" id="ribbon-group-schedule-view">
                         <div class="ribbon-group-content">
-                            <button id="schedule-expand-all-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9" />
-                                    <polyline points="6 15 12 21 18 15" />
-                                </svg>
-                                <span>Развернуть<br>всё</span>
-                            </button>
-                            <button id="schedule-collapse-all-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <polyline points="18 15 12 9 6 15" />
-                                </svg>
-                                <span>Свернуть<br>всё</span>
-                            </button>
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="schedule-collapse-all-btn" class="ribbon-btn-rect">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="18 15 12 9 6 15" />
+                                    </svg>
+                                    <span>Свернуть всё</span>
+                                </button>
+                                <button id="schedule-expand-all-btn" class="ribbon-btn-rect">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9" />
+                                        <polyline points="6 15 12 21 18 15" />
+                                    </svg>
+                                    <span>Развернуть всё</span>
+                                </button>
+                            </div>
                             <button id="schedule-toggle-volumes-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M12 20v-6M6 20V10M18 20V4" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-flag-icon lucide-flag">
+                                    <path
+                                        d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" />
                                 </svg>
                                 <span>Объем и<br>выполнения</span>
                             </button>
@@ -663,6 +648,32 @@
                         </div>
                         <span class="ribbon-group-label">Вид</span>
                     </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="schedule-project-settings-btn" class="ribbon-btn large">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-calendar-cog-icon lucide-calendar-cog">
+                                    <path d="m15.228 16.852-.923-.383" />
+                                    <path d="m15.228 19.148-.923.383" />
+                                    <path d="M16 2v4" />
+                                    <path d="m16.47 14.305.382.923" />
+                                    <path d="m16.852 20.772-.383.924" />
+                                    <path d="m19.148 15.228.383-.923" />
+                                    <path d="m19.53 21.696-.382-.924" />
+                                    <path d="m20.772 16.852.924-.383" />
+                                    <path d="m20.772 19.148.924.383" />
+                                    <path d="M21 10.592V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+                                    <path d="M3 10h18" />
+                                    <path d="M8 2v4" />
+                                    <circle cx="18" cy="18" r="3" />
+                                </svg>
+                                <span>Глобальная<br>настройка</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Настройка</span>
+                    </div>
                 </div>
 
                 <!-- GPR Ribbon Panel -->
@@ -670,25 +681,16 @@
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
                             <button id="gpr-assign-work-wizard-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M9 18h6" />
-                                    <path d="M10 22h4" />
-                                    <path d="M12 2v6" />
-                                    <path d="M7 8h10" />
-                                    <path d="M6 8v8a6 6 0 0 0 12 0V8" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-shuffle-icon lucide-shuffle">
+                                    <path d="m18 14 4 4-4 4" />
+                                    <path d="m18 2 4 4-4 4" />
+                                    <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
+                                    <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
+                                    <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
                                 </svg>
                                 <span>Распределить<br>работы</span>
-                            </button>
-                            <button id="gpr-project-settings-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path
-                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                                    </path>
-                                </svg>
-                                <span>Глобальная<br>настройка</span>
                             </button>
                         </div>
                         <span class="ribbon-group-label">Распределение</span>
@@ -714,28 +716,51 @@
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button id="gpr-expand-all-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <polyline points="13 10 13 3 5 3 5 10" />
-                                    <line x1="12" y1="15" x2="12" y2="21" />
-                                    <line x1="6" y1="15" x2="6" y2="21" />
-                                    <line x1="3" y1="18" x2="21" y2="18" />
-                                </svg>
-                                <span>Развернуть<br>всё</span>
-                            </button>
-                            <button id="gpr-collapse-all-btn" class="ribbon-btn large">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <polyline points="4 14 10 14 10 20" />
-                                    <polyline points="20 10 14 10 14 4" />
-                                    <line x1="14" y1="10" x2="21" y2="3" />
-                                    <line x1="3" y1="21" x2="10" y2="14" />
-                                </svg>
-                                <span>Свернуть<br>всё</span>
-                            </button>
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="gpr-collapse-all-btn" class="ribbon-btn-rect">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="18 15 12 9 6 15" />
+                                    </svg>
+                                    <span>Свернуть всё</span>
+                                </button>
+                                <button id="gpr-expand-all-btn" class="ribbon-btn-rect">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9" />
+                                        <polyline points="6 15 12 21 18 15" />
+                                    </svg>
+                                    <span>Развернуть всё</span>
+                                </button>
+                            </div>
                         </div>
                         <span class="ribbon-group-label">Вид</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="gpr-project-settings-btn" class="ribbon-btn large">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-calendar-cog-icon lucide-calendar-cog">
+                                    <path d="m15.228 16.852-.923-.383" />
+                                    <path d="m15.228 19.148-.923.383" />
+                                    <path d="M16 2v4" />
+                                    <path d="m16.47 14.305.382.923" />
+                                    <path d="m16.852 20.772-.383.924" />
+                                    <path d="m19.148 15.228.383-.923" />
+                                    <path d="m19.53 21.696-.382-.924" />
+                                    <path d="m20.772 16.852.924-.383" />
+                                    <path d="m20.772 19.148.924.383" />
+                                    <path d="M21 10.592V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+                                    <path d="M3 10h18" />
+                                    <path d="M8 2v4" />
+                                    <circle cx="18" cy="18" r="3" />
+                                </svg>
+                                <span>Глобальная<br>настройка</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Настройка</span>
                     </div>
                 </div>
 
@@ -958,6 +983,9 @@
             <span class="breadcrumb-separator">/</span>
             <span class="breadcrumb-item active">Текущая страница</span>
         </div>
+        <div id="turbo-loader" class="turbo-loader-container">
+            <div class="turbo-loader-bar"></div>
+        </div>
 
 
         <!-- Content Area -->
@@ -1167,7 +1195,8 @@
     <script type="module" src="js/xeokit-loader.js"></script>
 
     <script src="js/utils.js"></script>
-    <script src="js/api.js?v=20251219-2" defer></script>
+    <script src="js/api.js?v=20251219-2"></script>
+    <script src="js/auth.js" defer></script>
     <script src="js/ui.js" defer></script>
     <script src="js/ifcViewer.js" defer></script>
     <script src="js/import.js" defer></script>
@@ -1176,8 +1205,6 @@
     <script src="js/estimate.js" defer></script>
     <script src="js/chat.js" defer></script>
     <script src="js/settings.js?v=20251226-1" defer></script>
-    <script src="js/norms.js" defer></script>
-    <script src="js/normsSettings.js" defer></script>
     <script src="js/workTypeGroups.js?v=20251222-6" defer></script>
     <script src="js/instructionsManager.js?v=20251222-9" defer></script>
     <script src="js/app.js" defer></script>

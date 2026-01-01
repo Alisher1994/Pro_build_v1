@@ -52,8 +52,7 @@ const WorkTypeGroupsManager = {
 
     async loadGroups() {
         try {
-            const response = await fetch('/api/work-type-groups');
-            const groups = await response.json();
+            const groups = await api.getWorkTypeGroups();
 
             const groupsList = document.getElementById('groups-list');
 
@@ -132,8 +131,7 @@ const WorkTypeGroupsManager = {
 
     async loadItems(groupId) {
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}/items`);
-            const items = await response.json();
+            const items = await api.getWorkTypeGroupItems(groupId);
 
             const itemsList = document.getElementById('items-list');
 
@@ -180,8 +178,7 @@ const WorkTypeGroupsManager = {
 
     async showEditGroupModal(groupId) {
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}`);
-            const group = await response.json();
+            const group = await api.getWorkTypeGroup(groupId);
             this.showGroupModal('Редактировать группу работ', group.name, groupId);
         } catch (error) {
             UI.showNotification('Ошибка загрузки группы', 'error');
@@ -216,16 +213,13 @@ const WorkTypeGroupsManager = {
 
         try {
             const isEdit = groupId && groupId !== 'null';
-            const url = isEdit ? `/api/work-type-groups/${groupId}` : '/api/work-type-groups';
-            const method = isEdit ? 'PUT' : 'POST';
+            const data = { name };
 
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            });
-
-            if (!response.ok) throw new Error('Ошибка сохранения');
+            if (isEdit) {
+                await api.updateWorkTypeGroup(groupId, data);
+            } else {
+                await api.createWorkTypeGroup(data);
+            }
 
             UI.closeModal();
             UI.showNotification('Группа сохранена', 'success');
@@ -240,12 +234,7 @@ const WorkTypeGroupsManager = {
         if (!confirmed) return;
 
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}`, { method: 'DELETE' });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Ошибка удаления');
-            }
+            await api.deleteWorkTypeGroup(groupId);
 
             if (this.selectedGroupId === groupId) {
                 this.selectedGroupId = null;
@@ -270,8 +259,7 @@ const WorkTypeGroupsManager = {
 
     async showEditItemModal(groupId, itemId) {
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}/items`);
-            const items = await response.json();
+            const items = await api.getWorkTypeGroupItems(groupId);
             const item = items.find(i => i.id === itemId);
             if (!item) throw new Error('Вид работ не найден');
 
@@ -322,18 +310,13 @@ const WorkTypeGroupsManager = {
         try {
             const groupId = this.selectedGroupId;
             const isEdit = itemId && itemId !== 'null';
-            const url = isEdit
-                ? `/api/work-type-groups/${groupId}/items/${itemId}`
-                : `/api/work-type-groups/${groupId}/items`;
-            const method = isEdit ? 'PUT' : 'POST';
+            const data = { name, unit };
 
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, unit })
-            });
-
-            if (!response.ok) throw new Error('Ошибка сохранения');
+            if (isEdit) {
+                await api.updateWorkTypeGroupItem(groupId, itemId, data);
+            } else {
+                await api.createWorkTypeGroupItem(groupId, data);
+            }
 
             UI.closeModal();
             UI.showNotification('Вид работ сохранен', 'success');
@@ -348,12 +331,7 @@ const WorkTypeGroupsManager = {
         if (!confirmed) return;
 
         try {
-            const response = await fetch(`/api/work-type-groups/${groupId}/items/${itemId}`, { method: 'DELETE' });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Ошибка удаления');
-            }
+            await api.deleteWorkTypeGroupItem(groupId, itemId);
 
             UI.showNotification('Вид работ удален', 'success');
             await this.loadItems(groupId);

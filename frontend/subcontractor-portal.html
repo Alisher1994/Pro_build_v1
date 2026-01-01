@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Портал субподрядчика · ProBIM</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -30,7 +31,8 @@
             z-index: 1000;
             padding: 20px;
             overflow: hidden;
-            background: var(--gray-900);
+            background: #000;
+            font-family: 'Inter', sans-serif;
         }
 
         #login-video {
@@ -50,25 +52,26 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.45);
-            /* Overlay for readability */
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 100%);
             z-index: 2;
         }
 
         .login-card {
             position: relative;
             z-index: 10;
-            background: var(--white);
-            padding: 40px;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
+            background: #ffffff;
+            /* Solid white as requested, no blur */
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
             text-align: center;
-            animation: slideUp 0.5s ease-out;
+            animation: authFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        @keyframes slideUp {
+        @keyframes authFadeIn {
             from {
                 opacity: 0;
                 transform: translateY(20px);
@@ -84,63 +87,111 @@
             font-size: 32px;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 8px;
+            margin-bottom: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .login-title {
-            font-size: 18px;
+            font-size: 1rem;
             color: var(--gray-600);
-            margin-bottom: 32px;
+            margin-bottom: 2rem;
+            opacity: 0.8;
         }
 
         .code-input-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 24px;
+            gap: 0.6rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            width: 100%;
         }
 
         .code-input-group label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--gray-400);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-left: 2px;
+            text-transform: none;
+            letter-spacing: normal;
         }
 
         .split-inputs {
             display: flex;
             gap: 12px;
             justify-content: center;
+            width: 100%;
         }
 
         .code-input-single {
-            width: 50px;
+            width: 100%;
             height: 60px;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius-md);
-            font-size: 28px;
+            background: rgba(255, 255, 255, 1);
+            border: 1.5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-size: 24px;
             text-align: center;
             font-weight: 700;
-            font-family: var(--font-family);
+            font-family: 'Inter', sans-serif;
             color: var(--gray-900);
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             outline: none;
         }
 
         .code-input-single:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-lighter);
+            box-shadow: 0 0 0 4px rgba(32, 115, 69, 0.1);
+            transform: translateY(-1px);
         }
 
-        .btn-block {
+        #btn-login {
+            height: 56px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
+            margin-top: 0.5rem;
+            box-shadow: 0 8px 20px rgba(32, 115, 69, 0.25);
+        }
+
+        #btn-login:hover {
+            background: var(--primary-darker);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(32, 115, 69, 0.35);
+        }
+
+        #btn-login:active {
+            transform: translateY(0);
+        }
+
+        .login-logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .login-error {
+            color: #d13438;
+            background: #fde7e9;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            display: none;
+            border-left: 4px solid #d13438;
         }
 
         /* --- Dashboard Screen --- */
@@ -292,11 +343,13 @@
 
         /* Prevent browser from redistributing extra width differently between tables */
         #offer-expected-table {
-            width: 700px; /* 60 + 80 + 400 + 70 + 90 */
+            width: 700px;
+            /* 60 + 80 + 400 + 70 + 90 */
         }
 
         #offer-uploaded-table {
-            width: 920px; /* 60 + 80 + 400 + 70 + 90 + 110 + 110 */
+            width: 920px;
+            /* 60 + 80 + 400 + 70 + 90 + 110 + 110 */
         }
 
         .offer-table thead th {
@@ -894,7 +947,7 @@
             margin-bottom: 10px;
             overflow: hidden;
             background: var(--white);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         }
 
         .section-group .list-item {
@@ -1505,18 +1558,12 @@
             <source src="src/media/Login.mp4" type="video/mp4">
         </video>
         <div class="login-card">
-            <div class="login-logo" style="text-transform: uppercase;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                PROBIM PORTAL
+            <div class="login-logo">
+                <h1>ProBIM</h1>
             </div>
-            <div class="login-title"
-                style="font-size: 11px; font-weight: 700; color: var(--gray-400); letter-spacing: 0.1em; text-transform: uppercase; margin-top: -4px;">
-                МОДУЛЬ ТЕНДЕРА</div>
+            <div class="login-title">МОДУЛЬ ТЕНДЕРА</div>
 
-            <div class="code-input-group" style="margin-top: 32px;">
+            <div class="code-input-group">
                 <label>Введите 4-значный код</label>
                 <div class="split-inputs">
                     <input type="text" class="code-input-single" maxlength="1" pattern="\d*" inputmode="numeric"
@@ -1527,9 +1574,8 @@
                 </div>
             </div>
 
-            <button id="btn-login" class="btn btn-primary btn-block">Войти в систему</button>
-            <div id="login-error" style="color: var(--accent-red); font-size: 13px; margin-top: 16px; display: none;">Неверный код
-                доступа</div>
+            <button id="btn-login" class="btn btn-primary">Войти в систему</button>
+            <div id="login-error" class="login-error">Неверный код доступа</div>
         </div>
     </div>
 
@@ -1673,7 +1719,8 @@
                             </svg>
                             Скачать CSV
                         </button>
-                        <button class="btn btn-primary" id="top-btn-upload-offer" style="display:flex; align-items:center;"
+                        <button class="btn btn-primary" id="top-btn-upload-offer"
+                            style="display:flex; align-items:center;"
                             onclick="document.getElementById('file-upload').click()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
@@ -1687,7 +1734,8 @@
                             onclick="openResetOfferConfirm()">
                             Вернуть в исходную
                         </button>
-                        <button class="btn btn-secondary" id="top-btn-view-contract" style="display:none;" onclick="openContractModal()">
+                        <button class="btn btn-secondary" id="top-btn-view-contract" style="display:none;"
+                            onclick="openContractModal()">
                             Посмотреть договор
                         </button>
                         <input type="file" id="file-upload" accept=".csv" style="display: none;"
@@ -1707,94 +1755,121 @@
             <div class="right-panel-container" id="sub-right-panel-container">
                 <!-- Табы в свернутом состоянии -->
                 <div class="right-panel-tabs-collapsed">
-                    <button class="right-panel-toggle-collapsed" onclick="SubRightPanel.toggleRightPanel(event)" title="Развернуть панель">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="right-panel-toggle-collapsed" onclick="SubRightPanel.toggleRightPanel(event)"
+                        title="Развернуть панель">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="15 18 9 12 15 6"></polyline>
                         </svg>
                     </button>
-                    <div class="right-panel-tab-collapsed" data-tab="3d" onclick="SubRightPanel.switchRightPanelTab('3d')">3D Вид</div>
-                    <div class="right-panel-tab-collapsed" data-tab="files" onclick="SubRightPanel.switchRightPanelTab('files')">Файлы</div>
-                    <div class="right-panel-tab-collapsed" data-tab="chat" onclick="SubRightPanel.switchRightPanelTab('chat')">Чат</div>
+                    <div class="right-panel-tab-collapsed" data-tab="3d"
+                        onclick="SubRightPanel.switchRightPanelTab('3d')">3D Вид</div>
+                    <div class="right-panel-tab-collapsed" data-tab="files"
+                        onclick="SubRightPanel.switchRightPanelTab('files')">Файлы</div>
+                    <div class="right-panel-tab-collapsed" data-tab="chat"
+                        onclick="SubRightPanel.switchRightPanelTab('chat')">Чат</div>
                 </div>
 
                 <div class="right-panel-content">
                     <!-- Табы в развернутом состоянии -->
-                    <div class="right-panel-tabs-expanded" style="display: flex; align-items: stretch; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                    <div class="right-panel-tabs-expanded"
+                        style="display: flex; align-items: stretch; justify-content: space-between; width: 100%; box-sizing: border-box;">
                         <div style="display: flex; align-items: stretch;">
-                            <div class="right-panel-tab-expanded" data-tab="3d" onclick="SubRightPanel.switchRightPanelTab('3d')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <div class="right-panel-tab-expanded" data-tab="3d"
+                                onclick="SubRightPanel.switchRightPanelTab('3d')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                 </svg>
                                 3D Вид
                             </div>
-                            <div class="right-panel-tab-expanded" data-tab="files" onclick="SubRightPanel.switchRightPanelTab('files')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <div class="right-panel-tab-expanded" data-tab="files"
+                                onclick="SubRightPanel.switchRightPanelTab('files')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                                     <polyline points="13 2 13 9 20 9"></polyline>
                                 </svg>
                                 Файлы
                             </div>
-                            <div class="right-panel-tab-expanded" data-tab="chat" onclick="SubRightPanel.switchRightPanelTab('chat')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <div class="right-panel-tab-expanded" data-tab="chat"
+                                onclick="SubRightPanel.switchRightPanelTab('chat')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
                                 </svg>
                                 Чат
                             </div>
                         </div>
-                        <button class="right-panel-toggle" id="sub-right-panel-toggle" title="Свернуть панель" style="position: static; margin-right: 8px; flex-shrink: 0; align-self: center;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button class="right-panel-toggle" id="sub-right-panel-toggle" title="Свернуть панель"
+                            style="position: static; margin-right: 8px; flex-shrink: 0; align-self: center;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 5 15 12 9 19"></polyline>
                             </svg>
                         </button>
                     </div>
 
                     <!-- Контент: 3D -->
-                    <div id="sub-right-panel-content-3d" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                    <div id="sub-right-panel-content-3d"
+                        style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
                         <div id="ifc-viewer-panel" style="flex: 1; position: relative; overflow: hidden;">
-                            <canvas id="ifc-canvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
-                            <canvas id="ifc-navcube-canvas" class="ifc-navcube-canvas" aria-label="Куб навигации"></canvas>
-                            <div id="ifc-viewer-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                            <canvas id="ifc-canvas"
+                                style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
+                            <canvas id="ifc-navcube-canvas" class="ifc-navcube-canvas"
+                                aria-label="Куб навигации"></canvas>
+                            <div id="ifc-viewer-overlay"
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
                                 <div style="text-align: center; color: var(--gray-400); padding: 16px;">
-                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px;">
-                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1" style="margin-bottom: 16px;">
+                                        <path
+                                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                        <line x1="12" y1="22.08" x2="12" y2="12" />
                                     </svg>
                                     <p style="font-size: 16px; margin-bottom: 8px;">3D Просмотр модели</p>
-                                    <p id="ifc-status-text" style="font-size: 13px; color: var(--gray-500);">Выберите смету для просмотра 3D</p>
+                                    <p id="ifc-status-text" style="font-size: 13px; color: var(--gray-500);">Выберите
+                                        смету для просмотра 3D</p>
                                 </div>
                             </div>
 
                             <div id="viewer-controls" class="viewer-controls">
                                 <div class="viewer-control-row">
-                                    <button onclick="SubRightPanel.viewerZoomIn()" class="viewer-btn" title="Приблизить">
+                                    <button onclick="SubRightPanel.viewerZoomIn()" class="viewer-btn"
+                                        title="Приблизить">
                                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                                            <circle cx="12" cy="12" r="8"/>
-                                            <line x1="12" y1="8" x2="12" y2="16"/>
-                                            <line x1="8" y1="12" x2="16" y2="12"/>
+                                            <circle cx="12" cy="12" r="8" />
+                                            <line x1="12" y1="8" x2="12" y2="16" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
                                         </svg>
                                     </button>
                                     <button onclick="SubRightPanel.viewerZoomOut()" class="viewer-btn" title="Отдалить">
                                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                                            <circle cx="12" cy="12" r="8"/>
-                                            <line x1="8" y1="12" x2="16" y2="12"/>
+                                            <circle cx="12" cy="12" r="8" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
                                         </svg>
                                     </button>
-                                    <button onclick="SubRightPanel.viewerFitToView()" class="viewer-btn" title="Центрировать модель">
+                                    <button onclick="SubRightPanel.viewerFitToView()" class="viewer-btn"
+                                        title="Центрировать модель">
                                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                                            <circle cx="12" cy="12" r="9"/>
-                                            <line x1="12" y1="5" x2="12" y2="19"/>
-                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                            <circle cx="12" cy="12" r="9" />
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
                                         </svg>
                                     </button>
-                                    <button id="toggle-spaces-btn" onclick="SubRightPanel.toggleSpacesVisibility()" class="viewer-btn" title="Показать/скрыть помещения" style="background: var(--gray-200);">
+                                    <button id="toggle-spaces-btn" onclick="SubRightPanel.toggleSpacesVisibility()"
+                                        class="viewer-btn" title="Показать/скрыть помещения"
+                                        style="background: var(--gray-200);">
                                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                            <line x1="3" y1="9" x2="21" y2="9"/>
-                                            <line x1="9" y1="21" x2="9" y2="9"/>
+                                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                                            <line x1="3" y1="9" x2="21" y2="9" />
+                                            <line x1="9" y1="21" x2="9" y2="9" />
                                         </svg>
                                     </button>
-                                    <button id="toggle-section-btn" onclick="SubRightPanel.toggleSectionCut()" class="viewer-btn viewer-btn-mode" title="Разрез">
+                                    <button id="toggle-section-btn" onclick="SubRightPanel.toggleSectionCut()"
+                                        class="viewer-btn viewer-btn-mode" title="Разрез">
                                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
                                             <circle cx="6" cy="6" r="2" />
                                             <circle cx="6" cy="18" r="2" />
@@ -1804,7 +1879,8 @@
                                             <path d="M8.5 12.5L7.5 13.5" />
                                         </svg>
                                     </button>
-                                    <button id="toggle-measure-btn" onclick="SubRightPanel.toggleDistanceMeasure()" class="viewer-btn viewer-btn-mode" title="Замер (2 клика)">
+                                    <button id="toggle-measure-btn" onclick="SubRightPanel.toggleDistanceMeasure()"
+                                        class="viewer-btn viewer-btn-mode" title="Замер (2 клика)">
                                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
                                             <path d="M4 12h16" />
                                             <path d="M7 9l-3 3 3 3" />
@@ -1817,14 +1893,17 @@
                     </div>
 
                     <!-- Контент: Файлы -->
-                    <div id="sub-right-panel-content-files" style="flex: 1; display: none; flex-direction: column; overflow: hidden; background: var(--white);">
-                        <div id="sub-estimate-files-container" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                    <div id="sub-right-panel-content-files"
+                        style="flex: 1; display: none; flex-direction: column; overflow: hidden; background: var(--white);">
+                        <div id="sub-estimate-files-container"
+                            style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
                             <div style="padding: 40px; text-align: center; color: var(--gray-500);">Выберите смету</div>
                         </div>
                     </div>
 
                     <!-- Контент: Чат -->
-                    <div id="sub-right-panel-content-chat" style="flex: 1; display: none; flex-direction: column; overflow: hidden; background: var(--white);">
+                    <div id="sub-right-panel-content-chat"
+                        style="flex: 1; display: none; flex-direction: column; overflow: hidden; background: var(--white);">
                         <div class="chat-conversation-header" style="flex-shrink: 0;">
                             <div class="chat-conversation-info">
                                 <div class="name" id="sub-chat-title">Чат по смете</div>
@@ -1833,7 +1912,8 @@
                         </div>
 
                         <div id="sub-chat-messages" class="chat-messages-area">
-                            <div style="padding: 40px; text-align: center; color: var(--gray-500); font-size: 12px;">Выберите смету</div>
+                            <div style="padding: 40px; text-align: center; color: var(--gray-500); font-size: 12px;">
+                                Выберите смету</div>
                         </div>
 
                         <div class="chat-input-area" style="flex-shrink: 0;">
@@ -1855,7 +1935,8 @@
                     <div class="offer-modal-summary" id="offer-modal-summary"></div>
                 </div>
                 <div class="offer-modal-actions">
-                    <button class="btn btn-secondary btn-sm" type="button" title="Закрыть" onclick="closeOfferModal()">Закрыть</button>
+                    <button class="btn btn-secondary btn-sm" type="button" title="Закрыть"
+                        onclick="closeOfferModal()">Закрыть</button>
                 </div>
             </div>
 
@@ -1924,13 +2005,15 @@
             <div class="offer-modal-footer">
                 <div class="offer-modal-issues" id="offer-modal-issues">Выберите строку для просмотра статуса</div>
                 <div class="offer-modal-actions">
-                    <button class="btn-primary" type="button" id="offer-modal-apply" onclick="applyOfferFromModal()">Применить</button>
+                    <button class="btn-primary" type="button" id="offer-modal-apply"
+                        onclick="applyOfferFromModal()">Применить</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="confirm-reset-overlay" class="confirm-modal-overlay" style="display:none;" onclick="confirmResetOverlayClick(event)">
+    <div id="confirm-reset-overlay" class="confirm-modal-overlay" style="display:none;"
+        onclick="confirmResetOverlayClick(event)">
         <div class="confirm-modal" role="dialog" aria-modal="true" aria-label="Подтверждение">
             <div class="confirm-modal-header">
                 <div class="confirm-modal-title">Подтвердите действие</div>
@@ -1942,13 +2025,15 @@
                 </div>
             </div>
             <div class="confirm-modal-footer">
-                <button class="btn btn-secondary btn-sm" type="button" onclick="closeResetOfferConfirm()">Отмена</button>
+                <button class="btn btn-secondary btn-sm" type="button"
+                    onclick="closeResetOfferConfirm()">Отмена</button>
                 <button class="btn-primary" type="button" onclick="confirmResetOffer()">Вернуть</button>
             </div>
         </div>
     </div>
 
-    <div id="contract-modal-overlay" class="confirm-modal-overlay" style="display:none;" onclick="contractModalOverlayClick(event)">
+    <div id="contract-modal-overlay" class="confirm-modal-overlay" style="display:none;"
+        onclick="contractModalOverlayClick(event)">
         <div class="confirm-modal" role="dialog" aria-modal="true" aria-label="Договор">
             <div class="confirm-modal-header">
                 <div class="confirm-modal-title">Договор</div>
@@ -1974,7 +2059,7 @@
         const API_BASE_URL = (() => {
             const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
             if (isLocalHost && window.location.port === '8000') {
-                return 'http://localhost:3001';
+                return `http://${window.location.hostname}:3001`;
             }
             return window.location.origin;
         })();
@@ -2756,7 +2841,7 @@
             const statusOrder = STATUS_STEPS.map(s => s.key);
             const currentIdx = statusOrder.indexOf(currentStatus);
 
-                        const loaderSvg = (id) => `
+            const loaderSvg = (id) => `
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
                                 <radialGradient id="${id}" cx=".66" fx=".66" cy=".3125" fy=".3125" gradientTransform="scale(1.5)">
                                     <stop offset="0" stop-color="var(--accent-orange)"></stop>
@@ -3454,19 +3539,19 @@
                             </thead>
                             <tbody>
                                 ${rows.map(r => {
-                                    if (r.level === 'stage') {
-                                        return `
+                if (r.level === 'stage') {
+                    return `
                                             <tr class="offer-row level-stage">
                                                 <td colspan="8">${escapeHtml(r.name)}</td>
                                             </tr>
                                         `;
-                                    }
+                }
 
-                                    const levelClass = r.level === 'work' ? 'level-work' : 'level-resource';
-                                    const normValue = (r.level === 'resource' && Number.isFinite(Number(r.normPerUnit)))
-                                        ? formatNum(Number(r.normPerUnit))
-                                        : '';
-                                    return `
+                const levelClass = r.level === 'work' ? 'level-work' : 'level-resource';
+                const normValue = (r.level === 'resource' && Number.isFinite(Number(r.normPerUnit)))
+                    ? formatNum(Number(r.normPerUnit))
+                    : '';
+                return `
                                         <tr class="offer-row ${levelClass}" data-ref="${escapeHtml(r.ref)}">
                                             <td>${escapeHtml(r.ref)}</td>
                                             <td>${escapeHtml(r.cipher || '')}</td>
@@ -3478,7 +3563,7 @@
                                             <td>${escapeHtml(fmtMoney(Number(r.total) || 0))}</td>
                                         </tr>
                                     `;
-                                }).join('')}
+            }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -3726,7 +3811,7 @@
                 const ref = String(r.ref || '').trim();
                 const match = matchesByRef.get(ref);
                 const status = match?.status || 'missing';
-                const level = String(r.level || ( /^\d+$/.test(ref) ? 'work' : 'resource'));
+                const level = String(r.level || (/^\d+$/.test(ref) ? 'work' : 'resource'));
                 return `
                     <tr class="offer-row status-${escapeHtml(status)} level-${escapeHtml(level)}" data-ref="${escapeHtml(ref)}">
                         <td>${escapeHtml(ref)}</td>

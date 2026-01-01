@@ -72,6 +72,20 @@ router.get('/', async (req: Request, res: Response) => {
     const take = limit ? Math.min(Math.max(Number(limit), 1), 200) : undefined;
     const skip = offset ? Math.max(Number(offset), 0) : 0;
 
+    // Автоматически закрываем лоты, у которых истек срок
+    await prisma.tender.updateMany({
+      where: {
+        projectId: projectId as string,
+        status: 'open',
+        deadline: {
+          lt: new Date()
+        }
+      },
+      data: {
+        status: 'closed'
+      }
+    });
+
     const [total, tenders] = await Promise.all([
       prisma.tender.count({ where: { projectId } }),
       prisma.tender.findMany({
@@ -552,6 +566,15 @@ router.get('/invites/:token', async (req: Request, res: Response) => {
     });
 
     if (!invite) return res.status(404).json({ error: 'Invite not found' });
+
+    // Автоматическое закрытие тендера, если срок истек
+    if (invite.tender.status === 'open' && new Date() > invite.tender.deadline) {
+      await prisma.tender.update({
+        where: { id: invite.tenderId },
+        data: { status: 'closed' }
+      });
+      invite.tender.status = 'closed';
+    }
 
     // Check if expired
     if (new Date() > invite.expiresAt) {
@@ -1586,10 +1609,10 @@ router.get('/:id/chat/unread-summary', async (req: Request, res: Response) => {
     const threadIds = threads.map((t) => String(t.id));
     const lastMessages = threadIds.length
       ? await prisma.tenderChatMessage.findMany({
-          where: { threadId: { in: threadIds } },
-          orderBy: { createdAt: 'desc' },
-          take: Math.min(5000, Math.max(100, threadIds.length * 5))
-        })
+        where: { threadId: { in: threadIds } },
+        orderBy: { createdAt: 'desc' },
+        take: Math.min(5000, Math.max(100, threadIds.length * 5))
+      })
       : [];
 
     const lastByThreadId = new Map<string, { sender: string; text: string; createdAt: Date }>();
@@ -1892,6 +1915,14 @@ router.get('/:id', async (req: Request, res: Response) => {
         }
       }
     });
+
+    if (tender && tender.status === 'open' && tender.deadline < new Date()) {
+      await prisma.tender.update({
+        where: { id },
+        data: { status: 'closed' }
+      });
+      tender.status = 'closed';
+    }
 
     if (!tender) {
       return res.status(404).json({ error: 'Tender not found' });

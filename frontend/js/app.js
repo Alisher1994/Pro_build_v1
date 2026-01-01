@@ -318,6 +318,8 @@ class ProBIMApp {
     }
 
     async loadCurrentTab(isRestoring = false) {
+        UI.showTurboLoader();
+
         if (!this.currentProjectId) {
             document.getElementById('content-area').innerHTML = `
                 <div id="welcome-screen" class="welcome-screen">
@@ -330,6 +332,7 @@ class ProBIMApp {
                     <button class="primary-btn" onclick="app.createProject()">Добавить первый проект</button>
                 </div>
             `;
+            UI.hideTurboLoader();
             return;
         }
 
@@ -369,7 +372,7 @@ class ProBIMApp {
                 this.loadSupplyTab();
                 break;
             case 'finance':
-                this.loadFinanceTab();
+                await this.loadFinanceTab();
                 break;
             case 'analytics':
                 this.loadAnalyticsTab();
@@ -395,12 +398,10 @@ class ProBIMApp {
                     this.setSettingsActive('project');
                 }
                 break;
-            case 'norms-settings':
-                await SettingsManager.showNormsSettings(this.currentProjectId);
-                break;
         }
 
         this.updateBreadcrumbs();
+        UI.hideTurboLoader();
     }
 
     updateBreadcrumbs(extraItems = []) {
@@ -664,6 +665,7 @@ class ProBIMApp {
 
     async loadStatisticsTab() {
         if (!this.currentProjectId) return;
+        UI.showTurboLoader();
         this.currentRibbonTab = 'dashboard';
         this.currentDashboardSubTab = 'statistics';
         this.applyRibbonTabToUI('dashboard');
@@ -702,10 +704,12 @@ class ProBIMApp {
             console.error('Error loading dashboard statistics:', error);
             contentArea.innerHTML = `<div style="padding: 24px;"><h2>Ошибка загрузки</h2></div>`;
         }
+        UI.hideTurboLoader();
     }
 
     async loadOrgStructureTab() {
         if (!this.currentProjectId) return;
+        UI.showTurboLoader();
         this.currentRibbonTab = 'dashboard';
         this.currentDashboardSubTab = 'org-structure';
         this.applyRibbonTabToUI('dashboard');
@@ -720,10 +724,12 @@ class ProBIMApp {
                 <iframe src="org-structure.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Структура объекта"></iframe>
             </div>
         `;
+        UI.hideTurboLoader();
     }
 
     async loadCamerasTab() {
         if (!this.currentProjectId) return;
+        UI.showTurboLoader();
         this.currentRibbonTab = 'dashboard';
         this.currentDashboardSubTab = 'cameras';
         this.applyRibbonTabToUI('dashboard');
@@ -738,6 +744,7 @@ class ProBIMApp {
                 <iframe src="cameras.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Камеры"></iframe>
             </div>
         `;
+        UI.hideTurboLoader();
     }
 
     loadTimesheetTab() {
@@ -1373,9 +1380,6 @@ class ProBIMApp {
         });
 
         // Schedule buttons
-        document.getElementById('generate-schedule-btn')?.addEventListener('click', () => {
-            ScheduleManager.showGenerationWizard();
-        });
 
         document.getElementById('clear-schedule-btn')?.addEventListener('click', () => {
             ScheduleManager.clearSchedule();
@@ -1392,9 +1396,6 @@ class ProBIMApp {
             ScheduleManager.showWorkDistributionWizard();
         });
 
-        document.getElementById('export-schedule-btn')?.addEventListener('click', () => {
-            ScheduleManager.exportToPDF();
-        });
 
         // Schedule view tools (expand/collapse all)
         document.getElementById('schedule-toggle-volumes-btn')?.addEventListener('click', (e) => {
@@ -1538,14 +1539,6 @@ class ProBIMApp {
             this.showPermitBoard();
         });
 
-        document.getElementById('norms-settings-btn')?.addEventListener('click', () => {
-            if (!this.currentProjectId) {
-                UI.showNotification('Сначала выберите проект', 'error');
-                return;
-            }
-            this.currentRibbonTab = 'norms-settings';
-            this.loadCurrentTab();
-        });
 
         const ribbonToggle = document.getElementById('ribbon-collapse-toggle');
         if (ribbonToggle) {
@@ -2060,6 +2053,6 @@ const app = new ProBIMApp();
 window.app = app; // Делаем доступным глобально для других модулей
 
 // Запуск при загрузке DOM
-document.addEventListener('DOMContentLoaded', () => {
-    app.init();
-});
+// document.addEventListener('DOMContentLoaded', () => {
+//     app.init();
+// });

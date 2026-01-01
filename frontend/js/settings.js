@@ -64,9 +64,7 @@ const SettingsManager = {
 
         const fetchSubcontractors = async () => {
             try {
-                const res = await fetch(`/api/subcontractors`);
-                if (!res.ok) throw new Error('Не удалось получить список');
-                this.subcontractors = await res.json();
+                this.subcontractors = await api.getAllSubcontractors();
             } catch (err) {
                 console.error(err);
                 UI.showNotification('Ошибка загрузки субподрядчиков', 'error');
@@ -970,22 +968,12 @@ const SettingsManager = {
         contentArea.innerHTML = `<div style="padding: 32px 40px;"><p>Загрузка данных...</p></div>`;
 
         try {
-            const [deptsRes, posRes, empsRes, projectsRes] = await Promise.all([
-                fetch('/api/departments'),
-                fetch('/api/positions'),
-                fetch('/api/employees'),
-                fetch('/api/projects')
+            const [depts, positions, employees, projects] = await Promise.all([
+                api.getOrgStructure(),
+                api.getPositions(),
+                api.getEmployees(),
+                api.getProjects()
             ]);
-
-            const deptsJson = await deptsRes.json();
-            const positionsJson = await posRes.json();
-            const employeesJson = await empsRes.json();
-            const projectsJson = await projectsRes.json();
-
-            const depts = deptsJson?.data ?? deptsJson ?? [];
-            const positions = positionsJson?.data ?? positionsJson ?? [];
-            const employees = employeesJson?.data ?? employeesJson ?? [];
-            const projects = projectsJson?.data ?? projectsJson ?? [];
 
             if (!Array.isArray(depts) || !Array.isArray(positions) || !Array.isArray(employees)) {
                 console.error('Invalid API response:', { depts, positions, employees });
@@ -1819,28 +1807,19 @@ const SettingsManager = {
             }
 
             try {
-                const method = isEdit ? 'PUT' : 'POST';
-                const url = isEdit ? `/api/employees/${emp.id}` : '/api/employees';
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                if (res.ok) {
-                    document.removeEventListener('paste', handlePaste);
-                    overlay.remove();
-                    this.showStaffManagement(this.currentProjectId, { deptId: data.departmentId, posId: data.positionId });
+                if (isEdit) {
+                    await api.updateEmployee(emp.id, data);
                 } else {
-                    let errText = 'Ошибка сохранения сотрудника';
-                    try {
-                        const err = await res.json();
-                        errText = err.error || err.message || JSON.stringify(err);
-                    } catch (_) {
-                        errText = await res.text();
-                    }
-                    UI.showNotification(errText, 'error');
+                    await api.createEmployee(data);
                 }
-            } catch (e) { UI.showNotification('Ошибка сети', 'error'); }
+
+                document.removeEventListener('paste', handlePaste);
+                overlay.remove();
+                this.showStaffManagement(this.currentProjectId, { deptId: data.departmentId, posId: data.positionId });
+            } catch (err) {
+                console.error('Error saving employee:', err);
+                UI.showNotification(err.message || 'Ошибка сохранения сотрудника', 'error');
+            }
         };
 
         document.getElementById('modal-container').appendChild(overlay);

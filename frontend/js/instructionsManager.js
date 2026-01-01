@@ -33,8 +33,7 @@ const InstructionsManager = {
 
     async loadInstructions() {
         try {
-            const response = await fetch('/api/instructions');
-            const instructions = await response.json();
+            const instructions = await api.getInstructions();
 
             const table = document.getElementById('instructions-table');
 
@@ -98,8 +97,7 @@ const InstructionsManager = {
 
     async showEditModal(instructionId) {
         try {
-            const response = await fetch(`/api/instructions/${instructionId}`);
-            const instruction = await response.json();
+            const instruction = await api.getInstruction(instructionId);
 
             const selectedWorkTypeIds = instruction.workTypes.map(wt => wt.workTypeItemId);
 
@@ -119,8 +117,7 @@ const InstructionsManager = {
 
     async showModal(title, code = '', name = '', text = '', selectedWorkTypeIds = [], instructionId = null) {
         // Загружаем группы и виды работ
-        const groupsResponse = await fetch('/api/work-type-groups');
-        const groups = await groupsResponse.json();
+        const groups = await api.getWorkTypeGroups();
 
         const content = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
@@ -219,16 +216,13 @@ const InstructionsManager = {
 
         try {
             const isEdit = instructionId && instructionId !== 'null';
-            const url = isEdit ? `/api/instructions/${instructionId}` : '/api/instructions';
-            const method = isEdit ? 'PUT' : 'POST';
+            const data = { code, name, text, workTypeItemIds };
 
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, name, text, workTypeItemIds })
-            });
-
-            if (!response.ok) throw new Error('Ошибка сохранения');
+            if (isEdit) {
+                await api.updateInstruction(instructionId, data);
+            } else {
+                await api.createInstruction(data);
+            }
 
             UI.closeModal();
             UI.showNotification('Инструкция сохранена', 'success');
@@ -243,8 +237,7 @@ const InstructionsManager = {
         if (!confirmed) return;
 
         try {
-            const response = await fetch(`/api/instructions/${instructionId}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Ошибка удаления');
+            await api.deleteInstruction(instructionId);
 
             UI.showNotification('Инструкция удалена', 'success');
             await this.loadInstructions();
@@ -311,21 +304,11 @@ const InstructionsManager = {
             textInput.value = 'Генерация текста инструкции... Пожалуйста, подождите...';
             textInput.disabled = true;
 
-            const response = await fetch('http://localhost:3001/api/instructions/generate-excerpt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    worktypeNames: worktypeNames,
-                    instructionName: name,
-                    code: code
-                })
+            const data = await api.generateInstructionExcerpt({
+                worktypeNames: worktypeNames,
+                instructionName: name,
+                code: code
             });
-
-            if (!response.ok) {
-                throw new Error('Ошибка генерации текста');
-            }
-
-            const data = await response.json();
 
             // Вставляем сгенерированный текст
             textInput.value = data.excerpt || '';

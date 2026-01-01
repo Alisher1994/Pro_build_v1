@@ -427,7 +427,8 @@
     }
 
     .lot-entry[open] .lot-content {
-      max-height: 2400px; /* large enough to fit content */
+      max-height: 2400px;
+      /* large enough to fit content */
       opacity: 1;
       transform: translateY(0);
     }
@@ -1423,17 +1424,76 @@
       overflow-y: auto;
     }
 
-    #sections-list .block-group { border-bottom: 1px solid var(--gray-300); }
-    #sections-list .block-group-header { padding: 10px 12px; background: var(--gray-100); font-weight: 600; font-size: 13px; color: var(--gray-900); border-bottom: 1px solid var(--gray-200); cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none; transition: background 0.15s; }
-    #sections-list .block-group-header:hover { background: var(--gray-200); }
-    #sections-list .block-group-header .chevron { width: 16px; height: 16px; transition: transform 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    #sections-list .block-group-header .chevron svg { width: 100%; height: 100%; }
-    #sections-list .block-group-header.collapsed .chevron { transform: rotate(-90deg); }
-    #sections-list .block-estimates { overflow: hidden; transition: max-height 0.3s ease-out; }
-    #sections-list .block-estimates.collapsed { max-height: 0 !important; }
-    #sections-list .estimate-item { padding: 8px 12px 8px 24px; cursor: pointer; border-bottom: 1px solid var(--gray-200); font-size: 12px; color: var(--gray-700); transition: background 0.1s; }
-    #sections-list .estimate-item:hover { background: var(--gray-100); color: var(--gray-900); }
-    #sections-list .estimate-item.active { background: var(--primary-lighter); color: var(--primary); font-weight: 500; }
+    #sections-list .block-group {
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    #sections-list .block-group-header {
+      padding: 10px 12px;
+      background: var(--gray-100);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--gray-900);
+      border-bottom: 1px solid var(--gray-200);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    #sections-list .block-group-header:hover {
+      background: var(--gray-200);
+    }
+
+    #sections-list .block-group-header .chevron {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #sections-list .block-group-header .chevron svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    #sections-list .block-group-header.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    #sections-list .block-estimates {
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    #sections-list .block-estimates.collapsed {
+      max-height: 0 !important;
+    }
+
+    #sections-list .estimate-item {
+      padding: 8px 12px 8px 24px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 12px;
+      color: var(--gray-700);
+      transition: background 0.1s;
+    }
+
+    #sections-list .estimate-item:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    #sections-list .estimate-item.active {
+      background: var(--primary-lighter);
+      color: var(--primary);
+      font-weight: 500;
+    }
 
     #sections-list select {
       width: 100%;
@@ -2503,7 +2563,8 @@
         <div class="lot-chat-subs" id="lot-chat-subs"></div>
         <div class="lot-chat-conv">
           <div class="lot-chat-messages" id="lot-chat-messages">
-            <div style="padding: 24px; text-align: center; color: var(--gray-500); font-size: 12px;">Выберите субподрядчика</div>
+            <div style="padding: 24px; text-align: center; color: var(--gray-500); font-size: 12px;">Выберите
+              субподрядчика</div>
           </div>
           <div class="lot-chat-input">
             <input id="lot-chat-input" type="text" placeholder="Сообщение..." autocomplete="off" />
@@ -2797,7 +2858,22 @@
     function updateCountdowns() {
       document.querySelectorAll('.countdown').forEach(el => {
         const deadline = el.getAttribute('data-deadline');
+        const status = el.getAttribute('data-status');
         if (!deadline) return;
+
+        // Если статус уже 'closed' или 'contract', показываем соответствующий текст
+        if (status === 'closed' || status === 'contract') {
+          if (!el.classList.contains('expired')) {
+            el.classList.add('expired');
+            const message = status === 'contract' ? 'Лот успешно завершено' : 'Срок приёма данных истёк';
+            el.innerHTML = `
+              <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${status === 'contract' ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}</svg>
+                <span>${message}</span>
+              </div>`;
+          }
+          return;
+        }
 
         const target = new Date(deadline + "T23:59:59");
         const now = new Date();
@@ -2886,14 +2962,31 @@
       };
     };
 
-    const countdownMarkup = (deadline) => {
-      if (!deadline) return `<div class="countdown" data-deadline=""></div>`;
+    const countdownMarkup = (deadline, status) => {
+      if (!deadline) return `<div class="countdown" data-deadline="" data-status="${status || ''}"></div>`;
+
+      // Если лот закрыт или по нему есть договор — показываем текст вместо таймера
+      if (status === 'closed' || status === 'contract') {
+        const message = status === 'contract' ? 'Лот успешно завершено' : 'Срок приёма данных истёк';
+        const icon = status === 'contract'
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+
+        return `
+          <div class="countdown expired" data-deadline="${deadline}" data-status="${status}">
+            <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              ${icon}
+              <span>${message}</span>
+            </div>
+          </div>
+        `;
+      }
 
       const target = new Date(deadline + "T23:59:59");
       const now = new Date();
       if (target - now <= 0) {
         return `
-          <div class="countdown expired" data-deadline="${deadline}">
+          <div class="countdown expired" data-deadline="${deadline}" data-status="${status}">
             <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               <span>Срок приёма данных истёк</span>
@@ -2910,7 +3003,7 @@
         </div>`;
 
       return `
-        <div class="countdown" data-deadline="${deadline}">
+        <div class="countdown" data-deadline="${deadline}" data-status="${status}">
           <div class="cd-block">
             ${unitBoxes(p.days, 'days')}
             <div class="cd-label">Дни</div>
@@ -3226,7 +3319,7 @@
           const isActiveBlock = bName === selectedBlock;
           const isCollapsed = !isActiveBlock;
           const maxHeight = !isCollapsed ? (estimates.length * 40 + 20) + 'px' : '0';
-          
+
           return `
             <div class="block-group" data-block-name="${escapeHtml(bName)}">
               <div class="block-group-header ${isCollapsed ? 'collapsed' : ''}" data-block-name="${escapeHtml(bName)}">
@@ -3767,54 +3860,54 @@
       try {
         // Get lot items
         const items = (lot.items && lot.items.length) ? lot.items : [];
-        
+
         console.log('Lot data:', lot);
         console.log('Lot items:', items);
-        
+
         // If no items, show message
         if (items.length === 0) {
           bodyContainer.innerHTML = '<div style="padding:48px 24px; text-align:center; color:var(--gray-500); font-size:14px;">Состав работ не определен для данного лота</div>';
           return;
         }
-        
+
         // Get all blocks first to map names to IDs
         const allBlocks = await window.probimApi.getBlocks();
         console.log('All blocks:', allBlocks);
-        
+
         // Extract unique blocks and estimates from lot items
         const blocksInLot = new Map(); // blockId -> blockName
         const estimatesInLot = new Map(); // blockId -> Map<estimateId, estimateName>
         const workTypesInLot = new Set();
         const blockNameToId = new Map();
-        
+
         // Create mapping of block names to IDs
         allBlocks.forEach(block => {
           blockNameToId.set(block.name, block.id);
         });
-        
+
         // Process items and resolve IDs from names
         for (const item of items) {
           let blockId = item.blockId || item.block_id;
           let blockName = item.blockName || item.block_name || 'Общее';
-          
+
           // If no blockId, try to find it by name
           if (!blockId && blockName) {
             blockId = blockNameToId.get(blockName);
           }
-          
+
           if (blockId) {
             blocksInLot.set(blockId, blockName);
-            
+
             // Now fetch estimates for this block to map estimate names to IDs
             if (!estimatesInLot.has(blockId)) {
               estimatesInLot.set(blockId, new Map());
             }
-            
+
             try {
               const estimates = await window.probimApi.getEstimates(blockId);
               const estimateName = item.estimateName || item.estimate_name || 'Раздел';
               let estimateId = item.estimateId || item.estimate_id;
-              
+
               // If no estimateId, find it by name
               if (!estimateId && estimateName) {
                 const matchingEstimate = estimates.find(e => e.name === estimateName);
@@ -3822,7 +3915,7 @@
                   estimateId = matchingEstimate.id;
                 }
               }
-              
+
               if (estimateId) {
                 estimatesInLot.get(blockId).set(estimateId, estimateName);
               }
@@ -3830,7 +3923,7 @@
               console.warn('Failed to fetch estimates for block', blockId, e);
             }
           }
-          
+
           const workTypeId = item.workTypeId || item.work_type_id || item.id;
           if (workTypeId) workTypesInLot.add(workTypeId);
         }
@@ -3884,10 +3977,10 @@
 
         // Render grouped blocks with their estimates
         const chevronSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
-        
+
         container.innerHTML = blocksWithEstimates.map(block => {
           const sortedEstimates = [...block.estimates].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-          
+
           return `
             <div class="block-group" data-block-id="${block.id}">
               <div class="block-group-header" data-block-id="${block.id}">
@@ -3895,10 +3988,10 @@
                 <span>${block.name}</span>
               </div>
               <div class="block-estimates" data-block-id="${block.id}" style="max-height: ${sortedEstimates.length * 40 + 20}px">
-                ${sortedEstimates.length === 0 ? 
-                  '<div class="muted" style="padding:8px 12px 8px 24px; font-size:11px;">Нет разделов</div>' :
-                  sortedEstimates.map(est => {
-                    return `
+                ${sortedEstimates.length === 0 ?
+              '<div class="muted" style="padding:8px 12px 8px 24px; font-size:11px;">Нет разделов</div>' :
+              sortedEstimates.map(est => {
+                return `
                       <div class="estimate-item" 
                            data-block-id="${block.id}"
                            data-estimate-id="${est.id}" 
@@ -3906,8 +3999,8 @@
                         ${est.name}
                       </div>
                     `;
-                  }).join('')
-                }
+              }).join('')
+            }
               </div>
             </div>
           `;
@@ -3918,7 +4011,7 @@
           header.addEventListener('click', () => {
             const blockId = header.dataset.blockId;
             const estimatesContainer = container.querySelector(`.block-estimates[data-block-id="${blockId}"]`);
-            
+
             if (header.classList.contains('collapsed')) {
               header.classList.remove('collapsed');
               estimatesContainer.classList.remove('collapsed');
@@ -3939,7 +4032,7 @@
             const estimateId = el.dataset.estimateId;
             const estimateName = el.dataset.estimateName;
             const blockId = el.dataset.blockId;
-            
+
             // Update active state
             container.querySelectorAll('.estimate-item').forEach(item => item.classList.remove('active'));
             el.classList.add('active');
@@ -3983,10 +4076,10 @@
             const sections = await window.probimApi.getSections(estimateId);
             const stagesWithWt = await Promise.all(sections.map(async (section) => {
               const stages = await window.probimApi.getStages(section.id);
-              
+
               const stagesWithWorkTypes = await Promise.all(stages.map(async (stage) => {
                 const wts = await window.probimApi.getWorkTypes(stage.id);
-                
+
                 const wtsWithResources = await Promise.all(wts.map(async (wt) => {
                   let resources = [];
                   try {
@@ -4018,10 +4111,10 @@
 
         function rerenderViewTree() {
           if (!currentTreeData) return;
-          
+
           const treeContainer = document.getElementById('col-view-tree');
           const header = document.getElementById('col-view-tree-header');
-          
+
           if (header && currentEstimateName) {
             header.textContent = `2. Состав работ раздела ${currentEstimateName}`;
           }
@@ -4048,12 +4141,12 @@
           currentTreeData.forEach(stage => {
             const wtItems = stage.wts.map((wt, wtIndex) => {
               const isInLot = workTypesInLot.has(wt.id);
-              
+
               // Only show work types that are in the lot
               if (!isInLot) {
                 return '';
               }
-              
+
               // Apply search filter
               if (searchQuery) {
                 const searchableFields = [
@@ -4063,7 +4156,7 @@
                   wt.code,
                   wt.number
                 ].filter(Boolean).join(' ').toLowerCase();
-                
+
                 if (!searchableFields.includes(searchQuery)) {
                   return '';
                 }
@@ -4093,45 +4186,45 @@
                       ${showResources && resources.length ? `
                         <div class="wt-resources">
                           ${resources.map((res, resIdx) => {
-                            // Check if resource is in lot
-                            const lotItem = items.find(item => item.workTypeId === wt.id);
-                            const hasResources = lotItem && lotItem.resources && lotItem.resources.length > 0;
-                            const isResInLot = hasResources && lotItem.resources.some(r => 
-                              r.resourceId === res.id || r.name === res.name
-                            );
+                // Check if resource is in lot
+                const lotItem = items.find(item => item.workTypeId === wt.id);
+                const hasResources = lotItem && lotItem.resources && lotItem.resources.length > 0;
+                const isResInLot = hasResources && lotItem.resources.some(r =>
+                  r.resourceId === res.id || r.name === res.name
+                );
 
-                            const resNoRaw = (res.code && String(res.code).trim().replace(/\.$/, '')) || String(resIdx + 1);
-                            const resNo = escapeHtml(resNoRaw);
-                            const resCodeRaw = res.cipher || res.resourceCode || res.itemCode || res.article || res.number || '';
-                            const resCode = escapeHtml((resCodeRaw || '—').toString());
-                            const resNameRaw = res.name || res.resourceName || res.title || res.description || '';
-                            const resName = escapeHtml(resNameRaw);
-                            const qty = Number(res.quantity || 0);
-                            const unitRes = escapeHtml(res.unit || res.measure || '');
-                            const resTotal = res.totalCost || (qty * (Number(res.unitPrice) || 0));
-                            const normPerUnit = res.normPerUnit ? Number(res.normPerUnit) : null;
-                            
-                            const rawType = (res.resourceType || '').toLowerCase();
-                            let resType = 'material';
-                            let typeLabel = 'Мат';
-                            let typeBg = '#eef2ff';
-                            let typeColor = '#312e81';
-                            let nameColor = '#312e81';
-                            if (rawType.includes('labor') || rawType === 'labor') {
-                              resType = 'labor';
-                              typeLabel = 'Труд';
-                              typeBg = '#faf5ff';
-                              typeColor = '#6b21a8';
-                              nameColor = '#6b21a8';
-                            } else if (rawType.includes('equipment') || rawType === 'equipment') {
-                              resType = 'equipment';
-                              typeLabel = 'Мех';
-                              typeBg = '#fff7ed';
-                              typeColor = '#9a3412';
-                              nameColor = '#000';
-                            }
-                            
-                            return `
+                const resNoRaw = (res.code && String(res.code).trim().replace(/\.$/, '')) || String(resIdx + 1);
+                const resNo = escapeHtml(resNoRaw);
+                const resCodeRaw = res.cipher || res.resourceCode || res.itemCode || res.article || res.number || '';
+                const resCode = escapeHtml((resCodeRaw || '—').toString());
+                const resNameRaw = res.name || res.resourceName || res.title || res.description || '';
+                const resName = escapeHtml(resNameRaw);
+                const qty = Number(res.quantity || 0);
+                const unitRes = escapeHtml(res.unit || res.measure || '');
+                const resTotal = res.totalCost || (qty * (Number(res.unitPrice) || 0));
+                const normPerUnit = res.normPerUnit ? Number(res.normPerUnit) : null;
+
+                const rawType = (res.resourceType || '').toLowerCase();
+                let resType = 'material';
+                let typeLabel = 'Мат';
+                let typeBg = '#eef2ff';
+                let typeColor = '#312e81';
+                let nameColor = '#312e81';
+                if (rawType.includes('labor') || rawType === 'labor') {
+                  resType = 'labor';
+                  typeLabel = 'Труд';
+                  typeBg = '#faf5ff';
+                  typeColor = '#6b21a8';
+                  nameColor = '#6b21a8';
+                } else if (rawType.includes('equipment') || rawType === 'equipment') {
+                  resType = 'equipment';
+                  typeLabel = 'Мех';
+                  typeBg = '#fff7ed';
+                  typeColor = '#9a3412';
+                  nameColor = '#000';
+                }
+
+                return `
                               <div class="wt-res-row ${isResInLot ? 'selected' : ''}">
                                 <span style="display:flex; align-items:center; justify-content:center;">${isResInLot ? '✓' : ''}</span>
                                 <div class="res-wt-no">${resNo}.</div>
@@ -4146,7 +4239,7 @@
                                 <span class="res-sum">${resTotal ? formatMoney(resTotal) : ''}</span>
                               </div>
                             `;
-                          }).join('')}
+              }).join('')}
                         </div>
                       ` : ''}
                     </div>
@@ -4666,7 +4759,7 @@
               <div class="lot-summary-right">
                 <div style="display: flex; align-items: flex-start; gap: 8px;">
                   <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                    ${countdownMarkup(lot.deadline)}
+                    ${countdownMarkup(lot.deadline, lot.status)}
                     ${getPictorialChart(lot.uploads)}
                   </div>
                   <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation();" style="margin-top: 2px;">
@@ -5689,7 +5782,7 @@
             const sortedEstimates = [...block.estimates].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
             const isCollapsed = collapsedBlocks.has(block.id);
             const chevronSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
-            
+
             return `
               <div class="block-group" data-block-id="${block.id}">
                 <div class="block-group-header ${isCollapsed ? 'collapsed' : ''}" data-block-id="${block.id}">
@@ -5697,11 +5790,11 @@
                   <span>${block.name}</span>
                 </div>
                 <div class="block-estimates ${isCollapsed ? 'collapsed' : ''}" data-block-id="${block.id}" style="max-height: ${isCollapsed ? '0' : (sortedEstimates.length * 40 + 20) + 'px'}">
-                  ${sortedEstimates.length === 0 ? 
-                    '<div class="muted" style="padding:8px 12px 8px 24px; font-size:11px;">Нет разделов</div>' :
-                    sortedEstimates.map(est => {
-                      const isEmpty = est._count && est._count.sections === 0;
-                      return `
+                  ${sortedEstimates.length === 0 ?
+                '<div class="muted" style="padding:8px 12px 8px 24px; font-size:11px;">Нет разделов</div>' :
+                sortedEstimates.map(est => {
+                  const isEmpty = est._count && est._count.sections === 0;
+                  return `
                         <div class="estimate-item ${est.id === activeEstimateId ? 'active' : ''} ${isEmpty ? 'disabled' : ''}" 
                              data-block-id="${block.id}"
                              data-estimate-id="${est.id}" 
@@ -5710,8 +5803,8 @@
                           ${est.name}
                         </div>
                       `;
-                    }).join('')
-                  }
+                }).join('')
+              }
                 </div>
               </div>
             `;
@@ -5722,7 +5815,7 @@
             header.addEventListener('click', (e) => {
               const blockId = header.dataset.blockId;
               const estimatesContainer = container.querySelector(`.block-estimates[data-block-id="${blockId}"]`);
-              
+
               if (collapsedBlocks.has(blockId)) {
                 collapsedBlocks.delete(blockId);
                 header.classList.remove('collapsed');
@@ -5843,11 +5936,11 @@
             const wtHay = [wt.name, wt.cipher, wt.code, wt.itemCode, wt.workCode, wt.article, wt.number]
               .filter(Boolean)
               .map(String)
-              .join(' ') 
+              .join(' ')
               .toLowerCase();
-            
+
             if (wtHay.includes(query)) return true;
-            
+
             // Search in resources
             const resources = Array.isArray(wt.resources) ? wt.resources : [];
             const hasMatchingResource = resources.some(res => {
@@ -5858,7 +5951,7 @@
                 .toLowerCase();
               return resHay.includes(query);
             });
-            
+
             return hasMatchingResource;
           });
 
@@ -5914,45 +6007,45 @@
                       ${showResources && resources.length ? `
                         <div class="wt-resources">
                           ${resources.filter(res => {
-                            if (resourceTypeFilters.size === 0) return true;
-                            const rawType = (res.resourceType || '').toLowerCase();
-                            let resType = 'material';
-                            if (rawType.includes('labor') || rawType === 'labor') resType = 'labor';
-                            else if (rawType.includes('equipment') || rawType === 'equipment') resType = 'equipment';
-                            return resourceTypeFilters.has(resType);
-                          }).map((res, resIdx) => {
-                            const resNoRaw = (res.code && String(res.code).trim().replace(/\.$/, '')) || String(resIdx + 1);
-                            const resNo = escapeHtml(resNoRaw);
-                            const resCodeRaw = res.cipher || res.resourceCode || res.itemCode || res.article || res.number || '';
-                            const resCode = escapeHtml((resCodeRaw || '—').toString());
-                            const resNameRaw = res.name || res.resourceName || res.title || res.description || '';
-                            const resName = escapeHtml(resNameRaw);
-                            const qty = Number(res.quantity || 0);
-                            const unitRes = escapeHtml(res.unit || res.measure || '');
-                            const resTotal = res.totalCost || (qty * (Number(res.unitPrice) || 0));
-                            const normPerUnit = res.normPerUnit ? Number(res.normPerUnit) : null;
-                            
-                            const rawType = (res.resourceType || '').toLowerCase();
-                            let resType = 'material';
-                            let typeLabel = 'Мат';
-                            let typeBg = '#eef2ff';
-                            let typeColor = '#312e81';
-                            let nameColor = '#312e81';
-                            if (rawType.includes('labor') || rawType === 'labor') {
-                              resType = 'labor';
-                              typeLabel = 'Труд';
-                              typeBg = '#faf5ff';
-                              typeColor = '#6b21a8';
-                              nameColor = '#6b21a8';
-                            } else if (rawType.includes('equipment') || rawType === 'equipment') {
-                              resType = 'equipment';
-                              typeLabel = 'Мех';
-                              typeBg = '#fff7ed';
-                              typeColor = '#9a3412';
-                              nameColor = '#000';
-                            }
-                            
-                            return `
+              if (resourceTypeFilters.size === 0) return true;
+              const rawType = (res.resourceType || '').toLowerCase();
+              let resType = 'material';
+              if (rawType.includes('labor') || rawType === 'labor') resType = 'labor';
+              else if (rawType.includes('equipment') || rawType === 'equipment') resType = 'equipment';
+              return resourceTypeFilters.has(resType);
+            }).map((res, resIdx) => {
+              const resNoRaw = (res.code && String(res.code).trim().replace(/\.$/, '')) || String(resIdx + 1);
+              const resNo = escapeHtml(resNoRaw);
+              const resCodeRaw = res.cipher || res.resourceCode || res.itemCode || res.article || res.number || '';
+              const resCode = escapeHtml((resCodeRaw || '—').toString());
+              const resNameRaw = res.name || res.resourceName || res.title || res.description || '';
+              const resName = escapeHtml(resNameRaw);
+              const qty = Number(res.quantity || 0);
+              const unitRes = escapeHtml(res.unit || res.measure || '');
+              const resTotal = res.totalCost || (qty * (Number(res.unitPrice) || 0));
+              const normPerUnit = res.normPerUnit ? Number(res.normPerUnit) : null;
+
+              const rawType = (res.resourceType || '').toLowerCase();
+              let resType = 'material';
+              let typeLabel = 'Мат';
+              let typeBg = '#eef2ff';
+              let typeColor = '#312e81';
+              let nameColor = '#312e81';
+              if (rawType.includes('labor') || rawType === 'labor') {
+                resType = 'labor';
+                typeLabel = 'Труд';
+                typeBg = '#faf5ff';
+                typeColor = '#6b21a8';
+                nameColor = '#6b21a8';
+              } else if (rawType.includes('equipment') || rawType === 'equipment') {
+                resType = 'equipment';
+                typeLabel = 'Мех';
+                typeBg = '#fff7ed';
+                typeColor = '#9a3412';
+                nameColor = '#000';
+              }
+
+              return `
                               <div class="wt-res-row">
                                 <span style="display:flex; align-items:center; justify-content:center;"><input type="checkbox" class="res-cb" data-wt-id="${wt.id}"></span>
                                 <div class="res-wt-no">${resNo}.</div>
@@ -5967,7 +6060,7 @@
                                 <span class="res-sum">${resTotal ? formatMoney(resTotal) : ''}</span>
                               </div>
                             `;
-                          }).join('')}
+            }).join('')}
                         </div>
                       ` : ''}
                     </div>
@@ -6032,7 +6125,7 @@
           cb.addEventListener('change', () => {
             const wtId = cb.value;
             const wtRow = cb.closest('.tree-wt-row');
-            
+
             // Toggle all resource checkboxes for this work type
             if (wtRow) {
               const resourceCheckboxes = wtRow.querySelectorAll(`.res-cb[data-wt-id="${wtId}"]`);
@@ -6040,7 +6133,7 @@
                 resCb.checked = cb.checked;
               });
             }
-            
+
             handleWorkTypeChange(cb);
             updateSelectedTotal();
           });

@@ -2,19 +2,11 @@
 // Tender API Module
 // ===========================================
 
-const API_URL = (() => {
-  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-  if (isLocalHost && window.location.port === '8000') {
-    return 'http://localhost:3001/api';
-  }
-  return '/api';
-})();
-
 /**
  * Получить список тендеров проекта
  */
 async function getTenders(projectId) {
-  const response = await fetch(`${API_URL}/tenders?projectId=${projectId}`);
+  const response = await api.request(`/api/tenders?projectId=${projectId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch tenders');
   }
@@ -25,7 +17,7 @@ async function getTenders(projectId) {
  * Получить детали тендера
  */
 async function getTender(tenderId) {
-  const response = await fetch(`${API_URL}/tenders/${tenderId}`);
+  const response = await api.request(`/api/tenders/${tenderId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch tender');
   }
@@ -36,11 +28,8 @@ async function getTender(tenderId) {
  * Создать новый тендер
  */
 async function createTender(tenderData) {
-  const response = await fetch(`${API_URL}/tenders`, {
+  const response = await api.request(`/api/tenders`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
     body: JSON.stringify(tenderData)
   });
   if (!response.ok) {
@@ -53,11 +42,8 @@ async function createTender(tenderData) {
  * Пригласить субподрядчика в тендер
  */
 async function inviteSubcontractor(tenderId, subcontractorId) {
-  const response = await fetch(`${API_URL}/tenders/${tenderId}/invites`, {
+  const response = await api.request(`/api/tenders/${tenderId}/invites`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
     body: JSON.stringify({ subcontractorId })
   });
   if (!response.ok) {
@@ -71,11 +57,8 @@ async function inviteSubcontractor(tenderId, subcontractorId) {
  * Заблокировать/разблокировать отклик
  */
 async function toggleBidBlock(bidId, blocked, blockReason) {
-  const response = await fetch(`${API_URL}/tenders/bids/${bidId}/block`, {
+  const response = await api.request(`/api/tenders/bids/${bidId}/block`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
     body: JSON.stringify({ blocked, blockReason })
   });
   if (!response.ok) {
@@ -88,11 +71,8 @@ async function toggleBidBlock(bidId, blocked, blockReason) {
  * Выбрать победителя
  */
 async function selectWinner(bidId) {
-  const response = await fetch(`${API_URL}/tenders/bids/${bidId}/select-winner`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    }
+  const response = await api.request(`/api/tenders/bids/${bidId}/select-winner`, {
+    method: 'POST'
   });
   if (!response.ok) {
     throw new Error('Failed to select winner');
@@ -104,11 +84,8 @@ async function selectWinner(bidId) {
  * Создать договор
  */
 async function createContract(bidId) {
-  const response = await fetch(`${API_URL}/tenders/bids/${bidId}/create-contract`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    }
+  const response = await api.request(`/api/tenders/bids/${bidId}/create-contract`, {
+    method: 'POST'
   });
   if (!response.ok) {
     throw new Error('Failed to create contract');
@@ -120,11 +97,8 @@ async function createContract(bidId) {
  * Отменить договор
  */
 async function cancelContract(bidId) {
-  const response = await fetch(`${API_URL}/tenders/bids/${bidId}/cancel-contract`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    }
+  const response = await api.request(`/api/tenders/bids/${bidId}/cancel-contract`, {
+    method: 'POST'
   });
   if (!response.ok) {
     throw new Error('Failed to cancel contract');

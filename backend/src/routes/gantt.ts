@@ -325,7 +325,7 @@ router.post('/assign-worktype', async (req, res) => {
 
     let floorTask = await prisma.ganttTask.findUnique({
       where: { id: floorTaskId },
-      select: { id: true, projectId: true, type: true }
+      select: { id: true, projectId: true, type: true, blockId: true }
     });
 
     // Если этаж не найден, но ID соответствует формату floor-<blockId>-..., попробуем создать его
@@ -531,6 +531,7 @@ router.post('/assign-worktype', async (req, res) => {
         resourceCount: 1,
         calculationMode: 'manual',
         durationType,
+        blockId: floorTask.blockId,
         sortOrder: 999999
       },
       update: {
@@ -538,6 +539,7 @@ router.post('/assign-worktype', async (req, res) => {
         duration,
         quantity: finalQty,
         plannedWork,
+        blockId: floorTask.blockId,
         resourceIntensity,
         unit: workType.unit || '',
         parent: floorTaskId
@@ -600,40 +602,116 @@ router.get('/:projectId', async (req, res) => {
       }
     });
 
+    // --- ПРИВЯЗКА ПОБЕДИТЕЛЕЙ ТЕНДЕРОВ К ЗАДАЧАМ ГРАФИКА ---
+    // 1. Находим все выигрышные ставки для данного проекта
+    const winningBids = await prisma.tenderBid.findMany({
+      where: {
+        tender: { projectId },
+        status: { in: ['winner', 'contract'] }
+      },
+      include: {
+        tender: true,
+        subcontractor: {
+          select: { company: true }
+        }
+      }
+    });
+
+    // 1.5 Получаем все блоки проекта для преобразования имен в ID
+    // (Тендеры часто хранят имена блоков в blockIds вместо UUID)
+    const projectBlocks = await prisma.block.findMany({
+      where: { projectId },
+      select: { id: true, name: true }
+    });
+    const blockNameToId = new Map<string, string>();
+    for (const b of projectBlocks) {
+      blockNameToId.set(b.name.trim(), b.id);
+    }
+
+    // 2. Строим карту победителей: blockId -> workTypeId -> companyName
+    const winnerMap: Record<string, Record<string, string>> = {};
+    for (const bid of winningBids) {
+      const company = bid.subcontractor.company;
+      let rawBlockIds: string[] = [];
+      let tenderItems: any[] = [];
+
+      try {
+        rawBlockIds = JSON.parse(bid.tender.blockIds || '[]');
+        tenderItems = JSON.parse(bid.tender.items || '[]');
+      } catch (e) { continue; }
+
+      // Нормализуем ID блоков (если в базе имена - превращаем в ID)
+      const normalizedBlockIds = rawBlockIds.map(idOrName => {
+        const trimmed = String(idOrName).trim();
+        return blockNameToId.get(trimmed) || idOrName;
+      });
+
+      for (const bId of normalizedBlockIds) {
+        if (!winnerMap[bId]) winnerMap[bId] = {};
+        for (const item of tenderItems) {
+          const wtId = item.workTypeId || item.work_type_id;
+          if (wtId) {
+            winnerMap[bId][wtId] = company;
+          }
+        }
+      }
+    }
+
     // Форматируем для DHTMLX Gantt
     // DHTMLX ожидает { data: [], links: [] }
     // Даты нужно передавать в формате, который поймет клиент (обычно строка)
 
+    // Map all tasks by ID for fast lookup during blockId resolution
+    const taskMap = new Map();
+    for (const t of tasks) {
+      taskMap.set(String(t.id), t);
+    }
+
+    const resolveBlockId = (task: any): string => {
+      if (task.blockId) return String(task.blockId);
+      if (task.parent && task.parent !== '0' && task.parent !== projectId) {
+        const parent = taskMap.get(String(task.parent));
+        if (parent) return resolveBlockId(parent);
+      }
+      return '';
+    };
+
     res.json({
-      data: tasks.map(t => ({
-        id: String(t.id),
-        text: t.text,
-        start_date: t.start_date ? t.start_date.toISOString().replace('T', ' ').substring(0, 16) : '',
-        duration: Math.max(1, Number(t.duration || 1)),
-        progress: t.progress || 0,
-        parent: t.parent ? String(t.parent) : 0,
-        type: t.type || 'task',
-        blockId: t.blockId,
-        estimateSectionId: t.estimateSectionId,
-        quantity: t.quantity,
-        unit: t.unit,
-        completedQuantity: t.completedQuantity,
-        dailyPlan: t.dailyPlan,
-        shiftsPerDay: t.shiftsPerDay,
-        resourceCount: t.resourceCount,
-        calculationMode: t.calculationMode,
-        plannedWork: t.plannedWork,
-        leadingResourceId: t.leadingResourceId,
-        norm: (() => {
-          const workTypeId = extractWorkTypeIdFromTaskId(t.id);
-          if (!workTypeId) return null;
-          const npu = normPerUnitByWorkTypeId.get(workTypeId) || 0;
-          const qty = Number(t.quantity || 0);
-          if (!Number.isFinite(qty) || qty === 0) return 0;
-          return Math.round(qty * npu * 100) / 100;
-        })(),
-        open: true
-      })),
+      data: tasks.map(t => {
+        const wtId = extractWorkTypeIdFromTaskId(t.id);
+        const bId = resolveBlockId(t);
+        const subcontractor = (wtId && winnerMap[bId]) ? winnerMap[bId][wtId] : null;
+
+        return {
+          id: String(t.id),
+          text: t.text,
+          start_date: t.start_date ? t.start_date.toISOString().replace('T', ' ').substring(0, 16) : '',
+          duration: Math.max(1, Number(t.duration || 1)),
+          progress: t.progress || 0,
+          parent: t.parent ? String(t.parent) : 0,
+          type: t.type || 'task',
+          blockId: t.blockId,
+          estimateSectionId: t.estimateSectionId,
+          quantity: t.quantity,
+          unit: t.unit,
+          completedQuantity: t.completedQuantity,
+          dailyPlan: t.dailyPlan,
+          shiftsPerDay: t.shiftsPerDay,
+          resourceCount: t.resourceCount,
+          calculationMode: t.calculationMode,
+          plannedWork: t.plannedWork,
+          leadingResourceId: t.leadingResourceId,
+          subcontractor: subcontractor, // Добавляем субподрядчика
+          norm: (() => {
+            if (!wtId) return null;
+            const npu = normPerUnitByWorkTypeId.get(wtId) || 0;
+            const qty = Number(t.quantity || 0);
+            if (!Number.isFinite(qty) || qty === 0) return 0;
+            return Math.round(qty * npu * 100) / 100;
+          })(),
+          open: true
+        };
+      }),
 
       links: links.map(l => ({
         id: l.id,
@@ -720,14 +798,44 @@ router.put('/task/:id', async (req, res) => {
     const data: any = {};
     if (text !== undefined) data.text = String(text);
     if (parsedDate !== undefined && !Number.isNaN(parsedDate.getTime())) data.start_date = parsedDate;
-    if (progress !== undefined) data.progress = toFiniteNumber(progress);
-    if (quantity !== undefined) data.quantity = toFiniteNumber(quantity);
+
+    // Use current or new quantity for calculations
+    const curQty = (quantity !== undefined ? toFiniteNumber(quantity) : undefined) ?? Number(existing.quantity || 0);
+    if (quantity !== undefined) data.quantity = curQty;
+
+    // We assume completedQuantity is in "physical units" (scaled with multiplier if any)
+    // while progress is 0.0 - 1.0. 
+    // To properly calculate, we'd need the multiplier from the unit, but to keep it simple and consistent:
+    // If progress is provided but not completedQuantity, we estimate it.
+    // However, if we don't have the multiplier here, we might be slightly off if we just use curQty.
+    // BUT! existing.plannedWork is often set to quantity * norm.
+
+    // Let's check if we can get the multiplier from existing.unit
+    const getMultiplier = (u: any) => {
+      const match = String(u || '').match(/^(\d+)/);
+      return match ? parseInt(match[0], 10) : 1;
+    };
+    const mult = getMultiplier(unit !== undefined ? unit : existing.unit);
+    const physicalVolume = (curQty || 0) * mult;
+
+    if (progress !== undefined && completedQuantity === undefined) {
+      const p = toFiniteNumber(progress) || 0;
+      data.progress = p;
+      data.completedQuantity = Number((p * physicalVolume).toFixed(4));
+    } else if (completedQuantity !== undefined && progress === undefined) {
+      const cq = toFiniteNumber(completedQuantity) || 0;
+      data.completedQuantity = cq;
+      data.progress = physicalVolume > 0 ? Number(Math.min(1, cq / physicalVolume).toFixed(4)) : 0;
+    } else {
+      if (progress !== undefined) data.progress = toFiniteNumber(progress);
+      if (completedQuantity !== undefined) data.completedQuantity = toFiniteNumber(completedQuantity);
+    }
+
     if (unit !== undefined) data.unit = unit === null ? null : String(unit);
     if (shiftsPerDay !== undefined) data.shiftsPerDay = Number(shiftsPerDay);
     if (resourceCount !== undefined) data.resourceCount = toFiniteNumber(resourceCount);
     if (calculationMode !== undefined) data.calculationMode = String(calculationMode);
     if (leadingResourceId !== undefined) data.leadingResourceId = leadingResourceId === null ? null : String(leadingResourceId);
-    if (completedQuantity !== undefined) data.completedQuantity = toFiniteNumber(completedQuantity);
 
     // Recording history if addedQuantity is provided
     if (addedQuantity !== undefined && Number(addedQuantity) !== 0) {
@@ -761,7 +869,6 @@ router.put('/task/:id', async (req, res) => {
 
     // Workload calculation
     let curWork = toFiniteNumber(plannedWork) ?? Number(existing.plannedWork || 0);
-    const curQty = toFiniteNumber(quantity) ?? Number(existing.quantity || 0);
     const curLeadingId = leadingResourceId !== undefined ? leadingResourceId : existing.leadingResourceId;
 
     let usedShifts = curShifts;

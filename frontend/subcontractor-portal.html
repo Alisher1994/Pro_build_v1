@@ -4,10 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Портал субподрядчика · ProBIM</title>
+    <title>Модуль субподрядчика · ProBIM</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            /* MS Word Blue Theme Override */
+            --primary: #2b579a;
+            --primary-hover: #1e3f72;
+            --primary-light: #e6eff8;
+            --primary-lighter: #f0f6fa;
+            /* Remap existing green variables to blue */
+            --excel-green: #2b579a;
+            --excel-green-hover: #1e3f72;
+            --accent-green: #2b579a;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -143,7 +157,7 @@
 
         .code-input-single:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(32, 115, 69, 0.1);
+            box-shadow: 0 0 0 4px rgba(43, 87, 154, 0.1);
             transform: translateY(-1px);
         }
 
@@ -162,13 +176,13 @@
             justify-content: center;
             width: 100%;
             margin-top: 0.5rem;
-            box-shadow: 0 8px 20px rgba(32, 115, 69, 0.25);
+            box-shadow: 0 8px 20px rgba(43, 87, 154, 0.25);
         }
 
         #btn-login:hover {
-            background: var(--primary-darker);
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(32, 115, 69, 0.35);
+            box-shadow: 0 12px 28px rgba(43, 87, 154, 0.35);
         }
 
         #btn-login:active {
@@ -176,8 +190,10 @@
         }
 
         .login-logo h1 {
+            font-family: 'Montserrat', sans-serif;
             font-size: 2rem;
-            font-weight: 700;
+            font-weight: 800;
+            text-transform: uppercase;
             color: var(--gray-900);
             margin: 0;
             letter-spacing: -0.02em;
@@ -1547,6 +1563,80 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+
+        /* --- Logo Text Flip Animation --- */
+        .scrolling-text-container {
+            display: inline-block;
+            height: 1.2em;
+            overflow: hidden;
+            vertical-align: bottom;
+            position: relative;
+            width: 170px;
+            /* Fixed width to prevent jumping */
+            text-align: left;
+        }
+
+        .scrolling-text-content {
+            display: block;
+            position: relative;
+            animation: scrollText 20s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .scrolling-text-item {
+            display: block;
+            height: 1.2em;
+            line-height: 1.2em;
+            white-space: nowrap;
+        }
+
+        @keyframes scrollText {
+
+            0%,
+            10% {
+                transform: translateY(0);
+            }
+
+            12.5%,
+            22.5% {
+                transform: translateY(-1.2em);
+            }
+
+            25%,
+            35% {
+                transform: translateY(-2.4em);
+            }
+
+            37.5%,
+            47.5% {
+                transform: translateY(-3.6em);
+            }
+
+            50%,
+            60% {
+                transform: translateY(-4.8em);
+            }
+
+            62.5%,
+            72.5% {
+                transform: translateY(-6.0em);
+            }
+
+            75%,
+            85% {
+                transform: translateY(-7.2em);
+            }
+
+            87.5%,
+            97.5% {
+                transform: translateY(-8.4em);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+
+            /* Loop back */
+        }
     </style>
 </head>
 
@@ -1559,7 +1649,22 @@
         </video>
         <div class="login-card">
             <div class="login-logo">
-                <h1>ProBIM</h1>
+                <h1 style="display: flex; align-items: baseline; justify-content: center; width: 100%;">
+                    Pro&nbsp;
+                    <div class="scrolling-text-container" style="color: var(--primary);">
+                        <div class="scrolling-text-content">
+                            <div class="scrolling-text-item">BIM</div>
+                            <div class="scrolling-text-item">ESTIMATE</div>
+                            <div class="scrolling-text-item">TENDER</div>
+                            <div class="scrolling-text-item">PLAN</div>
+                            <div class="scrolling-text-item">SUPPLY</div>
+                            <div class="scrolling-text-item">MONEY</div>
+                            <div class="scrolling-text-item">LOGIC</div>
+                            <div class="scrolling-text-item">SALES</div>
+                            <div class="scrolling-text-item">BIM</div>
+                        </div>
+                    </div>
+                </h1>
             </div>
             <div class="login-title">МОДУЛЬ ТЕНДЕРА</div>
 
@@ -4227,6 +4332,47 @@
 
         document.getElementById('btn-save').onclick = () => saveBid('parsing');
         document.getElementById('btn-submit').onclick = () => saveBid('parsed');
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const subtitleEl = document.querySelector('.login-title');
+            if (!subtitleEl) return;
+
+            const descriptions = [
+                "(База) Информационная модель и коллизии",
+                "(Сметы) Расчет стоимости на основе объемов из модели",
+                "(Тендеры) Выбор подрядчиков и конкурентные листы",
+                "(ГПР) Календарно-сетевое планирование и сроки",
+                "(Снабжение) Закупки и управление заказами",
+                "(Финансы) Движение денежных средств и БДДС",
+                "(Логистика) Доставка материалов и складской учет",
+                "(Продажи) Управление продажами и клиентами"
+            ];
+
+            let currentIndex = 0;
+            const stepDuration = 2500;
+
+            // Initialize style for transition
+            subtitleEl.style.transition = 'opacity 0.3s ease';
+            subtitleEl.style.minHeight = '1.2em';
+
+            function updateSubtitle() {
+                subtitleEl.style.opacity = '0';
+                setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % descriptions.length;
+                    subtitleEl.textContent = descriptions[currentIndex];
+                    subtitleEl.style.opacity = '1';
+                }, 300);
+            }
+
+            // Sync with CSS animation
+            subtitleEl.textContent = descriptions[0];
+
+            setTimeout(() => {
+                updateSubtitle();
+                setInterval(updateSubtitle, stepDuration);
+            }, 2000);
+        });
     </script>
 </body>
 

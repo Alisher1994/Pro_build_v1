@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProBIM - Управление строительными проектами</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/auth.css">
     <!-- DHTMLX Gantt -->
@@ -110,6 +112,221 @@
             background: #DEF2F1;
             color: var(--gray-800);
         }
+
+        /* Multiselect Dropdown for Ribbon */
+        .ribbon-dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .ribbon-multiselect-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            background: #fff;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 0;
+            min-width: 560px;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .dropdown-body {
+            display: flex;
+            padding: 16px;
+            gap: 24px;
+            min-height: 240px;
+        }
+
+        .dropdown-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            max-height: 400px;
+        }
+
+        .ribbon-multiselect-dropdown.hidden {
+            display: none;
+        }
+
+        .dropdown-group-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .dropdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: var(--radius-sm);
+            transition: background 0.15s ease;
+            color: var(--gray-800);
+            user-select: none;
+        }
+
+        .dropdown-item:hover {
+            background: var(--gray-100);
+        }
+
+        .dropdown-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid var(--gray-400);
+        }
+
+        .dropdown-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .filter-action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-300);
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .filter-action-btn:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-400);
+        }
+
+        .filter-action-btn.primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .filter-action-btn.primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .dropdown-label {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- Logo Text Flip Animation --- */
+        .scrolling-text-container {
+            display: inline-block;
+            height: 1.2em;
+            overflow: hidden;
+            vertical-align: bottom;
+            position: relative;
+            width: 170px;
+            /* Fixed width to prevent jumping */
+            text-align: left;
+        }
+
+        .scrolling-text-content {
+            display: block;
+            position: relative;
+            animation: scrollText 20s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .scrolling-text-item {
+            display: block;
+            height: 1.2em;
+            line-height: 1.2em;
+            white-space: nowrap;
+        }
+
+        @keyframes scrollText {
+
+            0%,
+            10% {
+                transform: translateY(0);
+            }
+
+            12.5%,
+            22.5% {
+                transform: translateY(-1.2em);
+            }
+
+            25%,
+            35% {
+                transform: translateY(-2.4em);
+            }
+
+            37.5%,
+            47.5% {
+                transform: translateY(-3.6em);
+            }
+
+            50%,
+            60% {
+                transform: translateY(-4.8em);
+            }
+
+            62.5%,
+            72.5% {
+                transform: translateY(-6.0em);
+            }
+
+            75%,
+            85% {
+                transform: translateY(-7.2em);
+            }
+
+            87.5%,
+            97.5% {
+                transform: translateY(-8.4em);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+
+            /* Loop back */
+        }
+
+        .logo-description {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-500);
+            text-transform: none;
+            letter-spacing: normal;
+            margin-left: 8px;
+            vertical-align: middle;
+            display: inline-block;
+        }
     </style>
 </head>
 
@@ -122,12 +339,41 @@
         <div class="login-overlay-filter"></div>
         <div class="login-card">
             <div class="login-logo">
-                <h1>Вход в систему</h1>
+                <h1
+                    style="font-family: 'Montserrat', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 32px; letter-spacing: -0.02em; display: flex; align-items: baseline; justify-content: center; width: 100%;">
+                    Pro&nbsp;
+                    <div class="scrolling-text-container" style="color: var(--primary); text-align: left;">
+                        <div class="scrolling-text-content">
+                            <div class="scrolling-text-item">BIM <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">ESTIMATE <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">TENDER <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">PLAN <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">SUPPLY <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">MONEY <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">LOGIC <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">SALES <span class="logo-description"
+                                    style="display:none;"></span></div>
+                            <div class="scrolling-text-item">BIM <span class="logo-description"
+                                    style="display:none;"></span></div>
+                        </div>
+                    </div>
+                </h1>
+                <div id="dynamic-subtitle"
+                    style="font-size: 14px; color: var(--gray-600); min-height: 20px; transition: opacity 0.3s ease;">
+                    (База) Информационная модель и коллизии
+                </div>
             </div>
             <form id="login-form">
                 <div class="login-form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" placeholder="admin@probim.uz" required>
+                    <label for="login-email">Email или Телефон</label>
+                    <input type="text" id="login-email" placeholder="admin@probim.uz или +998..." required>
                 </div>
                 <div class="login-form-group">
                     <label for="login-password">Пароль</label>
@@ -137,7 +383,12 @@
                 <button type="submit" id="login-btn" class="login-btn">Войти</button>
             </form>
             <div class="login-footer">
-                &copy; 2026 ProBIM. Все права защищены.
+                <div>&copy; 2026 ProBIM. Все права защищены.</div>
+                <div style="margin-top: 8px;">
+                    <a href="subcontractor-login.html"
+                        style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 13px;">Вход
+                        для субподрядчика</a>
+                </div>
             </div>
         </div>
     </div>
@@ -246,8 +497,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="account-switcher" role="button" tabindex="0" aria-label="Переключение аккаунта"
-                    onclick="auth.logout()">
+                <div class="account-switcher" id="account-toggle" role="button" tabindex="0"
+                    aria-label="Профиль пользователя">
                     <div class="account-icon" aria-hidden="true">
                         <img src="https://i.pravatar.cc/150?img=11" alt="User" class="user-photo"
                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
@@ -256,15 +507,56 @@
                         <span class="account-company" id="header-company-name">ООО «PROBIM»</span>
                         <span class="account-user user-name">Загрузка...</span>
                     </div>
-                    <span class="account-caret" aria-hidden="true" title="Выйти">Logout</span>
-                </div>
-                <button class="qat-btn notification-btn" title="Уведомления">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        style="margin-left: 4px; opacity: 0.7;">
+                        <path d="m6 9 6 6 6-6" />
                     </svg>
-                    <span class="notification-badge">3</span>
-                </button>
+
+                    <!-- Custom Dropdown Menu -->
+                    <div class="account-dropdown" id="account-dropdown">
+                        <div class="dropdown-header">
+                            <span class="user-name-full user-name">Загрузка...</span>
+                            <span class="user-role" id="header-user-role">Администратор</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="SettingsManager.showProfileSettings()">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Профиль</span>
+                        </button>
+                        <button class="dropdown-item" onclick="SettingsManager.showSecurity()">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Безопасность</span>
+                        </button>
+                        <button class="dropdown-item" onclick="SettingsManager.showSubcontractors()">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Участники</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item logout" onclick="auth.logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Выйти</span>
+                        </button>
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const toggle = document.getElementById('account-toggle');
+                        const dropdown = document.getElementById('account-dropdown');
+
+                        toggle.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            dropdown.classList.toggle('visible');
+                        });
+
+                        document.addEventListener('click', (e) => {
+                            if (!toggle.contains(e.target)) {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+                    });
+                </script>
+
                 <button class="qat-btn" id="header-chat-toggle" title="Чат">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -340,7 +632,7 @@
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button class="ribbon-btn large">
+                            <button class="ribbon-btn large" id="btn-stats-tab">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <line x1="18" y1="20" x2="18" y2="10" />
@@ -599,7 +891,7 @@
                                     <line x1="10" y1="11" x2="10" y2="17"></line>
                                     <line x1="14" y1="11" x2="14" y2="17"></line>
                                 </svg>
-                                <span>Очистить<br>ГПР</span>
+                                <span>Очистить<br>график</span>
                             </button>
                         </div>
                         <span class="ribbon-group-label">Управление</span>
@@ -647,6 +939,46 @@
                             </button>
                         </div>
                         <span class="ribbon-group-label">Вид</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group" id="ribbon-group-schedule-filters">
+                        <div class="ribbon-group-content">
+                            <div class="ribbon-dropdown-container">
+                                <button id="schedule-filter-btn" class="ribbon-btn large">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-filter-icon lucide-filter">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                                    </svg>
+                                    <span>Фильтр<br>по объектам</span>
+                                </button>
+                                <div id="schedule-filter-dropdown" class="ribbon-multiselect-dropdown hidden">
+                                    <div class="dropdown-body">
+                                        <div class="dropdown-column">
+                                            <div class="dropdown-group-title">Секции (Блоки)</div>
+                                            <div id="filter-sections-list" class="dropdown-list">
+                                                <div style="padding: 8px; color: var(--gray-400); font-size: 12px;">
+                                                    Загрузка...</div>
+                                            </div>
+                                        </div>
+                                        <div class="dropdown-column">
+                                            <div class="dropdown-group-title">Этажи</div>
+                                            <div id="filter-floors-list" class="dropdown-list">
+                                                <div style="padding: 8px; color: var(--gray-400); font-size: 12px;">
+                                                    Загрузка...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-actions">
+                                        <button id="schedule-filter-reset-btn"
+                                            class="filter-action-btn">Сбросить</button>
+                                        <button id="schedule-filter-apply-btn"
+                                            class="filter-action-btn primary">Применить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="ribbon-group-label">Фильтры</span>
                     </div>
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group">
@@ -824,7 +1156,7 @@
                         </div>
                         <span class="ribbon-group-label">Кадры</span>
                     </div>
-                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-separator" id="ribbon-sep-hr"></div>
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
                             <button id="project-settings-btn" class="ribbon-btn large">
@@ -851,7 +1183,7 @@
                         </div>
                         <span class="ribbon-group-label">Проект</span>
                     </div>
-                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-separator" id="ribbon-sep-project"></div>
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
                             <button id="subcontractors-btn" class="ribbon-btn large">
@@ -1199,6 +1531,7 @@
     <script src="js/auth.js" defer></script>
     <script src="js/ui.js" defer></script>
     <script src="js/ifcViewer.js" defer></script>
+    <script src="js/monitoring.js" defer></script>
     <script src="js/import.js" defer></script>
     <script src="js/schedule.js?v=20251219-2" defer></script>
     <script src="js/gpr.js" defer></script>
@@ -1209,6 +1542,51 @@
     <script src="js/instructionsManager.js?v=20251222-9" defer></script>
     <script src="js/app.js" defer></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const subtitleEl = document.getElementById('dynamic-subtitle');
+            if (!subtitleEl) return;
+
+            const descriptions = [
+                "(База) Информационная модель и коллизии",
+                "(Сметы) Расчет стоимости на основе объемов из модели",
+                "(Тендеры) Выбор подрядчиков и конкурентные листы",
+                "(ГПР) Календарно-сетевое планирование и сроки",
+                "(Снабжение) Закупки и управление заказами",
+                "(Финансы) Движение денежных средств и БДДС",
+                "(Логистика) Доставка материалов и складской учет",
+                "(Продажи) Управление продажами и клиентами"
+            ];
+
+            // Animation total duration is 20s for 8 steps (returning to start at end)
+            // Each step is 2.5s (12.5% of total time)
+            // We need to sync JS updates with CSS animation
+
+            let currentIndex = 0;
+            const stepDuration = 2500; // 20s / 8 steps
+
+            function updateSubtitle() {
+                // Fade out
+                subtitleEl.style.opacity = '0';
+
+                setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % descriptions.length;
+                    subtitleEl.textContent = descriptions[currentIndex];
+                    // Fade in
+                    subtitleEl.style.opacity = '1';
+                }, 300); // Wait for fade out
+            }
+
+            // Sync with CSS animation
+            // First move happens at 10% (2s).
+            // We start fade out exactly when move starts.
+
+            setTimeout(() => {
+                updateSubtitle();
+                setInterval(updateSubtitle, stepDuration);
+            }, 2000); // Start exact at 2s (start of first move)
+        });
+    </script>
 </body>
 
 </html>

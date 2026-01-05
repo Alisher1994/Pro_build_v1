@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход для субподрядчика · ProBIM</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2b579a;
+            --primary-hover: #1e3f72;
+            --white: #ffffff;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #video-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            opacity: 0.6;
+            z-index: -1;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+            z-index: -1;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.05em;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+            margin-left: 0.25rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            height: 3.5rem;
+            padding: 0 1.25rem;
+            border-radius: 1rem;
+            border: 1.5px solid var(--gray-200);
+            background: var(--white);
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--gray-900);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(43, 87, 154, 0.1);
+        }
+
+        button {
+            width: 100%;
+            height: 3.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(43, 87, 154, 0.3);
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(43, 87, 154, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            margin-top: 1.5rem;
+            display: none;
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .footer-links {
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Logo Text Flip Animation --- */
+        .scrolling-text-container {
+            display: inline-block;
+            height: 1.2em;
+            overflow: hidden;
+            vertical-align: bottom;
+            position: relative;
+            width: 170px;
+            /* Fixed width to prevent jumping */
+            text-align: left;
+        }
+
+        .scrolling-text-content {
+            display: block;
+            position: relative;
+            animation: scrollText 20s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .scrolling-text-item {
+            display: block;
+            height: 1.2em;
+            line-height: 1.2em;
+            white-space: nowrap;
+        }
+
+        @keyframes scrollText {
+
+            0%,
+            10% {
+                transform: translateY(0);
+            }
+
+            12.5%,
+            22.5% {
+                transform: translateY(-1.2em);
+            }
+
+            25%,
+            35% {
+                transform: translateY(-2.4em);
+            }
+
+            37.5%,
+            47.5% {
+                transform: translateY(-3.6em);
+            }
+
+            50%,
+            60% {
+                transform: translateY(-4.8em);
+            }
+
+            62.5%,
+            72.5% {
+                transform: translateY(-6.0em);
+            }
+
+            75%,
+            85% {
+                transform: translateY(-7.2em);
+            }
+
+            87.5%,
+            97.5% {
+                transform: translateY(-8.4em);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+
+            /* Loop back */
+        }
+    </style>
+</head>
+
+<body>
+    <video id="video-bg" autoplay muted loop playsinline>
+        <source src="src/media/Login.mp4" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+
+    <div class="login-card">
+        <div class="logo" style="display: flex; align-items: baseline; justify-content: center; width: 100%;">
+            Pro&nbsp;
+            <div class="scrolling-text-container" style="color: var(--primary);">
+                <div class="scrolling-text-content">
+                    <div class="scrolling-text-item">BIM</div>
+                    <div class="scrolling-text-item">ESTIMATE</div>
+                    <div class="scrolling-text-item">TENDER</div>
+                    <div class="scrolling-text-item">PLAN</div>
+                    <div class="scrolling-text-item">SUPPLY</div>
+                    <div class="scrolling-text-item">MONEY</div>
+                    <div class="scrolling-text-item">LOGIC</div>
+                    <div class="scrolling-text-item">SALES</div>
+                    <div class="scrolling-text-item">BIM</div>
+                </div>
+            </div>
+        </div>
+        <div class="subtitle">Модуль субподрядчика</div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="inn">ИНН организации</label>
+                <input type="text" id="inn" name="inn" placeholder="123456789" required autofocus maxlength="12"
+                    autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required
+                    autocomplete="current-password">
+            </div>
+
+            <button type="submit" id="submit-btn">Войти в систему</button>
+        </form>
+
+        <div id="error-box" class="error-message"></div>
+
+        <div class="footer-links">
+            Нет аккаунта? <a href="#">Свяжитесь с менеджером</a>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const form = document.getElementById('login-form');
+        const innInput = document.getElementById('inn');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submit-btn');
+        const errorBox = document.getElementById('error-box');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const inn = innInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!inn || !password) return;
+
+            setLoading(true);
+            hideError();
+
+            try {
+                const data = await api.loginSubcontractor(inn, password);
+                if (data && data.token) {
+                    // Redirect to dashboard
+                    window.location.href = 'subcontractor-dashboard.html';
+                }
+            } catch (err) {
+                showError(err.message || 'Ошибка входа');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            submitBtn.disabled = isLoading;
+            submitBtn.textContent = isLoading ? 'Вход...' : 'Войти в систему';
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = 'block';
+        }
+
+        function hideError() {
+            errorBox.style.display = 'none';
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const subtitleEl = document.querySelector('.subtitle');
+            if (!subtitleEl) return;
+
+            const descriptions = [
+                "(База) Информационная модель и коллизии",
+                "(Сметы) Расчет стоимости на основе объемов из модели",
+                "(Тендеры) Выбор подрядчиков и конкурентные листы",
+                "(ГПР) Календарно-сетевое планирование и сроки",
+                "(Снабжение) Закупки и управление заказами",
+                "(Финансы) Движение денежных средств и БДДС",
+                "(Логистика) Доставка материалов и складской учет",
+                "(Продажи) Управление продажами и клиентами"
+            ];
+
+            // Initial clear since animation moves fast
+            // Keep default static text or clear? 
+            // The request implies descriptions should show for each step.
+            // Let's replace "Модуль субподрядчика" with the first description or cycle them.
+            // Given specific request for text changes, let's effectively replace subtitle logic.
+
+            let currentIndex = 0;
+            const stepDuration = 2500;
+
+            // Initialize style for transition
+            subtitleEl.style.transition = 'opacity 0.3s ease';
+            subtitleEl.style.minHeight = '1.2em';
+
+            function updateSubtitle() {
+                subtitleEl.style.opacity = '0';
+                setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % descriptions.length;
+                    subtitleEl.textContent = descriptions[currentIndex];
+                    subtitleEl.style.opacity = '1';
+                }, 300);
+            }
+
+            // Sync with CSS animation
+            subtitleEl.textContent = descriptions[0];
+
+            setTimeout(() => {
+                updateSubtitle();
+                setInterval(updateSubtitle, stepDuration);
+            }, 2000);
+        });
+    </script>
+</body>
+
+</html>

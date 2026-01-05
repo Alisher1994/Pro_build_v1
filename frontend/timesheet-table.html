@@ -631,6 +631,7 @@
         </div>
     </div>
 
+    <script src="js/api.js"></script>
     <script>
         const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
         const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -669,20 +670,7 @@
         async function loadEmployees() {
             try {
                 const projectId = getCurrentProjectId();
-                let url = '/api/employees';
-                if (projectId) {
-                    url += `?projectId=${projectId}`;
-                }
-
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to load employees');
-
-                const payload = await response.json();
-                const list = Array.isArray(payload)
-                    ? payload
-                    : Array.isArray(payload?.data)
-                        ? payload.data
-                        : [];
+                const list = await api.getEmployees(projectId);
 
                 employees = list.map(emp => ({
                     id: emp.id,

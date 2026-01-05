@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет субподрядчика · ProBIM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            /* MS Word Blue Theme Override */
+            --primary: #2b579a;
+            --primary-hover: #1e3f72;
+            --primary-light: #e6eff8;
+            --primary-lighter: #f0f6fa;
+            /* Remap existing green variables to blue */
+            --excel-green: #2b579a;
+            --excel-green-hover: #1e3f72;
+            --accent-green: #2b579a;
+        }
+
+        .content-area {
+            scrollbar-width: none;
+        }
+
+        .content-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        .subcontractor-welcome-card {
+            background: var(--white);
+            padding: 3rem;
+            border-radius: 1rem;
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            max-width: 600px;
+            margin: 100px auto;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .office-theme .sidebar.collapsed {
+            width: 60px;
+        }
+
+
+
+        /* Avatar & Icon Circle Consistency */
+        .account-icon,
+        .account-icon img,
+        #user-avatar-circle,
+        .chat-avatar {
+            border-radius: 50% !important;
+        }
+
+        /* SVG Icon alignment matches style.css */
+        .project-item svg {
+            margin-right: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .office-theme .sidebar.collapsed .project-item svg {
+            margin-right: 0;
+        }
+
+        .office-theme .sidebar.collapsed .project-name {
+            display: none;
+        }
+
+        .office-theme .sidebar.collapsed .project-item {
+            justify-content: center;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body class="office-theme">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <img src="src/logo/Logo horizontal.svg" alt="PROBIM" class="logo-expanded">
+                <img src="src/logo/Logo square.svg" alt="P" class="logo-collapsed">
+            </div>
+        </div>
+        <ul id="project-list" class="project-list"></ul>
+        <div class="sidebar-footer">
+            <button class="sidebar-toggle" id="sidebar-collapse-toggle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 5 9 12 15 19"></polyline>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Title Bar -->
+        <div class="office-title-bar">
+            <div class="title-bar-left">
+                <button class="qat-btn" onclick="location.reload()" title="Обновить">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                    </svg>
+                </button>
+                <div class="qat-separator"></div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--gray-600); margin-left: 10px;">
+                    Модуль субподрядчика
+                </div>
+            </div>
+            <div class="title-bar-right">
+                <div class="account-switcher" id="account-toggle" style="position: relative;">
+                    <div class="account-icon">
+                        <img id="user-avatar-img" src="" alt="Logo" class="user-photo"
+                            style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        <div id="user-avatar-circle"
+                            style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; border-radius: 50%; font-weight: 700; font-size: 12px;">
+                            ?</div>
+                    </div>
+                    <div class="account-info">
+                        <span class="account-company" id="sub-company-name">Загрузка...</span>
+                        <span class="account-user" id="sub-user-name">...</span>
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        style="margin-left: 4px; opacity: 0.7; color: white;">
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
+
+                    <!-- Custom Dropdown Menu -->
+                    <div class="account-dropdown" id="account-dropdown">
+                        <div class="dropdown-header">
+                            <span class="user-name-full" id="dropdown-full-name">Загрузка...</span>
+                            <span class="user-role">Субподрядчик</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="showCompanyProfile()">
+                            <i class="fas fa-id-card"></i>
+                            <span>Моя компания</span>
+                        </button>
+                        <button class="dropdown-item" onclick="showContracts()">
+                            <i class="fas fa-file-contract"></i>
+                            <span>Договоры</span>
+                        </button>
+                        <button class="dropdown-item" onclick="showSecuritySettings()">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Безопасность</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item logout" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Выйти</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="qat-btn" id="header-chat-toggle" title="Чат">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
+                        <path d="M8 12h.01" />
+                        <path d="M12 12h.01" />
+                        <path d="M16 12h.01" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Ribbon -->
+        <div class="office-ribbon" id="office-ribbon">
+            <div class="ribbon-tabs-bar">
+                <div class="ribbon-tabs">
+                    <button class="ribbon-tab active" data-ribbon="home">Главная</button>
+                    <button class="ribbon-tab" data-ribbon="tasks">Мои работы</button>
+                    <button class="ribbon-tab" data-ribbon="tenders">Тендеры</button>
+                    <button class="ribbon-tab" data-ribbon="finance">Финансы</button>
+                </div>
+            </div>
+
+            <div class="ribbon-content">
+                <div class="ribbon-panel active" data-panel="home">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large" onclick="location.reload()">
+                                <i class="fas fa-home"
+                                    style="font-size: 20px; margin-bottom: 4px; color: var(--primary);"></i>
+                                <span>Общий вид</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Обзор</span>
+                    </div>
+                </div>
+
+                <div class="ribbon-panel" data-panel="tasks">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large">
+                                <i class="fas fa-tasks"
+                                    style="font-size: 20px; margin-bottom: 4px; color: var(--primary);"></i>
+                                <span>Все задачи</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Работы</span>
+                    </div>
+                </div>
+
+                <div class="ribbon-panel" data-panel="tenders">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large">
+                                <i class="fas fa-gavel"
+                                    style="font-size: 20px; margin-bottom: 4px; color: var(--primary);"></i>
+                                <span>Лоты</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Тендеры</span>
+                    </div>
+                </div>
+
+                <div class="ribbon-panel" data-panel="finance">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large">
+                                <i class="fas fa-file-invoice-dollar"
+                                    style="font-size: 20px; margin-bottom: 4px; color: var(--primary);"></i>
+                                <span>Оплата</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Бухгалтерия</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="content-area" style="padding: 0;">
+            <!-- Home View -->
+            <div id="home-view" class="view-section">
+                <div class="subcontractor-welcome-card">
+                    <div class="welcome-icon">
+                        <i class="fas fa-hammer"></i>
+                    </div>
+                    <h1 id="welcome-title">Добро пожаловать!</h1>
+                    <p style="color: var(--gray-600); line-height: 1.6; margin-top: 1rem;">
+                        Выберите проект в левой панели, чтобы просмотреть закрепленные за вами работы,
+                        графики выполнения и статус оплаты.
+                    </p>
+                    <div
+                        style="margin-top: 2rem; font-size: 0.875rem; color: var(--gray-400); border-top: 1px solid var(--gray-100); padding-top: 1.5rem;">
+                        Функционал личного кабинета расширяется...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tenders View -->
+            <div id="tenders-view" class="view-section hidden">
+                <div class="tenders-container">
+
+                    <div id="tenders-list" class="tenders-grid">
+                        <!-- Tenders will be loaded here -->
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-500);">
+                            Загрузка тендеров...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks View (Placeholder) -->
+            <div id="tasks-view" class="view-section hidden">
+                <div style="padding: 40px; text-align: center; color: var(--gray-500);">
+                    <i class="fas fa-tasks" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <h3>Раздел в разработке</h3>
+                    <p>Здесь будут отображаться ваши текущие задачи и объемы.</p>
+                </div>
+            </div>
+
+            <!-- Finance View (Placeholder) -->
+            <div id="finance-view" class="view-section hidden">
+                <div style="padding: 40px; text-align: center; color: var(--gray-500);">
+                    <i class="fas fa-file-invoice-dollar"
+                        style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <h3>Раздел в разработке</h3>
+                    <p>Здесь будет отображаться информация о платежах и актах.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Sidebar -->
+    <div id="chat-sidebar" class="chat-sidebar position-right collapsed hidden">
+        <!-- Sidebar Header (Controls & Search) -->
+        <div class="chat-sidebar-header">
+            <div class="chat-header-title-row">
+                <span class="chat-header-title">Сообщения</span>
+            </div>
+            <div class="chat-controls-row">
+                <div class="chat-search-wrapper">
+                    <input type="text" id="chat-search-input" placeholder="Поиск...">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Tabs -->
+        <div class="chat-sidebar-tabs">
+            <button class="chat-tab-btn active" data-tab="contacts" title="Контакты">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Контакты</span>
+            </button>
+            <button class="chat-tab-btn" data-tab="groups" title="Группы">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Группы</span>
+            </button>
+            <button class="chat-tab-btn" data-tab="channel" title="Канал">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Канал</span>
+            </button>
+            <button class="chat-tab-btn" data-tab="subcontractors" title="Субподрядчики">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                </svg>
+                <span>Суб.</span>
+            </button>
+        </div>
+
+        <!-- List View -->
+        <div id="chat-list-view" class="chat-view active">
+            <div id="chat-list-container" class="chat-list-items"></div>
+        </div>
+
+        <!-- Conversation View -->
+        <div id="chat-conversation-view" class="chat-view" style="display:none;">
+            <div class="chat-conversation-header">
+                <button id="chat-back-btn" class="chat-back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+                <img id="conversation-user-image" src="" class="chat-avatar"
+                    style="width:32px;height:32px;margin-right:8px; display:none;">
+                <div class="chat-conversation-info">
+                    <span id="converastion-user-name" class="name">Name</span>
+                    <span id="conversation-user-status" class="status">Online</span>
+                </div>
+            </div>
+
+            <div id="chat-messages-area" class="chat-messages-area">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <div class="chat-input-area">
+                <button id="chat-btn-attach" class="chat-media-btn" title="Прикрепить файл">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                </button>
+                <button id="chat-btn-emoji" class="chat-media-btn" title="Смайлы">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                        <line x1="9" x2="9.01" y1="9" y2="9" />
+                        <line x1="15" x2="15.01" y1="9" y2="9" />
+                    </svg>
+                </button>
+                <input type="text" id="chat-message-input" placeholder="Сообщение...">
+                <button id="chat-btn-voice" class="chat-media-btn" title="Голосовое сообщение">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                    </svg>
+                </button>
+                <button id="chat-btn-video" class="chat-media-btn" title="Видеосообщение">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 7l-7 5 7 5V7z" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Footer (Bottom Controls) -->
+        <div class="chat-sidebar-footer">
+            <button id="chat-swap-btn" class="chat-control-btn" title="Поменять сторону">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3 4 7l4 4" />
+                    <path d="M4 7h16" />
+                    <path d="m16 21 4-4-4-4" />
+                    <path d="M20 17H4" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/chat.js" defer></script>
+    <script>
+        function showCompanyProfile() {
+            if (!state.user) return;
+
+            const content = `
+                <div style="text-align: center;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%; overflow: hidden; background: #f3f4f6;">
+                        ${state.user.companyPhoto
+                    ? `<img src="${state.user.companyPhoto}" style="width: 100%; height: 100%; object-fit: cover;">`
+                    : `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; color: var(--primary);">
+                                ${(state.user.company || state.user.lastName || '?')[0].toUpperCase()}
+                               </div>`
+                }
+                    </div>
+                    <h3 style="margin: 0; color: var(--gray-900);">${state.user.company || 'Компания'}</h3>
+                    <p style="color: var(--gray-500); margin: 4px 0 16px;">${state.user.firstName} ${state.user.lastName}</p>
+                    
+                    <div style="text-align: left; background: #f9fafb; padding: 16px; border-radius: 8px;">
+                        <div style="margin-bottom: 8px;"><strong>ИНН:</strong> ${state.user.inn || '—'}</div>
+                        <div style="margin-bottom: 8px;"><strong>Телефон:</strong> ${state.user.phone || '—'}</div>
+                        <div style="margin-bottom: 8px;"><strong>Email:</strong> ${state.user.email || '—'}</div>
+                        <div><strong>Адрес:</strong> ${state.user.address || '—'}</div>
+                    </div>
+                </div>
+            `;
+            showGenericModal('Моя компания', content);
+        }
+
+        function showContracts() {
+            showGenericModal('Договоры', '<div style="padding: 20px; text-align: center; color: var(--gray-500);">Список активных договоров пуст</div>');
+        }
+
+        function showSecuritySettings() {
+            const content = `
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom:5px; color:var(--gray-700);">Текущий пароль</label>
+                    <input type="password" class="form-control" style="width:100%; padding:8px; border:1px solid var(--gray-300); border-radius:4px;" placeholder="Введите текущий пароль">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                     <label style="display:block; margin-bottom:5px; color:var(--gray-700);">Новый пароль</label>
+                    <input type="password" class="form-control" style="width:100%; padding:8px; border:1px solid var(--gray-300); border-radius:4px;" placeholder="Минимум 6 символов">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                     <label style="display:block; margin-bottom:5px; color:var(--gray-700);">Подтвердите новый пароль</label>
+                    <input type="password" class="form-control" style="width:100%; padding:8px; border:1px solid var(--gray-300); border-radius:4px;" placeholder="Повторите пароль">
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn btn-primary" onclick="alert('Функция смены пароля в разработке')">Сохранить</button>
+                </div>
+            `;
+            showGenericModal('Безопасность', content);
+        }
+
+        function showGenericModal(title, htmlContent) {
+            const modalId = 'generic-modal';
+            let overlay = document.getElementById(modalId);
+
+            if (overlay) {
+                overlay.remove();
+            }
+
+            overlay = document.createElement('div');
+            overlay.id = modalId;
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <button class="close-modal-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        ${htmlContent}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const closeBtn = overlay.querySelector('.close-modal-btn');
+            const close = () => { overlay.classList.add('hidden'); setTimeout(() => overlay.remove(), 200); };
+
+            closeBtn.onclick = close;
+            overlay.onclick = (e) => {
+                if (e.target === overlay) close();
+            };
+        }
+
+        const state = {
+            user: null,
+            projects: [],
+            currentProjectId: null,
+            invites: [],
+            selectedInviteId: null
+        };
+
+        async function init() {
+            try {
+                const data = await api.verifyToken();
+                if (!data || data.user.role !== 'subcontractor') {
+                    window.location.href = 'subcontractor-login.html';
+                    return;
+                }
+
+                state.user = data.user;
+                updateUserInfo();
+
+                await Promise.all([
+                    loadProjects(),
+                    loadInvites()
+                ]);
+
+                setupHandlers();
+            } catch (err) {
+                console.error(err);
+                window.location.href = 'subcontractor-login.html';
+            }
+        }
+
+        function updateUserInfo() {
+            const user = state.user;
+            const fullName = `${user.firstName} ${user.lastName}`;
+            document.getElementById('sub-company-name').textContent = user.company || 'Компания';
+            document.getElementById('sub-user-name').textContent = fullName;
+            document.getElementById('dropdown-full-name').textContent = fullName;
+
+            const avatarCircle = document.getElementById('user-avatar-circle');
+            const avatarImg = document.getElementById('user-avatar-img');
+            const welcomeTitle = document.getElementById('welcome-title');
+
+            if (user.companyPhoto) {
+                avatarImg.src = user.companyPhoto;
+                avatarImg.style.display = 'block';
+                avatarCircle.style.display = 'none';
+            } else {
+                avatarImg.style.display = 'none';
+                avatarCircle.style.display = 'flex';
+                avatarCircle.textContent = (user.company || user.lastName || '?')[0].toUpperCase();
+            }
+
+            welcomeTitle.textContent = `Добро пожаловать, ${user.company || user.firstName}!`;
+        }
+
+        async function loadProjects() {
+            try {
+                // Use the dedicated method in api.js which handles .data unwrapping
+                const list = await api.getProjects();
+                console.log('API Projects Response:', list);
+                state.projects = Array.isArray(list) ? list : [];
+                renderProjectList();
+            } catch (err) {
+                console.error('Failed to load projects', err);
+            }
+        }
+
+        async function loadInvites() {
+            try {
+                const invites = await api.getMyInvites();
+                state.invites = invites;
+                renderTendersList();
+            } catch (err) {
+                console.error('Failed to load invites', err);
+                document.getElementById('tenders-list').innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #dc2626;">
+                        Ошибка загрузки тендеров. <button onclick="loadInvites()" class="btn-text" style="color: var(--primary); text-decoration: underline;">Повторить</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderProjectList() {
+            const listEl = document.getElementById('project-list');
+            const filteredProjects = state.projects.filter(p => !p.name.includes('Главный офис'));
+
+            if (filteredProjects.length === 0) {
+                listEl.classList.add('empty');
+                listEl.innerHTML = `
+                    <li style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: auto; padding: 20px; color: var(--gray-600); cursor: default; text-align: center;">
+                        <div style="margin-bottom: 8px; font-size: 13px;">Нет доступных проектов</div>
+                        <button class="btn-text" style="font-size: 12px; color: var(--primary); text-decoration: underline; background: none; border: none; cursor: pointer;" onclick="loadProjects()">
+                            Обновить
+                        </button>
+                    </li>
+                `;
+                return;
+            }
+
+            listEl.classList.remove('empty');
+            listEl.innerHTML = filteredProjects.map(p => {
+                // Use generic building icon for all projects (since Main Office is filtered)
+                const iconHtml = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="project-icon-svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>`;
+
+                return `
+                <li class="project-item ${state.currentProjectId === p.id ? 'selected' : ''}" onclick="selectProject('${p.id}')" title="${p.name}">
+                    ${iconHtml}
+                    <span class="project-name">${p.name}</span>
+                </li>
+                `;
+            }).join('');
+        }
+
+        function renderTendersList() {
+            const container = document.getElementById('tenders-list');
+
+            // Filter invites based on selected project
+            let displayInvites = state.invites;
+            if (state.currentProjectId) {
+                const filterId = String(state.currentProjectId);
+                displayInvites = state.invites.filter(invite =>
+                    String(invite.tender.projectId || '') === filterId ||
+                    (invite.tender.project && String(invite.tender.project.id || '') === filterId)
+                );
+            }
+
+            if (displayInvites.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; color: var(--gray-500);">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+                        <div style="font-size: 16px;">
+                            ${state.currentProjectId ? 'Нет тендеров для выбранного объекта' : 'У вас пока нет приглашений'}
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = displayInvites.map(invite => {
+                const tender = invite.tender;
+                const project = tender.project;
+                const isDeadlinePassed = new Date(tender.deadline) < new Date();
+                const statusLabel = isDeadlinePassed ? 'Завершен' : (invite.status === 'invited' ? 'Новое' : 'Активен');
+                const statusClass = isDeadlinePassed ? 'status-closed' : (invite.status === 'invited' ? 'status-invited' : 'status-submitted');
+
+                return `
+                    <div class="tender-card" onclick="openTenderModal('${invite.id}')">
+                        <div class="tender-card-header">
+                            <span class="tender-status-badge ${statusClass}">${statusLabel}</span>
+                            <span style="font-size: 12px; color: var(--gray-400);">#${invite.inviteCode ? 'CODE' : '---'}</span>
+                        </div>
+                        <div class="tender-card-body">
+                            <h3 class="tender-title">${tender.name}</h3>
+                            <div class="tender-project">
+                                <i class="fas fa-building"></i>
+                                <span>${project.name}</span>
+                            </div>
+                            <div class="tender-meta">
+                                <div class="tender-meta-item">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <span>Дедлайн: ${new Date(tender.deadline).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Modal Logic ---
+
+        function openTenderModal(inviteId) {
+            state.selectedInviteId = inviteId;
+            const modal = document.getElementById('tender-access-modal');
+            const input = document.getElementById('invite-code-input');
+            const error = document.getElementById('invite-code-error');
+
+            input.value = '';
+            error.style.display = 'none';
+            modal.classList.remove('hidden');
+            input.focus();
+        }
+
+        function closeTenderModal() {
+            const modal = document.getElementById('tender-access-modal');
+            modal.classList.add('hidden');
+            state.selectedInviteId = null;
+        }
+
+        async function verifyInvite() {
+            if (!state.selectedInviteId) return;
+
+            const input = document.getElementById('invite-code-input');
+            const error = document.getElementById('invite-code-error');
+            const code = input.value.trim();
+
+            if (code.length !== 4) {
+                error.textContent = 'Введите 4-значный код';
+                error.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await api.verifyInviteCode(state.selectedInviteId, code);
+                if (res.success && res.token) {
+                    // Redirect to the portal view with the token
+                    window.location.href = `subcontractor-portal.html?token=${res.token}`;
+                }
+            } catch (err) {
+                console.error(err);
+                error.textContent = 'Неверный код доступа';
+                error.style.display = 'block';
+            }
+        }
+
+        function selectProject(id) {
+            state.currentProjectId = id;
+            renderProjectList();
+            renderTendersList(); // Re-render tenders with filter
+            // Automatically switch to tenders view if not already there, or stay?
+            // User request implies immediate visual feedback. 
+            // If we are on "Home", switching to "Tenders" might be aggressive. 
+            // But if we are on "Tenders", it must update. 
+            // renderTendersList() handles the update.
+            console.log('Selected project:', id);
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            const view = document.getElementById(`${viewName}-view`);
+            if (view) view.classList.remove('hidden');
+        }
+
+        function setupHandlers() {
+            // Account dropdown
+            const accountToggle = document.getElementById('account-toggle');
+            const accountDropdown = document.getElementById('account-dropdown');
+
+            accountToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                accountDropdown.classList.toggle('visible');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!accountToggle.contains(e.target)) {
+                    accountDropdown.classList.remove('visible');
+                }
+            });
+
+            // Sidebar toggle
+            document.getElementById('sidebar-collapse-toggle').addEventListener('click', () => {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.querySelector('.main-content');
+                sidebar.classList.toggle('collapsed');
+                // main-content margin handled by CSS now (flex or similar) or default block flow
+            });
+
+            // Ribbon Tabs Navigation
+            document.querySelectorAll('.ribbon-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Tab styling
+                    document.querySelectorAll('.ribbon-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.ribbon-panel').forEach(p => p.classList.remove('active'));
+
+                    tab.classList.add('active');
+                    const target = tab.dataset.ribbon; // home, tasks, tenders, finance
+
+                    // Show corresponding ribbon panel
+                    const panel = document.querySelector(`[data-panel="${target}"]`);
+                    if (panel) panel.classList.add('active');
+
+                    // Switch Main View
+                    switchView(target);
+                });
+            });
+
+            // Modal Overlay Click to Close
+            document.getElementById('tender-access-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'tender-access-modal') {
+                    closeTenderModal();
+                }
+            });
+        }
+
+        function logout() {
+            api.setToken(null);
+            window.location.href = 'subcontractor-login.html';
+        }
+
+        // Global styles for hidden class if not present
+        if (!document.getElementById('hidden-style')) {
+            const style = document.createElement('style');
+            style.id = 'hidden-style';
+            style.textContent = `.hidden { display: none !important; }`;
+            document.head.appendChild(style);
+        }
+
+        init();
+    </script>
+    <!-- Tender Access Modal -->
+    <div id="tender-access-modal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Вход в закрытый тендер</h3>
+                <button class="close-modal-btn" onclick="closeTenderModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--gray-600);">
+                    Для доступа к материалам тендера введите 4-значный код, который был отправлен вам в приглашении.
+                </p>
+                <div class="form-group">
+                    <label for="invite-code-input">Код доступа</label>
+                    <input type="text" id="invite-code-input" class="form-control" placeholder="Например: 1234"
+                        maxlength="4" style="font-size: 18px; letter-spacing: 2px; text-align: center;">
+                    <div id="invite-code-error" class="error-text"
+                        style="display: none; color: #dc2626; margin-top: 8px; font-size: 13px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTenderModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="verifyInvite()">Войти</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-dialog {
+            background: white;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(0);
+            transition: transform 0.2s ease;
+        }
+
+        .modal-overlay.hidden .modal-dialog {
+            transform: translateY(20px);
+        }
+
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-list li.selected {
+            background: var(--primary-lighter);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        /* Tender List Styles */
+        .tenders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+
+        .tender-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tender-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .tender-card-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .tender-status-badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-invited {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .status-accessed {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-submitted {
+            background: #fef9c3;
+            color: #ca8a04;
+        }
+
+        .status-closed {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .tender-card-body {
+            padding: 16px;
+        }
+
+        .tender-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: var(--gray-900);
+        }
+
+        .tender-project {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tender-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .tender-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</body>
+
+</html>

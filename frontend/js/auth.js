@@ -51,7 +51,7 @@ class AuthManager {
         const password = this.passwordInput.value;
 
         if (!email || !password) {
-            this.showError('Введите email и пароль');
+            this.showError('Введите Email/Телефон и пароль');
             return;
         }
 
@@ -73,7 +73,7 @@ class AuthManager {
 
     onAuthenticated(user) {
         this.user = user;
-        console.log('✅ Authenticated as:', user.email);
+        console.log('✅ Authenticated as:', user.email || user.phone);
 
         // Hide login, show app
         if (this.loginOverlay) {
@@ -115,7 +115,7 @@ class AuthManager {
         const userNameEls = document.querySelectorAll('.user-name');
         const userPhotoEls = document.querySelectorAll('.user-photo');
 
-        userEmailEls.forEach(el => el.textContent = this.user.email);
+        userEmailEls.forEach(el => el.textContent = this.user.email || this.user.phone);
         userNameEls.forEach(el => el.textContent = `${this.user.firstName} ${this.user.lastName}`);
 
         if (this.user.photo) {

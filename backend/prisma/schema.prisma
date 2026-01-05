@@ -745,7 +745,7 @@ model Employee {
   phone           String
   corporatePhone  String?
   password        String
-  email           String   @unique
+  email           String?  @unique
   positionId      String
   hireDate        DateTime?
   terminationDate DateTime?

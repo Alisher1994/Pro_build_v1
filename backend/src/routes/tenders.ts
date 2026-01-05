@@ -57,6 +57,75 @@ const upload = multer({
   }
 });
 
+import { authMiddleware } from '../middleware/auth';
+
+// ... existing imports ...
+
+// ==========================================
+// Subcontractor Dashboard Routes (Authenticated)
+// ==========================================
+
+// GET /api/tenders/my-invites
+// Get all invites for the logged-in subcontractor
+router.get('/my-invites', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const subcontractorId = req.user.id; // From authMiddleware
+
+    const invites = await prisma.tenderInvite.findMany({
+      where: {
+        subcontractorId
+      },
+      include: {
+        tender: {
+          include: {
+            project: true
+          }
+        },
+        bid: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(invites);
+  } catch (error) {
+    logger.error('Error fetching my-invites:', error);
+    res.status(500).json({ error: 'Failed to fetch invites' });
+  }
+});
+
+// POST /api/tenders/my-invites/:inviteId/verify
+// Verify access code for a specific invite
+router.post('/my-invites/:inviteId/verify', authMiddleware, async (req: any, res: Response) => {
+  try {
+    const { inviteId } = req.params;
+    const { code } = req.body;
+    const subcontractorId = req.user.id;
+
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { id: inviteId }
+    });
+
+    if (!invite) {
+      return res.status(404).json({ error: 'Invite not found' });
+    }
+
+    if (invite.subcontractorId !== subcontractorId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (invite.inviteCode !== code) {
+      return res.status(401).json({ error: 'Invalid access code' });
+    }
+
+    res.json({ success: true, token: invite.token });
+  } catch (error) {
+    logger.error('Error verifying invite code:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
 // ==========================================
 // GET /api/tenders?projectId=X
 // Получить список лотов проекта
@@ -869,10 +938,22 @@ router.get('/invites/:token/export-csv/:estimateId', async (req: Request, res: R
     if (invite.inviteCode !== code) return res.status(401).json({ error: 'Unauthorized' });
 
     const tenderItems = JSON.parse(invite.tender.items || '[]');
+
+    // If estimateId looks like a UUID, try to find its name to match against legacy items
+    let resolvedName: string | null = null;
+    if (/^[0-9a-f-]{36}$/i.test(estimateId)) {
+      const est = await prisma.estimate.findUnique({
+        where: { id: estimateId },
+        select: { name: true }
+      });
+      if (est) resolvedName = est.name;
+    }
+
     // Filter items belonging to this estimate - try both ID and Name matching
     const estimateWorks = tenderItems.filter((i: any) =>
       String(i.estimateId) === estimateId ||
-      String(i.estimateName) === estimateId
+      String(i.estimateName) === estimateId ||
+      (resolvedName && String(i.estimateName) === resolvedName)
     );
 
     if (estimateWorks.length === 0) {

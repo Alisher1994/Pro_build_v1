@@ -16,6 +16,11 @@ const ScheduleManager = {
         openHeightPx: null,
     },
 
+    filters: {
+        sections: [], // selected names
+        floors: [],   // selected names
+    },
+
     currentTaskResources: [],
     charts: {
         labor: null,
@@ -236,10 +241,24 @@ const ScheduleManager = {
         const list = Array.isArray(resources) ? resources : [];
 
         if (list.length === 0) {
+            const task = gantt.getTask(this.resourcesPane.selectedTaskId);
+            const subHtml = task.subcontractor ? `
+                <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: #fff; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #c7d2fe; color: #4338ca; flex-shrink: 0;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; color: #4338ca; font-weight: 700; text-transform: uppercase;">Исполнитель по тендеру</div>
+                        <div style="font-size: 15px; color: #1e1b4b; font-weight: 800;">${this.escapeHtml(task.subcontractor)}</div>
+                    </div>
+                </div>
+            ` : '';
+
             pane.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${subHtml}
                     <div style="font-weight:600; color: var(--gray-900);">${safeTask}</div>
-                    <div style="color: var(--gray-700);">Ресурсы не найдены</div>
+                    <div style="color: var(--gray-700); padding: 10px; background: var(--gray-50); border-radius: 6px; border: 1px solid var(--gray-100);">Ресурсы для данного вида работ еще не заведены в смете</div>
                 </div>
             `;
             return;
@@ -258,6 +277,23 @@ const ScheduleManager = {
         const task = gantt.getTask(this.resourcesPane.selectedTaskId);
         const taskQty = Number(task.quantity || 0);
         const duration = Number(task.duration || 1);
+
+        const subcontractorHtml = task.subcontractor ? `
+            <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: transform 0.2s hover; cursor: default; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="background: #fff; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #c7d2fe; color: #4338ca; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 10px; color: #4338ca; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding-bottom: 2px;">Исполнитель по тендеру</div>
+                    <div style="font-size: 15px; color: #1e1b4b; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(task.subcontractor)}</div>
+                </div>
+                <div style="background: #dbeafe; padding: 4px 10px; border-radius: 20px; color: #1e40af; font-size: 11px; font-weight: 600; border: 1px solid #bfdbfe;">
+                    Контракт
+                </div>
+            </div>
+        ` : '';
 
         const rows = list.map((r, idx) => {
             const b = getBadge(r.resourceType);
@@ -388,7 +424,7 @@ const ScheduleManager = {
                 }
                             <div class="contractor-dropdown" data-resource-id="${r.id}" style="display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 4px; cursor: pointer; font-size: 11px; color: var(--gray-600); flex: 1;">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                <span class="contractor-name">${r.contractorName ? this.escapeHtml(r.contractorName) : 'Не назначен'}</span>
+                                <span class="contractor-name">${this.escapeHtml(r.contractorName || task.subcontractor || 'Не назначен')}</span>
                             </div>
                         </div>
                     </td>
@@ -398,6 +434,7 @@ const ScheduleManager = {
 
         pane.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:10px;">
+                ${subcontractorHtml}
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 12px;">
                     <div style="font-weight:600; color: var(--gray-900); display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
@@ -1223,7 +1260,7 @@ const ScheduleManager = {
                 { name: "text", label: "Название задачи", tree: true, width: 360, resize: true },
                 { name: "start_date", label: "Начало", align: "center", width: 120, resize: true },
                 { name: "end_date", label: "Окончание", align: "center", width: 120, resize: true },
-                { name: "duration", label: "Длит.", align: "center", width: 60, resize: true },
+                { name: "duration", label: "Длит.", align: "center", width: 60, resize: true, template: (obj) => obj.type === 'project' ? '' : obj.duration },
                 {
                     name: "progress", label: "%", align: "center", width: 50, resize: true,
                     template: (obj) => Math.round(obj.progress * 100) + "%"
@@ -1232,8 +1269,14 @@ const ScheduleManager = {
 
             // Детальные колонки сметы (показываем только если showEstimate = true)
             const estimateColumns = this.showEstimate ? [
-                { name: "quantity", label: "Объем", align: "center", width: 70, resize: true },
-                { name: "unit", label: "Ед.изм.", align: "center", width: 100, resize: true }
+                {
+                    name: "quantity", label: "Объем", align: "center", width: 70, resize: true,
+                    template: (obj) => obj.type === 'project' ? '' : (obj.quantity || '')
+                },
+                {
+                    name: "unit", label: "Ед.изм.", align: "center", width: 100, resize: true,
+                    template: (obj) => obj.type === 'project' ? '' : (obj.unit || '')
+                }
             ] : [];
 
             // Колонки объемов и выполнения (показываем только если showVolume = true)
@@ -1264,6 +1307,7 @@ const ScheduleManager = {
                     width: 100,
                     resize: true,
                     template: (obj) => {
+                        if (obj.type === 'project') return '';
                         const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
                         const completed = Number(obj.completedQuantity || 0);
                         if (!total && !completed) return '';
@@ -1280,6 +1324,7 @@ const ScheduleManager = {
                     width: 100,
                     resize: true,
                     template: (obj) => {
+                        if (obj.type === 'project') return '';
                         const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
                         const completed = Number(obj.completedQuantity || 0);
                         const remaining = Math.max(0, total - completed);
@@ -1648,6 +1693,10 @@ const ScheduleManager = {
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pickaxe-icon lucide-pickaxe"><path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3L11 9.999"/><path d="M15.973 4.027A13 13 0 0 0 5.902 2.373c-1.398.342-1.092 2.158.277 2.601a19.9 19.9 0 0 1 5.822 3.024"/><path d="M16.001 11.999a19.9 19.9 0 0 1 3.024 5.824c.444 1.369 2.26 1.676 2.603.278A13 13 0 0 0 20 8.069"/><path d="M18.352 3.352a1.205 1.205 0 0 0-1.704 0l-5.296 5.296a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l5.296-5.296a1.205 1.205 0 0 0 0-1.704z"/></svg>
                             <span>Подрядчики</span>
                         </button>
+                        <button type="button" class="schedule-bottom-tab" data-tab="monitoring" role="tab" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            <span>Мониторинг 3D</span>
+                        </button>
                     </div>
                     <button type="button" class="schedule-bottom-toggle" aria-label="Свернуть/развернуть панель" title="Свернуть/развернуть">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1689,6 +1738,9 @@ const ScheduleManager = {
                             <div class="schedule-bottom-pane" data-pane="contractors">
                                 <div style="color: var(--gray-700);">Подрядчики (в разработке)</div>
                             </div>
+                            <div class="schedule-bottom-pane" data-pane="monitoring" id="monitoring-pane">
+                                <div style="color: var(--gray-700);">Загрузка мониторинга...</div>
+                            </div>
                         </div>
                         
                         <!-- Правая колонка: Детали задачи -->
@@ -1722,6 +1774,7 @@ const ScheduleManager = {
         `;
 
         this.initBottomPanel();
+        this.initFilters();
 
         // Инициализация DHTMLX Gantt
         this.initGantt();
@@ -1966,6 +2019,12 @@ const ScheduleManager = {
             }
         }
 
+        if (this.bottomPanel.isOpen && this.bottomPanel.activeTab === 'monitoring') {
+            if (window.MonitoringManager) {
+                window.MonitoringManager.init(this.currentProjectId);
+            }
+        }
+
         if (this.bottomPanel.isOpen) {
             bottom.classList.add('is-open');
             this.bottomPanel.openHeightPx = h;
@@ -2102,6 +2161,35 @@ const ScheduleManager = {
         gantt.config.keep_grid_width = false;
         gantt.config.grid_resize = true;
 
+        // Фильтрация задач
+        gantt.attachEvent("onBeforeTaskDisplay", (id, task) => {
+            const noSectionFilter = this.filters.sections.length === 0;
+            const noFloorFilter = this.filters.floors.length === 0;
+            if (noSectionFilter && noFloorFilter) return true;
+
+            // Проверяем саму задачу и всех её родителей
+            let current = task;
+            while (current) {
+                const text = current.text || '';
+                const isSectionNode = (text.includes('Секция') || text.includes('Блок')) && !text.includes('Этаж');
+                const isFloorNode = text.includes('Этаж') || text.match(/Level|Storey/i);
+
+                if (isSectionNode && !noSectionFilter && !this.filters.sections.includes(text)) {
+                    return false;
+                }
+                if (isFloorNode && !noFloorFilter && !this.filters.floors.includes(text)) {
+                    return false;
+                }
+
+                if (!current.parent || current.parent === 0 || current.parent === '0') break;
+                try {
+                    current = gantt.getTask(current.parent);
+                } catch (e) { break; }
+            }
+
+            return true;
+        });
+
         // Отключаем стандартное редактирование через Lightbox по двойному клику
         gantt.config.details_on_dblclick = false;
         gantt.config.details_on_create = false;
@@ -2111,14 +2199,20 @@ const ScheduleManager = {
             { name: "text", label: "Название задачи", tree: true, width: 360, resize: true },
             { name: "start_date", label: "Начало", align: "center", width: 120, resize: true },
             { name: "end_date", label: "Окончание", align: "center", width: 120, resize: true },
-            { name: "duration", label: "Длит.", align: "center", width: 60, resize: true },
+            { name: "duration", label: "Длит.", align: "center", width: 60, resize: true, template: (obj) => obj.type === 'project' ? '' : obj.duration },
             {
                 name: "progress", label: "%", align: "center", width: 50, resize: true, template: function (obj) {
                     return Math.round(obj.progress * 100) + "%";
                 }
             },
-            { name: "quantity", label: "Объем", align: "center", width: 70, resize: true, hide: true },
-            { name: "unit", label: "Ед.изм.", align: "center", width: 100, resize: true, hide: true },
+            {
+                name: "quantity", label: "Объем", align: "center", width: 70, resize: true, hide: true,
+                template: (obj) => obj.type === 'project' ? '' : (obj.quantity || '')
+            },
+            {
+                name: "unit", label: "Ед.изм.", align: "center", width: 100, resize: true, hide: true,
+                template: (obj) => obj.type === 'project' ? '' : (obj.unit || '')
+            },
             {
                 name: "total_qty",
                 label: "Физ. объем",
@@ -2142,6 +2236,7 @@ const ScheduleManager = {
                 width: 100,
                 resize: true,
                 template: (obj) => {
+                    if (obj.type === 'project') return '';
                     const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
                     const completed = Number(obj.completedQuantity || 0);
                     if (!total && !completed) return '';
@@ -2156,6 +2251,7 @@ const ScheduleManager = {
                 width: 100,
                 resize: true,
                 template: (obj) => {
+                    if (obj.type === 'project') return '';
                     const total = this.calculatePhysicalVolume(obj.quantity, obj.unit);
                     const completed = Number(obj.completedQuantity || 0);
                     const remaining = Math.max(0, total - completed);
@@ -2251,6 +2347,23 @@ const ScheduleManager = {
         gantt.attachEvent("onAfterTaskUpdate", (id) => {
             // Не пересчитываем во время наших автоправок
             if (this.isAutoUpdatingParents) return true;
+
+            // Sync progress with completedQuantity locally for immediate table update
+            const task = gantt.getTask(id);
+            if (task && task.type !== 'project' && task.quantity) {
+                const total = this.calculatePhysicalVolume(task.quantity, task.unit);
+                if (total > 0) {
+                    const expectedComp = Number((task.progress * total).toFixed(4));
+                    // Update only if difference is significant to avoid infinite loops or jitter
+                    if (Math.abs((task.completedQuantity || 0) - expectedComp) > 0.001) {
+                        task.completedQuantity = expectedComp;
+                        // refreshTask instead of updateTask to avoid triggering another onAfterTaskUpdate if possible
+                        // or just rely on isAutoUpdatingParents if we used updateTask
+                        gantt.refreshTask(id);
+                    }
+                }
+            }
+
             this.rollupParentChainFrom(id);
             return true;
         });
@@ -2839,10 +2952,17 @@ const ScheduleManager = {
         UI.showLoading(true, 'Загрузка данных...');
         let sources;
         try {
-            sources = await api.getAssignmentSources(this.currentProjectId);
+            const pid = this.currentProjectId || ScheduleManager.currentProjectId;
+            if (!pid) {
+                console.error('[WDW] No project ID found');
+                throw new Error('Project ID not set');
+            }
+            sources = await api.getAssignmentSources(pid);
+            console.log('[WDW] Sources loaded:', sources);
         } catch (e) {
+            console.error('[WDW] Init error:', e);
             UI.showLoading(false);
-            UI.showNotification('Ошибка загрузки блоков/смет', 'error');
+            UI.showNotification('Ошибка загрузки данных: ' + (e.message || 'Неизвестная ошибка'), 'error');
             return;
         } finally {
             UI.showLoading(false);
@@ -3255,10 +3375,13 @@ const ScheduleManager = {
 
             // Распределяем по ровну остаток на выбранные этажи
             try {
+                const pid = ScheduleManager.currentProjectId;
+                if (!pid) throw new Error('Project ID lost');
+
                 UI.showLoading(true, 'Проверка остатков...');
 
                 // Всегда переполучаем актуальные остатки перед записью
-                const latest = await api.getAssignmentEstimate(this.currentProjectId, state.activeBlockId, state.activeEstimateId);
+                const latest = await api.getAssignmentEstimate(pid, state.activeBlockId, state.activeEstimateId);
                 state.estimateData = latest;
                 const wts = getSelectedWorkTypes();
 
@@ -3370,6 +3493,7 @@ const ScheduleManager = {
                 this.ensureTodayMarker();
                 // Подтягиваем даты родителей сразу после загрузки
                 await this.rollupAllParents();
+                this.populateFilters();
             } else {
                 UI.showNotification('График пуст. Нажмите "Сформировать из сметы"', 'info');
                 this.ensureTodayMarker();
@@ -3396,6 +3520,122 @@ const ScheduleManager = {
             UI.showNotification('Ошибка очистки графика: ' + error.message, 'error');
         } finally {
             UI.showLoading(false);
+        }
+    },
+
+    initFilters() {
+        const filterBtn = document.getElementById('schedule-filter-btn');
+        const dropdown = document.getElementById('schedule-filter-dropdown');
+        const resetBtn = document.getElementById('schedule-filter-reset-btn');
+        const applyBtn = document.getElementById('schedule-filter-apply-btn');
+
+        if (!filterBtn || !dropdown) return;
+
+        filterBtn.onclick = (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('hidden');
+        };
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && e.target !== filterBtn && !filterBtn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        if (resetBtn) {
+            resetBtn.onclick = () => {
+                this.filters.sections = [];
+                this.filters.floors = [];
+                this.populateFilters();
+                if (typeof gantt !== 'undefined') {
+                    gantt.render();
+                }
+                dropdown.classList.add('hidden');
+            };
+        }
+
+        if (applyBtn) {
+            applyBtn.onclick = () => {
+                const sectionChecks = document.querySelectorAll('#filter-sections-list input[type="checkbox"]:checked');
+                const floorChecks = document.querySelectorAll('#filter-floors-list input[type="checkbox"]:checked');
+
+                // If all are checked, we treat it as no filter
+                const allSections = document.querySelectorAll('#filter-sections-list input[type="checkbox"]');
+                const allFloors = document.querySelectorAll('#filter-floors-list input[type="checkbox"]');
+
+                if (sectionChecks.length === allSections.length) {
+                    this.filters.sections = [];
+                } else {
+                    this.filters.sections = Array.from(sectionChecks).map(c => c.value);
+                }
+
+                if (floorChecks.length === allFloors.length) {
+                    this.filters.floors = [];
+                } else {
+                    this.filters.floors = Array.from(floorChecks).map(c => c.value);
+                }
+
+                if (typeof gantt !== 'undefined') {
+                    gantt.render();
+                }
+                dropdown.classList.add('hidden');
+            };
+        }
+    },
+
+    populateFilters() {
+        if (typeof gantt === 'undefined') return;
+
+        const sectionsMap = new Map();
+        const floorsMap = new Map();
+
+        gantt.eachTask((task) => {
+            if (!task) return;
+            const text = task.text || '';
+
+            // Only consider project types for filters (Queue, Section, Floor)
+            if (task.type !== 'project') return;
+
+            const isSection = (text.includes('Секция') || text.includes('Блок')) && !text.includes('Этаж');
+            const isFloor = text.includes('Этаж') || text.match(/Level|Storey/i);
+
+            if (isSection) {
+                sectionsMap.set(text, text);
+            } else if (isFloor) {
+                floorsMap.set(text, text);
+            }
+        });
+
+        const sectionsList = document.getElementById('filter-sections-list');
+        const floorsList = document.getElementById('filter-floors-list');
+
+        if (sectionsList) {
+            if (sectionsMap.size === 0) {
+                sectionsList.innerHTML = '<div style="padding: 4px 8px; color: var(--gray-400); font-size: 12px;">Секции не найдены</div>';
+            } else {
+                const sorted = Array.from(sectionsMap.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+                sectionsList.innerHTML = sorted.map(name => `
+                    <label class="dropdown-item">
+                        <input type="checkbox" value="${this.escapeHtml(name)}" ${this.filters.sections.includes(name) || this.filters.sections.length === 0 ? 'checked' : ''}>
+                        <span class="dropdown-label">${this.escapeHtml(name)}</span>
+                    </label>
+                `).join('');
+            }
+        }
+
+        if (floorsList) {
+            if (floorsMap.size === 0) {
+                floorsList.innerHTML = '<div style="padding: 4px 8px; color: var(--gray-400); font-size: 12px;">Этажи не найдены</div>';
+            } else {
+                const sorted = Array.from(floorsMap.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+                floorsList.innerHTML = sorted.map(name => `
+                    <label class="dropdown-item">
+                        <input type="checkbox" value="${this.escapeHtml(name)}" ${this.filters.floors.includes(name) || this.filters.floors.length === 0 ? 'checked' : ''}>
+                        <span class="dropdown-label">${this.escapeHtml(name)}</span>
+                    </label>
+                `).join('');
+            }
         }
     }
 };

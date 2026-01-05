@@ -115,6 +115,11 @@ class ProBIMApp {
             const lastProjectId = localStorage.getItem('probim_last_project_id');
             const projectToSelect = this.projects.find(p => p.id === lastProjectId) || this.projects[0];
 
+            if (projectToSelect?.name === 'Главный офис') {
+                this.currentRibbonTab = 'settings';
+                this.applyRibbonTabToUI('settings');
+            }
+
             if (projectToSelect) {
                 // Передаем true вторым параметром, чтобы сигнализировать о восстановлении состояния
                 this.selectProject(projectToSelect.id, true);
@@ -272,7 +277,8 @@ class ProBIMApp {
             const sep = group?.previousElementSibling;
             if (isMainOffice) {
                 if (group) group.style.display = '';
-                if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = '';
+                // Don't touch the separator here; it belongs to the previous group (Project), 
+                // which handles its own visibility.
             } else {
                 if (group) group.style.display = 'none';
                 if (sep && sep.classList.contains('ribbon-separator')) sep.style.display = 'none';
@@ -280,9 +286,9 @@ class ProBIMApp {
         }
 
         // Auto-switch tab if necessary
-        if (isMainOffice && !['settings', 'dashboard'].includes(this.currentRibbonTab)) {
-            this.currentRibbonTab = 'dashboard';
-            this.applyRibbonTabToUI('dashboard');
+        if (isMainOffice && this.currentRibbonTab !== 'settings') {
+            this.currentRibbonTab = 'settings';
+            this.applyRibbonTabToUI('settings');
         }
     }
 
@@ -304,6 +310,16 @@ class ProBIMApp {
             const projectNameEl = document.getElementById('selected-project-name');
             if (projectNameEl) {
                 projectNameEl.textContent = project.name;
+            }
+
+            // Если выбран Главный офис, сразу переключаемся на вкладку настроек
+            if (project.name === 'Главный офис') {
+                this.currentRibbonTab = 'settings';
+                this.applyRibbonTabToUI('settings');
+            } else if (!isRestoring) {
+                // При переключении на обычный проект открываем Главную
+                this.currentRibbonTab = 'dashboard';
+                this.applyRibbonTabToUI('dashboard');
             }
         }
 
@@ -1393,11 +1409,18 @@ class ProBIMApp {
         });
 
         document.getElementById('assign-work-wizard-btn')?.addEventListener('click', () => {
+            if (this.currentProjectId) {
+                ScheduleManager.currentProjectId = this.currentProjectId;
+            }
             ScheduleManager.showWorkDistributionWizard();
         });
 
-
-        // Schedule view tools (expand/collapse all)
+        document.getElementById('gpr-assign-work-wizard-btn')?.addEventListener('click', () => {
+            if (this.currentProjectId) {
+                GPRManager.currentProjectId = this.currentProjectId;
+            }
+            GPRManager.showWorkDistributionWizard();
+        });
         document.getElementById('schedule-toggle-volumes-btn')?.addEventListener('click', (e) => {
             const btn = e.currentTarget;
             const isActive = btn.classList.toggle('active');
@@ -1430,11 +1453,10 @@ class ProBIMApp {
         });
 
         // GPR buttons
-        document.getElementById('gpr-assign-work-wizard-btn')?.addEventListener('click', () => {
-            GPRManager.showWorkDistributionWizard();
-        });
-
         document.getElementById('gpr-project-settings-btn')?.addEventListener('click', () => {
+            if (this.currentProjectId) {
+                GPRManager.currentProjectId = this.currentProjectId;
+            }
             GPRManager.showProjectSettingsModal();
         });
 

@@ -6224,6 +6224,7 @@
           // Prepare items for backend
           const itemsPayload = items.map(i => ({
             workTypeId: i.id, // Save the original ID for tracking
+            estimateId: i.estimateId, // Ensure estimateId is included for CSV export
             blockName: i.blockName,
             estimateName: i.estimateName,
             stageName: i.stageName,

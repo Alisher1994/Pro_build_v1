@@ -1204,6 +1204,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 }
 
 .account-switcher {
+    position: relative;
     border: 1px solid transparent;
     border-radius: var(--radius-md);
     padding: 2px var(--spacing-sm);
@@ -1218,6 +1219,101 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     height: 40px;
     color: var(--white);
 }
+
+/* Account Dropdown */
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    width: 240px;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    display: none;
+    flex-direction: column;
+    padding: 6px 0;
+    z-index: 2000;
+    cursor: default;
+}
+
+.account-dropdown.visible {
+    display: flex;
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.account-dropdown .dropdown-header {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.account-dropdown .dropdown-header .user-name-full {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--gray-900);
+}
+
+.account-dropdown .dropdown-header .user-role {
+    font-size: 11px;
+    color: var(--gray-500);
+}
+
+.account-dropdown .dropdown-divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 4px 0;
+}
+
+.account-dropdown .dropdown-item {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--gray-700);
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.account-dropdown .dropdown-item:hover {
+    background: var(--gray-50);
+    color: var(--primary);
+}
+
+.account-dropdown .dropdown-item i {
+    width: 16px;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.account-dropdown .dropdown-item.logout {
+    color: var(--accent-red);
+}
+
+.account-dropdown .dropdown-item.logout:hover {
+    background: #fff5f5;
+}
+
 
 .account-switcher:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -1272,6 +1368,8 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     background: var(--white);
     border-bottom: 1px solid var(--gray-300);
     flex-shrink: 0;
+    position: relative;
+    z-index: 100;
 }
 
 .office-ribbon.disabled {
@@ -1358,7 +1456,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     min-height: 84px;
     /* Высота активной панели для стабильности */
     max-height: 500px;
-    overflow: hidden;
+    overflow: visible;
     transition: max-height 0.25s ease, opacity 0.2s ease;
     opacity: 1;
 }
@@ -1368,6 +1466,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     max-height: 0;
     opacity: 0;
     pointer-events: none;
+    overflow: hidden;
 }
 
 .office-ribbon.collapsed .ribbon-toggle svg {
@@ -1382,6 +1481,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 
 .ribbon-panel.active {
     display: flex;
+    overflow: visible;
 }
 
 .ribbon-group {
@@ -4000,5 +4100,111 @@ body:has(.sidebar.collapsed) .chat-sidebar.position-left {
     100% {
         left: 100%;
         width: 10%;
+    }
+}
+
+/* ========================================
+   Schedule Bottom Panel & Resizer
+   ======================================== */
+
+.schedule-bottom-panel {
+    /* Ensure basic positioning if not already defined */
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    /* Adjust left to match sidebar or layout. Assuming .sidebar width ~250px or handled by flex layout.
+       If it is inside .content-area, it might need absolute positioning relative to content-area.
+       Let's assume it is 250px left for now based on typical sidebar.
+       However, checking gpr.js, it seems to be injected into #content-area.
+       If it is in #content-area, position absolute might relate to content-area if it has position relative.
+     */
+    left: 250px;
+    border-top: 1px solid var(--gray-300);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    background: #fff;
+    /* Default collapsed height */
+    height: 48px;
+    transition: height 0.3s ease;
+}
+
+/* Collapsed state adjustments, if any */
+.schedule-bottom-panel:not(.is-open) {
+    height: 48px !important;
+}
+
+.schedule-bottom-panel.is-open {
+    height: 300px;
+    /* Default open height */
+}
+
+/* Disable transition during drag */
+.schedule-bottom-panel.is-resizing {
+    transition: none !important;
+    user-select: none;
+}
+
+.schedule-bottom-resizer {
+    position: absolute;
+    top: -3px;
+    /* Hang slightly above to be grabbable */
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: ns-resize;
+    z-index: 1001;
+    background: transparent;
+}
+
+.schedule-bottom-resizer:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Handle Grip */
+.schedule-bottom-resizer::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    background: var(--gray-300);
+    border-radius: 2px;
+    pointer-events: none;
+    transition: background 0.2s;
+}
+
+.schedule-bottom-resizer:hover::after {
+    background: var(--primary);
+}
+
+/* ========================================
+   Monitoring Viewer Styles
+   ======================================== */
+
+#monitoring-viewer-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid var(--gray-300);
+    transition: all 0.3s ease;
+}
+
+#monitoring-viewer-container:hover {
+    box-shadow: inset 0 0 20px rgba(32, 115, 69, 0.2);
+}
+
+.turbo-loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: turbo-spin 0.8s linear infinite;
+}
+
+@keyframes turbo-spin {
+    to {
+        transform: rotate(360deg);
     }
 }

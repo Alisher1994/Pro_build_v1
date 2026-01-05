@@ -1381,3 +1381,5 @@ const IFCViewerManager = {
         this.persistentHighlightColor = null;
     }
 };
+
+window.IFCViewerManager = IFCViewerManager;

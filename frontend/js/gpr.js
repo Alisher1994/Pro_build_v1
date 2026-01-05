@@ -98,6 +98,7 @@ const GPRManager = {
                 </div>
             </div>
             <div id="gpr-bottom" class="schedule-bottom-panel">
+                <div class="schedule-bottom-resizer"></div>
                 <div class="schedule-bottom-header">
                     <div class="schedule-bottom-tabs">
                         <button type="button" class="schedule-bottom-tab active" data-tab="resources">
@@ -137,6 +138,37 @@ const GPRManager = {
                 this.setBottomPanelState(true);
             };
         });
+
+        // Initialize Resizer
+        const resizer = bottom.querySelector('.schedule-bottom-resizer');
+        if (resizer) {
+            let startY, startHeight;
+
+            const doDrag = (e) => {
+                const newHeight = startHeight + (startY - e.clientY);
+                if (newHeight > 100 && newHeight < (window.innerHeight - 100)) {
+                    bottom.style.height = `${newHeight}px`;
+                }
+            };
+
+            const stopDrag = () => {
+                document.documentElement.removeEventListener('mousemove', doDrag, false);
+                document.documentElement.removeEventListener('mouseup', stopDrag, false);
+                bottom.classList.remove('is-resizing');
+            };
+
+            resizer.addEventListener('mousedown', (e) => {
+                if (!bottom.classList.contains('is-open')) return; // Only resize if open
+
+                startY = e.clientY;
+                startHeight = parseInt(document.defaultView.getComputedStyle(bottom).height, 10);
+
+                bottom.classList.add('is-resizing'); // Optional class for styling during resize
+                document.documentElement.addEventListener('mousemove', doDrag, false);
+                document.documentElement.addEventListener('mouseup', stopDrag, false);
+                e.preventDefault(); // Prevent text selection
+            }, false);
+        }
     },
 
     setBottomPanelState(isOpen) {
@@ -144,6 +176,8 @@ const GPRManager = {
         if (!bottom) return;
         this.bottomPanel.isOpen = isOpen;
         bottom.classList.toggle('is-open', isOpen);
+        // Reset height if closing, or restore default if opening without height set? 
+        // Actually CSS handles default height. We might want to keep resized height.
     },
 
     initGantt() {
@@ -595,8 +629,6 @@ const GPRManager = {
     // ============================================================
 
     async showWorkDistributionWizard() {
-        if (!this.currentProjectId) return;
-
         // Ensure styles
         if (!document.getElementById('wdw-styles')) {
             const s = document.createElement('style');
@@ -626,9 +658,15 @@ const GPRManager = {
         UI.showLoading(true, 'Подготовка мастера...');
         let sources;
         try {
-            sources = await api.getAssignmentSources(this.currentProjectId);
+            const pid = this.currentProjectId || GPRManager.currentProjectId;
+            if (!pid) {
+                console.error('[GPR WDW] No project ID found');
+                throw new Error('Project ID not set');
+            }
+            sources = await api.getAssignmentSources(pid);
         } catch (e) {
-            UI.showNotification('Ошибка загрузки данных', 'error');
+            console.error('[GPR WDW] Init error:', e);
+            UI.showNotification('Ошибка загрузки данных: ' + (e.message || 'Неизвестная ошибка'), 'error');
             return;
         } finally {
             UI.showLoading(false);
@@ -840,6 +878,12 @@ const GPRManager = {
         };
 
         $btnSave.onclick = async () => {
+            const pid = GPRManager.currentProjectId;
+            if (!pid) {
+                UI.showNotification('Project ID lost', 'error');
+                return;
+            }
+
             const wts = [];
             state.estimateData.stages.forEach(st => st.workTypes.forEach(wt => {
                 if (state.selectedWorkTypeIds.has(wt.id)) wts.push(wt);
@@ -858,7 +902,7 @@ const GPRManager = {
                         q = Math.round(q * 100) / 100;
                         if (q <= 0) continue;
 
-                        await api.assignWorkTypeToFloor(this.currentProjectId, floors[i], wt.id, q, 'add');
+                        await api.assignWorkTypeToFloor(pid, floors[i], wt.id, q, 'add');
                     }
                 }
                 UI.closeModal();

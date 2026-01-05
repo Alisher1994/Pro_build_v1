@@ -22,7 +22,34 @@ const ensureBaseProject = async () => {
     logger.error('Failed to seed base project:', e);
   }
 };
-ensureBaseProject();
+
+const ensureDemoProject = async () => {
+  try {
+    // Check if we only have the base project
+    const count = await prisma.project.count();
+    // If only 1 (Base Project) or 0, create a demo one
+    if (count <= 1) {
+      const demoExists = await prisma.project.findFirst({ where: { name: 'Строительство ЖК' } });
+      if (!demoExists) {
+        await prisma.project.create({
+          data: {
+            name: 'Строительство ЖК',
+            description: 'Демонстрационный проект жилого комплекса',
+            status: 'active',
+            address: 'ул. Строителей, д. 1',
+            startDate: new Date(),
+            endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+          }
+        });
+        logger.info('Seeded demo project "Строительство ЖК"');
+      }
+    }
+  } catch (e) {
+    logger.error('Failed to seed demo project:', e);
+  }
+};
+
+ensureBaseProject().then(() => ensureDemoProject());
 
 // ========================================
 // GET /api/projects - Получить все проекты

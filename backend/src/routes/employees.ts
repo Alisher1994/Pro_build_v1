@@ -53,9 +53,9 @@ router.post('/', async (req, res) => {
     try {
         const body = req.body;
 
-        // Simple validation (email обязателен, т.к. колонка non-null unique)
-        if (!body.lastName || !body.firstName || !body.phone || !body.positionId || !body.departmentId || !body.projectId || !body.password || !body.email) {
-            return res.status(400).json({ error: 'Заполните обязательные поля: Фамилия, Имя, Телефон, Email, Пароль, Отдел, Должность, Объект' });
+        // Simple validation (email now optional)
+        if (!body.lastName || !body.firstName || !body.phone || !body.positionId || !body.departmentId || !body.projectId || !body.password) {
+            return res.status(400).json({ error: 'Заполните обязательные поля: Фамилия, Имя, Телефон, Пароль, Отдел, Должность, Объект' });
         }
 
         // Fetch position & project to validate
@@ -116,7 +116,7 @@ router.post('/', async (req, res) => {
             phone: body.phone,
             corporatePhone: body.corporatePhone || null,
             password: await bcrypt.hash(body.password, 10),
-            email: body.email?.trim().toLowerCase(),
+            email: body.email ? body.email.trim().toLowerCase() : null, // Handle empty string as null
             positionId: body.positionId,
             departmentId: body.departmentId,
             projectId: body.projectId,
@@ -171,11 +171,15 @@ router.put('/:id', async (req, res) => {
                     data[f] = Number(body[f]);
                 } else if (f === 'password' && body[f]) {
                     data[f] = await bcrypt.hash(body[f], 10);
+                } else if (f === 'email') {
+                    data[f] = body[f] ? body[f].trim().toLowerCase() : null;
                 } else {
                     data[f] = body[f] === '' ? null : body[f];
                 }
             }
         }
+
+        // ... (rest of the logic remains until the update)
 
         // If positionId or projectId is changed, check RP/ZRP & Head uniqueness
         if (body.positionId || body.projectId) {
@@ -210,7 +214,7 @@ router.put('/:id', async (req, res) => {
                             }
                         });
                         if (existing) {
-                            return res.status(400).json({ error: `На этом проекте уже назначен ${targetPos.name}` });
+                            return res.status(400).json({ error: `На этом проекте уже назначен ${targetPos.name}: ${existing.lastName} ${existing.firstName}` });
                         }
                     }
 
@@ -229,7 +233,7 @@ router.put('/:id', async (req, res) => {
                             }
                         });
                         if (existingHead) {
-                            return res.status(400).json({ error: 'В этом отделе на данном объекте уже есть руководитель' });
+                            return res.status(400).json({ error: `В этом отделе на данном объекте уже есть руководитель: ${existingHead.lastName} ${existingHead.firstName}` });
                         }
                     }
 
@@ -248,6 +252,7 @@ router.put('/:id', async (req, res) => {
         });
         res.json(sanitizeEmployee(updated));
     } catch (error: any) {
+        if (error.code === 'P2002') return res.status(400).json({ error: 'Email уже используется другим сотрудником' });
         res.status(500).json({ error: error.message });
     }
 });

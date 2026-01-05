@@ -237,8 +237,8 @@ const SettingsManager = {
                                     <input type="email" id="sc-email" value="${data.email || ''}" placeholder="example@example.com">
                                 </div>
                                 <div class="form-group">
-                                    <label>Пароль *</label>
-                                    <input type="text" id="sc-password" value="${data.password || ''}" required>
+                                    <label>Пароль ${mode === 'create' ? '*' : ''}</label>
+                                    <input type="text" id="sc-password" value="" placeholder="${mode === 'edit' ? '• • • • (Оставьте пустым, чтобы не менять)' : 'Введите 4-значный код'}" ${mode === 'create' ? 'required' : ''}>
                                 </div>
                                 <div class="form-group">
                                     <label>Статус</label>
@@ -445,8 +445,8 @@ const SettingsManager = {
                 const account = overlay.querySelector('#sc-account').value.trim();
                 const address = overlay.querySelector('#sc-address').value.trim();
 
-                if (!company || !firstName || !lastName || !phone || !password) {
-                    UI.showNotification('Заполните обязательные поля: Название, Фамилия, Имя, Телефон, Пароль', 'error');
+                if (!company || !firstName || !lastName || !phone || (mode === 'create' && !password)) {
+                    UI.showNotification('Заполните обязательные поля: Название, Фамилия, Имя, Телефон' + (mode === 'create' ? ', Пароль' : ''), 'error');
                     return;
                 }
 
@@ -462,7 +462,7 @@ const SettingsManager = {
                     middleName,
                     phone,
                     email,
-                    password,
+                    // password (conditional)
                     status,
                     mfo,
                     inn,
@@ -474,11 +474,15 @@ const SettingsManager = {
                     directorPhoto: directorPhotoData
                 };
 
+                if (password) {
+                    payload.password = password;
+                }
+
                 try {
                     const endpoint = mode === 'edit' ? `/api/subcontractors/${data.id}` : '/api/subcontractors';
                     const method = mode === 'edit' ? 'PUT' : 'POST';
 
-                    const res = await fetch(endpoint, {
+                    const res = await api.request(endpoint, {
                         method,
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -517,7 +521,7 @@ const SettingsManager = {
                     const ok = await UI.showConfirmDialog('Удаление субподрядчика', 'Вы уверены, что хотите удалить этого субподрядчика?');
                     if (!ok) return;
                     try {
-                        const res = await fetch(`/api/subcontractors/${id}`, { method: 'DELETE' });
+                        const res = await api.request(`/api/subcontractors/${id}`, { method: 'DELETE' });
                         if (!res.ok) throw new Error('Delete failed');
                         await fetchSubcontractors();
                         renderTable();
@@ -830,26 +834,25 @@ const SettingsManager = {
                 }
             }
             try {
-                const url = isEdit ? `/api/positions/${pos.id}` : '/api/positions';
-                const method = isEdit ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        departmentId,
-                        isHead,
-                        privileges: { read, edit, windows: ['dashboard'] }
-                    })
-                });
-                if (res.ok) {
-                    overlay.remove();
-                    this.showStaffManagement(projectId, { deptId: departmentId });
+                const data = {
+                    name,
+                    departmentId,
+                    isHead,
+                    privileges: JSON.stringify({ read, edit, windows: ['dashboard'] }) // Сервер ждет строку
+                };
+
+                if (isEdit) {
+                    await api.updatePosition(pos.id, data);
                 } else {
-                    const err = await res.json();
-                    UI.showNotification(err.error, 'error');
+                    await api.createPosition(data);
                 }
-            } catch (e) { UI.showNotification('Ошибка сети', 'error'); }
+
+                overlay.remove();
+                this.showStaffManagement(projectId, { deptId: departmentId });
+            } catch (e) {
+                console.error(e);
+                UI.showNotification(e.message, 'error');
+            }
         };
         document.getElementById('modal-container').appendChild(overlay);
         if (!isEdit) document.getElementById('new-pos-name').focus();
@@ -1460,11 +1463,13 @@ const SettingsManager = {
                         const name = document.getElementById('new-dept-name').value;
                         if (!name) return;
                         try {
-                            const res = await fetch('/api/departments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-                            if (res.ok) this.showStaffManagement(projectId);
-                            else { const err = await res.json(); UI.showNotification(err.error, 'error'); }
+                            await api.createDepartment({ name });
+                            this.showStaffManagement(projectId);
                             overlay.remove();
-                        } catch (e) { console.error(e); }
+                        } catch (e) {
+                            console.error(e);
+                            UI.showNotification(e.message, 'error');
+                        }
                     };
                     document.getElementById('modal-container').appendChild(overlay);
                     document.getElementById('new-dept-name').focus();
@@ -2333,5 +2338,45 @@ const SettingsManager = {
             console.error('Error saving project settings:', error);
             UI.showNotification('Ошибка сохранения настроек: ' + error.message, 'error');
         }
+    },
+
+    async showProfileSettings() {
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = `
+            <div style="padding: 40px; max-width: 600px; margin: 0 auto;">
+                <h1 style="margin-bottom: 24px;">Настройки профиля</h1>
+                <div style="background: white; padding: 32px; border-radius: 12px; border: 1px solid var(--gray-200); text-align: center;">
+                     <div style="width: 80px; height: 80px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; margin: 0 auto 16px;">
+                        ?
+                    </div>
+                    <p style="color: var(--gray-600);">Функциональность редактирования профиля администратора находится в разработке.</p>
+                </div>
+            </div>
+        `;
+    },
+
+    async showSecurity() {
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = `
+            <div style="padding: 40px; max-width: 600px; margin: 0 auto;">
+                <h1 style="margin-bottom: 24px;">Безопасность</h1>
+                <div style="background: white; padding: 32px; border-radius: 12px; border: 1px solid var(--gray-200);">
+                    <h3 style="margin-top: 0;">Смена пароля</h3>
+                     <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px;">Текущий пароль</label>
+                        <input type="password" class="form-control" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px;">Новый пароль</label>
+                        <input type="password" class="form-control" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label style="display: block; margin-bottom: 8px;">Подтверждение пароля</label>
+                        <input type="password" class="form-control" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="UI.showNotification('Функция в разработке', 'info')">Обновить пароль</button>
+                </div>
+            </div>
+        `;
     }
 };

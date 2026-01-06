@@ -25,7 +25,7 @@ const EstimateManager = {
 
     renderStatusDropdown(estimateId, currentStatus) {
         const config = this.statusConfig[currentStatus] || this.statusConfig.draft;
-        
+
         let optionsHtml = '';
         for (const [key, val] of Object.entries(this.statusConfig)) {
             optionsHtml += `
@@ -63,12 +63,12 @@ const EstimateManager = {
 
     toggleStatusDropdown(estimateId, event) {
         if (event) event.stopPropagation();
-        
+
         const dropdown = document.getElementById(`status-dropdown-${estimateId}`);
         if (!dropdown) return;
 
         const isActive = dropdown.classList.contains('active');
-        
+
         // Закрываем все остальные открытые дропдауны
         document.querySelectorAll('.status-dropdown.active').forEach(d => {
             if (d !== dropdown) d.classList.remove('active');
@@ -79,7 +79,7 @@ const EstimateManager = {
 
     async selectStatus(estimateId, newStatus, event) {
         if (event) event.stopPropagation();
-        
+
         const dropdown = document.getElementById(`status-dropdown-${estimateId}`);
         if (dropdown) dropdown.classList.remove('active');
 
@@ -126,7 +126,7 @@ const EstimateManager = {
         try {
             UI.showNotification('Подготовка данных для экспорта...', 'info');
             const estimate = await api.getFullEstimate(this.currentEstimateId);
-            
+
             if (!estimate || !estimate.sections) {
                 throw new Error('Данные сметы не получены');
             }
@@ -217,7 +217,7 @@ const EstimateManager = {
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             const fileName = `Смета_${estimate.name || 'export'}_${new Date().toLocaleDateString()}.csv`;
-            
+
             link.setAttribute("href", url);
             link.setAttribute("download", fileName);
             link.style.visibility = 'hidden';
@@ -235,7 +235,7 @@ const EstimateManager = {
     // Переключить фильтр в дереве
     async toggleTreeFilter(filterKey) {
         this.treeFilters[filterKey] = !this.treeFilters[filterKey];
-        
+
         // Обновляем UI переключателей, если они открыты
         const toggle = document.getElementById(`filter-toggle-${filterKey}`);
         if (toggle) {
@@ -276,21 +276,21 @@ const EstimateManager = {
     async refreshVisibleTree() {
         // Сохраняем текущие раскрытые виды работ
         const expandedWTs = new Set(this.expandedWorkTypeIds);
-        
+
         const stageIds = Array.from(this.expandedStageIds);
         for (const stageId of stageIds) {
             await this.loadWorkTypesTree(stageId);
-            
+
             // После перерисовки видов работ, нужно заново раскрыть те, что были раскрыты
             const stageContainer = document.getElementById(`stage-${stageId}-content`);
             if (!stageContainer) continue;
-            
+
             const resourceBlocks = stageContainer.querySelectorAll('[id^="worktype-"][id$="-resources"]');
             for (const rb of resourceBlocks) {
                 const mm = rb.id.match(/^worktype-(.+)-resources$/);
                 if (!mm || !mm[1]) continue;
                 const wtId = mm[1];
-                
+
                 if (expandedWTs.has(wtId)) {
                     const wtIcon = document.getElementById(`worktype-icon-${wtId}`);
                     if (wtIcon) {
@@ -311,7 +311,7 @@ const EstimateManager = {
         if (!container || !btn) return;
 
         const isVisible = container.style.display === 'flex';
-        
+
         if (isVisible) {
             container.style.display = 'none';
             // Возвращаем цвет кнопки к состоянию "есть ли активные фильтры"
@@ -366,7 +366,7 @@ const EstimateManager = {
                 </div>
             `;
         });
-        
+
         // Добавляем keyframes если их нет
         if (!document.getElementById('filter-animations')) {
             const style = document.createElement('style');
@@ -378,7 +378,7 @@ const EstimateManager = {
             `;
             document.head.appendChild(style);
         }
-        
+
         container.innerHTML = html;
     },
 
@@ -687,7 +687,7 @@ const EstimateManager = {
 
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
-                <div style="padding: 24px;">
+                <div style="padding: 32px 48px; max-width: 1400px; margin: 0 auto; width: 100%;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <h2 style="margin: 0;">Сметы</h2>
                     </div>
@@ -993,7 +993,7 @@ const EstimateManager = {
         try {
             await api.updateEstimate(estimateId, { status: newStatus });
             UI.showNotification('Статус сметы обновлен', 'success');
-            
+
             // Обновляем UI дропдауна без полной перезагрузки списка
             const dropdownContainer = document.querySelector(`#status-dropdown-${estimateId}`)?.parentElement;
             if (dropdownContainer) {
@@ -1435,11 +1435,11 @@ const EstimateManager = {
 
         const isCollapsed = container.classList.toggle('collapsed');
         localStorage.setItem('rightPanelCollapsed', isCollapsed);
-        
+
         if (divider) {
             divider.style.display = isCollapsed ? 'none' : 'block';
         }
-        
+
         const leftPanel = document.getElementById('left-panel');
         if (leftPanel) {
             if (isCollapsed) {
@@ -1463,19 +1463,19 @@ const EstimateManager = {
         if (window.viewerManager && typeof window.viewerManager.onResize === 'function') {
             setTimeout(() => window.viewerManager.onResize(), 300);
         }
-        
+
         // Триггерим resize для DXF вьювера
         window.dispatchEvent(new Event('resize'));
     },
 
     switchRightPanelTab(tabId) {
         this.currentRightPanelTab = tabId;
-        
+
         const container = document.getElementById('right-panel-container');
         if (container && container.classList.contains('collapsed')) {
             container.classList.remove('collapsed');
             localStorage.setItem('rightPanelCollapsed', 'false');
-            
+
             const leftPanel = document.getElementById('left-panel');
             if (leftPanel) {
                 const savedWidth = localStorage.getItem('leftPanelWidthBeforeCollapse') || localStorage.getItem('leftPanelWidth') || '60%';
@@ -1566,10 +1566,10 @@ const EstimateManager = {
         `;
         const headerBar = document.getElementById('files-header-bar');
         if (headerBar) headerBar.style.display = 'flex';
-        
+
         const listContainer = document.getElementById('files-list');
         const files = this._estimateFiles;
-        
+
         if (!files || files.length === 0) {
             listContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: var(--gray-400);">
@@ -1582,7 +1582,7 @@ const EstimateManager = {
         listContainer.innerHTML = files.map(file => {
             let iconHtml = '';
             const fileExt = file.name.split('.').pop().toLowerCase();
-            
+
             if (fileExt === 'pdf') {
                 iconHtml = `<img src="img/pdf.png" style="width: 32px; height: 32px; object-fit: contain;" alt="PDF">`;
             } else if (fileExt === 'dwg' || fileExt === 'dxf') {
@@ -1707,7 +1707,7 @@ const EstimateManager = {
 
         try {
             console.log('Initializing DXF Viewer (Three-Dxf) for:', fileUrl);
-            
+
             if (typeof THREE === 'undefined') {
                 container.innerHTML = '<div style="color: white; padding: 20px;">Ошибка: Three.js не загружен</div>';
                 return;
@@ -1722,16 +1722,16 @@ const EstimateManager = {
 
             const response = await fetch(fileUrl);
             const data = await response.text();
-            
+
             const parser = new DxfParser();
             const dxf = parser.parseSync(data);
 
             if (dxf) {
                 container.innerHTML = ''; // Очищаем текст загрузки
-                
+
                 console.log('Checking ThreeDxf library...', window.ThreeDxf);
                 const DxfViewerLib = window.ThreeDxf;
-                
+
                 if (!DxfViewerLib || !DxfViewerLib.Viewer) {
                     console.error('ThreeDxf.Viewer not found. window.ThreeDxf is:', window.ThreeDxf);
                     throw new Error('Библиотека для отображения DXF не загружена. Попробуйте обновить страницу (Ctrl+F5).');
@@ -1759,7 +1759,7 @@ const EstimateManager = {
                 if (recolored) {
                     console.log(`DXF: recolored ${recolored} white materials to dark for visibility`);
                 }
-                
+
                 // Добавляем обработчик изменения размера
                 const resizeHandler = () => {
                     if (container && container.clientWidth > 0) {
@@ -1768,7 +1768,7 @@ const EstimateManager = {
                     }
                 };
                 window.addEventListener('resize', resizeHandler);
-                
+
                 UI.showNotification('Чертеж DXF загружен', 'success');
             }
         } catch (error) {
@@ -1792,7 +1792,7 @@ const EstimateManager = {
         input.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             UI.showNotification('Загрузка файла...', 'info');
             try {
                 await api.uploadEstimateFile(this.currentEstimateId, file);
@@ -3298,7 +3298,7 @@ const EstimateManager = {
                         filtered.push(wt);
                         continue;
                     }
-                    
+
                     // Иначе проверяем, есть ли в нем ресурсы, подходящие под активные фильтры ресурсов
                     const resources = await api.getResources(wt.id);
                     const hasMatchingResource = resources.some(r => {
@@ -3308,7 +3308,7 @@ const EstimateManager = {
                         if (this.treeFilters.material && type === 'material') return true;
                         return false;
                     });
-                    
+
                     if (hasMatchingResource) {
                         filtered.push(wt);
                     }
@@ -3583,7 +3583,7 @@ const EstimateManager = {
 
             if (isFilterActive) {
                 const resourceFiltersActive = this.treeFilters.labor || this.treeFilters.equipment || this.treeFilters.material;
-                
+
                 if (resourceFiltersActive) {
                     filteredResources = resources.filter(r => {
                         const type = (r.resourceType || '').toLowerCase();
@@ -3791,7 +3791,7 @@ const EstimateManager = {
             const bind = (currentValue) => {
                 this.makeEditableSelect(el, currentValue, unitOptions, async (newValue) => {
                     const updateData = { unit: newValue };
-                    
+
                     // Авто-смена типа ресурса при выборе определенных единиц
                     if (newValue === 'ЧЕЛ.-Ч') updateData.resourceType = 'labor';
                     if (newValue === 'МАШ.-Ч') updateData.resourceType = 'equipment';
@@ -3806,7 +3806,7 @@ const EstimateManager = {
                         await this.recalculateHierarchyFixed(workTypeId);
                         await this.refreshTotalsForWorkType(workTypeId);
                     }
-                    
+
                     UI.showNotification('Обновлено', 'success');
                     bind(newValue);
                 });
@@ -6100,7 +6100,10 @@ const EstimateManager = {
 
         try {
             const response = await fetch(`${API_BASE_URL}/sections/${sectionId}/ifc`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.api?.token}`
+                }
             });
 
             if (!response.ok) throw new Error('Ошибка удаления связи с IFC');
@@ -6122,7 +6125,10 @@ const EstimateManager = {
 
         try {
             const response = await fetch(`${API_BASE_URL}/estimates/${estimateId}/ifc`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.api?.token}`
+                }
             });
 
             if (!response.ok) throw new Error('Ошибка удаления связи с IFC');
@@ -6218,6 +6224,9 @@ const EstimateManager = {
             };
 
             xhr.open('POST', `${API_BASE_URL}/estimates/${estimateId}/upload-ifc`);
+            if (window.api && window.api.token) {
+                xhr.setRequestHeader('Authorization', `Bearer ${window.api.token}`);
+            }
             xhr.send(formData);
         };
 

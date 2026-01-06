@@ -266,6 +266,12 @@
             flex-shrink: 0;
         }
 
+        #btn-logout:hover {
+            background: rgba(0, 0, 0, 0.05) !important;
+            border-color: rgba(0, 0, 0, 0.15) !important;
+            color: var(--gray-800) !important;
+        }
+
         .portal-brand h1 {
             font-family: 'Montserrat', sans-serif;
             font-size: 1.5rem;
@@ -433,11 +439,11 @@
         }
 
         .offer-row.level-work {
-            background: #f0f9f5;
+            background: #e8f0f9;
         }
 
         .offer-row.level-work:hover {
-            background: #e6f6ee;
+            background: #d6e5f5;
         }
 
         .offer-row.level-stage {
@@ -1912,7 +1918,8 @@
             </div>
             <div class="portal-actions" style="display:flex; gap:12px; align-items: center;">
                 <button class="btn btn-primary" id="btn-submit">Отправить оферту</button>
-                <button class="btn btn-danger btn-square" onclick="logout()" title="Выйти">
+                <button class="btn-square" id="btn-logout" onclick="logout()" title="Выйти"
+                    style="background: transparent; border: 1px solid rgba(0,0,0,0.1); color: var(--gray-600); transition: all 0.2s;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

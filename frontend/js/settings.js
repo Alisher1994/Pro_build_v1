@@ -1976,18 +1976,27 @@ const SettingsManager = {
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Статус проекта
                                 </label>
-                                <select 
-                                    id="project-status" 
-                                    name="status"
-                                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; font-family: 'Segoe UI', sans-serif; background: white; cursor: pointer; transition: border-color 0.2s;"
-                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.outline='none';"
-                                    onblur="this.style.borderColor='var(--gray-300)';"
-                                >
-                                    <option value="active" ${(project.status || 'active') === 'active' ? 'selected' : ''}>🟢 Активный</option>
-                                    <option value="paused" ${project.status === 'paused' ? 'selected' : ''}>⏸️ Пауза</option>
-                                    <option value="closed" ${project.status === 'closed' ? 'selected' : ''}>🔴 Закрыт</option>
-                                    <option value="exploitation" ${project.status === 'exploitation' ? 'selected' : ''}>🏗️ Эксплуатация</option>
-                                </select>
+                                <input type="hidden" id="project-status" name="status" value="${project.status || 'active'}">
+                                <div class="custom-select" id="status-select">
+                                    <div class="custom-select-trigger" tabindex="0">
+                                        <span class="select-text">Выберите статус</span>
+                                        <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                                    </div>
+                                    <div class="custom-select-options">
+                                        <div class="custom-select-option" data-value="active">
+                                            <span>🟢 Активный</span>
+                                        </div>
+                                        <div class="custom-select-option" data-value="paused">
+                                            <span>⏸️ Пауза</span>
+                                        </div>
+                                        <div class="custom-select-option" data-value="closed">
+                                            <span>🔴 Закрыт</span>
+                                        </div>
+                                        <div class="custom-select-option" data-value="exploitation">
+                                            <span>🏗️ Эксплуатация</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Менеджер проекта -->
@@ -2267,6 +2276,48 @@ const SettingsManager = {
             document.addEventListener('click', (e) => {
                 if (!currencySelect.contains(e.target)) {
                     currencySelect.classList.remove('open');
+                }
+            });
+
+            // Инициализация кастомного select для статуса
+            const statusSelect = document.getElementById('status-select');
+            const statusInput = document.getElementById('project-status');
+            const statusTrigger = statusSelect.querySelector('.custom-select-trigger');
+            const statusOptions = statusSelect.querySelectorAll('.custom-select-option');
+
+            // Установить начальное значение
+            const currentStatus = statusInput.value || 'active';
+            const currentStatusOption = statusSelect.querySelector(`[data-value="${currentStatus}"]`);
+            if (currentStatusOption) {
+                const text = currentStatusOption.querySelector('span').textContent;
+                statusTrigger.querySelector('.select-text').textContent = text;
+                currentStatusOption.classList.add('selected');
+            }
+
+            // Открытие/закрытие dropdown
+            statusTrigger.addEventListener('click', () => {
+                statusSelect.classList.toggle('open');
+            });
+
+            // Выбор опции
+            statusOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const value = option.dataset.value;
+                    const text = option.querySelector('span').textContent;
+
+                    statusInput.value = value;
+                    statusTrigger.querySelector('.select-text').textContent = text;
+
+                    statusOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    statusSelect.classList.remove('open');
+                });
+            });
+
+            // Закрытие при клике снаружи
+            document.addEventListener('click', (e) => {
+                if (!statusSelect.contains(e.target)) {
+                    statusSelect.classList.remove('open');
                 }
             });
 

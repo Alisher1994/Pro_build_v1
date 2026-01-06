@@ -403,10 +403,18 @@
         async function startCamera() {
             const video = document.getElementById('video-entrance');
             const statusBadge = document.querySelector('.camera-card .camera-status');
+            const wrapper = document.querySelector('.camera-card .video-wrapper');
+
+            // Cleanup previous errors
+            if (wrapper) {
+                const overlays = wrapper.querySelectorAll('div');
+                overlays.forEach(div => div.remove());
+            }
 
             try {
                 console.log("Requesting camera access...");
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                // Simple request first
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
                 if (video) {
                     video.srcObject = stream;
@@ -437,15 +445,20 @@
                     statusBadge.style.color = "#ef4444";
                 }
 
-                const wrapper = document.querySelector('.camera-card .video-wrapper');
                 if (wrapper) {
-                    wrapper.innerHTML = `
-                        <div style="padding: 20px; text-align: center; color: white;">
-                            <p>Ошибка доступа к камере:</p>
-                            <p style="color: #fca5a5; font-size: 12px;">${err.name}: ${err.message}</p>
-                            <p style="font-size: 11px; margin-top: 10px; color: #ccc;">Проверьте разрешения браузера</p>
-                        </div>
+                    const errorMsg = document.createElement('div');
+                    errorMsg.style.cssText = 'position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); color: white; padding: 20px; text-align: center; z-index: 10;';
+                    errorMsg.innerHTML = `
+                        <p style="font-weight: 600; margin: 0 0 8px 0;">Ошибка доступа</p>
+                        <p style="color: #fca5a5; font-size: 11px; margin: 0 0 16px 0;">${err.name}</p>
+                        <button id="retry-cam-btn" style="padding: 8px 16px; border-radius: 6px; border: none; background: #22c55e; color: white; cursor: pointer; font-size: 13px; font-weight: 500;">Включить камеру</button>
                     `;
+                    wrapper.appendChild(errorMsg);
+
+                    document.getElementById('retry-cam-btn').addEventListener('click', () => {
+                        errorMsg.remove();
+                        startCamera();
+                    });
                 }
             }
         }

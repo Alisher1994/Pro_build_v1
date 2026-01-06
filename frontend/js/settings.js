@@ -1999,40 +1999,6 @@ const SettingsManager = {
                                 </div>
                             </div>
 
-                            <!-- Менеджер проекта -->
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                                    Менеджер проекта
-                                </label>
-                                <input 
-                                    type="text" 
-                                    id="project-manager" 
-                                    name="manager"
-                                    value="${project.manager || ''}"
-                                    placeholder="ФИО менеджера проекта"
-                                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; font-family: 'Segoe UI', sans-serif; transition: border-color 0.2s;"
-                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.outline='none';"
-                                    onblur="this.style.borderColor='var(--gray-300)';"
-                                />
-                            </div>
-
-                            <!-- Заместитель менеджера -->
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
-                                    Заместитель менеджера
-                                </label>
-                                <input 
-                                    type="text" 
-                                    id="project-deputy" 
-                                    name="deputy"
-                                    value="${project.deputy || ''}"
-                                    placeholder="ФИО заместителя менеджера"
-                                    style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 14px; font-family: 'Segoe UI', sans-serif; transition: border-color 0.2s;"
-                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.outline='none';"
-                                    onblur="this.style.borderColor='var(--gray-300)';"
-                                />
-                            </div>
-
                             <!-- Заказчик (Customer) -->
                             <div style="margin-bottom: 24px;">
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">

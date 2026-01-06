@@ -1839,19 +1839,19 @@ const SettingsManager = {
 
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
-                <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
-                    <h1 style="margin-bottom: 32px; color: var(--gray-900); font-size: 28px;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 12px;">
+                <div style="padding: 32px 48px; max-width: 1400px; margin: 0 auto; width: 100%;">
+                    <h1 style="margin-bottom: 32px; color: var(--gray-900); font-size: 28px; display: flex; align-items: center;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 12px;">
                             <circle cx="12" cy="12" r="3" />
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.52.27 1.14 0 1.66a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                         </svg>
                         Настройки проекта
                     </h1>
                     
-                    <div style="background: var(--white); border: 1px solid var(--gray-300); border-radius: 8px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                        <form id="project-settings-form">
+                    <div style="background: var(--white); border: 1px solid var(--gray-300); border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <form id="project-settings-form" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 32px;">
                             <!-- Название объекта -->
-                            <div style="margin-bottom: 24px;">
+                            <div style="grid-column: 1 / -1;">
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Название объекта *
                                 </label>
@@ -1868,7 +1868,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Адрес объекта -->
-                            <div style="margin-bottom: 24px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Адрес объекта
                                 </label>
@@ -1885,7 +1885,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Заказчик -->
-                            <div style="margin-bottom: 24px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Заказчик
                                 </label>
@@ -1902,7 +1902,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Валюта -->
-                            <div style="margin-bottom: 32px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Валюта проекта *
                                 </label>
@@ -1979,7 +1979,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Статус проекта -->
-                            <div style="margin-bottom: 24px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Статус проекта
                                 </label>
@@ -1998,7 +1998,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Менеджер проекта -->
-                            <div style="margin-bottom: 24px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Менеджер проекта
                                 </label>
@@ -2015,7 +2015,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Заместитель менеджера -->
-                            <div style="margin-bottom: 24px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Заместитель менеджера
                                 </label>
@@ -2049,7 +2049,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Генподрядчик -->
-                            <div style="margin-bottom: 24px;">
+                            <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                     Генподрядчик
                                 </label>
@@ -2066,7 +2066,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Дополнительная информация -->
-                            <div style="border-top: 1px solid var(--gray-200); padding-top: 24px; margin-bottom: 24px;">
+                            <div style="grid-column: 1 / -1; border-top: 1px solid var(--gray-200); padding-top: 24px; margin-top: 8px;">
                                 <h3 style="margin-bottom: 16px; color: var(--gray-800); font-size: 16px;">Дополнительная информация</h3>
                                 
                                 <div style="margin-bottom: 16px;">
@@ -2115,7 +2115,7 @@ const SettingsManager = {
                             </div>
 
                             <!-- Кнопки действий -->
-                            <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                            <div style="grid-column: 1 / -1; display: flex; gap: 12px; justify-content: flex-end; align-items: center; padding-top: 16px; border-top: 1px solid var(--gray-200);">
                                 <button 
                                     type="button" 
                                     onclick="window.location.reload()"

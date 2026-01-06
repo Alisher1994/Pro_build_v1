@@ -59,7 +59,62 @@ const upload = multer({
 
 import { authMiddleware } from '../middleware/auth';
 
-// ... existing imports ...
+// Helper functions for score calculation (mimicking frontend logic)
+function getRatingPoints(ratingBase: string | null | undefined): number {
+  if (!ratingBase) return 0;
+  const ratingMap: Record<string, number> = {
+    'AAA': 5.0, 'AA': 4.6, 'A': 4.2,
+    'BBB': 3.8, 'BB': 3.4, 'B': 3.0,
+    'CCC': 2.6, 'CC': 2.2, 'C': 1.8,
+    'DDD': 1.4, 'DD': 1.0, 'D': 0.6
+  };
+  let cleanRating = ratingBase.replace('+', '').trim();
+  let pts = ratingMap[cleanRating] || 0;
+  if (ratingBase.includes('+')) pts += 0.2;
+  return parseFloat(Math.min(5.0, pts).toFixed(1));
+}
+
+function calculateBidScore(bid: any, allBids: any[], targetDeadline: Date | null | undefined): number {
+  // 1. mc.uz Rating (max 5.0 points)
+  let score = getRatingPoints(bid.subcontractor?.rating || bid.rating);
+
+  // 2. Documents (max 2.0 points)
+  if (bid.certificatePhoto || (bid.subcontractor && bid.subcontractor.certificatePhoto)) score += 0.5;
+  if (bid.licensePhoto || (bid.subcontractor && bid.subcontractor.licensePhoto)) score += 0.5;
+  if (bid.mtbPhoto || (bid.subcontractor && bid.subcontractor.mtbPhoto)) score += 0.5;
+  if (bid.trPhoto || (bid.subcontractor && bid.subcontractor.trPhoto)) score += 0.5;
+
+  // 3. Price Competitiveness (max 2.0 points)
+  if (allBids && allBids.length > 0) {
+    const prices = allBids.map(b => b.priceTotal).filter(p => p > 0);
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
+
+    if (maxPrice > minPrice && bid.priceTotal > 0) {
+      score += 2.0 * (1 - (bid.priceTotal - minPrice) / (maxPrice - minPrice));
+    } else if (bid.priceTotal > 0) {
+      score += 2.0;
+    }
+  }
+
+  // 4. Deadline Competitiveness (max 1.0 point)
+  if (targetDeadline && bid.completionDate) {
+    const target = new Date(targetDeadline);
+    const bidDate = new Date(bid.completionDate);
+    if (!isNaN(target.getTime()) && !isNaN(bidDate.getTime())) {
+      if (bidDate <= target) {
+        score += 1.0;
+      } else {
+        const dayDiff = Math.ceil((bidDate.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+        score += Math.max(0, 1.0 - (dayDiff * 0.1));
+      }
+    }
+  } else {
+    score += 0.3;
+  }
+
+  return parseFloat(Math.min(10, score).toFixed(1));
+}
 
 // ==========================================
 // Subcontractor Dashboard Routes (Authenticated)
@@ -76,6 +131,7 @@ router.get('/my-invites', authMiddleware, async (req: any, res: Response) => {
         subcontractorId
       },
       include: {
+        subcontractor: true,
         tender: {
           include: {
             project: true
@@ -88,7 +144,36 @@ router.get('/my-invites', authMiddleware, async (req: any, res: Response) => {
       }
     });
 
-    res.json(invites);
+    // For each invite, we need to calculate the score based on all other bids for that tender
+    const result = await Promise.all(invites.map(async (invite: any) => {
+      // Fetch all bids for this tender to calculate competitive score
+      const allBids = await prisma.tenderBid.findMany({
+        where: { tenderId: invite.tenderId }
+      });
+
+      // Calculate score for the subcontractor's bid (or potential score if no bid yet)
+      const bidForScore = invite.bid ? {
+        ...invite.bid,
+        subcontractor: invite.subcontractor
+      } : {
+        subcontractor: invite.subcontractor,
+        priceTotal: 0,
+        completionDate: null
+      };
+
+      const score = calculateBidScore(bidForScore, allBids, invite.tender.deadline);
+
+      // If bid exists, attach score to it. If not, attach to invite.
+      if (invite.bid) {
+        invite.bid.score = score;
+      } else {
+        (invite as any).potentialScore = score;
+      }
+
+      return invite;
+    }));
+
+    res.json(result);
   } catch (error) {
     logger.error('Error fetching my-invites:', error);
     res.status(500).json({ error: 'Failed to fetch invites' });

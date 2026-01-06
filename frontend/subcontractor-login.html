@@ -398,51 +398,8 @@
         }
     </script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const subtitleEl = document.querySelector('.subtitle');
-            if (!subtitleEl) return;
-
-            const descriptions = [
-                "(База) Информационная модель и коллизии",
-                "(Сметы) Расчет стоимости на основе объемов из модели",
-                "(Тендеры) Выбор подрядчиков и конкурентные листы",
-                "(ГПР) Календарно-сетевое планирование и сроки",
-                "(Снабжение) Закупки и управление заказами",
-                "(Финансы) Движение денежных средств и БДДС",
-                "(Логистика) Доставка материалов и складской учет",
-                "(Продажи) Управление продажами и клиентами"
-            ];
-
-            // Initial clear since animation moves fast
-            // Keep default static text or clear? 
-            // The request implies descriptions should show for each step.
-            // Let's replace "Модуль субподрядчика" with the first description or cycle them.
-            // Given specific request for text changes, let's effectively replace subtitle logic.
-
-            let currentIndex = 0;
-            const stepDuration = 2500;
-
-            // Initialize style for transition
-            subtitleEl.style.transition = 'opacity 0.3s ease';
-            subtitleEl.style.minHeight = '1.2em';
-
-            function updateSubtitle() {
-                subtitleEl.style.opacity = '0';
-                setTimeout(() => {
-                    currentIndex = (currentIndex + 1) % descriptions.length;
-                    subtitleEl.textContent = descriptions[currentIndex];
-                    subtitleEl.style.opacity = '1';
-                }, 300);
-            }
-
-            // Sync with CSS animation
-            subtitleEl.textContent = descriptions[0];
-
-            setTimeout(() => {
-                updateSubtitle();
-                setInterval(updateSubtitle, stepDuration);
-            }, 2000);
-        });
+        // Dynamic subtitle functionality removed as per user request.
+        // Subtitle remains static: "Модуль субподрядчика"
     </script>
 </body>
 

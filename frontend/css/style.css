@@ -2160,7 +2160,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     width: 90%;
     max-width: 1200px;
     max-height: 90vh;
-    overflow: visible;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -3450,7 +3450,7 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
     border: 1px solid var(--gray-400);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
-    z-index: 30001;
+    z-index: 1000;
     max-height: 250px;
     overflow-y: auto;
     display: none;

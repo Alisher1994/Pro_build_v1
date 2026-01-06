@@ -953,24 +953,11 @@ const GPRManager = {
 
                 <div class="form-group" style="margin-bottom: 10px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Рабочая неделя</label>
-                    <input type="hidden" id="set_workWeek" value="${project.workWeek || '5_2'}">
-                    <div class="custom-select" id="workweek-select">
-                        <div class="custom-select-trigger" tabindex="0">
-                            <span class="select-text">Выберите режим</span>
-                            <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-                        </div>
-                        <div class="custom-select-options">
-                            <div class="custom-select-option" data-value="5_2">
-                                <span>Пятидневка (5/2)</span>
-                            </div>
-                            <div class="custom-select-option" data-value="6_1">
-                                <span>Шестидневка (6/1)</span>
-                            </div>
-                            <div class="custom-select-option" data-value="7_0">
-                                <span>Без выходных (7/0)</span>
-                            </div>
-                        </div>
-                    </div>
+                    <select id="set_workWeek" class="form-control" style="width: 100%; height: 40px; font-size: 14px;">
+                        <option value="5_2" ${project.workWeek === '5_2' ? 'selected' : ''}>Пятидневка (5/2)</option>
+                        <option value="6_1" ${project.workWeek === '6_1' ? 'selected' : ''}>Шестидневка (6/1)</option>
+                        <option value="7_0" ${project.workWeek === '7_0' ? 'selected' : ''}>Без выходных (7/0)</option>
+                    </select>
                 </div>
 
                 <style>
@@ -994,48 +981,6 @@ const GPRManager = {
                 opt.classList.add('active-opt');
                 opt.querySelector('input').checked = true;
             };
-        });
-
-        // Initialize custom select for work week
-        const workWeekSelect = document.getElementById('workweek-select');
-        const workWeekInput = document.getElementById('set_workWeek');
-        const workWeekTrigger = workWeekSelect.querySelector('.custom-select-trigger');
-        const workWeekOptions = workWeekSelect.querySelectorAll('.custom-select-option');
-
-        // Set initial value
-        const currentWorkWeek = workWeekInput.value || '5_2';
-        const currentWorkWeekOption = workWeekSelect.querySelector(`[data-value="${currentWorkWeek}"]`);
-        if (currentWorkWeekOption) {
-            const text = currentWorkWeekOption.querySelector('span').textContent;
-            workWeekTrigger.querySelector('.select-text').textContent = text;
-            currentWorkWeekOption.classList.add('selected');
-        }
-
-        // Open/close dropdown
-        workWeekTrigger.addEventListener('click', () => {
-            workWeekSelect.classList.toggle('open');
-        });
-
-        // Select option
-        workWeekOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                const value = option.dataset.value;
-                const text = option.querySelector('span').textContent;
-
-                workWeekInput.value = value;
-                workWeekTrigger.querySelector('.select-text').textContent = text;
-
-                workWeekOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                workWeekSelect.classList.remove('open');
-            });
-        });
-
-        // Close when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!workWeekSelect.contains(e.target)) {
-                workWeekSelect.classList.remove('open');
-            }
         });
 
         document.getElementById('btn-save-project-settings').onclick = async () => {

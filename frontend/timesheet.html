@@ -395,17 +395,108 @@
     </div>
 
     <script>
-        // --- Webcam Logic ---
-        async function startCamera() {
+        // --- Webcam & Face Detection Logic ---
+
+        // Load face-api.js remotely
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js";
+        script.onload = () => initFaceDetection();
+        document.head.appendChild(script);
+
+        async function initFaceDetection() {
+            // Load models (using lightweight tiny face detector for performance)
+            // Note: In a real prod env, host these models locally
+            const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model';
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.getElementById('video-entrance');
-                if (video) video.srcObject = stream;
+                console.log("Loading Face API models...");
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                // await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL); 
+                // await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                console.log("Models loaded");
+
+                startCamera();
             } catch (err) {
-                console.warn("Camera access denied or missing", err);
+                console.error("Error loading Face API models:", err);
+                // Fallback to just camera if models fail
+                startCamera();
             }
         }
-        startCamera();
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                const video = document.getElementById('video-entrance');
+                if (video) {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        // Start detection loop once video is playing
+                        if (typeof faceapi !== 'undefined') {
+                            startDetectionLoop(video);
+                        }
+                    };
+                }
+            } catch (err) {
+                console.warn("Camera access denied or missing", err);
+                const camStatus = document.querySelector('.camera-status.active');
+                if (camStatus) {
+                    camStatus.classList.remove('active');
+                    camStatus.classList.add('offline');
+                    camStatus.textContent = "OFFLINE";
+                    camStatus.style.background = "#fee2e2";
+                    camStatus.style.color = "#ef4444";
+                }
+            }
+        }
+
+        let isProcessing = false;
+        let lastDetectionTime = 0;
+
+        async function startDetectionLoop(video) {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            // Optional: visualization overlay
+            // document.querySelector('.video-wrapper').append(canvas); 
+            // const displaySize = { width: video.videoWidth, height: video.videoHeight };
+            // faceapi.matchDimensions(canvas, displaySize);
+
+            const options = new faceapi.TinyFaceDetectorOptions();
+
+            setInterval(async () => {
+                if (isProcessing) return;
+
+                // Rate limit detections (e.g., once every 2 seconds max) to avoid spamming events
+                const now = Date.now();
+                if (now - lastDetectionTime < 5000) return;
+
+                isProcessing = true;
+
+                try {
+                    const detections = await faceapi.detectAllFaces(video, options);
+
+                    if (detections.length > 0) {
+                        console.log("Face detected!", detections);
+
+                        // Simulate recognition logic
+                        // In real app: extract embedding -> send to backend -> compare with DB
+
+                        // Demo: Randomly identify as employee or stranger
+                        const isUnknown = Math.random() > 0.8; // 20% chance of unknown
+                        addEvent(isUnknown);
+
+                        // Flash effect on video to show capture
+                        video.style.opacity = 0.5;
+                        setTimeout(() => video.style.opacity = 1, 100);
+
+                        lastDetectionTime = Date.now();
+                    }
+                } catch (err) {
+                    console.error("Detection error:", err);
+                } finally {
+                    isProcessing = false;
+                }
+            }, 500); // Check every 500ms
+        }
 
         // --- Mock Data & Events ---
         const employees = [

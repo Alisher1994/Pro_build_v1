@@ -397,56 +397,85 @@
     <script>
         // --- Webcam & Face Detection Logic ---
 
-        // Load face-api.js remotely
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js";
-        script.onload = () => initFaceDetection();
-        document.head.appendChild(script);
+        let faceApiLoaded = false;
 
-        async function initFaceDetection() {
-            // Load models (using lightweight tiny face detector for performance)
-            // Note: In a real prod env, host these models locally
-            const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model';
-
-            try {
-                console.log("Loading Face API models...");
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                // await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL); 
-                // await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                console.log("Models loaded");
-
-                startCamera();
-            } catch (err) {
-                console.error("Error loading Face API models:", err);
-                // Fallback to just camera if models fail
-                startCamera();
-            }
-        }
-
+        // 1. Start Camera IMMEDIATELY (Don't wait for AI)
         async function startCamera() {
+            const video = document.getElementById('video-entrance');
+            const statusBadge = document.querySelector('.camera-card .camera-status');
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-                const video = document.getElementById('video-entrance');
+                console.log("Requesting camera access...");
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+
                 if (video) {
                     video.srcObject = stream;
                     video.onloadedmetadata = () => {
                         video.play();
-                        // Start detection loop once video is playing
-                        if (typeof faceapi !== 'undefined') {
-                            startDetectionLoop(video);
+                        console.log("Camera started successfully");
+
+                        // Update UI to ONLINE
+                        if (statusBadge) {
+                            statusBadge.textContent = "ONLINE";
+                            statusBadge.className = "camera-status active";
+                            statusBadge.style.background = "#dcfce7";
+                            statusBadge.style.color = "#166534";
                         }
+
+                        // Try to start detection loop if AI is ready
+                        if (faceApiLoaded) startDetectionLoop(video);
                     };
                 }
             } catch (err) {
-                console.warn("Camera access denied or missing", err);
-                const camStatus = document.querySelector('.camera-status.active');
-                if (camStatus) {
-                    camStatus.classList.remove('active');
-                    camStatus.classList.add('offline');
-                    camStatus.textContent = "OFFLINE";
-                    camStatus.style.background = "#fee2e2";
-                    camStatus.style.color = "#ef4444";
+                console.error("Camera access error:", err);
+
+                // Show error on UI
+                if (statusBadge) {
+                    statusBadge.textContent = "ERROR";
+                    statusBadge.className = "camera-status offline";
+                    statusBadge.style.background = "#fee2e2";
+                    statusBadge.style.color = "#ef4444";
                 }
+
+                const wrapper = document.querySelector('.camera-card .video-wrapper');
+                if (wrapper) {
+                    wrapper.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: white;">
+                            <p>Ошибка доступа к камере:</p>
+                            <p style="color: #fca5a5; font-size: 12px;">${err.name}: ${err.message}</p>
+                            <p style="font-size: 11px; margin-top: 10px; color: #ccc;">Проверьте разрешения браузера</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Start camera right away
+        startCamera();
+
+        // 2. Load Face API in background
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js";
+        script.onload = () => initFaceDetection();
+        script.onerror = () => console.error("Failed to load Face API script");
+        document.head.appendChild(script);
+
+        async function initFaceDetection() {
+            const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model';
+
+            try {
+                console.log("Bg: Loading AI models...");
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                console.log("Bg: AI Models loaded");
+                faceApiLoaded = true;
+
+                // Check if video is already playing and start detection
+                const video = document.getElementById('video-entrance');
+                if (video && !video.paused && !video.ended) {
+                    startDetectionLoop(video);
+                }
+            } catch (err) {
+                console.error("Bg: Error loading AI models:", err);
             }
         }
 
@@ -454,18 +483,12 @@
         let lastDetectionTime = 0;
 
         async function startDetectionLoop(video) {
-            const canvas = faceapi.createCanvasFromMedia(video);
-            // Optional: visualization overlay
-            // document.querySelector('.video-wrapper').append(canvas); 
-            // const displaySize = { width: video.videoWidth, height: video.videoHeight };
-            // faceapi.matchDimensions(canvas, displaySize);
-
+            console.log("Starting detection loop...");
             const options = new faceapi.TinyFaceDetectorOptions();
 
             setInterval(async () => {
-                if (isProcessing) return;
+                if (isProcessing || !faceApiLoaded || video.paused || video.ended) return;
 
-                // Rate limit detections (e.g., once every 2 seconds max) to avoid spamming events
                 const now = Date.now();
                 if (now - lastDetectionTime < 5000) return;
 
@@ -474,19 +497,16 @@
                 try {
                     const detections = await faceapi.detectAllFaces(video, options);
 
-                    if (detections.length > 0) {
+                    if (detections && detections.length > 0) {
                         console.log("Face detected!", detections);
 
-                        // Simulate recognition logic
-                        // In real app: extract embedding -> send to backend -> compare with DB
+                        // Visual Feedback
+                        video.style.filter = "brightness(1.5)";
+                        setTimeout(() => video.style.filter = "none", 200);
 
-                        // Demo: Randomly identify as employee or stranger
-                        const isUnknown = Math.random() > 0.8; // 20% chance of unknown
+                        // Randomly identify
+                        const isUnknown = Math.random() > 0.8;
                         addEvent(isUnknown);
-
-                        // Flash effect on video to show capture
-                        video.style.opacity = 0.5;
-                        setTimeout(() => video.style.opacity = 1, 100);
 
                         lastDetectionTime = Date.now();
                     }
@@ -495,7 +515,7 @@
                 } finally {
                     isProcessing = false;
                 }
-            }, 500); // Check every 500ms
+            }, 500);
         }
 
         // --- Mock Data & Events ---

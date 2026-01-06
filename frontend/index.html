@@ -367,13 +367,12 @@
                 </h1>
                 <div id="dynamic-subtitle"
                     style="font-size: 14px; color: var(--gray-600); min-height: 20px; transition: opacity 0.3s ease;">
-                    (База) Информационная модель и коллизии
                 </div>
             </div>
             <form id="login-form">
                 <div class="login-form-group">
-                    <label for="login-email">Email или Телефон</label>
-                    <input type="text" id="login-email" placeholder="admin@probim.uz или +998..." required>
+                    <label for="login-email">Логин</label>
+                    <input type="text" id="login-email" placeholder="+998" required>
                 </div>
                 <div class="login-form-group">
                     <label for="login-password">Пароль</label>
@@ -863,6 +862,34 @@
                 <div class="ribbon-panel" data-panel="schedule">
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
+                            <button id="schedule-mode-gantt-btn" class="ribbon-btn large">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-chart-gantt-icon lucide-chart-gantt">
+                                    <path d="M10 6h8" />
+                                    <path d="M12 16h6" />
+                                    <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                                    <path d="M8 11h7" />
+                                </svg>
+                                <span>ГПР</span>
+                            </button>
+                            <button id="schedule-mode-3d-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                                    </path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                                <span>3D</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Режим</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
                             <button id="assign-work-wizard-btn" class="ribbon-btn large">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
@@ -1007,6 +1034,8 @@
                         <span class="ribbon-group-label">Настройка</span>
                     </div>
                 </div>
+
+
 
                 <!-- GPR Ribbon Panel -->
                 <div class="ribbon-panel" data-panel="gpr">
@@ -1203,6 +1232,37 @@
                         </div>
                         <span class="ribbon-group-label">Контрагенты</span>
                     </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button id="toggle-breadcrumbs-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M9 18l6-6-6-6" />
+                                    <path d="M16 18l6-6-6-6" />
+                                </svg>
+                                <span>Хлебные<br>крошки</span>
+                            </button>
+                            <button id="toggle-weather-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z" />
+                                </svg>
+                                <span>Погода</span>
+                            </button>
+                            <button id="toggle-aqi-btn" class="ribbon-btn large">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
+                                    <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
+                                    <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
+                                </svg>
+                                <span>Воздух</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Интерфейс</span>
+                    </div>
                 </div>
 
                 <!-- OT и ТБ Ribbon Panel -->
@@ -1309,7 +1369,7 @@
             </div>
         </div>
         <!-- Breadcrumbs Bar -->
-        <div id="breadcrumbs-bar" class="breadcrumbs-bar">
+        <div id="breadcrumbs-bar" class="breadcrumbs-bar" style="display: none;">
             <!-- Breadcrumbs content will be injected here -->
             <span class="breadcrumb-item">Главная</span>
             <span class="breadcrumb-separator">/</span>
@@ -1330,6 +1390,12 @@
                 <h2>Добро пожаловать в ProBIM</h2>
                 <p>Выберите проект из списка слева или добавьте новый</p>
                 <button id="create-first-project" class="primary-btn">Добавить первый проект</button>
+            </div>
+
+            <!-- Monitoring 3D View -->
+            <div id="view-monitoring" class="view" style="display:none; width:100%; height:100%;">
+                <div id="monitoring-viewer-container"
+                    style="width:100%; height:100%; position:relative; background:#f0f2f5;"></div>
             </div>
         </div>
     </div>
@@ -1543,49 +1609,7 @@
     <script src="js/app.js" defer></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const subtitleEl = document.getElementById('dynamic-subtitle');
-            if (!subtitleEl) return;
-
-            const descriptions = [
-                "(База) Информационная модель и коллизии",
-                "(Сметы) Расчет стоимости на основе объемов из модели",
-                "(Тендеры) Выбор подрядчиков и конкурентные листы",
-                "(ГПР) Календарно-сетевое планирование и сроки",
-                "(Снабжение) Закупки и управление заказами",
-                "(Финансы) Движение денежных средств и БДДС",
-                "(Логистика) Доставка материалов и складской учет",
-                "(Продажи) Управление продажами и клиентами"
-            ];
-
-            // Animation total duration is 20s for 8 steps (returning to start at end)
-            // Each step is 2.5s (12.5% of total time)
-            // We need to sync JS updates with CSS animation
-
-            let currentIndex = 0;
-            const stepDuration = 2500; // 20s / 8 steps
-
-            function updateSubtitle() {
-                // Fade out
-                subtitleEl.style.opacity = '0';
-
-                setTimeout(() => {
-                    currentIndex = (currentIndex + 1) % descriptions.length;
-                    subtitleEl.textContent = descriptions[currentIndex];
-                    // Fade in
-                    subtitleEl.style.opacity = '1';
-                }, 300); // Wait for fade out
-            }
-
-            // Sync with CSS animation
-            // First move happens at 10% (2s).
-            // We start fade out exactly when move starts.
-
-            setTimeout(() => {
-                updateSubtitle();
-                setInterval(updateSubtitle, stepDuration);
-            }, 2000); // Start exact at 2s (start of first move)
-        });
+        // Dynamic subtitle functionality removed as per user request
     </script>
 </body>
 

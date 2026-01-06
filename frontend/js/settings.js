@@ -1839,7 +1839,7 @@ const SettingsManager = {
 
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
-                <div style="max-width: 1400px; margin: 0 auto; width: 100%;">
+                <div>
                     <h1 style="margin-bottom: 32px; color: var(--gray-900); font-size: 28px; display: flex; align-items: center;">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 12px;">
                             <circle cx="12" cy="12" r="3" />

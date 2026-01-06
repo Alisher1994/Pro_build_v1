@@ -78,6 +78,77 @@
             justify-content: center;
             padding: 0;
         }
+
+        /* --- Logo Text Flip Animation --- */
+        .scrolling-text-container {
+            display: inline-block;
+            height: 1.2em;
+            overflow: hidden;
+            vertical-align: bottom;
+            position: relative;
+            width: 170px;
+            text-align: left;
+        }
+
+        .scrolling-text-content {
+            display: block;
+            position: relative;
+            animation: scrollText 20s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .scrolling-text-item {
+            display: block;
+            height: 1.2em;
+            line-height: 1.2em;
+            white-space: nowrap;
+        }
+
+        @keyframes scrollText {
+
+            0%,
+            10% {
+                transform: translateY(0);
+            }
+
+            12.5%,
+            22.5% {
+                transform: translateY(-1.2em);
+            }
+
+            25%,
+            35% {
+                transform: translateY(-2.4em);
+            }
+
+            37.5%,
+            47.5% {
+                transform: translateY(-3.6em);
+            }
+
+            50%,
+            60% {
+                transform: translateY(-4.8em);
+            }
+
+            62.5%,
+            72.5% {
+                transform: translateY(-6.0em);
+            }
+
+            75%,
+            85% {
+                transform: translateY(-7.2em);
+            }
+
+            87.5%,
+            97.5% {
+                transform: translateY(-8.4em);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -86,7 +157,23 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-brand">
-                <img src="src/logo/Logo horizontal.svg" alt="PROBIM" class="logo-expanded">
+                <div class="logo-expanded"
+                    style="font-family: 'Montserrat', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 20px; letter-spacing: -0.02em; display: flex; align-items: baseline; color: white; white-space: nowrap;">
+                    Pro&nbsp;
+                    <div class="scrolling-text-container" style="color: white; text-align: left; height: 1.2em;">
+                        <div class="scrolling-text-content">
+                            <div class="scrolling-text-item">BIM</div>
+                            <div class="scrolling-text-item">ESTIMATE</div>
+                            <div class="scrolling-text-item">TENDER</div>
+                            <div class="scrolling-text-item">PLAN</div>
+                            <div class="scrolling-text-item">SUPPLY</div>
+                            <div class="scrolling-text-item">MONEY</div>
+                            <div class="scrolling-text-item">LOGIC</div>
+                            <div class="scrolling-text-item">SALES</div>
+                            <div class="scrolling-text-item">BIM</div>
+                        </div>
+                    </div>
+                </div>
                 <img src="src/logo/Logo square.svg" alt="P" class="logo-collapsed">
             </div>
         </div>

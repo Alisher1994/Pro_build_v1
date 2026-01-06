@@ -687,7 +687,7 @@ const EstimateManager = {
 
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
-                <div style="padding: 32px 48px; max-width: 1400px; margin: 0 auto; width: 100%;">
+                <div style="max-width: 1400px; margin: 0 auto; width: 100%;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <h2 style="margin: 0;">Сметы</h2>
                     </div>

@@ -1840,7 +1840,7 @@ const SettingsManager = {
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = `
                 <div style="background: var(--white); border: 1px solid var(--gray-300); border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                    <div style="display: grid; grid-template-columns: 1fr 280px; gap: 32px; margin-bottom: 24px;">
+                    <div style="display: grid; grid-template-columns: 1fr 380px; gap: 32px; margin-bottom: 24px;">
                         <div>
                             <form id="project-settings-form" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 32px;">
                             <!-- Название объекта -->
@@ -2037,11 +2037,11 @@ const SettingsManager = {
                         </div>
                         
                         <!-- Фото проекта (правая колонка) -->
-                        <div>
+                        <div style="display: flex; flex-direction: column;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-700); font-size: 14px;">
                                 Фото проекта
                             </label>
-                            <div id="settings-photo-area" style="width: 100%; aspect-ratio: 1; border: 2px dashed var(--gray-300); border-radius: 8px; background: var(--gray-50); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background-size: cover; background-position: center; ${project.photo ? `background-image: url(${project.photo});` : ''}">
+                            <div id="settings-photo-area" style="flex: 1; width: 100%; border: 2px dashed var(--gray-300); border-radius: 8px; background: var(--gray-50); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background-size: cover; background-position: center; ${project.photo ? `background-image: url(${project.photo});` : ''}">
                                 ${!project.photo ? `
                                     <div style="text-align: center; color: var(--gray-600);">
                                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 8px;">

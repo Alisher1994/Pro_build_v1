@@ -25,6 +25,12 @@ class ProBIMApp {
         this.navigationHistory = []; // История навигации внутри системы
         this.otitbActive = null;
         this.currentDashboardSubTab = 'statistics';
+        this.scheduleMode = 'gantt'; // 'gantt' or '3d'
+        this.userSettings = {
+            showBreadcrumbs: false,
+            showWeather: true,
+            showAQI: true
+        };
     }
 
     getInitialRibbonTab() {
@@ -73,8 +79,71 @@ class ProBIMApp {
         }
     }
 
+    loadUserSettings() {
+        if (!window.auth || !window.auth.user) return;
+        const userId = window.auth.user.id;
+        const saved = localStorage.getItem(`probim_settings_${userId}`);
+        if (saved) {
+            try {
+                this.userSettings = { ...this.userSettings, ...JSON.parse(saved) };
+            } catch (e) {
+                console.error('Failed to parse user settings', e);
+            }
+        }
+    }
+
+    saveUserSettings() {
+        if (!window.auth || !window.auth.user) return;
+        const userId = window.auth.user.id;
+        localStorage.setItem(`probim_settings_${userId}`, JSON.stringify(this.userSettings));
+    }
+
+    applyUserSettings() {
+        const breadcrumbs = document.getElementById('breadcrumbs-bar');
+        const weather = document.getElementById('weather-widget');
+        const aqi = document.getElementById('aqi-widget');
+
+        if (breadcrumbs) breadcrumbs.style.display = this.userSettings.showBreadcrumbs ? 'flex' : 'none';
+        if (weather) weather.style.display = this.userSettings.showWeather ? 'flex' : 'none';
+        if (aqi) aqi.style.display = this.userSettings.showAQI ? 'flex' : 'none';
+
+        this.updateSettingsButtonsUI();
+        this.updateChatPosition();
+    }
+
+    updateChatPosition() {
+        const headerHeight = 48;
+        const tabsHeight = 32;
+        const panelHeight = this.ribbonCollapsed ? 0 : 102;
+        const breadcrumbsHeight = (this.userSettings && this.userSettings.showBreadcrumbs) ? 33 : 0;
+
+        const total = headerHeight + tabsHeight + panelHeight + breadcrumbsHeight;
+        document.documentElement.style.setProperty('--chat-top-offset', `${total}px`);
+    }
+
+    updateSettingsButtonsUI() {
+        const btns = {
+            'toggle-breadcrumbs-btn': this.userSettings.showBreadcrumbs,
+            'toggle-weather-btn': this.userSettings.showWeather,
+            'toggle-aqi-btn': this.userSettings.showAQI
+        };
+
+        for (const [id, active] of Object.entries(btns)) {
+            const btn = document.getElementById(id);
+            if (btn) {
+                if (active) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        }
+    }
+
     async init() {
         console.log('🚀 ProBIM Application Starting...');
+
+        // Загружаем настройки пользователя
+        this.loadUserSettings();
+        this.applyUserSettings();
+        this.updateChatPosition();
 
         // Восстанавливаем активную вкладку ДО загрузки проекта,
         // чтобы после F5 оставаться на той же странице.
@@ -486,6 +555,7 @@ class ProBIMApp {
             }
             else if (this.currentRibbonTab === 'tender') label = 'Тендер';
             else if (this.currentRibbonTab === 'schedule') label = 'График';
+            else if (this.currentRibbonTab === 'monitoring') label = 'Мониторинг 3Д';
             else if (this.currentRibbonTab === 'gpr') label = 'ГПР';
             else if (this.currentRibbonTab === 'supply') label = 'Снабжение';
             else if (this.currentRibbonTab === 'finance') label = 'Финансы';
@@ -539,10 +609,29 @@ class ProBIMApp {
         breadcrumbs.innerHTML = html;
     }
 
-    loadScheduleTab() {
-        if (this.currentProjectId) {
+    async loadScheduleTab() {
+        if (!this.currentProjectId) return;
+
+        const contentArea = document.getElementById('content-area');
+
+        // Update ribbon button states
+        const ganttBtn = document.getElementById('schedule-mode-gantt-btn');
+        const mode3dBtn = document.getElementById('schedule-mode-3d-btn');
+
+        if (ganttBtn) ganttBtn.classList.toggle('active', this.scheduleMode === 'gantt');
+        if (mode3dBtn) mode3dBtn.classList.toggle('active', this.scheduleMode === '3d');
+
+        if (this.scheduleMode === '3d') {
+            contentArea.style.padding = '0';
+            contentArea.innerHTML = `<div id="monitoring-pane" style="width:100%; height:100%;"></div>`;
+            if (window.MonitoringManager) {
+                await MonitoringManager.init(this.currentProjectId);
+            }
+        } else {
+            contentArea.style.padding = '';
             ScheduleManager.init(this.currentProjectId);
         }
+
         this.updateBreadcrumbs();
     }
 
@@ -833,6 +922,8 @@ class ProBIMApp {
             </div>
         `;
     }
+
+
 
     setOTiTBActive(mode) {
         this.otitbActive = mode;
@@ -1441,6 +1532,19 @@ class ProBIMApp {
             ScheduleManager.collapseAll();
         });
 
+        // Schedule Mode Toggle
+        document.getElementById('schedule-mode-gantt-btn')?.addEventListener('click', () => {
+            if (this.scheduleMode === 'gantt') return;
+            this.scheduleMode = 'gantt';
+            this.loadScheduleTab();
+        });
+
+        document.getElementById('schedule-mode-3d-btn')?.addEventListener('click', () => {
+            if (this.scheduleMode === '3d') return;
+            this.scheduleMode = '3d';
+            this.loadScheduleTab();
+        });
+
         document.getElementById('schedule-project-settings-btn')?.addEventListener('click', () => {
             if (!this.currentProjectId) {
                 UI.showNotification('Сначала выберите проект', 'error');
@@ -1550,6 +1654,25 @@ class ProBIMApp {
             this.applyRibbonTabToUI('settings');
             this.setSettingsActive('hr');
             SettingsManager.showStaffManagement(this.currentProjectId);
+        });
+
+        // Interface toggles
+        document.getElementById('toggle-breadcrumbs-btn')?.addEventListener('click', (e) => {
+            this.userSettings.showBreadcrumbs = !this.userSettings.showBreadcrumbs;
+            this.saveUserSettings();
+            this.applyUserSettings();
+        });
+
+        document.getElementById('toggle-weather-btn')?.addEventListener('click', (e) => {
+            this.userSettings.showWeather = !this.userSettings.showWeather;
+            this.saveUserSettings();
+            this.applyUserSettings();
+        });
+
+        document.getElementById('toggle-aqi-btn')?.addEventListener('click', (e) => {
+            this.userSettings.showAQI = !this.userSettings.showAQI;
+            this.saveUserSettings();
+            this.applyUserSettings();
         });
 
         document.getElementById('permit-board-btn')?.addEventListener('click', () => {
@@ -1812,6 +1935,8 @@ class ProBIMApp {
         } catch (error) {
             console.warn('Failed to persist ribbon state:', error);
         }
+
+        this.updateChatPosition();
     }
 
     restoreSidebarState() {

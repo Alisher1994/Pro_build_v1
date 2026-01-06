@@ -890,14 +890,14 @@ class ProBIMApp {
         if (tab === 'kpp') {
             contentArea.innerHTML = `
                 <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-                    <iframe src="timesheet.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="КПП"></iframe>
+                    <iframe src="timesheet.html?t=${Date.now()}" allow="camera *; microphone *" style="flex: 1; border: none; width: 100%; height: 100%;" title="КПП"></iframe>
                 </div>
             `;
         } else {
             // Load Timesheet Table view
             contentArea.innerHTML = `
                 <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-                    <iframe src="timesheet-table.html" style="flex: 1; border: none; width: 100%; height: 100%;" title="Табель"></iframe>
+                    <iframe src="timesheet-table.html?t=${Date.now()}" allow="camera *; microphone *" style="flex: 1; border: none; width: 100%; height: 100%;" title="Табель"></iframe>
                 </div>
             `;
         }

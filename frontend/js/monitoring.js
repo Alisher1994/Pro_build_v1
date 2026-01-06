@@ -13,13 +13,20 @@ const MonitoringManager = {
 
         try {
             UI.showTurboLoader();
-            this.data = await api.getMonitoringData(projectId);
+            const [monitoringData, blocks] = await Promise.all([
+                api.getMonitoringData(projectId),
+                api.getBlocks(projectId)
+            ]);
+
+            this.data = monitoringData;
+            this.data.blocks = blocks || [];
 
             // ДИАГНОСТИКА: проверяем что получили от API
             console.log('[Monitoring Init] Данные получены:', {
                 tasks: this.data.tasks?.length || 0,
                 workTypes: this.data.workTypes?.length || 0,
-                estimates: this.data.estimates?.length || 0
+                estimates: this.data.estimates?.length || 0,
+                blocks: this.data.blocks?.length || 0
             });
             if (this.data.tasks?.length > 0) {
                 console.log('[Monitoring Init] Пример задачи:', this.data.tasks[0]);
@@ -49,6 +56,8 @@ const MonitoringManager = {
         if (!pane) return;
 
         const estimates = this.data.estimates || [];
+        const blocks = this.data.blocks || [];
+
         if (estimates.length === 0) {
             pane.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gray-500);">
@@ -63,16 +72,47 @@ const MonitoringManager = {
             return;
         }
 
+        // Initial filtering: show all or just the first block's?
+        // Let's show all by default, or if blocks exist, maybe select the first one?
+        // User request: "Drop down will display existing sections... filtering logic implies selection filters estimates"
+
         let html = `
             <div style="padding: 12px; height: 100%; display: flex; flex-direction: column; background: var(--gray-50);">
                 <div style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--gray-200);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label style="font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase;">Модель IFC / Смета</label>
-                        <select id="monitoring-estimate-select" style="padding: 6px 12px; border-radius: 4px; border: 1px solid var(--gray-300); background: #f9fafb; font-size: 13px; min-width: 240px;">
-                            ${estimates.map(e => `<option value="${e.xktUrl}">${this.escapeHtml(e.name)}</option>`).join('')}
-                        </select>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 4px; min-width: 200px;">
+                        <label style="font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase;">Секция (Блок)</label>
+                        <input type="hidden" id="monitoring-section-input">
+                        <div class="custom-select" id="monitoring-section-select">
+                            <div class="custom-select-trigger" tabindex="0" style="padding: 6px 12px; height: 32px; font-size: 13px; background: #f9fafb;">
+                                <span class="select-text">Выберите секцию</span>
+                                <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                            </div>
+                            <div class="custom-select-options">
+                                ${blocks.map(b => `
+                                    <div class="custom-select-option" data-value="${b.id}">
+                                        <span>${this.escapeHtml(b.name)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
-                    <button class="btn btn-primary" onclick="MonitoringManager.loadModel()" style="margin-top: 18px;">
+
+                    <div style="display: flex; flex-direction: column; gap: 4px; min-width: 240px;">
+                        <label style="font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase;">Модель IFC / Смета</label>
+                        <input type="hidden" id="monitoring-estimate-select"> <!-- ID preserved for loadModel compatibility -->
+                        <div class="custom-select" id="monitoring-estimate-dropdown">
+                            <div class="custom-select-trigger" tabindex="0" style="padding: 6px 12px; height: 32px; font-size: 13px; background: #f9fafb;">
+                                <span class="select-text">Выберите модель</span>
+                                <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                            </div>
+                            <div class="custom-select-options">
+                                <!-- Will be populated by onSectionChange -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="MonitoringManager.loadModel()" style="margin-top: 18px; height: 32px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
@@ -104,6 +144,113 @@ const MonitoringManager = {
             </div>
         `;
         pane.innerHTML = html;
+
+        // Initialize Section Dropdown
+        this.initCustomDropdown('monitoring-section-select', 'monitoring-section-input', (value) => {
+            this.onSectionChange(value);
+        });
+
+        // Initialize Estimate Dropdown (just event binding, options populated later)
+        this.initCustomDropdown('monitoring-estimate-dropdown', 'monitoring-estimate-select', null);
+
+        // Auto-select first block if exists
+        if (blocks.length > 0) {
+            // Manually select first option in custom dropdown
+            const firstBlockId = blocks[0].id;
+            const sectionDropdown = document.getElementById('monitoring-section-select');
+            const firstOption = sectionDropdown.querySelector(`[data-value="${firstBlockId}"]`);
+            if (firstOption) firstOption.click();
+        } else {
+            this.onSectionChange(null);
+        }
+    },
+
+    initCustomDropdown(dropdownId, inputId, onChange) {
+        const dropdown = document.getElementById(dropdownId);
+        const input = document.getElementById(inputId);
+        const trigger = dropdown.querySelector('.custom-select-trigger');
+        const optionsContainer = dropdown.querySelector('.custom-select-options');
+
+        // Toggle dropdown
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close other dropdowns
+            document.querySelectorAll('.custom-select.open').forEach(d => {
+                if (d !== dropdown) d.classList.remove('open');
+            });
+            dropdown.classList.toggle('open');
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Delegate click for options (static and dynamic)
+        optionsContainer.addEventListener('click', (e) => {
+            const option = e.target.closest('.custom-select-option');
+            if (option) {
+                const value = option.dataset.value;
+                const text = option.querySelector('span').textContent;
+
+                // Update input
+                input.value = value;
+
+                // Update trigger text
+                trigger.querySelector('.select-text').textContent = text;
+
+                // Update selection state
+                dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+
+                // Close dropdown
+                dropdown.classList.remove('open');
+
+                // Callback
+                if (onChange) onChange(value);
+            }
+        });
+    },
+
+    onSectionChange(blockId) {
+        const estDropdown = document.getElementById('monitoring-estimate-dropdown');
+        if (!estDropdown) return;
+
+        const optionsContainer = estDropdown.querySelector('.custom-select-options');
+        const triggerText = estDropdown.querySelector('.select-text');
+        const hiddenInput = document.getElementById('monitoring-estimate-select');
+
+        // Reset
+        optionsContainer.innerHTML = '';
+        triggerText.textContent = 'Выберите модель';
+        hiddenInput.value = '';
+
+        const allEstimates = this.data.estimates || [];
+        let filtered = allEstimates;
+
+        if (blockId) {
+            filtered = allEstimates.filter(e => e.blockId === blockId);
+        }
+
+        if (filtered.length === 0) {
+            optionsContainer.innerHTML = '<div style="padding: 8px 12px; color: var(--gray-500); font-size: 13px;">Нет моделей</div>';
+            return;
+        }
+
+        // Generate options
+        optionsContainer.innerHTML = filtered.map(e => `
+            <div class="custom-select-option" data-value="${e.xktUrl}">
+                <span>${this.escapeHtml(e.name)}</span>
+            </div>
+        `).join('');
+
+        // Auto-select first if available
+        if (filtered.length > 0) {
+            const firstOption = optionsContainer.querySelector('.custom-select-option');
+            if (firstOption) firstOption.click();
+        }
     },
 
     async loadModel() {

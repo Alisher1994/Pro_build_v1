@@ -1042,8 +1042,9 @@
             try {
                 const res = await api.verifyInviteCode(state.selectedInviteId, code);
                 if (res.success && res.token) {
-                    // Redirect to the portal view with the token
-                    window.location.href = `subcontractor-portal.html?token=${res.token}`;
+                    // Redirect to the portal view with the token in a new tab
+                    window.open(`subcontractor-portal.html?token=${res.token}&code=${code}`, '_blank');
+                    closeTenderModal();
                 }
             } catch (err) {
                 console.error(err);

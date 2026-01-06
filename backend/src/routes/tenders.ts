@@ -2101,5 +2101,65 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+/**
+ * GET /api/tenders/invites/:token/estimate/:estimateId/files
+ * Get estimate files for subcontractor access
+ */
+router.get('/invites/:token/estimate/:estimateId/files', async (req: Request, res: Response) => {
+  try {
+    const { token, estimateId } = req.params;
+    const { code } = req.query;
 
+    if (!code) {
+      return res.status(401).json({ error: 'Отсутствует код доступа' });
+    }
+
+    // Find the tender invite
+    const invite = await prisma.tenderInvite.findUnique({
+      where: { token: String(token) },
+      include: {
+        tender: true
+      }
+    });
+
+    if (!invite) {
+      return res.status(404).json({ error: 'Приглашение не найдено' });
+    }
+
+    // Verify the access code
+    if (invite.inviteCode !== String(code)) {
+      return res.status(401).json({ error: 'Неверный код доступа' });
+    }
+
+    // Get tender with lots and estimates
+    const tender = await prisma.tender.findUnique({
+      where: { id: invite.tenderId }
+    });
+
+    if (!tender) {
+      return res.status(404).json({ error: 'Тендер не найден' });
+    }
+
+    // Verify that the estimate belongs to the tender's project
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: String(estimateId) }
+    });
+
+    if (!estimate || estimate.projectId !== tender.projectId) {
+      return res.status(403).json({ error: 'Доступ к этой смете запрещен' });
+    }
+
+    // Get the files
+    const files = await prisma.projectFile.findMany({
+      where: { estimateId: String(estimateId) },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(files);
+  } catch (error) {
+    logger.error('Error fetching estimate files for subcontractor:', error);
+    res.status(500).json({ error: 'Не удалось загрузить файлы' });
+  }
+});
+
+export default router;

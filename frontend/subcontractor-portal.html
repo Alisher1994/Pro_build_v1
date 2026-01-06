@@ -255,6 +255,29 @@
             padding: 0 var(--spacing-md);
         }
 
+        .btn-square {
+            width: var(--height-button);
+            height: var(--height-button);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .portal-brand h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--gray-900);
+            margin: 0;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: baseline;
+        }
+
         /* --- Offer Mapping Modal --- */
         .offer-modal-overlay {
             position: fixed;
@@ -642,6 +665,8 @@
             border: 1px solid var(--gray-200);
             border-radius: 4px;
             overflow: hidden;
+            display: flex;
+            /* Ensure it's a flex container */
         }
 
         #sub-right-panel-container.right-panel-container.collapsed {
@@ -676,14 +701,14 @@
 
         .panel-header {
             padding: 10px 12px;
-            border-bottom: 1px solid var(--gray-200);
-            background: var(--white);
+            border-bottom: 1px solid var(--primary-hover);
+            background: var(--primary);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            /* Keep header height consistent even when there are no action buttons */
-            min-height: calc(var(--height-button) + 20px);
+            height: 48px;
             box-sizing: border-box;
+            color: var(--white);
         }
 
         .panel-header-actions {
@@ -707,9 +732,36 @@
         }
 
         .panel-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
-            color: var(--gray-800);
+            color: var(--white);
+            letter-spacing: 0.02em;
+        }
+
+        /* Buttons in Blue Header */
+        .panel-header .btn-primary {
+            background: var(--white);
+            color: var(--primary);
+            border: 1px solid var(--white);
+        }
+
+        .panel-header .btn-primary:hover {
+            background: var(--gray-100);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--primary-hover);
+        }
+
+        .panel-header .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .panel-header .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: var(--white);
         }
 
         .panel-body {
@@ -1528,27 +1580,178 @@
         }
 
         .right-panel-toggle-collapsed {
-            margin-bottom: 12px;
-            background: var(--white);
-            border: 1px solid var(--gray-300);
-            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
             width: 32px;
             height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            color: var(--gray-600);
+            color: #fff;
+            transition: all 0.2s;
+            margin: 0;
             box-shadow: var(--shadow-sm);
-            transition: all 0.15s ease;
         }
 
         .right-panel-toggle-collapsed:hover {
-            background: var(--gray-50);
-            border-color: var(--primary);
-            color: var(--primary);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #fff;
             box-shadow: var(--shadow-md);
         }
+
+        /* --- Right Panel Tabs Expanded --- */
+        .right-panel-tabs-expanded {
+            background: var(--primary);
+            border-bottom: 1px solid var(--primary-hover);
+            height: 48px;
+            display: flex;
+            align-items: stretch;
+            justify-content: space-between;
+            width: 100%;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            padding-right: 8px;
+        }
+
+        .right-panel-tab-expanded {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            height: 100%;
+            user-select: none;
+        }
+
+        .right-panel-tab-expanded:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .right-panel-tab-expanded.active {
+            color: #fff;
+            border-bottom-color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .right-panel-tab-expanded svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.8;
+        }
+
+        .right-panel-tab-expanded.active svg {
+            opacity: 1;
+        }
+
+        /* Override style.css defaults for right-panel-toggle */
+        #sub-right-panel-container .right-panel-toggle,
+        .right-panel-toggle#sub-right-panel-toggle {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 4px !important;
+            width: 32px !important;
+            height: 32px !important;
+            color: #fff !important;
+            cursor: pointer;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            align-self: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm) !important;
+            position: static !important;
+        }
+
+        #sub-right-panel-container .right-panel-toggle:hover,
+        .right-panel-toggle#sub-right-panel-toggle:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+            color: #fff !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+
+        #sub-right-panel-container.collapsed .right-panel-toggle,
+        .collapsed .right-panel-toggle#sub-right-panel-toggle {
+            display: none !important;
+        }
+
+        /* --- Right Panel Tabs Collapsed --- */
+        .right-panel-tabs-collapsed {
+            background: var(--primary);
+            display: none;
+            /* Hidden by default when expanded */
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 8px 8px 9px;
+            /* 9px left to compensate for 1px border */
+            gap: 20px;
+            height: 100%;
+            border-left: 1px solid var(--primary-hover);
+            width: 48px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .collapsed .right-panel-tabs-collapsed {
+            display: flex;
+            /* Show only when collapsed */
+        }
+
+        .collapsed .right-panel-content {
+            display: none;
+            /* Hide main content when collapsed */
+        }
+
+        .right-panel-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .right-panel-tab-collapsed {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 8px 4px;
+            border-right: 3px solid transparent;
+        }
+
+        .right-panel-tab-collapsed:hover {
+            color: #fff;
+        }
+
+        .right-panel-tab-collapsed.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-right: 3px solid #fff !important;
+            border-left: none !important;
+        }
+
+        /* Hide active state when panel is collapsed */
+        .collapsed .right-panel-tab-collapsed.active {
+            background: transparent !important;
+            border-right: none !important;
+        }
+
 
         #sub-chat-input {
             flex: 1;
@@ -1688,20 +1891,34 @@
     <div id="portal-screen">
         <header class="portal-header">
             <div class="portal-brand">
-                <div class="portal-logo">ProBIM</div>
+                <h1>
+                    Pro&nbsp;
+                    <div class="scrolling-text-container"
+                        style="color: var(--primary); width: 170px; font-size: 1.5rem;">
+                        <div class="scrolling-text-content">
+                            <div class="scrolling-text-item">BIM</div>
+                            <div class="scrolling-text-item">ESTIMATE</div>
+                            <div class="scrolling-text-item">TENDER</div>
+                            <div class="scrolling-text-item">PLAN</div>
+                            <div class="scrolling-text-item">SUPPLY</div>
+                            <div class="scrolling-text-item">MONEY</div>
+                            <div class="scrolling-text-item">LOGIC</div>
+                            <div class="scrolling-text-item">SALES</div>
+                            <div class="scrolling-text-item">BIM</div>
+                        </div>
+                    </div>
+                </h1>
                 <div class="tender-info-chip" id="tender-title-chip">Загрузка...</div>
             </div>
-            <div class="portal-actions" style="display:flex; gap:12px;">
-                <button class="btn btn-secondary" id="btn-save">Сохранить черновик</button>
+            <div class="portal-actions" style="display:flex; gap:12px; align-items: center;">
                 <button class="btn btn-primary" id="btn-submit">Отправить оферту</button>
-                <button class="btn btn-danger" onclick="logout()" style="display:flex; align-items:center; gap:6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                <button class="btn btn-danger btn-square" onclick="logout()" title="Выйти">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <polyline points="16 17 21 12 16 7" />
                         <line x1="21" y1="12" x2="9" y2="12" />
                     </svg>
-                    Выйти
                 </button>
             </div>
         </header>
@@ -1877,8 +2094,7 @@
 
                 <div class="right-panel-content">
                     <!-- Табы в развернутом состоянии -->
-                    <div class="right-panel-tabs-expanded"
-                        style="display: flex; align-items: stretch; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                    <div class="right-panel-tabs-expanded">
                         <div style="display: flex; align-items: stretch;">
                             <div class="right-panel-tab-expanded" data-tab="3d"
                                 onclick="SubRightPanel.switchRightPanelTab('3d')">
@@ -1907,8 +2123,7 @@
                                 Чат
                             </div>
                         </div>
-                        <button class="right-panel-toggle" id="sub-right-panel-toggle" title="Свернуть панель"
-                            style="position: static; margin-right: 8px; flex-shrink: 0; align-self: center;">
+                        <button class="right-panel-toggle" id="sub-right-panel-toggle" title="Свернуть панель">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 5 15 12 9 19"></polyline>
@@ -2173,7 +2388,11 @@
         const urlParams = new URLSearchParams(window.location.search);
         let token = urlParams.get('token');
         let tenderId = urlParams.get('tenderId');
-        let authCode = localStorage.getItem('sub_authCode') || null;
+        let authCode = urlParams.get('code') || localStorage.getItem('sub_authCode') || null;
+
+        // If credentials are in URL, save them to localStorage
+        if (urlParams.get('code')) localStorage.setItem('sub_authCode', urlParams.get('code'));
+        if (token) localStorage.setItem('sub_token', token);
         let tenderData = null;
         let timerInterval = null;
         let activeBlockName = null;
@@ -2539,7 +2758,12 @@
             async fetchEstimateMeta() {
                 if (!this.currentEstimateDbId) return null;
                 try {
-                    const resp = await fetch(`${API_BASE_URL}/api/estimates/${encodeURIComponent(this.currentEstimateDbId)}`);
+                    const params = new URLSearchParams();
+                    if (token) params.append('token', token);
+                    if (authCode) params.append('code', authCode);
+                    const queryString = params.toString();
+                    const url = `${API_BASE_URL}/api/estimates/${encodeURIComponent(this.currentEstimateDbId)}${queryString ? '?' + queryString : ''}`;
+                    const resp = await fetch(url);
                     if (!resp.ok) return null;
                     return await resp.json();
                 } catch (e) {
@@ -2646,7 +2870,10 @@
                 `;
 
                 try {
-                    const resp = await fetch(`${API_BASE_URL}/api/estimates/${encodeURIComponent(this.currentEstimateDbId)}/files`);
+                    // Use tender-specific endpoint that validates access
+                    const url = `${API_BASE_URL}/api/tenders/invites/${encodeURIComponent(token)}/estimate/${encodeURIComponent(this.currentEstimateDbId)}/files?code=${encodeURIComponent(authCode)}`;
+
+                    const resp = await fetch(url);
                     if (!resp.ok) {
                         const err = await resp.json().catch(() => ({}));
                         throw new Error(err.error || 'Не удалось загрузить файлы');
@@ -2864,13 +3091,9 @@
             },
         };
 
-        // Auto-login if we have saved credentials
+        // Auto-login if we have credentials (URL or localStorage)
         window.addEventListener('load', async () => {
-            const savedToken = localStorage.getItem('sub_token');
-            const savedCode = localStorage.getItem('sub_authCode');
-            if (savedToken && savedCode) {
-                token = savedToken;
-                authCode = savedCode;
+            if (token && authCode) {
                 // If tenderId was not in URL, try to get it from localStorage
                 if (!tenderId) {
                     tenderId = localStorage.getItem('sub_tenderId');
@@ -3032,7 +3255,6 @@
             const fileInput = document.getElementById('file-upload');
             const totalInput = document.getElementById('total-price');
             const daysInput = document.getElementById('completion-days');
-            const saveBtn = document.getElementById('btn-save');
             const submitBtn = document.getElementById('btn-submit');
 
             if (uploadBtn) uploadBtn.disabled = closed;
@@ -3040,7 +3262,6 @@
             if (fileInput) fileInput.disabled = closed;
             if (totalInput) totalInput.disabled = closed;
             if (daysInput) daysInput.disabled = closed;
-            if (saveBtn) saveBtn.disabled = closed;
             if (submitBtn) submitBtn.disabled = closed;
 
             // Documents upload lock
@@ -4330,8 +4551,9 @@
             });
         })();
 
-        document.getElementById('btn-save').onclick = () => saveBid('parsing');
-        document.getElementById('btn-submit').onclick = () => saveBid('parsed');
+        if (document.getElementById('btn-submit')) {
+            document.getElementById('btn-submit').onclick = () => saveBid('parsed');
+        }
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

@@ -54,7 +54,7 @@ const SettingsManager = {
 
         const setLoading = () => {
             contentArea.innerHTML = `
-                <div style="padding: 32px 40px; max-width: 1320px; margin: 0 auto; width: 100%;">
+                <div style="width: 100%;">
                     <div style="height: 120px; border: 1px solid var(--gray-200); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gray-500);">
                         Загрузка...
                     </div>
@@ -141,18 +141,11 @@ const SettingsManager = {
             }).join('');
 
             contentArea.innerHTML = `
-                <div style="padding: 32px 40px; max-width: 1320px; margin: 0 auto; width: 100%;">
+                <div style="width: 100%;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="14" rx="2" ry="2" />
-                                <path d="M8 10h8M8 14h5" />
-                                <circle cx="9" cy="18" r="1.2" />
-                            </svg>
-                            <div>
-                                <h1 style="margin: 0; font-size: 24px; color: var(--gray-900);">Субподрядчики (Общий список)</h1>
-                                <p style="margin: 4px 0 0; color: var(--gray-600); font-size: 13px;">Управление данными субподрядчиков для всех объектов</p>
-                            </div>
+                        <div>
+                            <h1 style="margin: 0; font-size: 24px; color: var(--gray-900);">Субподрядчики</h1>
+                            <p style="margin: 4px 0 0; color: var(--gray-600); font-size: 13px;">Управление данными субподрядчиков для всех объектов</p>
                         </div>
                         <button id="subcontractor-add-btn" class="btn btn-primary" style="padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -293,14 +286,14 @@ const SettingsManager = {
                             <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; justify-content: space-between;">
                                 <div>
                                     <label>Фото фирмы</label>
-                                    <div id="sc-company-photo-preview" style="position: relative; aspect-ratio: 1 / 1; min-height: 140px; border: 1px dashed var(--gray-300); border-radius: 50%; background: linear-gradient(135deg, var(--gray-50), #f8fafc); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; ${data.companyPhoto ? `background-image: url(${data.companyPhoto}); background-size: cover; background-position: center;` : ''}">
+                                    <div id="sc-company-photo-preview" style="position: relative; aspect-ratio: 1 / 1; min-height: 140px; border: 1px dashed var(--gray-300); border-radius: 12px; background: linear-gradient(135deg, var(--gray-50), #f8fafc); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; ${data.companyPhoto ? `background-image: url(${data.companyPhoto}); background-size: cover; background-position: center;` : ''}">
                                         ${data.companyPhoto ? '' : '<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color: var(--gray-500); font-size: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.6;"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><path d="M4 15l4-4 3 3 2-2 5 5"/></svg><span>Нажмите, чтобы загрузить</span></div>'}
                                     </div>
                                     <input type="file" id="sc-company-photo" accept="image/*" style="display: none;">
                                 </div>
                                 <div>
                                     <label>Фото директора</label>
-                                    <div id="sc-director-photo-preview" style="position: relative; aspect-ratio: 1 / 1; min-height: 140px; border: 1px dashed var(--gray-300); border-radius: 50%; background: linear-gradient(135deg, var(--gray-50), #f8fafc); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; ${data.directorPhoto ? `background-image: url(${data.directorPhoto}); background-size: cover; background-position: center;` : ''}">
+                                    <div id="sc-director-photo-preview" style="position: relative; aspect-ratio: 1 / 1; min-height: 140px; border: 1px dashed var(--gray-300); border-radius: 12px; background: linear-gradient(135deg, var(--gray-50), #f8fafc); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; ${data.directorPhoto ? `background-image: url(${data.directorPhoto}); background-size: cover; background-position: center;` : ''}">
                                         ${data.directorPhoto ? '' : '<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color: var(--gray-500); font-size: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.6;"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><path d="M4 15l4-4 3 3 2-2 5 5"/></svg><span>Нажмите, чтобы загрузить</span></div>'}
                                     </div>
                                     <input type="file" id="sc-director-photo" accept="image/*" style="display: none;">
@@ -998,7 +991,7 @@ const SettingsManager = {
                     : [];
 
                 contentArea.innerHTML = `
-                    <div style="padding: 20px 40px; height: calc(100vh - 140px); display: flex; flex-direction: column;">
+                    <div style="height: 100%; display: flex; flex-direction: column; width: 100%;">
                         <div style="margin-bottom: 20px;">
                             <h1 style="font-size: 24px; color: var(--gray-900); margin: 0;">Управление кадрами</h1>
                             <p style="margin: 4px 0 0; color: var(--gray-600); font-size: 13px;">Структура компании и сотрудники</p>
@@ -1238,7 +1231,7 @@ const SettingsManager = {
                     : [];
 
                 contentArea.innerHTML = `
-                    <div style="padding: 20px 40px; height: calc(100vh - 140px); display: flex; flex-direction: column;">
+                    <div style="height: 100%; display: flex; flex-direction: column; width: 100%;">
                         <div style="margin-bottom: 20px;">
                             <h1 style="font-size: 24px; color: var(--gray-900); margin: 0;">Управление кадрами</h1>
                             <p style="margin: 4px 0 0; color: var(--gray-600); font-size: 13px;">Структура компании и сотрудники</p>

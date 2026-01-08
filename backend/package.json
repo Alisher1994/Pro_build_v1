@@ -7,7 +7,7 @@
     "schema": "prisma/schema.sqlite.prisma"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "prisma generate --schema=prisma/schema.sqlite.prisma && ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",

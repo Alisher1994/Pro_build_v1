@@ -31,11 +31,58 @@ class ProBIMApp {
             showWeather: true,
             showAQI: true
         };
+        this.currentLegalSubTab = 'inbox';
+        this.legalStatusFilter = 'all';
+        this.legalSearchQuery = '';
+        this.legalFilterPanelVisible = false;
+        this.legalFilters = {
+            docType: 'all',
+            status: 'all',
+            priceFrom: '',
+            priceTo: '',
+            contractNo: '',
+            inn: '',
+            docDate: ''
+        };
+        this.legalDropdowns = {
+            docType: false,
+            status: false
+        };
+        this.lastLegalKeyPressTime = 0;
+        this.lastLegalKey = '';
+        this.legalTemplateEditorVisible = false;
+        this.selectedLegalTemplateType = 'contract_nk';
+        this.legalTemplateSections = [
+            { id: 1, title: '1. ПРЕДМЕТ ДОГОВОРА', text: '' },
+            { id: 2, title: '2. СТОИМОСТЬ РАБОТ И ПОРЯДОК РАСЧЕТА', text: '' },
+            { id: 3, title: '3. ОБЯЗАТЕЛЬСТВА СТОРОН', text: '' },
+            { id: 4, title: '4. ОТВЕТСТВЕННОСТЬ СТОРОН', text: '' },
+            { id: 5, title: '5. ПОРЯДОК РАЗРЕШЕНИЯ СПОРОВ', text: '' },
+            { id: 6, title: '6. ПРОЧИЕ УСЛОВИЯ', text: '' },
+            { id: 7, title: '7. ЮРИДИЧЕСКИЕ АДРЕСА, БАНКОВСКИЕ РЕКВИЗИТЫ И ПОДПИСИ СТОРОН', text: '' }
+        ];
+        this.editingLegalTemplateId = null;
+        this.legalTemplateData = {
+            name: '',
+            city: 'г. Ташкент',
+            docType: 'contract_nk',
+            partyA: { name: 'OOO "PROBIM"', inn: '309272383', mfo: '01095', bank: 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK"' },
+            partyB: { name: '', inn: '', mfo: '', bank: '' }
+        };
+        this.legalEditorDropdowns = {
+            docType: false,
+            city: false
+        };
+        this.uzbekistanCities = [
+            'г. Ташкент', 'Самарканд', 'Бухара', 'Хива', 'Андижан',
+            'Наманган', 'Фергана', 'Нукус', 'Карши', 'Термез',
+            'Джизак', 'Гулистан', 'Навои'
+        ];
     }
 
     getInitialRibbonTab() {
         // Убрали 'analytics' из списка разрешенных
-        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'timesheet', 'settings', 'ui-kit']);
+        const allowed = new Set(['dashboard', 'estimate', 'tender', 'schedule', 'supply', 'finance', 'otitb', 'timesheet', 'settings', 'ui-kit', 'legal']);
 
         // Принудительно открываем Дашборд при обновлении
         // Если в URL есть хеш, его можно оставить для глубокой навигации, 
@@ -459,6 +506,9 @@ class ProBIMApp {
             case 'finance':
                 await this.loadFinanceTab();
                 break;
+            case 'legal':
+                this.loadLegalTab();
+                break;
             case 'analytics':
                 this.loadAnalyticsTab();
                 break;
@@ -555,6 +605,7 @@ class ProBIMApp {
             }
             else if (this.currentRibbonTab === 'tender') label = 'Тендер';
             else if (this.currentRibbonTab === 'schedule') label = 'График';
+            else if (this.currentRibbonTab === 'legal') label = 'Юридический отдел';
             else if (this.currentRibbonTab === 'monitoring') label = 'Мониторинг 3Д';
             else if (this.currentRibbonTab === 'gpr') label = 'ГПР';
             else if (this.currentRibbonTab === 'supply') label = 'Снабжение';
@@ -673,6 +724,29 @@ class ProBIMApp {
         };
     }
 
+    setTenderFilter(filter) {
+        // Update ribbon UI
+        const buttons = {
+            'all': 'ribbon-tender-all',
+            'open': 'ribbon-tender-open',
+            'closed': 'ribbon-tender-closed'
+        };
+
+        Object.keys(buttons).forEach(key => {
+            const btn = document.getElementById(buttons[key]);
+            if (btn) {
+                if (key === filter) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
+
+        // Call iframe
+        const iframe = document.getElementById('tender-frame');
+        if (iframe && iframe.contentWindow && typeof iframe.contentWindow.updateLotFilter === 'function') {
+            iframe.contentWindow.updateLotFilter(filter);
+        }
+    }
+
     loadUiKitTab() {
         this.currentRibbonTab = 'ui-kit';
         this.applyRibbonTabToUI('ui-kit');
@@ -696,6 +770,1296 @@ class ProBIMApp {
             </div>
         `;
         this.updateBreadcrumbs();
+    }
+
+    setLegalSubTab(subTab) {
+        this.currentLegalSubTab = subTab;
+
+        // Update ribbon UI
+        const btnIds = {
+            'inbox': 'btn-legal-inbox',
+            'outbox': 'btn-legal-outbox',
+            'drafts': 'btn-legal-drafts',
+            'templates': 'btn-legal-templates',
+            'contracts': 'btn-legal-contracts',
+            'base': 'btn-legal-base'
+        };
+
+        Object.values(btnIds).forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.remove('active');
+        });
+
+        const activeBtn = document.getElementById(btnIds[subTab]);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        // Reset filter when switching sub-tabs
+        this.legalStatusFilter = 'all';
+
+        this.loadLegalTab();
+    }
+
+    setLegalStatusFilter(filter) {
+        this.legalStatusFilter = filter;
+        this.loadLegalTab();
+    }
+
+    handleLegalSearch() {
+        const input = document.getElementById('legal-search-input');
+        if (input) {
+            this.legalSearchQuery = input.value.trim();
+            this.loadLegalTab();
+            // Focus back to input after re-render
+            setTimeout(() => {
+                const newInput = document.getElementById('legal-search-input');
+                if (newInput) {
+                    newInput.focus();
+                    newInput.selectionStart = newInput.selectionEnd = newInput.value.length;
+                }
+            }, 10);
+        }
+    }
+
+    toggleLegalFilterPanel() {
+        this.legalFilterPanelVisible = !this.legalFilterPanelVisible;
+        // Close dropdowns when closing panel
+        if (!this.legalFilterPanelVisible) {
+            this.legalDropdowns.docType = false;
+            this.legalDropdowns.status = false;
+        }
+        this.loadLegalTab();
+
+        // Focus on INN input if panel opened
+        if (this.legalFilterPanelVisible) {
+            setTimeout(() => {
+                const innInput = document.getElementById('legal-filter-inn');
+                if (innInput) {
+                    innInput.focus();
+                    // Move cursor to end if there's already a value
+                    innInput.selectionStart = innInput.selectionEnd = innInput.value.length;
+                }
+            }, 300); // Wait for slide animation to start/complete a bit
+        }
+    }
+
+    toggleLegalDropdown(name, event) {
+        if (event) event.stopPropagation();
+        // Close others
+        for (let key in this.legalDropdowns) {
+            if (key !== name) this.legalDropdowns[key] = false;
+        }
+        this.legalDropdowns[name] = !this.legalDropdowns[name];
+        this.loadLegalTab();
+    }
+
+    setLegalFilterValue(key, value) {
+        this.legalFilters[key] = value;
+        this.legalDropdowns.docType = false;
+        this.legalDropdowns.status = false;
+        this.loadLegalTab();
+    }
+
+    resetLegalFilters() {
+        this.legalFilters = {
+            docType: 'all',
+            status: 'all',
+            priceFrom: '',
+            priceTo: '',
+            contractNo: '',
+            inn: '',
+            docDate: ''
+        };
+        this.legalSearchQuery = '';
+        this.loadLegalTab();
+        UI.showNotification('Фильтры сброшены', 'info');
+    }
+
+    openLegalTemplateEditor() {
+        this.editingLegalTemplateId = null;
+        this.legalTemplateData = {
+            name: '',
+            city: 'г. Ташкент',
+            docType: 'contract_nk',
+            partyA: { name: 'OOO "PROBIM"', inn: '309272383', mfo: '01095', bank: 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK"' },
+            partyB: { name: '', inn: '', mfo: '', bank: '' }
+        };
+        this.legalEditorDropdowns = {
+            docType: false,
+            city: false
+        };
+        this.legalTemplateSections = [
+            { id: 1, title: '1. ПРЕДМЕТ ДОГОВОРА', text: '' },
+            { id: 2, title: '2. СТОИМОСТЬ РАБОТ И ПОРЯДОК РАСЧЕТА', text: '' },
+            { id: 3, title: '3. ОБЯЗАТЕЛЬСТВА СТОРОН', text: '' },
+            { id: 4, title: '4. ОТВЕТСТВЕННОСТЬ СТОРОН', text: '' },
+            { id: 5, title: '5. ПОРЯДОК РАЗРЕШЕНИЯ СПОРОВ', text: '' },
+            { id: 6, title: '6. ПРОЧИЕ УСЛОВИЯ', text: '' },
+            { id: 7, title: '7. ЮРИДИЧЕСКИЕ АДРЕСА, БАНКОВСКИЕ РЕКВИЗИТЫ И ПОДПИСИ СТОРОН', text: '' }
+        ];
+        this.legalTemplateEditorVisible = true;
+        this.loadLegalTab();
+    }
+
+    toggleLegalEditorDropdown(dropdown, event) {
+        if (event) event.stopPropagation();
+        this.legalEditorDropdowns[dropdown] = !this.legalEditorDropdowns[dropdown];
+        this.renderLegalTemplateEditor();
+    }
+
+    setLegalTemplateDocType(type) {
+        this.legalTemplateData.docType = type;
+        this.legalEditorDropdowns.docType = false;
+        this.renderLegalTemplateEditor();
+    }
+
+    setLegalTemplateCity(city) {
+        this.legalTemplateData.city = city;
+        this.legalEditorDropdowns.city = false;
+        this.renderLegalTemplateEditor();
+    }
+
+    async editLegalTemplate(templateId) {
+        try {
+            const template = await api.getLegalTemplate(templateId);
+            this.editingLegalTemplateId = templateId;
+            this.legalTemplateData = {
+                name: template.name,
+                city: template.city || 'г. Ташкент',
+                docType: template.docType || 'contract_nk',
+                partyA: {
+                    name: template.partyAName || 'OOO "PROBIM"',
+                    inn: template.partyAinn || '309272383',
+                    mfo: template.partyAmfo || '01095',
+                    bank: template.partyAbank || 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK"'
+                },
+                partyB: {
+                    name: template.partyBName || '',
+                    inn: template.partyBinn || '',
+                    mfo: template.partyBmfo || '',
+                    bank: template.partyBbank || ''
+                }
+            };
+
+            // Parse sections if it's a JSON string
+            if (typeof template.sections === 'string') {
+                try {
+                    this.legalTemplateSections = JSON.parse(template.sections);
+                } catch (e) {
+                    console.error('Error parsing template sections:', e);
+                    this.legalTemplateSections = [];
+                }
+            } else {
+                this.legalTemplateSections = template.sections || [];
+            }
+
+            this.legalTemplateEditorVisible = true;
+            this.loadLegalTab();
+        } catch (error) {
+            console.error('Error loading template for edit:', error);
+            UI.showNotification('Ошибка при загрузке шаблона: ' + error.message, 'error');
+        }
+    }
+
+    closeLegalTemplateEditor() {
+        this.legalTemplateEditorVisible = false;
+        this.editingLegalTemplateId = null;
+        this.loadLegalTab();
+    }
+
+    selectLegalTemplateType(type) {
+        this.selectedLegalTemplateType = type;
+        this.loadLegalTab();
+    }
+
+    addLegalTemplateSection(afterId) {
+        const newId = Date.now();
+        const newSection = {
+            id: newId,
+            title: `НОВЫЙ РАЗДЕЛ`,
+            text: ''
+        };
+
+        if (afterId) {
+            const index = this.legalTemplateSections.findIndex(s => s.id === afterId);
+            if (index !== -1) {
+                this.legalTemplateSections.splice(index + 1, 0, newSection);
+            } else {
+                this.legalTemplateSections.push(newSection);
+            }
+        } else {
+            this.legalTemplateSections.push(newSection);
+        }
+
+        this.renderLegalTemplateEditor();
+
+        // Scroll to new section
+        setTimeout(() => {
+            const el = document.getElementById(`section-${newId}`);
+            if (el) {
+                // Use block: 'center' with behavior smooth, but ensure container doesn't jump
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.boxShadow = '0 0 0 3px rgba(32, 115, 69, 0.2)';
+                el.style.borderRadius = '4px';
+                setTimeout(() => { if (el) el.style.boxShadow = 'none'; }, 2000);
+            }
+        }, 50);
+    }
+
+    removeLegalTemplateSection(id) {
+        if (this.legalTemplateSections.length <= 1) {
+            UI.showNotification('Должен быть хотя бы один раздел', 'warning');
+            return;
+        }
+        this.legalTemplateSections = this.legalTemplateSections.filter(s => s.id !== id);
+        this.renderLegalTemplateEditor();
+    }
+
+    async saveLegalTemplate() {
+        try {
+            const data = {
+                projectId: this.currentProjectId,
+                name: document.getElementById('legal-doc-name')?.value || 'БЕЗ НАЗВАНИЯ',
+                city: this.legalTemplateData.city || 'г. Ташкент',
+                docType: this.legalTemplateData.docType || 'contract_nk',
+                partyA: {
+                    name: document.getElementById('legal-party-a-name')?.value || '',
+                    inn: document.getElementById('legal-party-a-inn')?.value || '',
+                    mfo: document.getElementById('legal-party-a-mfo')?.value || '',
+                    bank: document.getElementById('legal-party-a-bank')?.value || ''
+                },
+                partyB: {
+                    name: document.getElementById('legal-party-b-name')?.value || '',
+                    inn: document.getElementById('legal-party-b-inn')?.value || '',
+                    mfo: document.getElementById('legal-party-b-mfo')?.value || '',
+                    bank: document.getElementById('legal-party-b-bank')?.value || ''
+                },
+                sections: this.legalTemplateSections
+            };
+
+            UI.showNotification('Сохранение...', 'info');
+
+            if (this.editingLegalTemplateId) {
+                await api.updateLegalTemplate(this.editingLegalTemplateId, data);
+                UI.showNotification('Шаблон успешно обновлен', 'success');
+            } else {
+                await api.createLegalTemplate(data);
+                UI.showNotification('Шаблон успешно сохранен', 'success');
+            }
+
+            // Close modal if open
+            const modal = document.getElementById('legal-preview-modal');
+            if (modal) modal.remove();
+
+            this.closeLegalTemplateEditor();
+        } catch (error) {
+            console.error('Error saving template:', error);
+            UI.showNotification('Ошибка при сохранении: ' + error.message, 'error');
+        }
+    }
+
+    previewLegalTemplate() {
+        const data = {
+            name: document.getElementById('legal-doc-name')?.value || 'БЕЗ НАЗВАНИЯ',
+            city: this.legalTemplateData.city || 'г. Ташкент',
+            partyA: {
+                name: document.getElementById('legal-party-a-name')?.value || '',
+                inn: document.getElementById('legal-party-a-inn')?.value || '',
+                mfo: document.getElementById('legal-party-a-mfo')?.value || '',
+                bank: document.getElementById('legal-party-a-bank')?.value || ''
+            },
+            partyB: {
+                name: document.getElementById('legal-party-b-name')?.value || '',
+                inn: document.getElementById('legal-party-b-inn')?.value || '',
+                mfo: document.getElementById('legal-party-b-mfo')?.value || '',
+                bank: document.getElementById('legal-party-b-bank')?.value || ''
+            },
+            sections: this.legalTemplateSections
+        };
+
+        this.showLegalPreviewModal(data);
+    }
+
+    showLegalPreviewModal(data) {
+        const modal = document.createElement('div');
+        modal.id = 'legal-preview-modal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 9999; display: flex; 
+            align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        `;
+
+        const content = `
+            <div style="background: #fff; width: 90%; max-width: 800px; height: 90%; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+                <!-- Modal Header -->
+                <div style="padding: 16px 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: 400; color: #1a202c;">Предварительный просмотр документа</h3>
+                    <button onclick="document.getElementById('legal-preview-modal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #a0aec0;">&times;</button>
+                </div>
+                
+                <!-- Modal Body (Continuous White Paper) -->
+                <div style="flex: 1; overflow-y: auto; background: #fff; display: flex; justify-content: center;">
+                    <div style="width: 100%; max-width: 800px; padding: 60px 80px; font-family: 'Times New Roman', serif; color: #000; line-height: 1.6; background: #fff;">
+                        <!-- Doc Header -->
+                        <div style="text-align: center; margin-bottom: 40px;">
+                            <h1 style="font-size: 15px; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #000; display: inline-block; padding-bottom: 8px; margin-bottom: 20px;">${data.name}</h1>
+                            <div style="display: flex; justify-content: space-between; font-size: 15px; margin-top: 10px;">
+                                <span>${data.city}</span>
+                                <span>«___» __________ 202___ г.</span>
+                            </div>
+                        </div>
+
+                        <!-- Sections -->
+                        <div style="font-size: 15px; margin-bottom: 80px;">
+                            ${data.sections.map(s => `
+                                <div style="margin-bottom: 32px;">
+                                    <h4 style="margin: 0 0 15px 0; font-size: 15px; text-transform: uppercase; text-align: center; font-weight: bold;">${s.title}</h4>
+                                    <div style="text-align: justify; white-space: pre-wrap; font-size: 15px;">${s.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <!-- Parties Requisites -->
+                        <div style="display: flex; justify-content: space-between; gap: 60px; margin-bottom: 30px; font-size: 14px; border-top: 1.5px solid #000; padding-top: 30px;">
+                            <div style="flex: 1;">
+                                <strong style="display: block; margin-bottom: 15px; text-transform: uppercase;">Заказчик:</strong>
+                                <div style="line-height: 1.8;">
+                                    ${data.partyA.name}<br>
+                                    ИНН: ${data.partyA.inn}<br>
+                                    Банк: ${data.partyA.bank}<br>
+                                    МФО: ${data.partyA.mfo}
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <strong style="display: block; margin-bottom: 15px; text-transform: uppercase;">Исполнитель:</strong>
+                                <div style="line-height: 1.8;">
+                                    ${data.partyB.name || '___________'}<br>
+                                    ИНН: ${data.partyB.inn || '___________'}<br>
+                                    Банк: ${data.partyB.bank || '___________'}<br>
+                                    МФО: ${data.partyB.mfo || '___________'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Signatures -->
+                        <div style="display: flex; justify-content: space-between; gap: 60px;">
+                            <div style="flex: 1; border-top: 1px solid #000; padding-top: 15px; font-size: 13px; text-align: center;">
+                                (Подпись ЗАКАЗЧИКА)
+                            </div>
+                            <div style="flex: 1; border-top: 1px solid #000; padding-top: 15px; font-size: 13px; text-align: center;">
+                                (Подпись ИСПОЛНИТЕЛЯ)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div style="padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px; background: #fff;">
+                    <button onclick="document.getElementById('legal-preview-modal').remove()" style="padding: 10px 24px; border-radius: 4px; border: 1px solid #d1d5db; background: #fff; font-weight: 700; cursor: pointer; color: #4b5563;">Закрыть</button>
+                    <button onclick="app.saveLegalTemplate()" style="padding: 10px 24px; border-radius: 4px; border: none; background: #207245; color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(32, 114, 69, 0.2);">Сохранить документ</button>
+                </div>
+            </div>
+        `;
+
+        modal.innerHTML = content;
+        document.body.appendChild(modal);
+    }
+
+    async viewLegalTemplate(templateId) {
+        try {
+            const template = await api.getLegalTemplate(templateId);
+            const sections = JSON.parse(template.sections);
+
+            const data = {
+                name: template.name,
+                city: template.city || 'г. Ташкент',
+                partyA: {
+                    name: template.partyAName || '',
+                    inn: template.partyAinn || '',
+                    mfo: template.partyAmfo || '',
+                    bank: template.partyAbank || ''
+                },
+                partyB: {
+                    name: template.partyBName || '',
+                    inn: template.partyBinn || '',
+                    mfo: template.partyBmfo || '',
+                    bank: template.partyBbank || ''
+                },
+                sections: sections
+            };
+
+            this.showLegalPreviewModal(data);
+        } catch (error) {
+            console.error('Error viewing template:', error);
+            UI.showNotification('Ошибка загрузки шаблона: ' + error.message, 'error');
+        }
+    }
+
+    async deleteLegalTemplate(templateId) {
+        if (!confirm('Вы уверены, что хотите удалить этот шаблон?')) {
+            return;
+        }
+
+        try {
+            await api.deleteLegalTemplate(templateId);
+            UI.showNotification('Шаблон успешно удален', 'success');
+            this.loadLegalTab();
+        } catch (error) {
+            console.error('Error deleting template:', error);
+            UI.showNotification('Ошибка при удалении шаблона: ' + error.message, 'error');
+        }
+    }
+
+    renderLegalTemplateEditor() {
+        const contentArea = document.getElementById('content-area');
+        contentArea.style.padding = '0';
+
+        // Only Contract (NK) for now
+        const templateTypes = [
+            { id: 'contract_nk', name: 'Договор (НК)', icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>' }
+        ];
+
+        const selectedType = templateTypes.find(t => t.id === this.selectedLegalTemplateType) || templateTypes[0];
+
+        contentArea.innerHTML = `
+            <div id="legal-template-editor-container" style="display: flex; height: 100%; background: #fdfdfd; overflow: hidden; font-family: 'Inter', sans-serif;">
+                <style>
+                    #legal-template-editor-container {
+                        font-family: 'Inter', sans-serif !important;
+                        color: #2d3748;
+                    }
+                    #legal-template-editor-container input, 
+                    #legal-template-editor-container textarea {
+                        font-family: 'Inter', sans-serif !important;
+                        font-size: 13px !important;
+                        padding: 10px 14px !important;
+                        border: 1.5px solid #e2e8f0 !important;
+                        border-radius: 4px !important;
+                        color: #2d3748 !important;
+                        outline: none !important;
+                        transition: border-color 0.2s !important;
+                    }
+                    #legal-template-editor-container input:focus, 
+                    #legal-template-editor-container textarea:focus {
+                        border-color: var(--primary) !important;
+                    }
+                    #legal-template-editor-container label {
+                        font-family: 'Inter', sans-serif !important;
+                        font-size: 11px !important;
+                        font-weight: 700 !important;
+                        color: #718096 !important;
+                        text-transform: uppercase !important;
+                        letter-spacing: 0.02em !important;
+                    }
+                    #legal-template-editor-container .section-title-input {
+                        font-weight: 700 !important;
+                        font-size: 14px !important;
+                    }
+                    #legal-template-editor-container .card-panel {
+                        background: #fff;
+                        border: 1px solid #edf2f7;
+                        border-radius: 4px;
+                        padding: 24px;
+                        margin-bottom: 24px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                    }
+                </style>
+                <!-- Main Editor Area -->
+                <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: #fff;">
+                    
+                    <!-- Header Actions -->
+                    <div style="height: 56px; border-bottom: 1px solid #edf2f7; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; flex-shrink: 0; background: #fff;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <button onclick="app.closeLegalTemplateEditor()" style="display: flex; align-items: center; gap: 8px; background: none; border: none; color: #718096; cursor: pointer; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='transparent'">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                                Назад
+                            </button>
+                            <div style="height: 20px; width: 1px; background: #e2e8f0;"></div>
+                            <h2 style="margin: 0; font-size: 13px; font-weight: 400; color: #4a5568;">Тип документа: <span style="color: var(--primary);">${selectedType.name}</span></h2>
+                        </div>
+                        
+                        <!-- Top Action Buttons -->
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button style="padding: 8px 18px; font-weight: 700; border-radius: 4px; background: #207245; color: #fff; border: none; box-shadow: 0 4px 10px rgba(32, 114, 69, 0.2); cursor: pointer; font-size: 13px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 5px 14px rgba(32, 114, 69, 0.25)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(32, 114, 69, 0.2)'" onclick="app.previewLegalTemplate()">Предварительный просмотр и сохранить</button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Content -->
+                    <div style="flex: 1; overflow-y: auto; padding: 24px; background: #f8fafc;">
+                        <div style="width: 100%; margin: 0 auto; max-width: 1200px;">
+
+                             <!-- Document Meta Form -->
+                            <div class="card-panel" style="padding: 20px;">
+                                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px;">
+                                    <div style="position: relative;">
+                                        <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px; color: var(--primary); z-index: 1;">Наименование документа*</label>
+                                        <input type="text" id="legal-doc-name" placeholder="Введите название..." style="width: 100%;" value="${this.legalTemplateData.name || ''}">
+                                    </div>
+                                    <div style="position: relative;">
+                                        <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px; color: var(--primary); z-index: 1;">Город</label>
+                                        <div onclick="app.toggleLegalEditorDropdown('city', event)" style="width: 100%; height: 41px; border: 1.5px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; cursor: pointer; background: #fff; font-size: 13px;">
+                                            <span>${this.legalTemplateData.city || 'Выберите город...'}</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                                        </div>
+                                        
+                                        <div style="display: ${this.legalEditorDropdowns.city ? 'block' : 'none'}; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; padding: 4px 0; max-height: 250px; overflow-y: auto;">
+                                            ${this.uzbekistanCities.map(city => `
+                                                <div onclick="app.setLegalTemplateCity('${city}')" style="padding: 10px 14px; font-size: 13px; cursor: pointer; transition: background 0.2s; background: ${this.legalTemplateData.city === city ? '#f8fafc' : 'transparent'}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${this.legalTemplateData.city === city ? '#f8fafc' : 'transparent'}'">${city}</div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    <div style="position: relative;">
+                                        <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px; color: var(--primary); z-index: 1;">Тип документа</label>
+                                        <div onclick="app.toggleLegalEditorDropdown('docType', event)" style="width: 100%; height: 41px; border: 1.5px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; cursor: pointer; background: #fff; font-size: 13px;">
+                                            <span>${this.legalTemplateData.docType === 'contract_nk' ? 'Договор (НК)' : this.legalTemplateData.docType}</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                                        </div>
+                                        
+                                        <div id="legal-editor-doctype-menu" style="display: ${this.legalEditorDropdowns.docType ? 'block' : 'none'}; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; padding: 4px 0;">
+                                            <div onclick="app.setLegalTemplateDocType('contract_nk')" style="padding: 10px 14px; font-size: 13px; cursor: pointer; transition: background 0.2s; background: ${this.legalTemplateData.docType === 'contract_nk' ? '#f8fafc' : 'transparent'}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${this.legalTemplateData.docType === 'contract_nk' ? '#f8fafc' : 'transparent'}'">Договор (НК)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Parties Information -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                                <!-- Party A (Your Company) -->
+                                <div class="card-panel" style="margin-bottom: 0;">
+                                    <h4 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 800; color: #2d3748;">Ваши сведения</h4>
+                                    <div style="flex-direction: column; display: flex; gap: 20px;">
+                                        <div style="position: relative;">
+                                            <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px;">ИНН/ПИНФЛ</label>
+                                            <input type="text" id="legal-party-a-inn" value="${this.legalTemplateData.partyA.inn}" style="width: 100%; background: #f8fafc; border-color: #f1f5f9 !important;" readonly>
+                                        </div>
+                                        <div style="position: relative;">
+                                            <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px;">Наименование организации</label>
+                                            <input type="text" id="legal-party-a-name" value='${this.legalTemplateData.partyA.name}' style="width: 100%; background: #f8fafc; border-color: #f1f5f9 !important;" readonly>
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 100px 1fr; gap: 16px;">
+                                            <div style="position: relative;">
+                                                <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px;">МФО</label>
+                                                <input type="text" id="legal-party-a-mfo" value="${this.legalTemplateData.partyA.mfo}" style="width: 100%;">
+                                            </div>
+                                            <div style="position: relative;">
+                                                <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px;">Банк</label>
+                                                <input type="text" id="legal-party-a-bank" value='${this.legalTemplateData.partyA.bank}' style="width: 100%;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Party B (Partner) -->
+                                <div class="card-panel" style="margin-bottom: 0;">
+                                    <h4 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 800; color: #2d3748;">Сведения партнера</h4>
+                                    <div style="flex-direction: column; display: flex; gap: 20px;">
+                                        <div style="position: relative;">
+                                            <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px; color: var(--primary);">ИНН/ПИНФЛ*</label>
+                                            <input type="text" id="legal-party-b-inn" placeholder="Введите ИНН..." style="width: 100%;" value="${this.legalTemplateData.partyB.inn || ''}">
+                                        </div>
+                                        <div style="position: relative;">
+                                            <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px; color: var(--primary);">Наименование организации*</label>
+                                            <input type="text" id="legal-party-b-name" placeholder="Введите название..." style="width: 100%;" value="${this.legalTemplateData.partyB.name || ''}">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 100px 1fr; gap: 16px;">
+                                            <div style="position: relative;">
+                                                <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px;">МФО</label>
+                                                <input type="text" id="legal-party-b-mfo" placeholder="..." style="width: 100%;" value="${this.legalTemplateData.partyB.mfo || ''}">
+                                            </div>
+                                            <div style="position: relative;">
+                                                <label style="position: absolute; top: -8px; left: 12px; background: #fff; padding: 0 6px;">Банк</label>
+                                                <input type="text" id="legal-party-b-bank" placeholder="..." style="width: 100%;" value="${this.legalTemplateData.partyB.bank || ''}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Document Content Sections -->
+                            <div class="card-panel" style="padding: 32px;">
+                                <h4 style="margin: 0 0 24px 0; font-size: 16px; font-weight: 800; color: #1a202c;">Содержание договора</h4>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 24px;">
+                                    ${this.legalTemplateSections.map(section => `
+                                        <div id="section-${section.id}" style="position: relative; padding: 20px; border: 1.5px solid #edf2f7; border-radius: 4px; background: #fdfdfd; transition: all 0.2s;">
+                                            <div style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 16px;">
+                                                <div style="flex: 1;">
+                                                    <label style="display: block; margin-bottom: 8px; padding-left: 4px;">Заголовок раздела</label>
+                                                    <input type="text" class="section-title-input" value="${section.title}" oninput="const s = app.legalTemplateSections.find(x => x.id === ${section.id}); if(s) s.title = this.value" style="width: 100%;">
+                                                </div>
+                                                <div style="display: flex; gap: 6px;">
+                                                    <button onclick="app.addLegalTemplateSection(${section.id})" title="Добавить раздел" style="width: 38px; height: 38px; border-radius: 4px; border: 1.5px solid #207245; background: #fff; color: #207245; font-size: 18px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#207245'; this.style.color='#fff'" onmouseout="this.style.background='#fff'; this.style.color='#207245'">+</button>
+                                                    <button onclick="app.removeLegalTemplateSection(${section.id})" title="Удалить раздел" style="width: 38px; height: 38px; border-radius: 4px; border: 1.5px solid #fca5a5; background: #fff; color: #ef4444; font-size: 18px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'" onmouseout="this.style.background='#fff'; this.style.color='#ef4444'">-</button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin-bottom: 8px; padding-left: 4px;">Текст раздела</label>
+                                                <textarea oninput="const s = app.legalTemplateSections.find(x => x.id === ${section.id}); if(s) s.text = this.value" style="width: 100%; font-size: 13px; line-height: 1.6; min-height: 100px; resize: vertical; background: #fff;">${section.text}</textarea>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Extra Padding -->
+                            <div style="height: 60px;"></div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    toggleLegalActionsMenu(event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById('legal-actions-menu');
+        if (menu) {
+            const isVisible = menu.style.display === 'block';
+            menu.style.display = isVisible ? 'none' : 'block';
+        }
+    }
+
+    toggleAllLegalDocuments(master) {
+        const checkboxes = document.querySelectorAll('.legal-row-checkbox');
+        checkboxes.forEach(cb => cb.checked = master.checked);
+        UI.showNotification(master.checked ? 'Выбраны все документы' : 'Выбор снят', 'info');
+    }
+
+    copyToClipboard(text, label = 'Текст') {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            UI.showNotification(`${label} скопирован в буфер обмена`, 'success');
+        }).catch(err => {
+            console.error('Copy failed:', err);
+            UI.showNotification('Ошибка копирования', 'error');
+        });
+    }
+
+    async loadLegalTab() {
+        if (!this.currentProjectId) return;
+
+        if (this.legalTemplateEditorVisible) {
+            this.renderLegalTemplateEditor();
+            return;
+        }
+
+        const subTitles = {
+            'inbox': 'Входящие документы',
+            'outbox': 'Исходящие документы',
+            'drafts': 'Черновики',
+            'templates': 'Шаблоны документов',
+            'contracts': 'Реестр договоров',
+            'base': 'Правовая база'
+        };
+
+        const contentArea = document.getElementById('content-area');
+        contentArea.style.padding = '24px';
+
+        if (this.currentLegalSubTab === 'inbox' || this.currentLegalSubTab === 'outbox') {
+            const title = this.currentLegalSubTab === 'inbox' ? 'Входящие' : 'Исходящие';
+            contentArea.innerHTML = `
+                <div style="background: var(--white); border-radius: 4px; height: 100%; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); overflow: hidden;">
+                    <style>
+                        .legal-table-row { cursor: pointer; transition: all 0.2s ease; }
+                        .legal-table-row:hover { background-color: rgba(34, 197, 94, 0.05) !important; }
+                        
+                        /* Custom Checkbox Styling */
+                        .legal-row-checkbox, #legal-select-all {
+                            appearance: none;
+                            -webkit-appearance: none;
+                            width: 16px;
+                            height: 16px;
+                            border: 1px solid transparent; /* Transparent by default */
+                            border-radius: 2px;
+                            background: #fff;
+                            cursor: pointer;
+                            position: relative;
+                            transition: border-color 0.2s;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 0 auto;
+                            outline: none;
+                        }
+
+                        /* Header checkbox border always visible slightly or also transparent? 
+                           User said "границы checkbox будет прозрачным" - likely applies to all inbox checkboxes. */
+                        
+                        .legal-table-row:hover .legal-row-checkbox,
+                        #legal-actions-toggle:hover,
+                        #legal-select-all:hover {
+                            border-color: var(--gray-300);
+                        }
+
+                        .legal-row-checkbox:checked, #legal-select-all:checked {
+                            background: var(--primary);
+                            border-color: var(--primary);
+                        }
+
+                        .legal-row-checkbox:checked::after, #legal-select-all:checked::after {
+                            content: '';
+                            position: absolute;
+                            width: 4px;
+                            height: 8px;
+                            border: solid white;
+                            border-width: 0 2px 2px 0;
+                            transform: rotate(45deg);
+                            top: 2px;
+                        }
+
+                        /* Search Modern Styling */
+                        .legal-search-container {
+                            flex: 1;
+                            max-width: 500px;
+                            position: relative;
+                            display: flex;
+                            align-items: center;
+                            background: #f8f9fb;
+                            border: 1px solid var(--gray-200);
+                            border-radius: 8px;
+                            padding: 0 14px;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        }
+
+                        .legal-search-container:hover {
+                            border-color: var(--gray-300);
+                            background: #f1f3f7;
+                        }
+
+                        .legal-search-container:focus-within {
+                            background: #fff;
+                            border-color: var(--primary);
+                            box-shadow: 0 0 0 3px rgba(32, 115, 69, 0.1);
+                        }
+
+                        .legal-search-container svg {
+                            transition: stroke 0.2s;
+                        }
+
+                        .legal-search-container:focus-within svg {
+                            stroke: var(--primary);
+                        }
+
+                        .legal-search-input {
+                            flex: 1;
+                            height: 38px;
+                            border: none;
+                            background: transparent;
+                            padding: 0 12px;
+                            font-size: 13px;
+                            color: var(--gray-900);
+                            outline: none;
+                        }
+
+                        .legal-search-input::placeholder {
+                            color: var(--gray-400);
+                        }
+                    </style>
+                    
+                    <!-- Fixed Top Header Section -->
+                    <div style="padding: 24px 24px 0 24px; background: var(--white); z-index: 10;">
+                        <!-- Header Row: Title + Search (Expanding) + Actions (Right Aligned) -->
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                            <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--gray-900); white-space: nowrap; margin-right: 8px;">${title}</h2>
+                            
+                            <div class="legal-search-container">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="legal-search-input" class="legal-search-input" 
+                                    placeholder="Поиск по контрагенту, ИНН или номеру договора..." 
+                                    value="${this.legalSearchQuery}"
+                                    onkeypress="if(event.key === 'Enter') app.handleLegalSearch()">
+                            </div>
+
+                            ${this.currentLegalSubTab === 'outbox' ? `
+                            <button class="btn btn-primary" onclick="app.openLegalTemplateEditor()" style="height: 38px; padding: 0 16px; display: flex; align-items: center; gap: 8px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Создать
+                            </button>
+                            ` : ''}
+
+                            <button class="btn btn-secondary" onclick="app.toggleLegalFilterPanel()" style="height: 38px; padding: 0 16px; display: flex; align-items: center; gap: 8px; border-radius: 8px; border: 1px solid ${this.legalFilterPanelVisible ? 'var(--primary)' : 'var(--gray-300)'}; font-weight: 500; font-size: 13px; background: ${this.legalFilterPanelVisible ? 'rgba(32, 115, 69, 0.05)' : '#fff'}; cursor: pointer; color: ${this.legalFilterPanelVisible ? 'var(--primary)' : 'var(--gray-700)'}; white-space: nowrap; transition: all 0.2s;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                                Фильтр
+                            </button>
+
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <button id="legal-actions-toggle" class="btn btn-secondary" onclick="app.toggleLegalActionsMenu(event)" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--gray-300); background: #fff; cursor: pointer; color: var(--gray-700);">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+                                </button>
+                                
+                                <div id="legal-actions-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: white; border: 1px solid var(--gray-200); border-radius: 4px; box-shadow: var(--shadow-lg); min-width: 220px; z-index: 1000; padding: 6px 0;">
+                                    <div onclick="UI.showNotification('Синхронизация запущена...', 'info'); app.toggleLegalActionsMenu()" style="padding: 10px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; font-size: 13px; color: var(--gray-700);" onmouseover="this.style.background='#f8f9fb'" onmouseout="this.style.background='white'">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                        Синхронизация с НК
+                                    </div>
+                                    <div onclick="UI.showNotification('Генерация реестра...', 'info'); app.toggleLegalActionsMenu()" style="padding: 10px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; font-size: 13px; color: var(--gray-700);" onmouseover="this.style.background='#f8f9fb'" onmouseout="this.style.background='white'">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                        Реестр
+                                    </div>
+                                    <div style="height: 1px; background: var(--gray-100); margin: 4px 0;"></div>
+                                    <div onclick="UI.showNotification('Настройки списка', 'info'); app.toggleLegalActionsMenu()" style="padding: 10px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; font-size: 13px; color: var(--gray-700);" onmouseover="this.style.background='#f8f9fb'" onmouseout="this.style.background='white'">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                        Настройки списка
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Filter Panel (Animated) -->
+                        <div style="max-height: ${this.legalFilterPanelVisible ? '500px' : '0'}; overflow: ${this.legalFilterPanelVisible ? 'visible' : 'hidden'}; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: ${this.legalFilterPanelVisible ? '1' : '0'}; pointer-events: ${this.legalFilterPanelVisible ? 'auto' : 'none'}; margin-bottom: ${this.legalFilterPanelVisible ? '24px' : '0'};">
+                            <div style="background: #f8f9fb; border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                                <!-- Filters Row -->
+                                <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                                    
+                                    <!-- Custom Dropdown: Document Type -->
+                                    <div style="flex: 1; min-width: 200px; position: relative;">
+                                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Тип документа</label>
+                                        <div onclick="app.toggleLegalDropdown('docType', event)" style="height: 38px; background: #fff; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                                            <span>${{ all: 'Все типы', contract: 'Договор', act: 'Акт работ', invoice: 'Счет-фактура', appendix: 'Доп. соглашение' }[this.legalFilters.docType]}</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; transform: ${this.legalDropdowns.docType ? 'rotate(180deg)' : 'none'}"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                        </div>
+                                        <div style="display: ${this.legalDropdowns.docType ? 'block' : 'none'}; position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: #fff; border: 1px solid var(--gray-200); border-radius: 6px; box-shadow: var(--shadow-md); z-index: 100; padding: 4px 0;">
+                                            ${['all', 'contract', 'act', 'invoice', 'appendix'].map(val => `
+                                                <div onclick="app.setLegalFilterValue('docType', '${val}')" style="padding: 8px 12px; font-size: 13px; cursor: pointer; background: ${this.legalFilters.docType === val ? 'rgba(32, 115, 69, 0.05)' : 'transparent'}; color: ${this.legalFilters.docType === val ? 'var(--primary)' : 'var(--gray-700)'};" onmouseover="this.style.background='#f8f9fb'" onmouseout="this.style.background='${this.legalFilters.docType === val ? 'rgba(32, 115, 69, 0.05)' : 'transparent'}'">
+                                                    ${{ all: 'Все типы', contract: 'Договор', act: 'Акт работ', invoice: 'Счет-фактура', appendix: 'Доп. соглашение' }[val]}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom Dropdown: Status -->
+                                    <div style="flex: 1; min-width: 160px; position: relative;">
+                                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Статус документа</label>
+                                        <div onclick="app.toggleLegalDropdown('status', event)" style="height: 38px; background: #fff; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                                            <span>${{ all: 'Все статусы', pending: 'Ожидает подписи', signed: 'Подписан', rejected: 'Отказ в подписи', deleted: 'Удален' }[this.legalFilters.status]}</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; transform: ${this.legalDropdowns.status ? 'rotate(180deg)' : 'none'}"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                        </div>
+                                        <div style="display: ${this.legalDropdowns.status ? 'block' : 'none'}; position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: #fff; border: 1px solid var(--gray-200); border-radius: 6px; box-shadow: var(--shadow-md); z-index: 100; padding: 4px 0;">
+                                            ${['all', 'pending', 'signed', 'rejected', 'deleted'].map(val => `
+                                                <div onclick="app.setLegalFilterValue('status', '${val}')" style="padding: 8px 12px; font-size: 13px; cursor: pointer; background: ${this.legalFilters.status === val ? 'rgba(32, 115, 69, 0.05)' : 'transparent'}; color: ${this.legalFilters.status === val ? 'var(--primary)' : 'var(--gray-700)'};" onmouseover="this.style.background='#f8f9fb'" onmouseout="this.style.background='${this.legalFilters.status === val ? 'rgba(32, 115, 69, 0.05)' : 'transparent'}'">
+                                                    ${{ all: 'Все статусы', pending: 'Ожидает подписи', signed: 'Подписан', rejected: 'Отказ в подписи', deleted: 'Удален' }[val]}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+
+                                    <!-- INN -->
+                                    <div style="flex: 0.6; min-width: 110px;">
+                                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">ИНН</label>
+                                        <input type="text" id="legal-filter-inn" placeholder="770 123 456" 
+                                            maxlength="11" 
+                                            value="${this.legalFilters.inn}" 
+                                            oninput="let v = this.value.replace(/[^0-9]/g, ''); if(v.length > 3) v = v.substring(0,3) + ' ' + v.substring(3); if(v.length > 7) v = v.substring(0,7) + ' ' + v.substring(7,10); this.value = v; app.legalFilters.inn = v;" 
+                                            style="width: 100%; height: 38px; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; background: #fff;">
+                                    </div>
+
+                                    <!-- Contract Number -->
+                                    <div style="flex: 0.6; min-width: 110px;">
+                                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Номер дог.</label>
+                                        <input type="text" placeholder="№ 123" value="${this.legalFilters.contractNo}" oninput="app.legalFilters.contractNo = this.value" style="width: 100%; height: 38px; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; background: #fff;">
+                                    </div>
+
+                                    <!-- Document Date -->
+                                    <div style="flex: 1; min-width: 150px;">
+                                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Дата документа</label>
+                                        <input type="date" value="${this.legalFilters.docDate}" oninput="app.legalFilters.docDate = this.value" style="width: 100%; height: 38px; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; background: #fff;">
+                                    </div>
+
+                                    <!-- Price Range -->
+                                    <div style="flex: 1.8; min-width: 240px;">
+                                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px;">Сумма (₽)</label>
+                                        <div style="display: flex; gap: 6px;">
+                                            <input type="text" placeholder="От" value="${this.legalFilters.priceFrom}" 
+                                                oninput="this.value = this.value.replace(/\\D/g, '').replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' '); app.legalFilters.priceFrom = this.value;" 
+                                                style="flex: 1; height: 38px; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; background: #fff;">
+                                            <input type="text" placeholder="До" value="${this.legalFilters.priceTo}" 
+                                                oninput="this.value = this.value.replace(/\\D/g, '').replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' '); app.legalFilters.priceTo = this.value;" 
+                                                style="flex: 1; height: 38px; border: 1px solid var(--gray-200); border-radius: 6px; padding: 0 12px; font-size: 13px; background: #fff;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Reset & Apply -->
+                                <div style="width: 100%; display: flex; justify-content: flex-end; gap: 12px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                                    <button onclick="app.resetLegalFilters()" style="background: none; border: none; color: var(--gray-500); cursor: pointer; font-size: 13px; font-weight: 500;">Сбросить</button>
+                                    <button onclick="app.toggleLegalFilterPanel()" class="btn btn-primary" style="height: 38px; padding: 0 24px; border-radius: 8px; font-size: 13px;">Применить</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Tabs -->
+                        <div style="display: flex; gap: 24px; border-bottom: 1px solid var(--gray-100); margin-bottom: 12px; padding-bottom: 2px; overflow-x: auto;">
+                            <div onclick="app.setLegalStatusFilter('all')" style="padding: 10px 0; border-bottom: 2px solid ${this.legalStatusFilter === 'all' ? 'var(--primary)' : 'transparent'}; color: ${this.legalStatusFilter === 'all' ? 'var(--primary)' : 'var(--gray-600)'}; font-weight: ${this.legalStatusFilter === 'all' ? '600' : '400'}; display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; transition: all 0.2s;">
+                                Все статусы <span style="background: rgba(32, 115, 69, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">114</span>
+                            </div>
+                            <div onclick="app.setLegalStatusFilter('pending')" style="padding: 10px 0; border-bottom: 2px solid ${this.legalStatusFilter === 'pending' ? '#f59e0b' : 'transparent'}; color: ${this.legalStatusFilter === 'pending' ? '#f59e0b' : 'var(--gray-600)'}; font-weight: ${this.legalStatusFilter === 'pending' ? '600' : '400'}; display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; transition: all 0.2s;">
+                                Ожидают вашей подписи <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">2</span>
+                            </div>
+                            <div onclick="app.setLegalStatusFilter('signed')" style="padding: 10px 0; border-bottom: 2px solid ${this.legalStatusFilter === 'signed' ? '#22c55e' : 'transparent'}; color: ${this.legalStatusFilter === 'signed' ? '#22c55e' : 'var(--gray-600)'}; font-weight: ${this.legalStatusFilter === 'signed' ? '600' : '400'}; display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; transition: all 0.2s;">
+                                Подписан <span style="background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">104</span>
+                            </div>
+                            <div onclick="app.setLegalStatusFilter('rejected')" style="padding: 10px 0; border-bottom: 2px solid ${this.legalStatusFilter === 'rejected' ? '#ef4444' : 'transparent'}; color: ${this.legalStatusFilter === 'rejected' ? '#ef4444' : 'var(--gray-600)'}; font-weight: ${this.legalStatusFilter === 'rejected' ? '600' : '400'}; display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; transition: all 0.2s;">
+                                Отказ от подписи <span style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">7</span>
+                            </div>
+                            <div onclick="app.setLegalStatusFilter('deleted')" style="padding: 10px 0; border-bottom: 2px solid ${this.legalStatusFilter === 'deleted' ? '#111827' : 'transparent'}; color: ${this.legalStatusFilter === 'deleted' ? '#111827' : 'var(--gray-600)'}; font-weight: ${this.legalStatusFilter === 'deleted' ? '600' : '400'}; display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; transition: all 0.2s;">
+                                Удаленные <span style="background: rgba(17, 24, 39, 0.1); color: #111827; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Table Area -->
+                    <div style="flex: 1; overflow: auto; padding: 0 24px;">
+                        <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px;">
+                            <thead style="position: sticky; top: 0; background: var(--white); z-index: 5; border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100);">
+                                <tr style="text-align: left; color: var(--gray-500); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">
+                                    <th style="padding: 16px; width: 40px; text-align: center;">
+                                        <input type="checkbox" id="legal-select-all" onclick="app.toggleAllLegalDocuments(this)">
+                                    </th>
+                                    <th style="padding: 16px; width: 30px;"></th>
+                                    <th style="padding: 16px;">Тип документа</th>
+                                    <th style="padding: 16px;">Дата обновления</th>
+                                    <th style="padding: 16px;">Контрагент</th>
+                                    <th style="padding: 16px;">ИНН</th>
+                                    <th style="padding: 16px;">Номер и дата договора</th>
+                                    <th style="padding: 16px;">Стоимость поставки</th>
+                                    <th style="padding: 16px;">Сумма НДС</th>
+                                    <th style="padding: 16px;">Стоимость с НДС</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                    // Mock data generation
+                    const mockDocs = [];
+                    const statuses = ['signed', 'pending', 'rejected', 'deleted'];
+                    const statusColors = {
+                        'signed': '#86efac',    // Pastel green
+                        'pending': '#fde047',   // Pastel yellow
+                        'rejected': '#fca5a5',  // Pastel red/pink
+                        'deleted': '#d1d5db'    // Pastel gray
+                    };
+
+                    for (let i = 0; i < 50; i++) {
+                        const status = statuses[i % statuses.length];
+                        mockDocs.push({
+                            id: i,
+                            type: i % 3 === 0 ? 'Договор подряда' : 'Договор поставки',
+                            updated: `1${i % 9}.05.2024 1${i % 8}:45`,
+                            contractant: i % 2 === 0 ? 'ООО "ТехноПром"' : 'ИП Иванов А.В.',
+                            inn: `770123${560 + i}`,
+                            contract: `№ ${100 + i} от 01.05.2024`,
+                            price: '500 000,00',
+                            vat: '100 000,00',
+                            total: '600 000,00',
+                            status: status
+                        });
+                    }
+
+                    // Filter data
+                    let filtered = this.legalStatusFilter === 'all'
+                        ? mockDocs
+                        : mockDocs.filter(d => d.status === this.legalStatusFilter);
+
+                    // Search filtering
+                    if (this.legalSearchQuery) {
+                        const q = this.legalSearchQuery.toLowerCase();
+                        filtered = filtered.filter(d =>
+                            d.contractant.toLowerCase().includes(q) ||
+                            d.inn.toLowerCase().includes(q) ||
+                            d.contract.toLowerCase().includes(q) ||
+                            d.type.toLowerCase().includes(q)
+                        );
+                    }
+
+                    if (filtered.length === 0) {
+                        return `
+                                            <tr>
+                                                <td colspan="10" style="padding: 48px; text-align: center; color: var(--gray-500);">
+                                                    Нет документов в данном статусе
+                                                </td>
+                                            </tr>
+                                        `;
+                    }
+
+                    return filtered.map(doc => `
+                                        <tr class="legal-table-row" onclick="UI.showNotification('Открытие документа...', 'info')" style="border-bottom: 1px solid var(--gray-50);">
+                                            <td onclick="event.stopPropagation()" style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50); text-align: center;">
+                                                <input type="checkbox" class="legal-row-checkbox">
+                                            </td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50); width: 30px; vertical-align: middle;">
+                                                <div style="width: 14px; height: 14px; background: ${statusColors[doc.status]}; border-radius: 4px; margin: 0 auto;"></div>
+                                            </td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.type}</td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.updated}</td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.contractant}</td>
+                                            <td onclick="event.stopPropagation(); app.copyToClipboard('${doc.inn}', 'ИНН')" title="Нажмите, чтобы скопировать ИНН" style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50); color: var(--gray-900); cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--gray-900)'">
+                                                ${doc.inn.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
+                                            </td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.contract}</td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.price}</td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.vat}</td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50);">${doc.total}</td>
+                                        </tr>
+                                    `).join('');
+                })()}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination (Fixed at Bottom) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-top: 1px solid var(--gray-100); background: var(--white); border-radius: 0 0 4px 4px;">
+                        <div style="display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--gray-600);">
+                            <div>1 - 20 из 114</div>
+                            <div style="height: 16px; width: 1px; background: var(--gray-200);"></div>
+                            <div>
+                                Отображать по: 
+                                <select onchange="UI.showNotification('Настройка сохранена', 'success')" style="border: none; background: transparent; font-weight: 600; color: var(--gray-900); cursor: pointer; outline: none;">
+                                    <option>20</option>
+                                    <option>50</option>
+                                    <option>100</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <button onclick="UI.showNotification('Первая страница', 'info')" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); background: white; border-radius: 4px; color: var(--gray-600); cursor: pointer;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path></svg>
+                            </button>
+                            <button onclick="UI.showNotification('Предыдущая страница', 'info')" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); background: white; border-radius: 4px; color: var(--gray-600); cursor: pointer;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"></path></svg>
+                            </button>
+                            <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; border-radius: 4px; font-weight: 600; font-size: 13px;">1</div>
+                            <button onclick="UI.showNotification('Страница 2', 'info')" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); background: white; border-radius: 4px; color: var(--gray-600); cursor: pointer; font-size: 13px;">2</button>
+                            <button onclick="UI.showNotification('Страница 3', 'info')" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); background: white; border-radius: 4px; color: var(--gray-600); cursor: pointer; font-size: 13px;">3</button>
+                            <button onclick="UI.showNotification('Следующая страница', 'info')" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); background: white; border-radius: 4px; color: var(--gray-600); cursor: pointer;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                            </button>
+                            <button onclick="UI.showNotification('Последняя страница', 'info')" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); background: white; border-radius: 4px; color: var(--gray-600); cursor: pointer;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (this.currentLegalSubTab === 'base') {
+            contentArea.style.padding = '0';
+            contentArea.innerHTML = `
+                <div style="width: 100%; height: 100%; background: #fff; overflow: hidden; position: relative;">
+                    <iframe src="https://lex.uz" 
+                        style="width: 100%; height: calc(100% + 264px); border: none; position: absolute; top: -264px; left: 0;" 
+                        allowfullscreen></iframe>
+                </div>
+            `;
+        } else if (this.currentLegalSubTab === 'templates') {
+            // Load and display saved templates
+            try {
+                const templates = await api.getLegalTemplates(this.currentProjectId);
+                const title = 'Шаблоны документов';
+
+                // Filter templates based on search query
+                const filteredTemplates = this.legalSearchQuery
+                    ? templates.filter(t => t.name.toLowerCase().includes(this.legalSearchQuery.toLowerCase()))
+                    : templates;
+
+                contentArea.innerHTML = `
+                    <div style="background: var(--white); border-radius: 4px; height: 100%; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); overflow: hidden;">
+                        <style>
+                            .legal-table-row { cursor: pointer; transition: all 0.2s ease; }
+                            .legal-table-row:hover { background-color: rgba(34, 197, 94, 0.05) !important; }
+                            
+                            /* Search Modern Styling */
+                            .legal-search-container {
+                                flex: 1;
+                                max-width: 500px;
+                                position: relative;
+                                display: flex;
+                                align-items: center;
+                                background: #f8f9fb;
+                                border: 1px solid var(--gray-200);
+                                border-radius: 8px;
+                                padding: 0 14px;
+                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                            }
+
+                            .legal-search-container:hover {
+                                border-color: var(--gray-300);
+                                background: #f1f3f7;
+                            }
+
+                            .legal-search-container:focus-within {
+                                background: #fff;
+                                border-color: var(--primary);
+                                box-shadow: 0 0 0 3px rgba(32, 115, 69, 0.1);
+                            }
+
+                            .legal-search-container svg {
+                                transition: stroke 0.2s;
+                            }
+
+                            .legal-search-container:focus-within svg {
+                                stroke: var(--primary);
+                            }
+
+                            .legal-search-input {
+                                flex: 1;
+                                height: 38px;
+                                border: none;
+                                background: transparent;
+                                padding: 0 12px;
+                                font-size: 13px;
+                                color: var(--gray-900);
+                                outline: none;
+                            }
+
+                            .legal-search-input::placeholder {
+                                color: var(--gray-400);
+                            }
+                        </style>
+
+                        <!-- Fixed Top Header Section -->
+                        <div style="padding: 24px 24px 0 24px; background: var(--white); z-index: 10;">
+                            <!-- Header Row: Title + Search (Expanding) + Actions (Right Aligned) -->
+                            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                                <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--gray-900); white-space: nowrap; margin-right: 8px;">${title}</h2>
+                                
+                                <div class="legal-search-container">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="legal-search-input" class="legal-search-input" 
+                                        placeholder="Поиск по названию..." 
+                                        value="${this.legalSearchQuery || ''}"
+                                        oninput="app.legalSearchQuery = this.value; app.loadLegalTab()">
+                                </div>
+
+                                <button class="btn btn-primary" onclick="app.openLegalTemplateEditor()" style="height: 38px; padding: 0 16px; display: flex; align-items: center; gap: 8px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    Создать
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Table Area -->
+                        <div style="flex: 1; overflow: auto; padding: 0 24px;">
+                            ${templates.length === 0 ? `
+                                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--gray-500);">
+                                    <div style="width: 64px; height: 64px; background: rgba(32, 115, 69, 0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5">
+                                            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 style="margin: 0 0 8px 0; font-size: 16px; color: var(--gray-900);">Нет сохраненных шаблонов</h3>
+                                    <p style="margin: 0; font-size: 14px;">Создайте первый шаблон для начала работы</p>
+                                </div>
+                            ` : `
+                                <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px;">
+                                    <thead style="position: sticky; top: 0; background: var(--white); z-index: 5; border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100);">
+                                        <tr style="text-align: left; color: var(--gray-500); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">
+                                            <th style="padding: 16px; width: 40px; text-align: center;">#</th>
+                                            <th style="padding: 16px;">Название шаблона</th>
+                                            <th style="padding: 16px;">Тип документа</th>
+                                            <th style="padding: 16px;">Дата создания</th>
+                                            <th style="padding: 16px; width: 120px; text-align: right;">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${filteredTemplates.map((template, index) => {
+                    const createdDate = new Date(template.createdAt).toLocaleDateString('ru-RU', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const docTypeLabels = {
+                        'contract_nk': 'Договор (НК)'
+                    };
+
+                    return `
+                                                <tr class="legal-table-row" style="border-bottom: 1px solid var(--gray-50);">
+                                                    <td style="padding: 12px 16px; text-align: center; color: var(--gray-400);">${index + 1}</td>
+                                                    <td style="padding: 12px 16px;">
+                                                        <div style="color: var(--gray-900);">${template.name}</div>
+                                                    </td>
+                                                    <td style="padding: 12px 16px;">
+                                                        <span style="background: rgba(32, 115, 69, 0.05); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                                            ${docTypeLabels[template.docType] || template.docType}
+                                                        </span>
+                                                    </td>
+                                                    <td style="padding: 12px 16px; color: var(--gray-600);">${createdDate}</td>
+                                                    <td style="padding: 12px 16px; text-align: right;">
+                                                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                                            <button onclick="event.stopPropagation(); app.viewLegalTemplate('${template.id}')" title="Просмотр" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); border-radius: 4px; background: #fff; color: var(--gray-600); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-600)'">
+                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                                            </button>
+                                                            <button onclick="event.stopPropagation(); app.editLegalTemplate('${template.id}')" title="Изменить" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); border-radius: 4px; background: #fff; color: var(--gray-600); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-600)'">
+                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                            </button>
+                                                            <button onclick="event.stopPropagation(); app.deleteLegalTemplate('${template.id}')" title="Удалить" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); border-radius: 4px; background: #fff; color: var(--gray-600); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#ef4444'; this.style.color='#ef4444'; this.style.background='#fef2f2'" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-600)'; this.style.background='#fff'">
+                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `;
+                }).join('')}
+                                    </tbody>
+                                </table>
+                            `}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading templates:', error);
+                contentArea.innerHTML = `
+                    <div style="background: var(--white); border-radius: 4px; height: 100%; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: center;">
+                        <div style="text-align: center;">
+                            <p style="color: var(--gray-600); margin-bottom: 16px;">Ошибка загрузки шаблонов</p>
+                            <button class="btn btn-primary" onclick="app.loadLegalTab()">Повторить</button>
+                        </div>
+                    </div>
+                `;
+            }
+        } else if (['drafts', 'contracts'].includes(this.currentLegalSubTab)) {
+            const icons = {
+                'drafts': '<path d="M15 12h-5"></path><path d="M15 8h-5"></path><path d="M19 17V5a2 2 0 0 0-2-2H4"></path><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"></path>',
+                'contracts': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>'
+            };
+
+            const currentTitle = subTitles[this.currentLegalSubTab] || 'Юридический отдел';
+            const currentIcon = icons[this.currentLegalSubTab];
+
+            contentArea.innerHTML = `
+                <div style="background: var(--white); border-radius: 4px; height: 100%; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); position: relative; overflow: auto;">
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center;">
+                        <div style="display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; background: rgba(32, 115, 69, 0.05); border-radius: 4px; color: var(--primary); margin-bottom: 24px;">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                ${currentIcon}
+                            </svg>
+                        </div>
+                        <h3 style="margin-bottom: 12px; font-size: 20px; color: var(--gray-800); font-weight: 600;">${currentTitle}</h3>
+                        <p style="color: var(--gray-500); max-width: 440px; margin: 0 auto 32px auto; font-size: 15px; line-height: 1.6;">
+                            Раздел находится в стадии активной разработки. В ближайшее время здесь появится функционал для полноценной работы с документами.
+                        </p>
+                        <button class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; padding: 12px 32px; font-weight: 600; border-radius: 4px; gap: 8px;" onclick="app.openLegalTemplateEditor()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            <span>Создать документ</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update Breadcrumbs
+        const currentTitle = subTitles[this.currentLegalSubTab] || 'Юридический отдел';
+        const extraItems = [{ text: currentTitle }];
+        this.updateBreadcrumbs(extraItems);
     }
 
     loadDashboardTab() {
@@ -1749,6 +3113,61 @@ class ProBIMApp {
         });
         document.getElementById('unisolate-btn')?.addEventListener('click', () => {
             EstimateManager.showAllElements();
+        });
+
+        // Global click to close dropdowns
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('legal-actions-menu');
+            const toggle = document.getElementById('legal-actions-toggle');
+            if (menu && menu.style.display === 'block' && !menu.contains(e.target) && !toggle?.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+
+            // Global click to close legal filter dropdowns
+            if (!e.target.closest('[onclick*="toggleLegalDropdown"]')) {
+                const app = window.app;
+                if (app && (app.legalDropdowns.docType || app.legalDropdowns.status)) {
+                    app.legalDropdowns.docType = false;
+                    app.legalDropdowns.status = false;
+                    app.loadLegalTab();
+                }
+            }
+        });
+
+        // Keyboard Shortcut for Legal/Estimate Filter (Double press F or А)
+        document.addEventListener('keydown', (e) => {
+            // Handle escape key to blur active input
+            if (e.key === 'Escape') {
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                    document.activeElement.blur();
+                }
+                return;
+            }
+
+            const isLegalInbox = this.currentRibbonTab === 'legal' && this.currentLegalSubTab === 'inbox';
+            const isEstimateTree = this.currentRibbonTab === 'estimate' && document.getElementById('tree-filter-btn');
+
+            if (!isLegalInbox && !isEstimateTree) return;
+
+            // Don't trigger toggle if inside an input/textarea
+            const activeTag = document.activeElement?.tagName?.toLowerCase();
+            if (['input', 'textarea', 'select'].includes(activeTag) || document.activeElement?.isContentEditable) return;
+
+            const key = e.key.toLowerCase();
+            if (key === 'f' || key === 'а') { // English 'f' or Russian 'а'
+                const now = Date.now();
+                if (key === this.lastLegalKey && (now - this.lastLegalKeyPressTime) < 500) {
+                    if (isLegalInbox) {
+                        this.toggleLegalFilterPanel();
+                    } else if (isEstimateTree && typeof EstimateManager !== 'undefined') {
+                        EstimateManager.toggleFilterPanel(e);
+                    }
+                    this.lastLegalKeyPressTime = 0; // Reset
+                } else {
+                    this.lastLegalKeyPressTime = now;
+                    this.lastLegalKey = key;
+                }
+            }
         });
     }
 

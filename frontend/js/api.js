@@ -787,6 +787,45 @@ class ApiService {
         if (!response.ok) throw new Error('Failed to fetch monitoring data');
         return await response.json();
     }
+
+    // Legal
+    async getLegalTemplates(projectId) {
+        const response = await this.request(`${API_BASE_URL}/legal?projectId=${projectId}`);
+        if (!response.ok) throw new Error('Failed to fetch legal templates');
+        return await response.json();
+    }
+
+    async createLegalTemplate(data) {
+        const response = await this.request(`${API_BASE_URL}/legal`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to save legal template');
+        return await response.json();
+    }
+
+    async getLegalTemplate(id) {
+        const response = await this.request(`${API_BASE_URL}/legal/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch legal template');
+        return await response.json();
+    }
+
+    async updateLegalTemplate(id, data) {
+        const response = await this.request(`${API_BASE_URL}/legal/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to update legal template');
+        return await response.json();
+    }
+
+    async deleteLegalTemplate(id) {
+        const response = await this.request(`${API_BASE_URL}/legal/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('Failed to delete legal template');
+        return true;
+    }
 }
 
 window.api = new ApiService();

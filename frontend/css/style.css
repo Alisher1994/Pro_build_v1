@@ -1442,10 +1442,9 @@ body:has(.sidebar.collapsed) .schedule-bottom-panel {
 .ribbon-tab.active::after {
     content: '';
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 14px;
+    right: 14px;
     bottom: 0;
-    width: 50px;
     height: 2px;
     background: var(--primary);
     border-radius: 2px 2px 0 0;

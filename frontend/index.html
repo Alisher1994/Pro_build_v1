@@ -327,6 +327,230 @@
             vertical-align: middle;
             display: inline-block;
         }
+
+        /* Pie Menu Styles */
+        .pie-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .pie-menu-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .pie-menu {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pie-center-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--primary);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            font-size: 18px;
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .pie-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            margin-left: -30px;
+            margin-top: -30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* Position logic */
+            transform: rotate(var(--angle)) translate(120px) rotate(calc(-1 * var(--angle)));
+        }
+
+        .pie-item:hover {
+            transform: rotate(var(--angle)) translate(135px) rotate(calc(-1 * var(--angle))) scale(1.15);
+            z-index: 10;
+        }
+
+        .pie-icon-circle {
+            width: 54px;
+            height: 54px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--gray-700);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .pie-item:hover .pie-icon-circle {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--white);
+            box-shadow: 0 8px 25px rgba(32, 115, 69, 0.3);
+        }
+
+        .pie-label {
+            position: absolute;
+            top: 64px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.2s;
+            pointer-events: none;
+        }
+
+        .pie-item:hover .pie-label {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Pie Menu Styles */
+        .pie-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .pie-menu-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .pie-menu {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pie-center-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--primary);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            font-size: 18px;
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .pie-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            margin-left: -30px;
+            margin-top: -30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* Position logic */
+            transform: rotate(var(--angle)) translate(120px) rotate(calc(-1 * var(--angle)));
+        }
+
+        .pie-item:hover {
+            transform: rotate(var(--angle)) translate(135px) rotate(calc(-1 * var(--angle))) scale(1.15);
+            z-index: 10;
+        }
+
+        .pie-icon-circle {
+            width: 54px;
+            height: 54px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--gray-700);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .pie-item:hover .pie-icon-circle {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--white);
+            box-shadow: 0 8px 25px rgba(32, 115, 69, 0.3);
+        }
+
+        .pie-label {
+            position: absolute;
+            top: 64px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.2s;
+            pointer-events: none;
+        }
+
+        .pie-item:hover .pie-label {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 
@@ -580,6 +804,7 @@
                     <button class="ribbon-tab active" data-ribbon="dashboard">Главная</button>
                     <button class="ribbon-tab" data-ribbon="estimate">Смета</button>
                     <button class="ribbon-tab" data-ribbon="schedule">График</button>
+                    <button class="ribbon-tab" data-ribbon="legal">Юридический отдел</button>
                     <button class="ribbon-tab" data-ribbon="tender">Тендер</button>
                     <button class="ribbon-tab" data-ribbon="gpr" style="display: none;">ГПР</button>
                     <button class="ribbon-tab" data-ribbon="supply">Снабжение</button>
@@ -834,7 +1059,7 @@
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
                             <button class="ribbon-btn large"
-                                onclick="const tenderFrame = document.getElementById('tender-frame'); if(tenderFrame && tenderFrame.contentWindow.createNewLot) tenderFrame.contentWindow.createNewLot();">
+                                onclick="(function(){ const tf = document.getElementById('tender-frame'); if(tf && tf.contentWindow.createNewLot) tf.contentWindow.createNewLot(); })();">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <path d="M12 5v14" />
@@ -848,17 +1073,16 @@
                     <div class="ribbon-separator"></div>
                     <div class="ribbon-group">
                         <div class="ribbon-group-content">
-                            <button class="ribbon-btn large"
-                                onclick="const refreshFrame = document.getElementById('tender-frame'); if(refreshFrame && refreshFrame.contentWindow.refreshMockData) refreshFrame.contentWindow.refreshMockData(); else if(refreshFrame) refreshFrame.contentWindow.location.reload();">
+                            <button class="ribbon-btn large" id="tender-filter-btn"
+                                onclick="(function(){ const tf = document.getElementById('tender-frame'); if(tf && tf.contentWindow.toggleFilterPanel) tf.contentWindow.toggleFilterPanel(); })();">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
-                                    <path
-                                        d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                                 </svg>
-                                <span>Обновить</span>
+                                <span>Фильтр</span>
                             </button>
                         </div>
-                        <span class="ribbon-group-label">Действия</span>
+                        <span class="ribbon-group-label">Фильтрация</span>
                     </div>
                 </div>
 
@@ -1039,7 +1263,127 @@
                     </div>
                 </div>
 
+                <!-- Legal Ribbon Panel -->
+                <div class="ribbon-panel" data-panel="legal">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large active" id="btn-legal-inbox"
+                                onclick="app.setLegalSubTab('inbox')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7" />
+                                    <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                    <path d="m10 18 3-3-3-3" />
+                                </svg>
+                                <span>Входящие</span>
+                            </button>
+                            <button class="ribbon-btn large" id="btn-legal-outbox"
+                                onclick="app.setLegalSubTab('outbox')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M4.226 20.925A2 2 0 0 0 6 22h12a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v3.127" />
+                                    <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                    <path d="m5 11-3 3" />
+                                    <path d="m5 17-3-3h10" />
+                                </svg>
+                                <span>Исходящие</span>
+                            </button>
+                            <button class="ribbon-btn large" id="btn-legal-drafts"
+                                onclick="app.setLegalSubTab('drafts')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M15 12h-5" />
+                                    <path d="M15 8h-5" />
+                                    <path d="M19 17V5a2 2 0 0 0-2-2H4" />
+                                    <path
+                                        d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
+                                </svg>
+                                <span>Черновики</span>
+                            </button>
+                            <button class="ribbon-btn large" id="btn-legal-templates"
+                                onclick="app.setLegalSubTab('templates')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+                                </svg>
+                                <span>Шаблоны</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Корреспонденция</span>
+                    </div>
+                    <div class="ribbon-separator"></div>
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large" id="btn-legal-contracts"
+                                onclick="app.setLegalSubTab('contracts')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <span>Договоры</span>
+                            </button>
+                            <button class="ribbon-btn large" id="btn-legal-base" onclick="app.setLegalSubTab('base')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    <path d="M9 12l2 2 4-4"></path>
+                                </svg>
+                                <span>Правовая<br>база</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Библиотека</span>
+                    </div>
+                </div>
 
+
+
+                <!-- Tender Ribbon Panel -->
+                <div class="ribbon-panel" data-panel="tender">
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-content">
+                            <button class="ribbon-btn large active" id="ribbon-tender-all"
+                                onclick="app.setTenderFilter('all')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7" />
+                                    <rect x="14" y="3" width="7" height="7" />
+                                    <rect x="14" y="14" width="7" height="7" />
+                                    <rect x="3" y="14" width="7" height="7" />
+                                </svg>
+                                <span>Все</span>
+                            </button>
+                            <button class="ribbon-btn large" id="ribbon-tender-open"
+                                onclick="app.setTenderFilter('open')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                </svg>
+                                <span>Открытые</span>
+                            </button>
+                            <button class="ribbon-btn large" id="ribbon-tender-closed"
+                                onclick="app.setTenderFilter('closed')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                <span>Закрытые</span>
+                            </button>
+                        </div>
+                        <span class="ribbon-group-label">Фильтр</span>
+                    </div>
+                </div>
 
                 <!-- GPR Ribbon Panel -->
                 <div class="ribbon-panel" data-panel="gpr">
@@ -1614,6 +1958,263 @@
 
     <script>
         // Dynamic subtitle functionality removed as per user request
+    </script>
+    <!-- Pie Menu Logic -->
+    <div id="pie-menu-overlay" class="pie-menu-overlay">
+        <div class="pie-menu-container" style="position: relative; width: 600px; height: 600px;">
+            <svg id="pie-menu-svg" class="pie-menu-svg" viewBox="0 0 600 600">
+                <defs>
+                    <!-- Neon Gradient: Vibrance Green to Solid Black -->
+                    <radialGradient id="sector-gradient" cx="300" cy="300" r="300" gradientUnits="userSpaceOnUse">
+                        <stop offset="10%" stop-color="#00ff7f" />
+                        <stop offset="60%" stop-color="rgba(32, 115, 69, 0.4)" />
+                        <stop offset="95%" stop-color="#000" />
+                    </radialGradient>
+                </defs>
+            </svg>
+            <div id="pie-labels" class="pie-labels-container"></div>
+
+            <div class="pie-center-btn" id="pie-project-name">Загрузка...</div>
+        </div>
+    </div>
+
+    <style>
+        .pie-menu-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .pie-menu-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .pie-menu-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .pie-sector {
+            fill: rgba(22, 22, 22, 0.95);
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 1px;
+            cursor: pointer;
+            transition: all 0.1s ease-out;
+            transform-origin: 300px 300px;
+        }
+
+        /* Neon Glow Effect when active/hover */
+        .pie-sector:hover,
+        .pie-sector.active {
+            fill: url(#sector-gradient);
+            stroke: #00ff7f;
+            stroke-width: 2px;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 127, 0.4));
+        }
+
+        .pie-labels-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .pie-label-item {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            pointer-events: none;
+            transition: transform 0.2s;
+        }
+
+        .pie-item-icon {
+            font-size: 22px;
+            /* Smaller Icons */
+            color: #ccc;
+            margin-bottom: 5px;
+            filter: none;
+            /* No shadow */
+        }
+
+        .pie-item-text {
+            font-size: 10px;
+            /* Smaller font */
+            font-weight: 600;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            text-align: center;
+            line-height: 1.1;
+            text-shadow: none;
+            /* No text shadow */
+        }
+
+        .pie-label-item.active {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .pie-label-item.active .pie-item-icon {
+            color: #00ff7f;
+            /* Neon active icon */
+        }
+
+        .pie-label-item.active .pie-item-text {
+            color: #fff;
+        }
+
+        .pie-center-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 210px;
+            /* Diameter for 105 ir */
+            height: 210px;
+            border-radius: 50%;
+            background: #111;
+            /* Dark Background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            /* White Text */
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 255, 127, 0.1);
+            z-index: 20;
+            font-size: 14px;
+            text-transform: uppercase;
+            user-select: none;
+            border: 2px solid rgba(0, 255, 127, 0.3);
+            /* Thin Neon Border */
+            text-align: center;
+            padding: 20px;
+            line-height: 1.25;
+            overflow: hidden;
+        }
+    </style>
+
+    <script>
+        // --- Pie Menu Config ---
+        const PIE_ITEMS = [
+            { icon: 'fa-sync-alt', label: 'Обновить', action: () => window.location.reload() },
+            { icon: 'fa-calendar-alt', label: 'График', action: () => openTab('schedule') },
+            { icon: 'fa-calculator', label: 'Смета', action: () => openTab('estimate') },
+            { icon: 'fa-gavel', label: 'Тендер', action: () => openTab('tender') },
+            { icon: 'fa-truck', label: 'Снабжение', action: () => openTab('supply') },
+            { icon: 'fa-cog', label: 'Настройки', action: () => openTab('settings') },
+            { icon: 'fa-hard-hat', label: 'Субподряд\n(Добавить)', action: () => navigateToAddSub() },
+            { icon: 'fa-user-plus', label: 'Сотрудник\n(Добавить)', action: () => navigateToAddUser() },
+            { icon: 'fa-comment-alt', label: 'Чат', action: () => toggleChatLock() },
+            { icon: 'fa-expand-arrows-alt', label: 'Лента', action: () => toggleRibbonCollapse() },
+            { icon: 'fa-sign-out-alt', label: 'Выход', action: () => window.auth && window.auth.logout(), color: '#ff5c5c' }
+        ];
+
+        const pieOverlay = document.getElementById('pie-menu-overlay');
+        const svg = document.getElementById('pie-menu-svg');
+        const labelsContainer = document.getElementById('pie-labels');
+        const pieProjectName = document.getElementById('pie-project-name');
+        let activePieIndex = -1;
+        let isPieRendered = false;
+
+        function openTab(t) { if (window.app) { app.currentRibbonTab = t; app.applyRibbonTabToUI(t); app.loadCurrentTab(); } }
+        function toggleChatLock() { if (!window.chatApp) return; window.chatApp.isVisible ? window.chatApp.toggleVisibility(false) : (window.chatApp.toggleVisibility(true), window.chatApp.toggleSidebar && window.chatApp.toggleSidebar(true)); }
+        function toggleRibbonCollapse() {
+            const r = document.getElementById('office-ribbon') || document.querySelector('.ribbon');
+            if (r) {
+                r.classList.toggle('collapsed');
+                if (window.app) { window.app.ribbonCollapsed = r.classList.contains('collapsed'); window.app.updateChatPosition && window.app.updateChatPosition(); window.dispatchEvent(new Event('resize')); }
+            }
+        }
+        function navigateToAddSub() { if (!window.app) return; openTab('settings'); setTimeout(() => document.getElementById('subcontractors-btn')?.click(), 100); }
+        function navigateToAddUser() { if (!window.app) return; openTab('settings'); setTimeout(() => document.getElementById('hr-management-btn')?.click(), 100); }
+
+        function renderPieMenu() {
+            if (isPieRendered) return;
+            svg.innerHTML = `<defs><radialGradient id="sector-gradient" cx="300" cy="300" r="300" gradientUnits="userSpaceOnUse"><stop offset="10%" stop-color="#00ff7f" /><stop offset="65%" stop-color="rgba(32, 115, 69, 0.4)" /><stop offset="95%" stop-color="#000" /></radialGradient></defs>`;
+            labelsContainer.innerHTML = '';
+
+            const count = PIE_ITEMS.length, cx = 300, cy = 300, r = 295, ir = 105; // ir changed to 105 to match 210px diameter
+            const angleStep = 360 / count, startOffset = -90 - (angleStep / 2);
+
+            PIE_ITEMS.forEach((item, index) => {
+                const sA = startOffset + (index * angleStep), eA = sA + angleStep;
+                const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                pathEl.setAttribute("d", createAnnularSector(cx, cy, r, ir, sA, eA));
+                pathEl.setAttribute("class", "pie-sector");
+                pathEl.dataset.index = index;
+                pathEl.onclick = (e) => (e.stopPropagation(), executePieItem(index));
+                pathEl.onmouseenter = () => updateHighlight(index);
+                pathEl.onmouseleave = () => updateHighlight(-1);
+                svg.appendChild(pathEl);
+
+                const midA = startOffset + (index * angleStep) + (angleStep / 2), labelR = ir + (r - ir) * 0.52;
+                const lx = cx + labelR * Math.cos(midA * Math.PI / 180), ly = cy + labelR * Math.sin(midA * Math.PI / 180);
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'pie-label-item';
+                labelDiv.style.left = `${lx}px`; labelDiv.style.top = `${ly}px`; labelDiv.dataset.index = index;
+                labelDiv.innerHTML = `<i class="fas ${item.icon} pie-item-icon" ${item.color ? `style="color:${item.color}"` : ''}></i><span class="pie-item-text">${item.label.replace('\n', '<br>')}</span>`;
+                labelsContainer.appendChild(labelDiv);
+            });
+            isPieRendered = true;
+        }
+
+        function createAnnularSector(cx, cy, r, ir, sD, eD) {
+            const tR = d => d * Math.PI / 180;
+            const sR = tR(sD), eR = tR(eD);
+            const p0x = cx + r * Math.cos(sR), p0y = cy + r * Math.sin(sR);
+            const p1x = cx + r * Math.cos(eR), p1y = cy + r * Math.sin(eR);
+            const p2x = cx + ir * Math.cos(eR), p2y = cy + ir * Math.sin(eR);
+            const p3x = cx + ir * Math.cos(sR), p3y = cy + ir * Math.sin(sR);
+            // The largeArcFlag should be 1 if (eD - sD) > 180, 0 otherwise.
+            // For 11 items, angleStep is 360/11 = ~32.7, so largeArcFlag is always 0.
+            // The original code had `0 0 1` and `0 0 0` for largeArc and sweep flags.
+            // The snippet has `0 0 1` and `0 0 0`. This is correct for small arcs.
+            return `M ${p0x} ${p0y} A ${r} ${r} 0 0 1 ${p1x} ${p1y} L ${p2x} ${p2y} A ${ir} ${ir} 0 0 0 ${p3x} ${p3y} Z`;
+        }
+
+        function executePieItem(i) {
+            const item = PIE_ITEMS[i];
+            if (item && item.action) { updateHighlight(i); setTimeout(() => { item.action(); closePieMenu(); }, 150); }
+        }
+
+        function updateHighlight(i) {
+            activePieIndex = i;
+            svg.querySelectorAll('.pie-sector').forEach(el => el.classList.toggle('active', parseInt(el.dataset.index) === i));
+            labelsContainer.querySelectorAll('.pie-label-item').forEach(el => el.classList.toggle('active', parseInt(el.dataset.index) === i));
+        }
+
+        function closePieMenu() { pieOverlay.classList.remove('visible'); setTimeout(() => { if (!pieOverlay.classList.contains('visible')) pieOverlay.style.display = 'none'; }, 200); updateHighlight(-1); }
+
+        function openPieMenu() {
+            renderPieMenu();
+            const h = document.getElementById('selected-project-name')?.innerText || 'ПРОЕКТ НЕ ВЫБРАН';
+            pieProjectName.innerText = h;
+            pieOverlay.style.display = 'flex'; pieOverlay.offsetHeight; pieOverlay.classList.add('visible');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.code === 'Space') { e.preventDefault(); pieOverlay.classList.contains('visible') ? closePieMenu() : openPieMenu(); return; }
+            if (pieOverlay.classList.contains('visible')) {
+                if (e.key === 'Escape') closePieMenu();
+                else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); let n = activePieIndex + 1; if (n >= PIE_ITEMS.length) n = 0; updateHighlight(n); }
+                else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); let p = activePieIndex - 1; if (p < 0) p = PIE_ITEMS.length - 1; updateHighlight(p); }
+                else if (e.key === 'Enter' || (e.code === 'Space' && !e.ctrlKey)) { e.preventDefault(); if (activePieIndex >= 0) executePieItem(activePieIndex); }
+            }
+        });
+
+        pieOverlay.addEventListener('click', (e) => { if (e.target === pieOverlay) closePieMenu(); });
     </script>
 </body>
 

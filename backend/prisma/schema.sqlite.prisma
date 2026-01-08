@@ -47,6 +47,7 @@ model Project {
   ganttTasks  GanttTask[]
   tenders     Tender[]
   employees   Employee[]
+  legalTemplates LegalTemplate[]
 }
 
 // ========================================
@@ -665,4 +666,38 @@ model Employee {
   @@index([departmentId])
   @@index([projectId])
   @@index([projectId, createdAt(sort: Desc)])
+}
+
+// ========================================
+// 21. ЮРИДИЧЕСКИЕ ШАБЛОНЫ (Legal Templates)
+// ========================================
+model LegalTemplate {
+  id              String   @id @default(uuid())
+  projectId       String
+  name            String   // Название документа
+  city            String?  // Город
+  docType         String   @default("contract_nk") // Тип (НК, Договор и т.д.)
+  
+  // Реквизиты Стороны А (Ваши)
+  partyAName      String?
+  partyAinn       String?
+  partyAmfo       String?
+  partyAbank      String?
+  
+  // Реквизиты Стороны Б (Партнера)
+  partyBName      String?
+  partyBinn       String?
+  partyBmfo       String?
+  partyBbank      String?
+  
+  // Содержимое (JSON массив разделов)
+  sections        String   // JSON string
+  
+  status          String   @default("draft") // draft, active, archived
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }

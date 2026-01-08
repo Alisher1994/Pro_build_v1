@@ -27,6 +27,7 @@ import positionRoutes from './routes/positions';
 import employeeRoutes from './routes/employees';
 import authRoutes from './routes/auth';
 import monitoringRoutes from './routes/monitoring';
+import legalRoutes from './routes/legal';
 import { authMiddleware } from './middleware/auth';
 
 dotenv.config();
@@ -82,6 +83,7 @@ app.use('/api/departments', authMiddleware, departmentRoutes);
 app.use('/api/positions', authMiddleware, positionRoutes);
 app.use('/api/employees', authMiddleware, employeeRoutes);
 app.use('/api/monitoring', authMiddleware, monitoringRoutes);
+app.use('/api/legal', authMiddleware, legalRoutes);
 
 // API Routes - Public or with internal auth
 app.use('/api/tenders', tenderRoutes); // Tender routes handle their own auth for subcontractors

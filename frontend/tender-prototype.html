@@ -100,7 +100,7 @@
       border: 1px solid var(--gray-300);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-sm);
-      padding: var(--spacing-lg);
+      padding: 0;
       box-sizing: border-box;
       scrollbar-width: none;
     }
@@ -187,11 +187,10 @@
     .badge {
       display: inline-block;
       padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 400;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
       color: #fff;
-      min-width: 86px;
       text-align: center;
     }
 
@@ -2520,20 +2519,493 @@
       align-items: center;
       background: #fff;
     }
+
+    /* Table View Styles for Lots */
+    .lot-table-header {
+      display: grid;
+      grid-template-columns: 40px minmax(200px, 2fr) 130px 120px 120px 120px 110px 160px 200px 40px;
+      gap: 12px;
+      padding: 12px 24px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .lot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--gray-200);
+      border-radius: 0;
+      background: #fff;
+    }
+
+    .lot-entry {
+      border: none;
+      border-bottom: 1px solid var(--gray-100);
+      margin: 0;
+      border-radius: 0;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .lot-entry:last-child {
+      border-bottom: none;
+    }
+
+    .lot-entry summary.lot-entry-row {
+      display: grid;
+      grid-template-columns: 40px minmax(200px, 2fr) 130px 120px 120px 120px 110px 160px 200px 40px;
+      gap: 12px;
+      padding: 6px 16px;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      outline: none;
+      min-height: 48px;
+    }
+
+    .lot-entry summary.lot-entry-row:hover {
+      background: #f9fafb;
+    }
+
+    .lot-entry[open] summary.lot-entry-row {
+      background: #f0f9f5;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    /* Column Styles */
+    .col-index {
+      font-size: 12px;
+      color: var(--gray-400);
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .col-status {
+      display: flex;
+      align-items: center;
+      transform: scale(0.9);
+      transform-origin: left center;
+    }
+
+    .col-name {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .lot-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .icon-action-btn {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      color: var(--gray-600);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .icon-action-btn:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon-action-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2px;
+    }
+
+    .col-name .lot-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+      line-height: 1.4;
+    }
+
+    .col-name .lot-id {
+      font-size: 11px;
+      color: var(--gray-500);
+      font-family: monospace;
+    }
+
+    .col-name .lot-view-link {
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .col-sum {
+      font-weight: 600;
+      color: var(--gray-900);
+      font-size: 13px;
+      padding-top: 4px;
+    }
+
+    .col-date {
+      font-size: 12px;
+      color: var(--gray-700);
+      line-height: 1.4;
+      padding-top: 4px;
+    }
+
+    .col-meta {
+      font-size: 11px;
+      color: var(--gray-600);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-top: 4px;
+    }
+
+    .col-timer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .col-action {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Ultra Compact Countdown for Table */
+    .lot-entry-row .countdown {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 13px;
+      color: var(--gray-700);
+      letter-spacing: -0.5px;
+    }
+
+    .lot-entry-row .countdown .cd-box {
+      background: transparent;
+      color: inherit;
+      width: auto;
+      height: auto;
+      padding: 0;
+      font-weight: 600;
+      font-size: inherit;
+      border-radius: 0;
+    }
+
+    .lot-entry-row .countdown .cd-separator {
+      color: var(--gray-400);
+      margin: 0 1px;
+      font-weight: 400;
+      font-size: inherit;
+    }
+
+    .lot-entry-row .countdown .cd-label {
+      display: none;
+    }
+
+    .lot-entry-row .pictorial-chart {
+      justify-content: flex-end;
+      height: 14px;
+      margin-top: 2px;
+    }
+
+    .lot-entry-row .pictorial-chart svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .lot-entry-row .pictorial-chart span {
+      font-size: 9px !important;
+    }
+
+    /* Content styling */
+    .lot-content {
+      padding: 0;
+      background: #fafafa;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .lot-content .offers-toolbar {
+      padding: 12px 24px;
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .lot-content .offers-grid {
+      padding: 16px 24px;
+    }
+
+    /* Filter Modal Styles */
+    .filter-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(2px);
+    }
+
+    .filter-modal-overlay.visible {
+      display: flex;
+    }
+
+    .filter-modal {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      width: 480px;
+      max-width: 90vw;
+      animation: filterModalIn 0.2s ease-out;
+    }
+
+    @keyframes filterModalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .filter-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .filter-modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .filter-modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--gray-400);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .filter-modal-close:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .filter-modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .filter-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      border-radius: 0 0 12px 12px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 8px 14px;
+      border: 1px solid var(--gray-300);
+      background: #fff;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .filter-dates {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-input {
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--gray-700);
+      flex: 1;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(32, 115, 69, 0.1);
+    }
+
+    .filter-date-sep {
+      color: var(--gray-400);
+    }
+
+    .filter-btn-reset {
+      padding: 10px 20px;
+      border: 1px solid var(--gray-300);
+      background: #fff;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .filter-btn-reset:hover {
+      border-color: var(--gray-400);
+      color: var(--gray-800);
+    }
+
+    .filter-btn-apply {
+      padding: 10px 24px;
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .filter-btn-apply:hover {
+      background: #1a5f3a;
+    }
   </style>
 </head>
 
 <body>
   <div class="main">
     <section class="card" aria-label="Лоты">
-      <h2>Лоты</h2>
-      <div class="filters">
-        <span class="chip active" data-filter="all">Все</span>
-        <span class="chip" data-filter="open">Открытые</span>
-        <span class="chip" data-filter="closed">Закрытые</span>
-      </div>
+      <h2 style="display:none;">Лоты</h2>
       <div id="lot-list" class="lot-list"></div>
     </section>
+  </div>
+
+  <!-- Filter Modal -->
+  <div class="filter-modal-overlay" id="tender-filter-modal">
+    <div class="filter-modal">
+      <div class="filter-modal-header">
+        <h3>Фильтрация лотов</h3>
+        <button class="filter-modal-close" onclick="toggleFilterPanel()">&times;</button>
+      </div>
+      <div class="filter-modal-body">
+        <div class="filter-group">
+          <label class="filter-label">Статус лота</label>
+          <div class="filter-chips">
+            <button class="filter-chip active" data-filter="status" data-value="all">Все</button>
+            <button class="filter-chip" data-filter="status" data-value="open">Открытые</button>
+            <button class="filter-chip" data-filter="status" data-value="closed">Закрытые</button>
+            <button class="filter-chip" data-filter="status" data-value="contract">С договором</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Дата создания</label>
+          <div class="filter-dates">
+            <input type="date" id="filter-date-from" class="filter-input" placeholder="От">
+            <span class="filter-date-sep">—</span>
+            <input type="date" id="filter-date-to" class="filter-input" placeholder="До">
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Срок тендера</label>
+          <div class="filter-chips">
+            <button class="filter-chip active" data-filter="deadline" data-value="all">Все</button>
+            <button class="filter-chip" data-filter="deadline" data-value="active">Активные</button>
+            <button class="filter-chip" data-filter="deadline" data-value="expired">Истёкшие</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Участники</label>
+          <div class="filter-chips">
+            <button class="filter-chip active" data-filter="participants" data-value="all">Все</button>
+            <button class="filter-chip" data-filter="participants" data-value="none">Без участников</button>
+            <button class="filter-chip" data-filter="participants" data-value="has">С участниками</button>
+          </div>
+        </div>
+      </div>
+      <div class="filter-modal-footer">
+        <button class="filter-btn-reset" onclick="resetFilters()">Сбросить</button>
+        <button class="filter-btn-apply" onclick="applyFilters()">Применить</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-backdrop" id="modal">
@@ -2633,6 +3105,68 @@
     let objectFilter = null;
     let offerSortMode = "score"; // score|sum
 
+    // Advanced filter state
+    let filterStatus = "all";
+    let filterDeadline = "all";
+    let filterParticipants = "all";
+    let filterDateFrom = null;
+    let filterDateTo = null;
+
+    // Toggle filter modal visibility
+    function toggleFilterPanel() {
+      const modal = document.getElementById('tender-filter-modal');
+      if (modal) {
+        modal.classList.toggle('visible');
+      }
+    }
+
+    // Initialize filter chip click handlers
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const filterType = chip.dataset.filter;
+          const value = chip.dataset.value;
+
+          // Remove active from siblings
+          chip.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+
+          // Update filter state
+          if (filterType === 'status') filterStatus = value;
+          if (filterType === 'deadline') filterDeadline = value;
+          if (filterType === 'participants') filterParticipants = value;
+        });
+      });
+    });
+
+    // Reset all filters
+    function resetFilters() {
+      filterStatus = "all";
+      filterDeadline = "all";
+      filterParticipants = "all";
+      filterDateFrom = null;
+      filterDateTo = null;
+
+      // Reset UI
+      document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.value === 'all');
+      });
+      document.getElementById('filter-date-from').value = '';
+      document.getElementById('filter-date-to').value = '';
+
+      // Apply and re-render
+      renderLots();
+      toggleFilterPanel(); // Close modal
+    }
+
+    // Apply filters and re-render
+    function applyFilters() {
+      filterDateFrom = document.getElementById('filter-date-from').value || null;
+      filterDateTo = document.getElementById('filter-date-to').value || null;
+      renderLots();
+      toggleFilterPanel(); // Close modal
+    }
+
     function renderObjects() {
       // Sidebar removed
     }
@@ -2672,7 +3206,7 @@
       return base;
     };
 
-    const statusBadge = (status) => {
+    const statusBadge = (status, iconOnly = false) => {
       const map = {
         open: { cls: "b-open", icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>' },
         closed: { cls: "b-closed", icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>' },
@@ -2686,6 +3220,17 @@
       };
       const cfg = map[status] || { cls: "b-draft" };
       const label = statusLabel[status] || status;
+
+      if (iconOnly) {
+        // Return just the icon in a square badge
+        const iconSvg = cfg.icon || '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>';
+        // Extract just the svg if it was wrapped or use it directly
+        // My map has pure SVG strings for open/closed, but nothing for others.
+        // Let's ensure we return something useful.
+
+        return `<span class="badge ${cfg.cls}" style="padding: 0; width: 28px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;" title="${label}">${iconSvg.replace('width="14"', 'width="16"').replace('height="14"', 'height="16"')}</span>`;
+      }
+
       const icon = cfg.icon ? `<span style="display:inline-flex; align-items:center; gap:6px;">${cfg.icon}<span>${label}</span></span>` : label;
       return `<span class="badge ${cfg.cls}">${icon}</span>`;
     };
@@ -2867,9 +3412,9 @@
             el.classList.add('expired');
             const message = status === 'contract' ? 'Лот успешно завершено' : 'Срок приёма данных истёк';
             el.innerHTML = `
-              <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <div style="color: ${status === 'contract' ? '#2e7d32' : '#d32f2f'}; font-weight: 600; font-size: 13px; width: 100%; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${status === 'contract' ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}</svg>
-                <span>${message}</span>
+                <span>${status === 'contract' ? 'Лот успешно завершён' : 'Срок приёма данных истёк'}</span>
               </div>`;
           }
           return;
@@ -2883,7 +3428,7 @@
           if (!el.classList.contains('expired')) {
             el.classList.add('expired');
             el.innerHTML = `
-              <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <div style="color: #d32f2f; font-weight: 600; font-size: 13px; width: 100%; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 <span>Срок приёма данных истёк</span>
               </div>`;
@@ -2974,9 +3519,9 @@
 
         return `
           <div class="countdown expired" data-deadline="${deadline}" data-status="${status}">
-            <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <div style="color: ${status === 'contract' ? '#2e7d32' : '#d32f2f'}; font-weight: 600; font-size: 13px; width: 100%; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
               ${icon}
-              <span>${message}</span>
+              <span>${status === 'contract' ? 'Лот успешно завершён' : 'Срок приёма данных истёк'}</span>
             </div>
           </div>
         `;
@@ -2987,7 +3532,7 @@
       if (target - now <= 0) {
         return `
           <div class="countdown expired" data-deadline="${deadline}" data-status="${status}">
-            <div style="color: #d32f2f; font-weight: 700; font-size: 12px; padding: 14px 0; background: #ffebee; border-radius: 6px; border: 1px solid #ffcdd2; width: 264px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <div style="color: #d32f2f; font-weight: 600; font-size: 13px; width: 100%; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               <span>Срок приёма данных истёк</span>
             </div>
@@ -4558,18 +5103,87 @@
     function renderLots() {
       const container = document.getElementById("lot-list");
       const openLotIds = Array.from(container.querySelectorAll('details.lot-entry[open]')).map(d => d.getAttribute('data-lot-id'));
-      const filtered = lots.filter(lot =>
-        (lotFilter === "all" || lot.status === lotFilter) &&
-        (objectFilter === null || lot.objectName === objectFilter)
-      );
-      container.innerHTML = filtered.map((lot) => {
+
+      const now = new Date();
+
+      const filtered = lots.filter(lot => {
+        // Status filter
+        if (filterStatus !== "all") {
+          if (filterStatus === "contract") {
+            // Has contract
+            const hasContract = lot.uploads?.some(u => u.status === 'contract');
+            if (!hasContract) return false;
+          } else if (lot.status !== filterStatus) {
+            return false;
+          }
+        }
+
+        // Deadline filter (active/expired)
+        if (filterDeadline !== "all") {
+          const deadline = lot.deadline ? new Date(lot.deadline + "T23:59:59") : null;
+          const isExpired = deadline && deadline < now;
+          if (filterDeadline === "active" && isExpired) return false;
+          if (filterDeadline === "expired" && !isExpired) return false;
+        }
+
+        // Participants filter
+        if (filterParticipants !== "all") {
+          const participantCount = lot.uploads?.length || 0;
+          if (filterParticipants === "none" && participantCount > 0) return false;
+          if (filterParticipants === "has" && participantCount === 0) return false;
+        }
+
+        // Date range filter
+        if (filterDateFrom) {
+          const startDate = lot.startDate ? new Date(lot.startDate) : null;
+          const fromDate = new Date(filterDateFrom);
+          if (!startDate || startDate < fromDate) return false;
+        }
+        if (filterDateTo) {
+          const startDate = lot.startDate ? new Date(lot.startDate) : null;
+          const toDate = new Date(filterDateTo);
+          toDate.setHours(23, 59, 59, 999);
+          if (!startDate || startDate > toDate) return false;
+        }
+
+        // Object filter (legacy)
+        if (objectFilter !== null && lot.objectName !== objectFilter) return false;
+
+        return true;
+      });
+
+      const headerHtml = `
+         <div class="lot-table-header">
+            <div style="text-align: center;">№</div>
+            <div>Лот / Объект</div>
+            <div>Победитель</div>
+            <div>Предложение</div>
+            <div>Сумма (Лимит)</div>
+            <div>Сроки тендера</div>
+            <div>Осталось дней</div>
+            <div>Данные</div>
+            <div style="text-align: right;">Участники / Таймер</div>
+            <div></div>
+         </div>
+      `;
+
+      const rowsHtml = filtered.map((lot, index) => {
         const filteredUploads = lot.uploads;
         const lotName = lot.title || 'Без названия';
         const startLabel = lot.startDate ? new Date(lot.startDate).toLocaleDateString() : '—';
         const endLabel = lot.deadline ? new Date(lot.deadline).toLocaleDateString() : '—';
 
+        const diffTime = new Date(lot.deadline) - new Date();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const daysLeftLabel = diffDays > 0 ? diffDays : '0';
+
         const blocksLabel = (lot.blocks && lot.blocks.length) ? lot.blocks.join(', ') : '—';
         const sectionsLabel = (lot.sections && lot.sections.length) ? lot.sections.join(', ') : '—';
+
+        // Find Winner
+        const winner = filteredUploads.find(u => u.status === 'winner' || u.status === 'contract');
+        const winnerName = winner ? (winner.subcontractor || winner._rawData?.subcontractor?.company || '—') : '—';
+        const winnerSum = winner ? formatMoney(winner.total) : '—';
 
         // Calculate lot total sum from items
         const lotSum = (lot.items || []).reduce((acc, it) => acc + (parseFloat(it.totalCost) || 0), 0);
@@ -4647,8 +5261,18 @@
               </div>
               ${blockedBanner}
               <div class="offer-status">${statusStepper(u)}</div>
-              <div class="offer-row"><span class="offer-label">Срок</span><span>${u.completionDate || "—"}</span></div>
-              <div class="offer-row"><span class="offer-label">Сумма</span><span class="offer-sum">${sumLabel}</span></div>
+              <div class="offer-extra-content">
+                <div class="offer-row">
+                  <span class="offer-label">Уставной фонд</span>
+                  <span>${u._rawData?.subcontractor?.charterCapital ? formatMoney(u._rawData.subcontractor.charterCapital) : '—'}</span>
+                </div>
+                <div class="offer-row">
+                  <span class="offer-label">Дата регистрации</span>
+                  <span>${u._rawData?.subcontractor?.registrationDate ? new Date(u._rawData.subcontractor.registrationDate).toLocaleDateString('ru-RU') : '—'}</span>
+                </div>
+                <div class="offer-row"><span class="offer-label">Срок</span><span>${u.completionDate || "—"}</span></div>
+                <div class="offer-row"><span class="offer-label">Сумма</span><span class="offer-sum">${sumLabel}</span></div>
+              </div>
               <div class="offer-row">
                 <span class="offer-label">Рейтинг (mc.uz)</span>
                 <div style="display:flex; align-items:center; gap:6px;">
@@ -4709,7 +5333,7 @@
                 <div class="offer-row"><span class="offer-label">№ договора</span><span>${u.contractNumber || '—'}</span></div>
                 <div class="offer-actions">
                   <button class="btn secondary btn-view-file" data-url="${fileUrl}" ${getUploadStatus(u) === 'invited' ? 'disabled style="opacity:0.5;"' : ''}>Просмотр файла</button>
-                  <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) || getUploadStatus(u) === 'invited' ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Составить договор' : 'Выбрать')}</button>
+                  <button class="btn ${hasOwnContract ? 'secondary' : ''} btn-select-winner" data-upload-id="${u.uploadId}" data-lot-id="${lot.id}" ${(hasContract && !hasOwnContract) || getUploadStatus(u) === 'invited' ? 'disabled' : ''} style="${hasOwnContract ? 'background: #FFE5E5; color: #d32f2f; border-color: #FFCCCC;' : ''}">${hasOwnContract ? 'Отменить договор' : (isWinner ? 'Сос-ть договор' : 'Выбрать')}</button>
                 </div>
               </div>
             </div>
@@ -4727,57 +5351,50 @@
         const isOpen = openLotIds.includes(String(lot.id));
         return `
           <details class="lot-entry" data-lot-id="${lot.id}" ${isOpen ? 'open' : ''}>
-            <summary>
-              <div class="lot-summary-left">
-                <div class="lot-icon" aria-hidden="true">
-                  ${lotIconSvg}
-                </div>
-                <div class="lot-lines">
-                   <div class="lot-line">
-                    ${statusBadge(lot.status)}
-                    <button class="lot-share-btn" data-lot-id="${lot._rawData?.id}" title="Поделиться лотом" onclick="event.stopPropagation(); shareLot('${lot._rawData?.id}')">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg>
-                    </button>
-                      <button class="lot-chat-btn" data-tender-id="${lot._rawData?.id}" title="Чат" onclick="event.stopPropagation(); openLotChat('${lot._rawData?.id}')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M7 8h10"/><path d="M7 12h6"/></svg>
-                        <span class="lot-chat-dot" data-tender-id="${lot._rawData?.id}"></span>
+             <summary class="lot-entry-row">
+               <div class="col-index">${index + 1}</div>
+               <div class="col-name">
+                  <div class="lot-title" title="${lotName}">${lotName}</div>
+                  <div class="lot-id">ID: ${lot.id}</div>
+                  <div class="lot-actions-row">
+                     ${statusBadge(lot.status, true)}
+                     <button class="icon-action-btn" data-lot-id="${lot.id}" onclick="event.stopPropagation(); openLotWorksModal('${lot.id}')" title="Просмотр сметы">
+                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                     </button>
+                     <button class="icon-action-btn" data-lot-id="${lot._rawData?.id}" onclick="event.stopPropagation(); shareLot('${lot._rawData?.id}')" title="Поделиться лотом">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg>
+                     </button>
+                     <button class="icon-action-btn" data-tender-id="${lot._rawData?.id}" onclick="event.stopPropagation(); openLotChat('${lot._rawData?.id}')" title="Чат" style="position:relative;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M7 8h10"/><path d="M7 12h6"/></svg>
+                        <span class="lot-chat-dot" data-tender-id="${lot._rawData?.id}" style="top: 2px; right: 2px;"></span>
                       </button>
-                    <span class="lot-id">${lot.id}</span>
-                    <span class="lot-title">${lotName}</span>
                   </div>
-                   <div class="lot-line">
-                    ${(lot.items && lot.items.length > 0) ? `<span class="lot-meta-chip sum-chip" title="Общая сумма по смете"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>${formatMoney(lotSum)}</span>` : ''}
-                    <span class="lot-meta-chip">Срок: ${startLabel} — ${endLabel}</span>
                   </div>
-                  <div class="lot-line">
-                    <span class="lot-meta-chip">Секции: ${blocksLabel}</span>
-                    <span class="lot-meta-chip">Раздел: ${sectionsLabel}</span>
-                    <a href="#" class="lot-view-link" data-lot-id="${lot.id}">Просмотр</a>
-                  </div>
-                </div>
-              </div>
-              <div class="lot-summary-right">
-                <div style="display: flex; align-items: flex-start; gap: 8px;">
-                  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                    ${countdownMarkup(lot.deadline, lot.status)}
-                    ${getPictorialChart(lot.uploads)}
-                  </div>
-                  <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation();" style="margin-top: 2px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               </div>
+               <div style="font-size: 13px; font-weight: 600; color: ${winner ? 'var(--primary)' : 'var(--gray-400)'};">${winnerName}</div>
+               <div style="font-size: 13px; font-weight: 600; color: ${winner ? 'var(--primary)' : 'var(--gray-400)'};">${winnerSum}</div>
+               <div class="col-sum">${formatMoney(lotSum)}</div>
+               <div class="col-date">${startLabel} — <br>${endLabel}</div>
+               <div class="col-days" style="font-size: 12px; font-weight: 600; text-align: center; color: var(--gray-700);">${daysLeftLabel}</div>
+               <div class="col-meta">
+                  <span>Секции: <strong>${blocksLabel}</strong></span>
+                  <span>Раздел: <strong>${sectionsLabel}</strong></span>
+               </div>
+               <div class="col-timer">
+                   ${countdownMarkup(lot.deadline, lot.status)}
+                   ${getPictorialChart(lot.uploads)}
+               </div>
+               <div class="col-action">
+                    <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation(); deleteLot('${lot.id}')" style="color: var(--gray-400); width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center; border:1px solid transparent; background:transparent; cursor:pointer; border-radius:4px; transition:all 0.2s;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                   </button>
-                </div>
-              </div>
+               </div>
             </summary>
             <div class="lot-content">
-              <div class="offers-toolbar">
-                <div class="sort-switch" role="group" aria-label="Сортировка предложений">
-                  <button type="button" class="sort-btn ${offerSortMode === 'score' ? 'active' : ''}" data-sort="score">По баллам</button>
-                  <button type="button" class="sort-btn ${offerSortMode === 'sum' ? 'active' : ''}" data-sort="sum">По сумме</button>
-                </div>
-              </div>
+              <div class="offers-toolbar" style="display:none;"></div>
               <div class="offers-grid">
                 ${uploadsContent}
               </div>
@@ -4785,6 +5402,8 @@
           </details>
         `;
       }).join("");
+
+      container.innerHTML = headerHtml + rowsHtml;
 
       // Add click toggler for expanding all cards in a grid
       container.querySelectorAll(".offer-card:not(.invite-card)").forEach(card => {
@@ -6464,6 +7083,23 @@
         alert('Не удалось загрузить тендеры. Используются демо-данные.');
       }
     }
+
+    // Ribbon Filter Logic
+    window.updateLotFilter = function (filter) {
+      lotFilter = filter;
+
+      // Update button states
+      const buttons = ['btn-filter-all', 'btn-filter-open', 'btn-filter-closed'];
+      buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          if (id === 'btn-filter-' + filter) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+
+      renderLots();
+    };
 
     renderObjects();
     // renderLots(); // Закомментируем, чтобы не было двойного рендера

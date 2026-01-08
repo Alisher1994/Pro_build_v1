@@ -2523,8 +2523,8 @@
     /* Table View Styles for Lots */
     .lot-table-header {
       display: grid;
-      grid-template-columns: 40px minmax(200px, 2fr) 130px 120px 120px 120px 110px 160px 200px 40px;
-      gap: 12px;
+      grid-template-columns: 40px minmax(180px, 2fr) 130px 120px 120px 100px 100px 80px 130px 160px 180px 40px;
+      gap: 10px;
       padding: 12px 24px;
       background: var(--gray-50);
       border-bottom: 1px solid var(--gray-200);
@@ -2563,8 +2563,8 @@
 
     .lot-entry summary.lot-entry-row {
       display: grid;
-      grid-template-columns: 40px minmax(200px, 2fr) 130px 120px 120px 120px 110px 160px 200px 40px;
-      gap: 12px;
+      grid-template-columns: 40px minmax(180px, 2fr) 130px 120px 120px 100px 100px 80px 130px 160px 180px 40px;
+      gap: 10px;
       padding: 6px 16px;
       align-items: center;
       cursor: pointer;
@@ -5064,20 +5064,13 @@
       }
     }
 
-    async function deleteLot(lotId) {
-      const lot = lots.find(l => l.id === lotId);
-      if (!lot) return;
+    async function deleteLot(tenderId) {
+      if (!tenderId) return;
 
-      const lotName = lot.title || `Лот ${lot.id}`;
+      const lot = lots.find(l => l._rawData?.id === tenderId);
+      const lotName = lot?.title || `Лот`;
+
       if (!confirm(`Вы уверены, что хотите удалить "${lotName}"?`)) {
-        return;
-      }
-
-      // Get the real tender ID from the raw data
-      const tenderId = lot._rawData?.id;
-      if (!tenderId) {
-        console.error('Cannot find tender ID for lot', lotId);
-        alert('Ошибка: не найден ID тендера');
         return;
       }
 
@@ -5090,13 +5083,14 @@
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete tender');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Ошибка при удалении');
         }
 
-        await loadTenders(); // Reload data
+        await loadTenders();
       } catch (error) {
         console.error('Failed to delete tender:', error);
-        alert('Ошибка при удалении лота: ' + (error.message || 'Неизвестная ошибка'));
+        alert('Ошибка при удалении лота: ' + error.message);
       }
     }
 
@@ -5159,10 +5153,12 @@
             <div>Победитель</div>
             <div>Предложение</div>
             <div>Сумма (Лимит)</div>
-            <div>Сроки тендера</div>
-            <div>Осталось дней</div>
+            <div>Опубликован</div>
+            <div>Актуален до</div>
+            <div>Осталось</div>
+            <div>Организатор</div>
             <div>Данные</div>
-            <div style="text-align: right;">Участники / Таймер</div>
+            <div style="text-align: right;">Участники</div>
             <div></div>
          </div>
       `;
@@ -5374,8 +5370,10 @@
                <div style="font-size: 13px; font-weight: 600; color: ${winner ? 'var(--primary)' : 'var(--gray-400)'};">${winnerName}</div>
                <div style="font-size: 13px; font-weight: 600; color: ${winner ? 'var(--primary)' : 'var(--gray-400)'};">${winnerSum}</div>
                <div class="col-sum">${formatMoney(lotSum)}</div>
-               <div class="col-date">${startLabel} — <br>${endLabel}</div>
+               <div class="col-date" style="font-size: 12px; color: var(--gray-600);">${startLabel}</div>
+               <div class="col-date" style="font-size: 12px; color: var(--gray-600);">${endLabel}</div>
                <div class="col-days" style="font-size: 12px; font-weight: 600; text-align: center; color: var(--gray-700);">${daysLeftLabel}</div>
+               <div class="col-organizer" style="font-size: 12px; color: var(--gray-700);" title="${lot._rawData?.createdBy?.firstName || ''} ${lot._rawData?.createdBy?.lastName || ''}">${lot._rawData?.createdBy?.firstName || '—'} ${lot._rawData?.createdBy?.lastName || ''}</div>
                <div class="col-meta">
                   <span>Секции: <strong>${blocksLabel}</strong></span>
                   <span>Раздел: <strong>${sectionsLabel}</strong></span>
@@ -5385,7 +5383,7 @@
                    ${getPictorialChart(lot.uploads)}
                </div>
                <div class="col-action">
-                    <button class="delete-lot-btn" data-lot-id="${lot.id}" title="Удалить лот" onclick="event.stopPropagation(); deleteLot('${lot.id}')" style="color: var(--gray-400); width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center; border:1px solid transparent; background:transparent; cursor:pointer; border-radius:4px; transition:all 0.2s;">
+                    <button class="delete-lot-btn" data-lot-id="${lot._rawData?.id}" title="Удалить лот" onclick="event.stopPropagation(); deleteLot('${lot._rawData?.id}')" style="color: var(--gray-400); width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center; border:1px solid transparent; background:transparent; cursor:pointer; border-radius:4px; transition:all 0.2s;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -5553,15 +5551,7 @@
         // ... (removed old modal logic listeners if any remain, but I replaced the whole block so it's fine)
       });
 
-      // Delete lot buttons
-      container.querySelectorAll(".delete-lot-btn").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          const lotId = btn.getAttribute("data-lot-id");
-          if (lotId) await deleteLot(lotId);
-        });
-      });
+
 
       // Refresh rating buttons
       container.querySelectorAll(".btn-refresh-rating").forEach(btn => {

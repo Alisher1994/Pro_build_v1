@@ -684,7 +684,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     });
 
     if (!tender) {
-      return res.status(404).json({ error: 'Tender not found' });
+      return res.status(404).json({ error: 'Лот не найден' });
     }
 
     // Delete tender (cascading will delete related invites and bids)
@@ -692,7 +692,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       where: { id }
     });
 
-    res.json({ message: 'Tender deleted successfully' });
+    res.json({ message: 'Лот успешно удален' });
   } catch (error) {
     logger.error('Error deleting tender:', error);
     res.status(500).json({ error: 'Failed to delete tender' });

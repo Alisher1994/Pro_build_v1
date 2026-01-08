@@ -695,33 +695,38 @@ class ProBIMApp {
 
     loadTenderTab() {
         const contentArea = document.getElementById('content-area');
-        contentArea.innerHTML = `
-            <iframe id="tender-frame" src="tender-prototype.html" style="width: 100%; height: 100%; border: none;"></iframe>
-        `;
-        this.updateBreadcrumbs();
+        const projectId = this.currentProjectId;
+        const iframe = document.createElement('iframe');
+        iframe.id = 'tender-frame';
+        iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
 
-        const iframe = document.getElementById('tender-frame');
         iframe.onload = () => {
             if (iframe.contentWindow.initApi) {
                 iframe.contentWindow.initApi({
-                    getBlocks: () => api.getBlocks(this.currentProjectId),
-                    getEstimates: (blockId) => api.getEstimates(this.currentProjectId, blockId),
-                    getSections: (estimateId) => api.getSections(estimateId),
-                    getStages: (sectionId) => api.getStages(sectionId),
-                    getWorkTypes: (stageId) => api.getWorkTypes(stageId),
-                    getResources: (workTypeId) => api.getResources(workTypeId),
-                    getSubcontractors: () => api.getSubcontractors(this.currentProjectId),
-                    getTenders: () => api.getTenders(this.currentProjectId),
-                    createTender: (data) => api.createTender({ ...data, projectId: this.currentProjectId }),
-                    createTenderInvite: (tenderId, subcontractorId) => api.createTenderInvite(tenderId, subcontractorId),
-                    toggleBidBlock: (bidId, blocked, reason) => api.toggleBidBlock(bidId, blocked, reason),
-                    selectWinner: (bidId) => api.selectWinner(bidId),
-                    createContract: (bidId) => api.createContract(bidId),
-                    cancelContract: (bidId) => api.cancelContract(bidId),
-                    deleteTender: (id) => api.deleteTender(id)
+                    getBlocks: () => window.api.getBlocks(projectId),
+                    getEstimates: (blockId) => window.api.getEstimates(projectId, blockId),
+                    getSections: (estimateId) => window.api.getSections(estimateId),
+                    getStages: (sectionId) => window.api.getStages(sectionId),
+                    getWorkTypes: (stageId) => window.api.getWorkTypes(stageId),
+                    getResources: (workTypeId) => window.api.getResources(workTypeId),
+                    getSubcontractors: () => window.api.getSubcontractors(projectId),
+                    getTenders: () => window.api.getTenders(projectId),
+                    createTender: (data) => window.api.createTender({ ...data, projectId: projectId }),
+                    createTenderInvite: (tenderId, subcontractorId) => window.api.createTenderInvite(tenderId, subcontractorId),
+                    toggleBidBlock: (bidId, blocked, reason) => window.api.toggleBidBlock(bidId, blocked, reason),
+                    selectWinner: (bidId) => window.api.selectWinner(bidId),
+                    createContract: (bidId) => window.api.createContract(bidId),
+                    cancelContract: (bidId) => window.api.cancelContract(bidId),
+                    deleteTender: (id) => window.api.deleteTender(id),
+                    getProject: (id) => window.api.getProject(id)
                 });
             }
         };
+
+        iframe.src = 'tender-prototype.html';
+        contentArea.innerHTML = '';
+        contentArea.appendChild(iframe);
+        this.updateBreadcrumbs();
     }
 
     setTenderFilter(filter) {

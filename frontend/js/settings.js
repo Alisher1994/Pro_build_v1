@@ -2292,21 +2292,23 @@ const SettingsManager = {
 
     async saveProjectSettings() {
         try {
+            const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
+
             const formData = {
-                name: document.getElementById('project-name').value.trim(),
-                address: document.getElementById('project-address').value.trim(),
-                client: document.getElementById('project-client').value.trim(),
-                currency: document.getElementById('project-currency').value,
-                status: document.getElementById('project-status').value,
-                manager: document.getElementById('project-manager').value.trim(),
-                deputy: document.getElementById('project-deputy').value.trim(),
-                customer: document.getElementById('project-customer').value.trim(),
-                contractor: document.getElementById('project-contractor').value.trim(),
-                description: document.getElementById('project-description').value.trim(),
+                name: getVal('project-name'),
+                address: getVal('project-address'),
+                client: getVal('project-client'),
+                currency: getVal('project-currency'),
+                status: getVal('project-status'),
+                manager: getVal('project-manager'),
+                deputy: getVal('project-deputy'),
+                customer: getVal('project-customer'),
+                contractor: getVal('project-contractor'),
+                description: getVal('project-description'),
                 photo: this.uploadedPhotoData,
                 coordinates: this.savedMapCoords ? {
-                    latitude: this.savedMapCoords[0],
-                    longitude: this.savedMapCoords[1]
+                    latitude: parseFloat(this.savedMapCoords[0]),
+                    longitude: parseFloat(this.savedMapCoords[1])
                 } : null
             };
 

@@ -6,6 +6,7 @@
   <title>Тендер · Демо (без бэка)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=&lang=ru_RU" type="text/javascript"></script>
   <style>
     body {
       display: flex;
@@ -3073,6 +3074,7 @@
     const apiCreateContract = (...args) => (window.probimApi?.createContract ? window.probimApi.createContract(...args) : createContract(...args));
     const apiCancelContract = (...args) => (window.probimApi?.cancelContract ? window.probimApi.cancelContract(...args) : cancelContract(...args));
     const apiDeleteTender = (...args) => (window.probimApi?.deleteTender ? window.probimApi.deleteTender(...args) : deleteTender(...args));
+    const apiGetProject = (...args) => (window.probimApi?.getProject ? window.probimApi.getProject(...args) : getProject(...args));
 
     let lots = [];
     let PROJECT_CURRENCY = 'UZS';
@@ -5375,6 +5377,8 @@
                <div class="col-days" style="font-size: 12px; font-weight: 600; text-align: center; color: var(--gray-700);">${daysLeftLabel}</div>
                <div class="col-organizer" style="font-size: 12px; color: var(--gray-700);" title="${lot._rawData?.createdBy?.firstName || ''} ${lot._rawData?.createdBy?.lastName || ''}">${lot._rawData?.createdBy?.firstName || '—'} ${lot._rawData?.createdBy?.lastName || ''}</div>
                <div class="col-meta">
+                  <span>Тип: <strong>${lot._rawData?.type || '—'}</strong></span>
+                  <span>Адрес: <strong title="${lot._rawData?.address || ''}">${lot._rawData?.address || '—'}</strong></span>
                   <span>Секции: <strong>${blocksLabel}</strong></span>
                   <span>Раздел: <strong>${sectionsLabel}</strong></span>
                </div>
@@ -6113,15 +6117,13 @@
       alert("Моки обновлены (ничего не меняется, демо)");
     };
 
-    // API Bridge
-    window.probimApi = {
-      getBlocks: async () => [],
-      getEstimates: async (blockId) => [],
-      getSections: async (estimateId) => [],
-      getStages: async (sectionId) => [],
-      getWorkTypes: async (stageId) => [],
-      getResources: async (workTypeId) => []
-    };
+    // API Bridge - dynamic proxies
+    const apiGetBlocks = (...args) => (window.probimApi?.getBlocks ? window.probimApi.getBlocks(...args) : []);
+    const apiGetEstimates = (...args) => (window.probimApi?.getEstimates ? window.probimApi.getEstimates(...args) : []);
+    const apiGetSections = (...args) => (window.probimApi?.getSections ? window.probimApi.getSections(...args) : []);
+    const apiGetStages = (...args) => (window.probimApi?.getStages ? window.probimApi.getStages(...args) : []);
+    const apiGetWorkTypes = (...args) => (window.probimApi?.getWorkTypes ? window.probimApi.getWorkTypes(...args) : []);
+    const apiGetResources = (...args) => (window.probimApi?.getResources ? window.probimApi.getResources(...args) : []);
 
     window.initApi = (apiImpl) => {
       window.probimApi = apiImpl;
@@ -6141,34 +6143,83 @@
             <div id="new-lot-total-sum" style="font-weight: 700; font-size: 14px; color: var(--primary);">Итого: 0 ${PROJECT_CURRENCY === 'UZS' ? 'сўм' : '$'}</div>
           </div>
           <div style="display:flex; gap:12px; align-items:center;">
-            <input type="date" id="new-lot-deadline" value="${today}" min="${today}" style="padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; width: 140px; font-family:inherit; font-size:13px;">
+            <input type="text" id="lot-search" placeholder="Поиск по работам" style="width:200px; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+               <label style="font-size:12px; color:var(--gray-600);">Срок:</label>
+               <input type="date" id="new-lot-deadline" value="${today}" min="${today}" style="padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; width: 140px; font-family:inherit; font-size:13px;">
+            </div>
             <button class="btn" id="btn-create-lot-save">Сохранить</button>
             <button class="btn secondary" id="btn-create-lot-close">Закрыть</button>
           </div>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:10px;">
-          <label for="new-lot-name" style="font-size:13px; color:var(--gray-700); min-width:120px;">Название лота <span style="color:red;">*</span></label>
-          <input type="text" id="new-lot-name" placeholder="Например: Секция 2 - ОВ" style="flex:1; min-width:220px; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
-          <input type="text" id="lot-search" placeholder="Поиск по видам работ / шифрам" style="width:260px; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--gray-700); user-select:none;">
-            <input type="checkbox" id="toggle-show-resources" style="width:16px; height:16px; accent-color:#207345;">
-            <span>Показывать ресурсы</span>
-          </label>
-          <div id="resource-type-filters" style="display:none; align-items:center; gap:6px;">
-            <button class="res-type-filter" data-type="material" title="Материалы" style="padding:5px 10px; border:1px solid var(--gray-300); border-radius:4px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
-              <span style="font-size:11px;">Мат</span>
-            </button>
-            <button class="res-type-filter" data-type="equipment" title="Механизмы" style="padding:5px 10px; border:1px solid var(--gray-300); border-radius:4px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
-              <span style="font-size:11px;">Мех</span>
-            </button>
-            <button class="res-type-filter" data-type="labor" title="Труд" style="padding:5px 10px; border:1px solid var(--gray-300); border-radius:4px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
-              <span style="font-size:11px;">Труд</span>
+
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+          <label for="new-lot-name" style="font-size:13px; font-weight:600; color:var(--gray-700); min-width:120px;">Название лота <span style="color:red;">*</span></label>
+          <input type="text" id="new-lot-name" placeholder="Например: Секция 2 - ОВ" style="flex:1; padding:7px 12px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:14px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:12px;">
+          <label style="font-size:13px; color:var(--gray-700); min-width:120px;">Тип лота</label>
+          <div class="custom-lot-type-select" id="new-lot-type-select" style="position:relative; min-width:180px;">
+            <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
+              <span id="selected-type-text">Услуга</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
+              <div class="opt" data-value="Услуга" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Услуга</div>
+              <div class="opt" data-value="Товар" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Товар</div>
+              <div class="opt" data-value="Услуга с материалом" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Услуга с материалом</div>
+            </div>
+          </div>
+          <input type="hidden" id="new-lot-type" value="Услуга">
+
+          <label style="font-size:13px; color:var(--gray-700); margin-left:12px;">Адрес</label>
+          <div style="display:flex; flex:1; gap:8px;">
+            <input type="text" id="new-lot-address" placeholder="Адрес доставки или оказания услуг" style="flex:1; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
+            <button class="btn secondary" id="btn-use-project-address" style="padding:4px 8px; font-size:12px; white-space:nowrap; background:#f0f7f4; border:1px solid var(--primary-light); color:var(--primary);">Подставить адрес объекта</button>
+            <button class="btn secondary" id="btn-specify-on-map" style="padding:4px 8px; font-size:12px; white-space:nowrap; display:flex; align-items:center; gap:4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              Карта
             </button>
           </div>
         </div>
-        <div class="meta" style="margin-bottom:12px; color:var(--gray-600); font-size:12px;">${objectFilter || "Выберите параметры лота"}</div>
-        
+
+        <!-- Hidden Map Modal for Lot Address selection -->
+        <div id="lot-map-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center; padding: 20px;">
+          <div style="background:white; padding:24px; border-radius:12px; width:min(90vw, 800px); height:600px; display:flex; flex-direction:column; gap:16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="margin:0; font-size:18px;">Выбор адреса на карте</h3>
+              <button class="btn secondary" onclick="document.getElementById('lot-map-modal').style.display='none'" style="padding:4px 8px; font-size:12px;">Закрыть</button>
+            </div>
+            <div id="lot-map-container" style="flex:1; width:100%; border-radius:8px; border:1px solid var(--gray-300); background:#f9f9f9;"></div>
+            <div id="lot-map-address-preview" style="background:var(--gray-50); padding:10px; border-radius:6px; font-size:13px; color:var(--gray-700); min-height:18px;">Кликните на карте для выбора</div>
+            <div style="display:flex; justify-content:flex-end; gap:12px;">
+              <button class="btn btn-primary" id="btn-confirm-map-address" disabled>Подтвердить</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; padding: 8px 12px; background: #f8faf9; border-radius: 8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--gray-700); user-select:none; font-weight:500;">
+            <input type="checkbox" id="toggle-show-resources" style="width:17px; height:17px; accent-color:#207345;">
+            <span>Показывать ресурсы</span>
+          </label>
+          <div id="resource-type-filters" style="display:none; align-items:center; gap:8px; margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--gray-300);">
+            <button class="res-type-filter" data-type="material" title="Материалы" style="padding:5px 12px; border:1px solid var(--gray-300); border-radius:6px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
+              <span style="font-size:11px;">Мат</span>
+            </button>
+            <button class="res-type-filter" data-type="equipment" title="Механизмы" style="padding:5px 12px; border:1px solid var(--gray-300); border-radius:6px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
+              <span style="font-size:11px;">Мех</span>
+            </button>
+            <button class="res-type-filter" data-type="labor" title="Труд" style="padding:5px 12px; border:1px solid var(--gray-300); border-radius:6px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
+              <span style="font-size:11px;">Труд</span>
+            </button>
+          </div>
+          <div class="meta" style="margin-left:auto; color:var(--gray-600); font-size:12px;">${objectFilter || "Выберите параметры лота"}</div>
+        </div>
+
         <style>
+          .custom-lot-type-select .opt:hover { background: #f0f7f4; color: var(--primary); }
           .modal-content-wrapper { display: flex; flex-direction: column; height: 78vh; gap: 16px; }
           .modal-grid-3 { display: grid; grid-template-columns: 380px minmax(520px, 1fr); gap: 16px; flex: 1; min-height: 0; }
             .col-panel { 
@@ -6302,6 +6353,31 @@
           searchEl.dataset.bound = '1';
         }
 
+        // Custom Dropdown for Type
+        const typeSelect = document.getElementById('new-lot-type-select');
+        const typeTrigger = typeSelect?.querySelector('.trigger');
+        const typeOptions = typeSelect?.querySelector('.options');
+        const typeInput = document.getElementById('new-lot-type');
+        const typeText = document.getElementById('selected-type-text');
+
+        if (typeSelect && !typeSelect.dataset.bound) {
+          typeTrigger.onclick = (e) => {
+            e.stopPropagation();
+            typeOptions.style.display = typeOptions.style.display === 'block' ? 'none' : 'block';
+          };
+          typeSelect.querySelectorAll('.opt').forEach(opt => {
+            opt.onclick = (e) => {
+              e.stopPropagation();
+              const val = opt.dataset.value;
+              typeInput.value = val;
+              typeText.innerText = val;
+              typeOptions.style.display = 'none';
+            };
+          });
+          window.addEventListener('click', () => { if (typeOptions) typeOptions.style.display = 'none'; });
+          typeSelect.dataset.bound = '1';
+        }
+
         const toggleEl = toggleResourcesEl();
         if (toggleEl && !toggleEl.dataset.bound) {
           toggleEl.addEventListener('change', (e) => {
@@ -6337,13 +6413,89 @@
             btn.dataset.bound = '1';
           }
         });
+
+        // Address Helpers
+        const btnProjAddr = document.getElementById('btn-use-project-address');
+        if (btnProjAddr && !btnProjAddr.dataset.bound) {
+          btnProjAddr.addEventListener('click', async () => {
+            try {
+              const projectId = getCurrentProjectId();
+              if (!projectId) {
+                alert('Не удалось определить ID проекта');
+                return;
+              }
+              const project = await apiGetProject(projectId);
+              if (!project) throw new Error('Данные проекта не получены');
+              if (project && project.address) {
+                const addrInput = document.getElementById('new-lot-address');
+                if (addrInput) addrInput.value = project.address;
+              } else {
+                alert('У этого объекта не указан адрес в настройках');
+              }
+            } catch (e) {
+              console.error('Failed to get project address:', e);
+              alert('Ошибка при получении адреса: ' + e.message);
+            }
+          });
+          btnProjAddr.dataset.bound = '1';
+        }
+
+        // Yandex Maps for Lot
+        let lotMap = null;
+        let lotPlacemark = null;
+        const btnMap = document.getElementById('btn-specify-on-map');
+        if (btnMap && !btnMap.dataset.bound) {
+          btnMap.addEventListener('click', () => {
+            const mapModal = document.getElementById('lot-map-modal');
+            mapModal.style.display = 'flex';
+            if (!lotMap && window.ymaps) {
+              ymaps.ready(() => {
+                lotMap = new ymaps.Map('lot-map-container', {
+                  center: [41.31, 69.24],
+                  zoom: 12,
+                  controls: ['zoomControl', 'geolocationControl']
+                });
+                lotMap.events.add('click', (e) => {
+                  const coords = e.get('coords');
+                  if (lotPlacemark) {
+                    lotPlacemark.geometry.setCoordinates(coords);
+                  } else {
+                    lotPlacemark = new ymaps.Placemark(coords, {}, { preset: 'islands#redDotIcon' });
+                    lotMap.geoObjects.add(lotPlacemark);
+                  }
+                  const confirmBtn = document.getElementById('btn-confirm-map-address');
+                  if (confirmBtn) confirmBtn.disabled = false;
+                  ymaps.geocode(coords).then(res => {
+                    const addr = res.geoObjects.get(0).getAddressLine();
+                    document.getElementById('lot-map-address-preview').innerText = addr;
+                    if (confirmBtn) confirmBtn.dataset.addr = addr;
+                  });
+                });
+              });
+            }
+          });
+          btnMap.dataset.bound = '1';
+        }
+
+        const confirmMapBtn = document.getElementById('btn-confirm-map-address');
+        if (confirmMapBtn && !confirmMapBtn.dataset.bound) {
+          confirmMapBtn.addEventListener('click', () => {
+            const addr = confirmMapBtn.dataset.addr;
+            if (addr) {
+              const addrInput = document.getElementById('new-lot-address');
+              if (addrInput) addrInput.value = addr;
+              document.getElementById('lot-map-modal').style.display = 'none';
+            }
+          });
+          confirmMapBtn.dataset.bound = '1';
+        }
       };
 
       try {
-        blocksData = await window.probimApi.getBlocks();
+        blocksData = await apiGetBlocks();
         renderLayout();
       } catch (e) {
-        bodyContainer.innerHTML = `<div style="color:red; text-align:center;">Ошибка: ${e.message}</div>`;
+        bodyContainer.innerHTML = `<div style="color:red; text-align:center;">Ошибка при загрузке данных: ${e.message}</div>`;
       }
 
       function renderLayout() {
@@ -6377,7 +6529,7 @@
           const blocksWithEstimates = await Promise.all(
             blocksData.map(async (block) => {
               try {
-                const estimates = await window.probimApi.getEstimates(block.id);
+                const estimates = await apiGetEstimates(block.id);
                 return { ...block, estimates: estimates || [] };
               } catch (e) {
                 console.error(`Failed to load estimates for block ${block.id}:`, e);
@@ -6470,11 +6622,11 @@
 
         try {
           // Fetch Tree Data
-          const sections = await window.probimApi.getSections(id);
+          const sections = await apiGetSections(id);
           // Flatten stages from all sections
           let allStages = [];
           for (const sec of sections) {
-            const stages = await window.probimApi.getStages(sec.id);
+            const stages = await apiGetStages(sec.id);
             allStages = allStages.concat(stages);
           }
 
@@ -6485,12 +6637,11 @@
 
           // Fetch Work Types for all stages
           const stagesWithWt = await Promise.all(allStages.map(async (stage) => {
-            const wts = await window.probimApi.getWorkTypes(stage.id);
+            const wts = await apiGetWorkTypes(stage.id);
             const wtsWithResources = await Promise.all((wts || []).map(async (wt) => {
               let resources = [];
               try {
-                resources = await window.probimApi.getResources(wt.id) || [];
-                console.log('Resources for WT', wt.id, ':', resources);
+                resources = await apiGetResources(wt.id) || [];
               } catch (err) {
                 console.warn('Failed to fetch resources for WT', wt.id, err);
               }
@@ -6848,6 +6999,9 @@
             unitCost: parseFloat(i.unitCost) || 0
           }));
 
+          const lotType = document.getElementById("new-lot-type").value;
+          const lotAddress = document.getElementById("new-lot-address").value.trim();
+
           // Call API to create tender
           await apiCreateTender({
             name: finalTitle,
@@ -6856,6 +7010,8 @@
             deadline: deadline,
             blockIds: uniqueBlocks,
             sectionIds: [],
+            type: lotType,
+            address: lotAddress,
             items: itemsPayload // Send items to backend
           });
 

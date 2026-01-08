@@ -311,6 +311,8 @@ router.post('/', async (req: Request, res: Response) => {
         startDate: new Date(startDate),
         deadline: new Date(deadline),
         status: 'open',
+        type: req.body.type || null,
+        address: req.body.address || null,
         items: req.body.items ? JSON.stringify(req.body.items) : '[]'
       }
     });

@@ -506,6 +506,8 @@ model Tender {
   startDate   DateTime
   deadline    DateTime
   status      String   @default("open")
+  type        String?  // 'Услуга', 'Товар', 'Услуга с материалом'
+  address     String?
   items       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

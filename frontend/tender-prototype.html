@@ -4627,7 +4627,7 @@
         // Bind search and resource toggle
         const searchInput = document.getElementById('lot-view-search');
         const toggleResources = document.getElementById('toggle-view-resources');
-        let showResources = false;
+        let showResources = true;
         let searchQuery = '';
 
         if (searchInput) {
@@ -4830,17 +4830,22 @@
             if (wtItems) {
               html += `
                   <div class="tree-stage">
-                      <div class="tree-stage-header">
-                          <div class="stage-check-cell"></div>
-                          <div class="stage-name-cell">
-                            <strong>${escapeHtml(stage.name)}</strong>
+                      <div class="tree-stage-header" onclick="window.toggleLotStage(this)" style="cursor:pointer; user-select:none; display:flex; align-items:center;">
+                          <div style="margin-right:8px; transition:transform 0.2s; transform: rotate(90deg); display:flex; align-items:center; justify-content:center; width:20px; height:20px;" class="stage-arrow">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                          </div>
+                          <div class="stage-check-cell" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="stage-cb" data-stage-id="${stage.id}" ${isAllUsed ? 'disabled' : ''}>
+                          </div>
+                          <div class="stage-name-cell" style="flex:1">
+                            <strong ${isAllUsed ? 'style="opacity:0.5;"' : ''}>${escapeHtml(stage.name)}</strong>
                           </div>
                       </div>
-                          <div class="tree-wt-list">
-                            ${wtItems}
-                          </div>
+                      <div class="tree-stage-body" style="display:block; padding-left:10px;">
+                        ${wtItems}
+                      </div>
                   </div>
-              `;
+                `;
             }
           });
 
@@ -6376,11 +6381,7 @@
           <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
             <input type="text" id="lot-search" placeholder="Поиск по работам" style="flex:1; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
             <div style="display:flex; gap:12px; align-items:center; padding: 8px 12px; background: #f8faf9; border-radius: 8px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--gray-700); user-select:none; font-weight:500;">
-            <input type="checkbox" id="toggle-show-resources" style="width:17px; height:17px; accent-color:#207345;">
-            <span>Показывать ресурсы</span>
-          </label>
-          <div id="resource-type-filters" style="display:none; align-items:center; gap:8px; margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--gray-300);">
+          <div id="resource-type-filters" style="display:flex;  align-items:center; gap:8px; ">
             <button class="res-type-filter" data-type="material" title="Материалы" style="padding:5px 12px; border:1px solid var(--gray-300); border-radius:6px; background:var(--white); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--gray-700); transition:all 0.15s; font-family:var(--font-family);">
               <span style="font-size:11px;">Мат</span>
             </button>
@@ -6394,6 +6395,9 @@
           <div class="meta" style="margin-left:auto; color:var(--gray-600); font-size:12px;">${objectFilter || "Выберите параметры лота"}</div>
         </div>
           </div>
+
+          <!-- Container for Grid -->
+          <div id="works-tab-body" style="flex:1; display:flex; flex-direction:column; overflow:hidden;"></div>
 
         <style>
           
@@ -6621,6 +6625,7 @@
 
       // State
       let blocksData = [];
+            const expandedBlocks = new Set();
       let activeBlockId = null;
       let activeEstimateId = null;
       let activeEstimateName = null;
@@ -6629,125 +6634,7 @@
       let searchQuery = '';
       let resourceTypeFilters = new Set(); // 'material', 'labor', 'equipment', 'service'
       const searchInputEl = () => document.getElementById('lot-search');
-      const toggleResourcesEl = () => document.getElementById('toggle-show-resources');
-      const collapsedBlocks = new Set(); // Track which blocks are collapsed
-
-      // Selection State: Map<wtId, { wtName, stageId, stageName, estimateId, estimateName, blockId, blockName }>
-      const selectedWorkTypes = new Map();
-
-      // Collect all work type IDs already used in existing tenders
-      const usedWorkTypeIds = new Set();
-      lots.forEach(lot => {
-        (lot.items || []).forEach(it => {
-          if (it.workTypeId) usedWorkTypeIds.add(it.workTypeId);
-        });
-      });
-
-      // Elements
-      const bodyContainer = document.getElementById('lot-creation-body');
-
-      // UI filters
-      const attachFilters = () => {
-        const searchEl = searchInputEl();
-        if (searchEl && !searchEl.dataset.bound) {
-          searchEl.addEventListener('input', (e) => {
-            searchQuery = (e.target.value || '').trim().toLowerCase();
-            if (lotTreeData.length) renderTree(lotTreeData, activeEstimateId, activeEstimateName);
-          });
-          searchEl.dataset.bound = '1';
-        }
-
-        
-        // --- Dependency Chain Logic ---
-        const chain = [
-          { current: 'new-lot-type-select', next: 'new-lot-work-type-select' },
-          { current: 'new-lot-work-type-select', next: 'new-lot-industry-select' },
-          { current: 'new-lot-industry-select', next: 'new-lot-complexity-select' },
-          { current: 'new-lot-complexity-select', next: 'new-lot-funding-select' }
-        ];
-
-        function enableNext(currentId) {
-          const step = chain.find(s => s.current === currentId);
-          if (step) {
-            const nextEl = document.getElementById(step.next);
-            if (nextEl) {
-               nextEl.classList.remove('disabled');
-               // Flash effect
-               const trigger = nextEl.querySelector('.trigger');
-               if(trigger) {
-                  trigger.style.transition = 'border-color 0.3s';
-                  trigger.style.borderColor = 'var(--primary)';
-                  setTimeout(() => trigger.style.borderColor = '', 800);
-               }
-            }
-          }
-        }
-
-        function initDropdown(id, inputId, textId) {
-           const select = document.getElementById(id);
-           const trigger = select?.querySelector('.trigger');
-           const options = select?.querySelector('.options');
-           const input = document.getElementById(inputId);
-           const text = document.getElementById(textId);
-
-           if (select && !select.dataset.bound) {
-             trigger.onclick = (e) => {
-               e.stopPropagation();
-               if (select.classList.contains('disabled')) return; 
-               
-               // Close others
-               document.querySelectorAll('.options').forEach(el => {
-                  if (el !== options) el.style.display = 'none';
-               });
-               
-               if (options) options.style.display = options.style.display === 'block' ? 'none' : 'block';
-             };
-
-             if (select && options) {
-                 select.querySelectorAll('.opt').forEach(opt => {
-                   opt.onclick = (e) => {
-                     e.stopPropagation();
-                     if (select.classList.contains('disabled')) return;
-
-                     const val = opt.dataset.value;
-                     if (input) input.value = val;
-                     if (text) text.innerText = opt.innerText;
-                     
-                     options.style.display = 'none';
-                     
-                     enableNext(id);
-                   };
-                 });
-             }
-             
-             if (select) select.dataset.bound = '1';
-           }
-        }
-
-        // Initialize All Dropdowns
-        initDropdown('new-lot-type-select', 'new-lot-type', 'selected-type-text');
-        initDropdown('new-lot-work-type-select', 'new-lot-work-type', 'selected-work-type-text');
-        initDropdown('new-lot-industry-select', 'new-lot-industry', 'selected-industry-text');
-        initDropdown('new-lot-complexity-select', 'new-lot-complexity', 'selected-complexity-text');
-        initDropdown('new-lot-funding-select', 'new-lot-funding', 'selected-funding-text');
-
-        window.addEventListener('click', () => { 
-           document.querySelectorAll('.options').forEach(o => o.style.display = 'none'); 
-        });
-
-
-        const toggleEl = toggleResourcesEl();
-        if (toggleEl && !toggleEl.dataset.bound) {
-          toggleEl.addEventListener('change', (e) => {
-            showResources = !!e.target.checked;
-            const filterContainer = document.getElementById('resource-type-filters');
-            if (filterContainer) {
-              filterContainer.style.display = showResources ? 'flex' : 'none';
-            }
-            if (lotTreeData.length) renderTree(lotTreeData, activeEstimateId, activeEstimateName);
-          });
-          toggleEl.dataset.bound = '1';
-        }
+      // Resource toggle removed (fully cleaned)
 
         // Resource type filter buttons
         const filterButtons = document.querySelectorAll('.res-type-filter');
@@ -6849,13 +6736,59 @@
           });
           confirmMapBtn.dataset.bound = '1';
         }
-      };
 
+      
+      // Define container for layout
+      const bodyContainer = document.getElementById('works-tab-body');
+      
       try {
         blocksData = await apiGetBlocks();
         renderLayout();
       } catch (e) {
         bodyContainer.innerHTML = `<div style="color:red; text-align:center;">Ошибка при загрузке данных: ${e.message}</div>`;
+      }
+
+      
+      function attachFilters() {
+        const searchInput = document.getElementById('lot-search');
+        const filterBtns = document.querySelectorAll('.res-type-filter');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+              searchQuery = e.target.value;
+              refreshTree();
+            });
+        }
+
+        filterBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+            if (resourceTypeFilters.has(type)) {
+              resourceTypeFilters.delete(type);
+              btn.style.background = 'var(--white)';
+              btn.style.borderColor = 'var(--gray-300)';
+              // Reset icon color or bold logic if visual changes needed
+              btn.style.color = 'var(--gray-700)';
+            } else {
+              resourceTypeFilters.add(type);
+              btn.style.background = '#eef2ff';
+              btn.style.borderColor = 'var(--primary)';
+              btn.style.color = 'var(--primary)';
+            }
+            refreshTree();
+          });
+        });
+        
+        function refreshTree() {
+             const activeEstimateEl = document.querySelector('.estimate-item.active');
+             if (activeEstimateEl) {
+                // If we have access to the data bound to the element, use it.
+                // The estimate items usually have onclick handlers that do the rendering.
+                // We can't easily access the data unless we stored it.
+                // But clicking it programmatically triggers the render logic!
+                activeEstimateEl.click();
+             }
+        }
       }
 
       function renderLayout() {
@@ -6881,7 +6814,18 @@
       }
 
       async function renderBlocksWithEstimates() {
+        console.log('Rendering Blocks. Data:', blocksData);
         const container = document.getElementById('col-blocks-estimates');
+        if (!container) {
+            console.error('Container #col-blocks-estimates not found!');
+            return;
+        }
+        if (!blocksData || blocksData.length === 0) {
+            container.innerHTML = '<div style="padding:12px; color:gray;">Нет данных о блоках</div>';
+            return;
+        }
+
+        // const container = document.getElementById('col-blocks-estimates');
         container.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">Загрузка...</div>';
 
         try {
@@ -6901,7 +6845,7 @@
           // Render grouped blocks with their estimates
           container.innerHTML = blocksWithEstimates.map(block => {
             const sortedEstimates = [...block.estimates].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-            const isCollapsed = collapsedBlocks.has(block.id);
+            const isCollapsed = !expandedBlocks.has(block.id);
             const chevronSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
             return `
@@ -6937,17 +6881,19 @@
               const blockId = header.dataset.blockId;
               const estimatesContainer = container.querySelector(`.block-estimates[data-block-id="${blockId}"]`);
 
-              if (collapsedBlocks.has(blockId)) {
-                collapsedBlocks.delete(blockId);
+              if (expandedBlocks.has(blockId)) {
+                // Currently Expanded -> Collapse it
+                expandedBlocks.delete(blockId);
+                header.classList.add('collapsed');
+                estimatesContainer.classList.add('collapsed');
+                estimatesContainer.style.maxHeight = '0';
+              } else {
+                // Currently Collapsed -> Expand it
+                expandedBlocks.add(blockId);
                 header.classList.remove('collapsed');
                 estimatesContainer.classList.remove('collapsed');
                 const itemCount = estimatesContainer.querySelectorAll('.estimate-item, .muted').length;
                 estimatesContainer.style.maxHeight = (itemCount * 40 + 20) + 'px';
-              } else {
-                collapsedBlocks.add(blockId);
-                header.classList.add('collapsed');
-                estimatesContainer.classList.add('collapsed');
-                estimatesContainer.style.maxHeight = '0';
               }
             });
           });
@@ -7771,6 +7717,17 @@
         });
       });
     };
+
+    // Accordion Toggle Implementation
+    window.toggleLotStage = function(header) {
+      const body = header.nextElementSibling;
+      const arrow = header.querySelector('.stage-arrow');
+      if (body) {
+        const isCollapsed = body.style.display === 'none';
+        body.style.display = isCollapsed ? 'block' : 'none';
+        if(arrow) arrow.style.transform = isCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+      }
+    };
 </script>
 <style>
 /* --- CRITICAL LAYOUT FIX (Step 1512) --- */
@@ -7846,6 +7803,37 @@
 /* Tab 1 Scrolling */
 .lot-tab-content[data-content="main"] {
   overflow-y: auto !important;
+}
+</style>
+
+<style>
+/* FORCE MODAL HEIGHT to make Flexbox work */
+.modal {
+    height: 90vh !important; /* Force explicit height */
+    max-height: 95vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure body takes space */
+.modal-content-wrapper {
+    height: 100% !important;
+    flex: 1 !important;
+}
+
+/* Fix grid height again just in case */
+.lot-tab-content[data-content="works"] .modal-grid-3 {
+    height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    padding-bottom: 20px !important;
+}
+
+/* Ensure columns have scrollbars */
+.col-content {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    height: 100% !important; /* fallback */
 }
 </style>
 </body>

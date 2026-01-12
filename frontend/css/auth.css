@@ -3,8 +3,9 @@
    ======================================== */
 
 :root {
-    --auth-primary: #207345;
-    --auth-primary-hover: #1a5c37;
+    --auth-primary: #2b579a;
+    /* Changed to Blue for Subcontractor by default */
+    --auth-primary-hover: #1e3f72;
     --auth-white: #ffffff;
     --auth-text-main: #201f1e;
     --auth-text-sub: #605e5c;
@@ -107,7 +108,10 @@
 .login-form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.75rem;
+    /* Increased gap between label and input */
+    margin-bottom: 1.75rem;
+    /* Increased spacing between fields */
 }
 
 .login-form-group label {
@@ -133,7 +137,6 @@
     background: #fff;
     border-color: var(--auth-primary);
     box-shadow: 0 0 0 4px rgba(32, 115, 69, 0.1);
-    transform: translateY(-1px);
 }
 
 .login-form-group input::placeholder {
@@ -195,7 +198,6 @@
 
 .login-btn:hover {
     background: var(--auth-primary-hover);
-    transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(32, 115, 69, 0.35);
 }
 
@@ -239,4 +241,215 @@
     .login-form-group label {
         color: #ddd;
     }
+}
+
+/* --- Custom Project UI: Custom Select --- */
+.custom-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    height: 52px;
+    padding: 0 1.25rem;
+    background: #ffffff;
+    border: 1.5px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--auth-text-main);
+    transition: all 0.2s;
+}
+
+.custom-select-trigger:hover {
+    border-color: var(--auth-primary);
+}
+
+.custom-select-container.open .custom-select-trigger {
+    border-color: var(--auth-primary);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.custom-select-trigger span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 1rem;
+}
+
+.custom-select-trigger::after {
+    content: '\f107';
+    /* Thinner chevron arrow */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.9rem;
+    color: var(--auth-text-sub);
+    margin-left: 0.5rem;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-select-container.open .custom-select-trigger::after {
+    transform: rotate(180deg);
+}
+
+.custom-options-wrapper {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid var(--auth-primary);
+    border-top: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    animation: authFadeIn 0.2s ease-out;
+}
+
+.custom-select-container.open .custom-options-wrapper {
+    display: flex;
+}
+
+.select-search {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.select-search input {
+    width: 100%;
+    height: 38px !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.85rem !important;
+    border-radius: 8px !important;
+}
+
+.custom-options {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.custom-option {
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    flex-direction: row;
+    /* Horizontal layout for icon + info */
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.custom-option:hover {
+    background: rgba(32, 115, 69, 0.05);
+}
+
+/* Specific hover for subcontractor (blue) */
+[href*="subcontractor"] .custom-option:hover {
+    background: rgba(43, 87, 154, 0.05);
+}
+
+.option-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--auth-primary);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.option-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    overflow: hidden;
+}
+
+.custom-option .key-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--auth-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-option .key-tin {
+    font-size: 0.75rem;
+    color: var(--auth-text-sub);
+}
+
+/* Method Tabs for index.html */
+.login-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.4rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    gap: 0.25rem;
+}
+
+.login-tab {
+    flex: 1;
+    padding: 0.6rem 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--auth-text-sub);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    box-shadow: none !important;
+    text-align: center;
+}
+
+.login-tab:hover {
+    color: #fff !important;
+    background: var(--auth-primary);
+}
+
+.login-tab.active {
+    background: #fff;
+    color: var(--auth-primary);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.login-tab.active:hover {
+    background: #fff;
+    color: var(--auth-primary) !important;
+}
+
+.method-content {
+    display: none;
+    animation: authFadeIn 0.3s ease-out;
+}
+
+.method-content.active {
+    display: block;
+}
+
+.pfx-info {
+    font-size: 0.85rem;
+    color: var(--auth-text-sub);
+    background: rgba(0, 0, 0, 0.03);
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    text-align: left;
+    border: 1px dashed var(--auth-glass-border);
+    display: none;
+    /* Hidden by default, shown on error */
 }

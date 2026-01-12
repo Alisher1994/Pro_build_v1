@@ -507,6 +507,7 @@ model Tender {
   deadline    DateTime
   status      String   @default("open")
   type        String?  // 'Услуга', 'Товар', 'Услуга с материалом'
+  visibility  String   @default("closed") // 'open' (публичный) или 'closed' (по приглашению)
   address     String?
   items       String?
   createdAt   DateTime @default(now())
@@ -517,6 +518,7 @@ model Tender {
   chatThreads TenderChatThread[]
   @@index([projectId])
   @@index([status])
+  @@index([visibility])
   @@index([projectId, createdAt(sort: Desc)])
 }
 

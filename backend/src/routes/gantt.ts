@@ -571,9 +571,11 @@ router.get('/:projectId', async (req, res) => {
       where: { projectId },
       orderBy: { sortOrder: 'asc' },
       include: {
-        linksSource: true, // Исходящие связи
+        linksSource: true,
       }
     });
+
+    logger.info(`Found ${tasks.length} tasks for project ${projectId}`);
 
     const workTypeIds = Array.from(
       new Set(
@@ -602,6 +604,8 @@ router.get('/:projectId', async (req, res) => {
       }
     });
 
+    logger.info(`Found ${links.length} links for project ${projectId}`);
+
     // --- ПРИВЯЗКА ПОБЕДИТЕЛЕЙ ТЕНДЕРОВ К ЗАДАЧАМ ГРАФИКА ---
     // 1. Находим все выигрышные ставки для данного проекта
     const winningBids = await prisma.tenderBid.findMany({
@@ -617,12 +621,15 @@ router.get('/:projectId', async (req, res) => {
       }
     });
 
-    // 1.5 Получаем все блоки проекта для преобразования имен в ID
-    // (Тендеры часто хранят имена блоков в blockIds вместо UUID)
+    logger.info(`Found ${winningBids.length} winning bids for project ${projectId}`);
+
+    logger.info(`Fetching project blocks for project ${projectId}`);
     const projectBlocks = await prisma.block.findMany({
       where: { projectId },
       select: { id: true, name: true }
     });
+    logger.info(`Found ${projectBlocks.length} blocks for project ${projectId}`);
+
     const blockNameToId = new Map<string, string>();
     for (const b of projectBlocks) {
       blockNameToId.set(b.name.trim(), b.id);
@@ -636,9 +643,15 @@ router.get('/:projectId', async (req, res) => {
       let tenderItems: any[] = [];
 
       try {
-        rawBlockIds = JSON.parse(bid.tender.blockIds || '[]');
-        tenderItems = JSON.parse(bid.tender.items || '[]');
-      } catch (e) { continue; }
+        const parsedBlocks = JSON.parse(bid.tender.blockIds || '[]');
+        rawBlockIds = Array.isArray(parsedBlocks) ? parsedBlocks : [String(parsedBlocks)];
+
+        const parsedItems = JSON.parse(bid.tender.items || '[]');
+        tenderItems = Array.isArray(parsedItems) ? parsedItems : [];
+      } catch (e) {
+        logger.warn(`Failed to parse tender data for bid ${bid.id}: ${e instanceof Error ? e.message : String(e)}`);
+        continue;
+      }
 
       // Нормализуем ID блоков (если в базе имена - превращаем в ID)
       const normalizedBlockIds = rawBlockIds.map(idOrName => {
@@ -657,35 +670,53 @@ router.get('/:projectId', async (req, res) => {
       }
     }
 
-    // Форматируем для DHTMLX Gantt
-    // DHTMLX ожидает { data: [], links: [] }
-    // Даты нужно передавать в формате, который поймет клиент (обычно строка)
+    logger.info(`WinnerMap built with ${Object.keys(winnerMap).length} blocks`);
 
+    // Форматируем для DHTMLX Gantt
     // Map all tasks by ID for fast lookup during blockId resolution
-    const taskMap = new Map();
+    const taskMap = new Map<string, any>();
     for (const t of tasks) {
       taskMap.set(String(t.id), t);
     }
 
-    const resolveBlockId = (task: any): string => {
+    const resolveBlockId = (task: any, visited = new Set<string>()): string => {
+      if (!task) return '';
       if (task.blockId) return String(task.blockId);
+
+      const taskId = String(task.id);
+      if (visited.has(taskId)) {
+        logger.warn(`Loop detected in task hierarchy at task ${taskId}`);
+        return '';
+      }
+      visited.add(taskId);
+
       if (task.parent && task.parent !== '0' && task.parent !== projectId) {
         const parent = taskMap.get(String(task.parent));
-        if (parent) return resolveBlockId(parent);
+        if (parent) return resolveBlockId(parent, visited);
       }
       return '';
     };
 
-    res.json({
-      data: tasks.map(t => {
+    logger.info(`Starting task mapping for ${tasks.length} tasks`);
+    const data = tasks.map(t => {
+      try {
         const wtId = extractWorkTypeIdFromTaskId(t.id);
         const bId = resolveBlockId(t);
         const subcontractor = (wtId && winnerMap[bId]) ? winnerMap[bId][wtId] : null;
 
+        let startDateStr = '';
+        if (t.start_date) {
+          try {
+            startDateStr = t.start_date.toISOString().replace('T', ' ').substring(0, 16);
+          } catch (dateErr) {
+            logger.warn(`Invalid start_date for task ${t.id}: ${t.start_date}`);
+          }
+        }
+
         return {
           id: String(t.id),
           text: t.text,
-          start_date: t.start_date ? t.start_date.toISOString().replace('T', ' ').substring(0, 16) : '',
+          start_date: startDateStr,
           duration: Math.max(1, Number(t.duration || 1)),
           progress: t.progress || 0,
           parent: t.parent ? String(t.parent) : 0,
@@ -701,7 +732,7 @@ router.get('/:projectId', async (req, res) => {
           calculationMode: t.calculationMode,
           plannedWork: t.plannedWork,
           leadingResourceId: t.leadingResourceId,
-          subcontractor: subcontractor, // Добавляем субподрядчика
+          subcontractor: subcontractor,
           norm: (() => {
             if (!wtId) return null;
             const npu = normPerUnitByWorkTypeId.get(wtId) || 0;
@@ -711,8 +742,16 @@ router.get('/:projectId', async (req, res) => {
           })(),
           open: true
         };
-      }),
+      } catch (err: any) {
+        logger.error(`Error mapping task ${t.id}:`, err);
+        throw err;
+      }
+    });
 
+    logger.info(`Successfully prepared Gantt data for project ${projectId}: ${data.length} tasks, ${links.length} links`);
+
+    res.json({
+      data,
       links: links.map(l => ({
         id: l.id,
         source: l.source,
@@ -723,7 +762,8 @@ router.get('/:projectId', async (req, res) => {
     });
 
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    logger.error('Error in GET /api/gantt/:projectId:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 

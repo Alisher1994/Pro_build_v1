@@ -292,7 +292,8 @@ router.post('/', async (req: Request, res: Response) => {
       blockIds,      // массив ["block1", "block2"]
       sectionIds,    // массив ["АР", "КЖ"]
       startDate,
-      deadline
+      deadline,
+      visibility     // 'open' или 'closed'
     } = req.body;
 
     // Валидация
@@ -312,6 +313,7 @@ router.post('/', async (req: Request, res: Response) => {
         deadline: new Date(deadline),
         status: 'open',
         type: req.body.type || null,
+        visibility: visibility || 'closed', // По умолчанию закрытый
         address: req.body.address || null,
         items: req.body.items ? JSON.stringify(req.body.items) : '[]'
       }

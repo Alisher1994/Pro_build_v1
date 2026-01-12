@@ -8,7 +8,15 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/e-imzo.js"></script>
+    <script src="js/e-imzo-client.js"></script>
     <style>
+        :root {
+            --auth-primary: #2b579a;
+            --auth-primary-hover: #1e3f72;
+        }
+
         :root {
             --primary: #2b579a;
             --primary-hover: #1e3f72;
@@ -161,7 +169,6 @@
 
         button:hover {
             background: var(--primary-hover);
-            transform: translateY(-2px);
             box-shadow: 0 20px 25px -5px rgba(43, 87, 154, 0.4);
         }
 
@@ -300,6 +307,68 @@
 
             /* Loop back */
         }
+
+        /* Login Methods Styles */
+        .login-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.06);
+            /* More distinct gray background */
+            padding: 0.4rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            gap: 0.25rem;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 0.6rem 0.4rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            margin-top: 0;
+            height: auto;
+        }
+
+        .login-tab:hover {
+            color: var(--white) !important;
+            background: var(--primary);
+        }
+
+        .login-tab.active {
+            background: var(--white);
+            color: var(--primary);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .login-tab.active:hover {
+            background: var(--white);
+            color: var(--primary) !important;
+        }
+
+        .method-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .method-content.active {
+            display: block;
+        }
+
+        .pfx-info {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -328,79 +397,74 @@
         </div>
         <div class="subtitle">Модуль субподрядчика</div>
 
+        <!-- Login Method Tabs -->
+        <div class="login-tabs">
+            <button class="login-tab active" data-method="phone">Телефон</button>
+            <button class="login-tab" data-method="pfx">PFX (ЭЦП)</button>
+            <button class="login-tab" data-method="email">Почта</button>
+        </div>
+
         <form id="login-form">
-            <div class="form-group">
-                <label for="inn">ИНН организации</label>
-                <input type="text" id="inn" name="inn" placeholder="123456789" required autofocus maxlength="12"
-                    autocomplete="username">
+            <!-- Phone Method -->
+            <div id="method-phone" class="method-content active">
+                <div class="form-group">
+                    <label for="phone">Номер телефона</label>
+                    <input type="tel" id="login-phone" placeholder="+998 (__) ___-__-__">
+                </div>
+                <div class="form-group">
+                    <label for="phone-password">Пароль</label>
+                    <input type="password" id="login-phone-password" placeholder="••••••••">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="password">Пароль</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required
-                    autocomplete="current-password">
+            <!-- PFX Method -->
+            <div id="method-pfx" class="method-content">
+                <div class="pfx-info">
+                    Для входа необходимо наличие модуля <strong>E-IMZO</strong> и активного ключа.
+                </div>
+                <div class="form-group">
+                    <label>Выберите ключ ЭЦП</label>
+                    <div class="custom-select-container">
+                        <div class="custom-select-trigger">
+                            <span>Выберите ключ...</span>
+                        </div>
+                        <div class="custom-options-wrapper">
+                            <div class="select-search">
+                                <input type="text" placeholder="Поиск по имени или ИНН...">
+                            </div>
+                            <div class="custom-options">
+                                <div class="custom-option-loading">Загрузка ключей...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <button type="submit" id="submit-btn">Войти в систему</button>
+            <!-- Email Method -->
+            <div id="method-email" class="method-content">
+                <div class="form-group">
+                    <label for="email">Электронная почта</label>
+                    <input type="email" id="login-email" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label for="email-password">Пароль</label>
+                    <input type="password" id="login-email-password" placeholder="••••••••">
+                </div>
+            </div>
+
+            <div id="login-error" class="error-message"></div>
+            <button type="submit" id="login-btn" style="margin-top: 1rem;">Войти в систему</button>
         </form>
-
-        <div id="error-box" class="error-message"></div>
 
         <div class="footer-links">
             Нет аккаунта? <a href="#">Свяжитесь с менеджером</a>
         </div>
     </div>
 
+    <!-- Centralized Assets -->
+    <link rel="stylesheet" href="css/auth.css">
     <script src="js/api.js"></script>
-    <script>
-        const form = document.getElementById('login-form');
-        const innInput = document.getElementById('inn');
-        const passwordInput = document.getElementById('password');
-        const submitBtn = document.getElementById('submit-btn');
-        const errorBox = document.getElementById('error-box');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const inn = innInput.value.trim();
-            const password = passwordInput.value;
-
-            if (!inn || !password) return;
-
-            setLoading(true);
-            hideError();
-
-            try {
-                const data = await api.loginSubcontractor(inn, password);
-                if (data && data.token) {
-                    // Redirect to dashboard
-                    window.location.href = 'subcontractor-dashboard.html';
-                }
-            } catch (err) {
-                showError(err.message || 'Ошибка входа');
-            } finally {
-                setLoading(false);
-            }
-        });
-
-        function setLoading(isLoading) {
-            submitBtn.disabled = isLoading;
-            submitBtn.textContent = isLoading ? 'Вход...' : 'Войти в систему';
-        }
-
-        function showError(msg) {
-            errorBox.textContent = msg;
-            errorBox.style.display = 'block';
-        }
-
-        function hideError() {
-            errorBox.style.display = 'none';
-        }
-    </script>
-    <script>
-        // Dynamic subtitle functionality removed as per user request.
-        // Subtitle remains static: "Модуль субподрядчика"
-    </script>
+    <script src="js/auth.js"></script>
 </body>
 
 </html>

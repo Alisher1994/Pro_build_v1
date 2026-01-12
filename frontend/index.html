@@ -28,7 +28,15 @@
     <script src="js/libs/OrbitControls.js"></script>
     <script src="js/libs/dxf-parser.js"></script>
     <script src="js/libs/three-dxf.js"></script>
+    <script src="js/e-imzo.js"></script>
+    <script src="js/e-imzo-client.js"></script>
+    <script src="js/e-imzo-client.js"></script>
     <style>
+        :root {
+            --auth-primary: #207345;
+            --auth-primary-hover: #1a5c37;
+        }
+
         /* Hide scrollbar for content area but allow scrolling */
         .content-area {
             scrollbar-width: none;
@@ -593,17 +601,64 @@
                     style="font-size: 14px; color: var(--gray-600); min-height: 20px; transition: opacity 0.3s ease;">
                 </div>
             </div>
+
+            <!-- Login Method Tabs -->
+            <div class="login-tabs">
+                <button class="login-tab active" data-method="phone">Телефон</button>
+                <button class="login-tab" data-method="pfx">PFX (ЭЦП)</button>
+                <button class="login-tab" data-method="email">Почта</button>
+            </div>
+
             <form id="login-form">
-                <div class="login-form-group">
-                    <label for="login-email">Логин</label>
-                    <input type="text" id="login-email" placeholder="+998" required>
+                <!-- Phone Method -->
+                <div id="method-phone" class="method-content active">
+                    <div class="login-form-group">
+                        <label for="login-phone">Номер телефона</label>
+                        <input type="tel" id="login-phone" placeholder="+998 (__) ___-__-__">
+                    </div>
+                    <div class="login-form-group">
+                        <label for="login-phone-password">Пароль</label>
+                        <input type="password" id="login-phone-password" placeholder="••••••••">
+                    </div>
                 </div>
-                <div class="login-form-group">
-                    <label for="login-password">Пароль</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required>
+
+                <!-- PFX Method -->
+                <div id="method-pfx" class="method-content">
+                    <div class="pfx-info">
+                        Для входа необходимо наличие модуля <strong>E-IMZO</strong> и активного ключа.
+                    </div>
+                    <div class="login-form-group">
+                        <label>Выберите ключ ЭЦП</label>
+                        <div class="custom-select-container">
+                            <div class="custom-select-trigger">
+                                <span>Выберите ключ...</span>
+                            </div>
+                            <div class="custom-options-wrapper">
+                                <div class="select-search">
+                                    <input type="text" placeholder="Поиск по имени или ИНН...">
+                                </div>
+                                <div class="custom-options">
+                                    <div class="custom-option-loading">Загрузка ключей...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Email Method -->
+                <div id="method-email" class="method-content">
+                    <div class="login-form-group">
+                        <label for="login-email">Электронная почта</label>
+                        <input type="email" id="login-email" placeholder="example@mail.com">
+                    </div>
+                    <div class="login-form-group">
+                        <label for="login-email-password">Пароль</label>
+                        <input type="password" id="login-email-password" placeholder="••••••••">
+                    </div>
+                </div>
+
                 <div id="login-error" class="login-error"></div>
-                <button type="submit" id="login-btn" class="login-btn">Войти</button>
+                <button type="submit" id="login-btn" class="login-btn">Войти в систему</button>
             </form>
             <div class="login-footer">
                 <div>&copy; 2026 ProBIM. Все права защищены.</div>

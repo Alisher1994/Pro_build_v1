@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 
 <head>
@@ -1091,23 +1091,57 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      border: 1px dashed var(--gray-300);
-      color: var(--primary);
+      border: 2px dashed var(--gray-300);
+      background: rgba(250, 250, 250, 0.4);
+      color: var(--gray-600);
       cursor: pointer;
-      min-height: 180px;
-      transition: border-color 0.15s ease, background 0.15s ease;
+      min-height: 200px;
+      padding: 32px 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 12px;
+      gap: 16px;
     }
 
     .offer-card.invite-card:hover {
       border-color: var(--primary);
+      background: var(--white);
+      color: var(--primary);
+      box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
+    }
+
+    .invite-icon-wrapper {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .offer-card.invite-card:hover .invite-icon-wrapper {
       background: var(--primary-lighter);
+      color: var(--primary);
+      border-color: rgba(32, 115, 69, 0.1);
+      transform: scale(1.05) rotate(90deg);
     }
 
     .invite-cta {
-      font-weight: 600;
-      font-size: 13px;
-      padding: 8px 12px;
-      border-radius: 4px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+    }
+
+    .invite-subtext {
+      font-size: 12px;
+      color: var(--gray-500);
+      max-width: 150px;
+      line-height: 1.4;
+      font-weight: 400;
     }
 
     .offer-card.is-blocked {
@@ -5340,7 +5374,11 @@
 
         const inviteCard = `
           <div class="offer-card invite-card" data-lot-id="${lot.id}" role="button" tabindex="0" aria-label="Пригласить субподрядчика">
-            <span class="invite-cta">Пригласить</span>
+            <div class="invite-icon-wrapper">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+            <div class="invite-cta">Пригласить</div>
+            <div class="invite-subtext">Пригласите нового субподрядчика для участия в этом лоте</div>
           </div>
         `;
 
@@ -6137,50 +6175,181 @@
 
       // New Layout Structure
       innerModal.innerHTML = `
-        <div class="row" style="justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); margin-bottom: 12px;">
+        <div class="row" style="justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); margin-bottom: 16px;">
           <div style="display:flex; flex-direction:column; gap:4px;">
             <h3 style="margin:0;">Добавление нового лота</h3>
             <div id="new-lot-total-sum" style="font-weight: 700; font-size: 14px; color: var(--primary);">Итого: 0 ${PROJECT_CURRENCY === 'UZS' ? 'сўм' : '$'}</div>
           </div>
           <div style="display:flex; gap:12px; align-items:center;">
-            <input type="text" id="lot-search" placeholder="Поиск по работам" style="width:200px; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-               <label style="font-size:12px; color:var(--gray-600);">Срок:</label>
-               <input type="date" id="new-lot-deadline" value="${today}" min="${today}" style="padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; width: 140px; font-family:inherit; font-size:13px;">
-            </div>
             <button class="btn" id="btn-create-lot-save">Сохранить</button>
             <button class="btn secondary" id="btn-create-lot-close">Закрыть</button>
           </div>
         </div>
 
-        <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
-          <label for="new-lot-name" style="font-size:13px; font-weight:600; color:var(--gray-700); min-width:120px;">Название лота <span style="color:red;">*</span></label>
-          <input type="text" id="new-lot-name" placeholder="Например: Секция 2 - ОВ" style="flex:1; padding:7px 12px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:14px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+        <!-- Tabs Navigation -->
+        <div class="lot-tabs" style="display:flex; gap:8px; margin-bottom:16px; border-bottom:2px solid var(--gray-200);">
+          <button class="lot-tab active" data-tab="main" style="padding:10px 20px; border:none; background:transparent; cursor:pointer; font-size:14px; font-weight:600; color:var(--gray-600); border-bottom:3px solid transparent; transition:all 0.2s; font-family:inherit;">
+            Основные данные
+          </button>
+          <button class="lot-tab" data-tab="works" style="padding:10px 20px; border:none; background:transparent; cursor:pointer; font-size:14px; font-weight:600; color:var(--gray-600); border-bottom:3px solid transparent; transition:all 0.2s; font-family:inherit;">
+            Секции и работы
+          </button>
         </div>
 
-        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:12px;">
-          <label style="font-size:13px; color:var(--gray-700); min-width:120px;">Тип лота</label>
-          <div class="custom-lot-type-select" id="new-lot-type-select" style="position:relative; min-width:180px;">
-            <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
-              <span id="selected-type-text">Услуга</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
-            <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
-              <div class="opt" data-value="Услуга" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Услуга</div>
-              <div class="opt" data-value="Товар" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Товар</div>
-              <div class="opt" data-value="Услуга с материалом" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Услуга с материалом</div>
-            </div>
-          </div>
-          <input type="hidden" id="new-lot-type" value="Услуга">
+        <style>
+          .lot-tab:hover {
+            color: var(--primary);
+            background: var(--gray-50);
+          }
+          .lot-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary) !important;
+          }
+          .lot-tab-content {
+            display: none;
+            min-height: 650px;
+            padding-bottom: 20px;
+          }
+          .lot-tab-content.active {
+            display: block;
+          }
+        </style>
 
-          <label style="font-size:13px; color:var(--gray-700); margin-left:12px;">Адрес</label>
-          <div style="display:flex; flex:1; gap:8px;">
-            <input type="text" id="new-lot-address" placeholder="Адрес доставки или оказания услуг" style="flex:1; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
-            <button class="btn secondary" id="btn-use-project-address" style="padding:4px 8px; font-size:12px; white-space:nowrap; background:#f0f7f4; border:1px solid var(--primary-light); color:var(--primary);">Подставить адрес объекта</button>
-            <button class="btn secondary" id="btn-specify-on-map" style="padding:4px 8px; font-size:12px; white-space:nowrap; display:flex; align-items:center; gap:4px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-              Карта
-            </button>
+        <!-- Tab 1: Main Data -->
+        <div class="lot-tab-content active" data-content="main">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <!-- Left Column: All Fields -->
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label for="new-lot-name" style="font-size:13px; font-weight:600; color:var(--gray-700); min-width:200px;">Название лота <span style="color:red;">*</span></label>
+              <input type="text" id="new-lot-name" placeholder="Например: Секция 2 - ОВ" style="flex:1; padding:7px 12px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:14px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Срок выполнения</label>
+              <input type="date" id="new-lot-deadline" style="flex:1; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:0;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Тип лота</label>
+              <div class="custom-lot-type-select" id="new-lot-type-select" style="position:relative; flex:1;">
+                <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
+                  <span id="selected-type-text">Услуга</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
+                  <div class="opt" data-value="Услуга" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Услуга</div>
+                  <div class="opt" data-value="Товар" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Товар</div>
+                  <div class="opt" data-value="Услуга с материалом" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Услуга с материалом</div>
+                </div>
+              </div>
+              <input type="hidden" id="new-lot-type" value="Услуга">
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Тип выполнения работ</label>
+              <div id="new-lot-work-type-select" class="custom-dropdown disabled" style="position:relative; flex:1;">
+                <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
+                  <span id="selected-work-type-text">Выберите тип</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
+                  <div class="opt" data-value="own" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Собственными силами</div>
+                  <div class="opt" data-value="subcontract" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Субподрядом</div>
+                  <div class="opt" data-value="mixed" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Смешанный</div>
+                </div>
+              </div>
+              <input type="hidden" id="new-lot-work-type" value="">
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Отрасль лота</label>
+              <div id="new-lot-industry-select" class="custom-dropdown disabled" style="position:relative; flex:1;">
+                <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
+                  <span id="selected-industry-text">Выберите отрасль</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
+                  <div class="opt" data-value="construction" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Строительство</div>
+                  <div class="opt" data-value="renovation" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Ремонт</div>
+                  <div class="opt" data-value="engineering" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Инженерные системы</div>
+                  <div class="opt" data-value="landscaping" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Благоустройство</div>
+                  <div class="opt" data-value="other" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Прочее</div>
+                </div>
+              </div>
+              <input type="hidden" id="new-lot-industry" value="">
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Категория сложности</label>
+              <div id="new-lot-complexity-select" class="custom-dropdown disabled" style="position:relative; flex:1;">
+                <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
+                  <span id="selected-complexity-text">Выберите категорию</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
+                  <div class="opt" data-value="I" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">I категория (особо сложные)</div>
+                  <div class="opt" data-value="II" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">II категория (сложные)</div>
+                  <div class="opt" data-value="III" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">III категория (средней сложности)</div>
+                  <div class="opt" data-value="IV" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">IV категория (простые)</div>
+                </div>
+              </div>
+              <input type="hidden" id="new-lot-complexity" value="">
+            </div>
+
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Источник финансирования</label>
+              <div id="new-lot-funding-select" class="custom-dropdown disabled" style="position:relative; flex:1;">
+                <div class="trigger" style="padding:6px 30px 6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; cursor:pointer; font-size:13px; display:flex; align-items:center; position:relative;">
+                  <span id="selected-funding-text">Выберите источник</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="options" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1px solid var(--gray-300); border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); z-index:1001; overflow:hidden;">
+                  <div class="opt" data-value="budget" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Бюджетные средства</div>
+                  <div class="opt" data-value="private" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Частные инвестиции</div>
+                  <div class="opt" data-value="mixed" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Смешанное финансирование</div>
+                  <div class="opt" data-value="loan" style="padding:8px 12px; font-size:13px; cursor:pointer; transition:background 0.2s;">Кредитные средства</div>
+                </div>
+              </div>
+              <input type="hidden" id="new-lot-funding" value="">
+            </div>
+
+            <!-- Visibility Toggle -->
+            <div style="display:flex; gap:12px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:200px;">Видимость лота</label>
+              <div style="display:flex; align-items:center; gap:12px; flex:1;">
+                <label class="visibility-toggle" style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
+                  <input type="checkbox" id="lot-visibility-toggle" style="opacity:0; width:0; height:0;">
+                  <span class="visibility-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e0; border-radius:24px; transition:all 0.3s;"></span>
+                  <span class="visibility-knob" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:all 0.3s; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></span>
+                </label>
+                <span id="visibility-label" style="font-size:13px; color:var(--gray-700);">Закрытый (по приглашению)</span>
+              </div>
+            </div>
+            <input type="hidden" id="new-lot-visibility" value="closed">
+
+            <style>
+              #lot-visibility-toggle:checked + .visibility-slider {
+                background: var(--primary);
+              }
+              #lot-visibility-toggle:checked ~ .visibility-knob {
+                transform: translateX(20px);
+              }
+            </style>
+          </div>
+
+          <!-- Right Column: Address & Map -->
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <label style="font-size:13px; color:var(--gray-700); min-width:60px;">Адрес</label>
+              <input type="text" id="new-lot-address" placeholder="Адрес доставки или оказания услуг" style="flex:1; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
+              <button class="btn secondary" id="btn-use-project-address" style="padding:4px 12px; font-size:12px; white-space:nowrap; background:#f0f7f4; border:1px solid var(--primary-light); color:var(--primary);">Адрес объекта</button>
+            </div>
+
+            <div id="lot-inline-map" style="border:1px solid var(--gray-300); border-radius:8px; overflow:hidden; height:450px; background:#f9f9f9;"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -6199,7 +6368,14 @@
           </div>
         </div>
 
-        <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; padding: 8px 12px; background: #f8faf9; border-radius: 8px;">
+                </div>
+        <!-- End Tab 1: Main Data -->
+
+        <!-- Tab 2: Sections & Works -->
+        <div class="lot-tab-content" data-content="works">
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+            <input type="text" id="lot-search" placeholder="Поиск по работам" style="flex:1; padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; font-size:13px;">
+            <div style="display:flex; gap:12px; align-items:center; padding: 8px 12px; background: #f8faf9; border-radius: 8px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--gray-700); user-select:none; font-weight:500;">
             <input type="checkbox" id="toggle-show-resources" style="width:17px; height:17px; accent-color:#207345;">
             <span>Показывать ресурсы</span>
@@ -6217,9 +6393,27 @@
           </div>
           <div class="meta" style="margin-left:auto; color:var(--gray-600); font-size:12px;">${objectFilter || "Выберите параметры лота"}</div>
         </div>
+          </div>
 
         <style>
-          .custom-lot-type-select .opt:hover { background: #f0f7f4; color: var(--primary); }
+          
+          .custom-dropdown.disabled .trigger, 
+          .custom-lot-type-select.disabled .trigger {
+            background-color: var(--gray-100) !important;
+            color: var(--gray-400) !important;
+            cursor: not-allowed !important;
+            border-color: var(--gray-200) !important;
+          }
+          .custom-dropdown.disabled .trigger svg,
+          .custom-lot-type-select.disabled .trigger svg {
+            opacity: 0.5;
+          }
+
+          .custom-lot-type-select .opt:hover,
+          .custom-dropdown .opt:hover { 
+            background: #f0f7f4; 
+            color: var(--primary); 
+          }
           .modal-content-wrapper { display: flex; flex-direction: column; height: 78vh; gap: 16px; }
           .modal-grid-3 { display: grid; grid-template-columns: 380px minmax(520px, 1fr); gap: 16px; flex: 1; min-height: 0; }
             .col-panel { 
@@ -6303,7 +6497,117 @@
             
             input[type="checkbox"] { accent-color: #207345; width: 16px; height: 16px; }
             input[type="checkbox"]:disabled { cursor: not-allowed; }
-        </style>
+        
+          /* --- Scroll Fix Styles for Tab 2 --- */
+          
+          /* 1. Ensure tab content has fixed height and proper flex layout */
+          .lot-tab-content {
+             height: 650px; /* Fixed height instead of min-height */
+             display: none;
+             flex-direction: column;
+             overflow: hidden; /* Prevent tab itself from swelling */
+          }
+          
+          .lot-tab-content.active {
+             display: flex;
+          }
+
+          /* 2. Make the grid fill the remaining space below search bar */
+          .lot-tab-content[data-content="works"] .modal-grid-3 {
+             flex: 1;
+             min-height: 0; /* Crucial for nested flex scrolling */
+             overflow: hidden; 
+             margin-top: 12px;
+             margin-bottom: 20px; /* Space from bottom */
+          }
+          
+          /* 3. Panels take full height and manage their own scroll */
+          .col-panel {
+             height: 100%;
+             display: flex;
+             flex-direction: column;
+             overflow: hidden; /* Contain children */
+             background: white;
+             border: 1px solid var(--gray-200);
+             border-radius: 8px;
+          }
+          
+          /* Header inside panel (e.g. "Blocks (Sections)...") */
+          .col-panel > h4, 
+          .col-panel > div:first-child:not(.tree-item) {
+             flex-shrink: 0; /* Don't shrink header */
+          }
+          
+          /* 4. The list container inside (usually the last child or specific class) */
+          /* We target the div that contains the tree or list */
+          .col-panel-body, 
+          .col-panel > .tree-container,
+          .col-panel > div[style*="overflow-y"] {
+             flex: 1;
+             overflow-y: auto;
+             min-height: 0;
+          }
+          
+          /* Fallback: if we can't target specifically, assume the last div is the list */
+          .col-panel > div:last-child {
+             flex: 1;
+             overflow-y: auto;
+             padding-bottom: 10px;
+          }
+
+          /* --- FLEX Scroll Fix Styles (Final) --- */
+          
+          /* 1. Modal is flex column, so we just flex-grow the content */
+          .lot-tab-content {
+             flex: 1; /* Take all remaining height in modal */
+             min-height: 0; /* Allow shrinking if needed */
+             height: auto !important; /* Override any fixed height */
+             display: none;
+             flex-direction: column;
+             overflow: hidden; /* Contain scrolling children */
+             padding-bottom: 0 !important; /* Let margins handle spacing */
+          }
+          
+          .lot-tab-content.active {
+             display: flex !important;
+          }
+
+          /* 2. Grid fills the tab content exactly */
+          .lot-tab-content[data-content="works"] .modal-grid-3 {
+             flex: 1;
+             min-height: 0; 
+             overflow: hidden; 
+             margin-top: 12px;
+             margin-bottom: 12px;
+          }
+          
+          /* 3. Col Panels take 100% of grid cell */
+          .col-panel {
+             height: 100%;
+             max-height: 100%;
+             display: flex;
+             flex-direction: column;
+             overflow: hidden;
+             background: white;
+             border: 1px solid var(--gray-200);
+             border-radius: 8px;
+          }
+          
+          /* 4. Internal lists scroll properly */
+          .col-panel > div:last-child,
+          .col-panel .tree-container,
+          .col-panel .col-content {
+             flex: 1;
+             overflow-y: auto;
+             min-height: 0;
+          }
+          
+          /* Fix for Tab 1 scrolling if it gets too tall */
+          /* Tab 1 usually has a fixed layout, but let's make it scrollable if needed */
+          .lot-tab-content[data-content="main"] {
+            overflow-y: auto;
+          }
+</style>
 
         <div class="modal-content-wrapper" id="lot-creation-body">
             <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--gray-500);">Загрузка данных...</div>
@@ -6353,30 +6657,84 @@
           searchEl.dataset.bound = '1';
         }
 
-        // Custom Dropdown for Type
-        const typeSelect = document.getElementById('new-lot-type-select');
-        const typeTrigger = typeSelect?.querySelector('.trigger');
-        const typeOptions = typeSelect?.querySelector('.options');
-        const typeInput = document.getElementById('new-lot-type');
-        const typeText = document.getElementById('selected-type-text');
+        
+        // --- Dependency Chain Logic ---
+        const chain = [
+          { current: 'new-lot-type-select', next: 'new-lot-work-type-select' },
+          { current: 'new-lot-work-type-select', next: 'new-lot-industry-select' },
+          { current: 'new-lot-industry-select', next: 'new-lot-complexity-select' },
+          { current: 'new-lot-complexity-select', next: 'new-lot-funding-select' }
+        ];
 
-        if (typeSelect && !typeSelect.dataset.bound) {
-          typeTrigger.onclick = (e) => {
-            e.stopPropagation();
-            typeOptions.style.display = typeOptions.style.display === 'block' ? 'none' : 'block';
-          };
-          typeSelect.querySelectorAll('.opt').forEach(opt => {
-            opt.onclick = (e) => {
-              e.stopPropagation();
-              const val = opt.dataset.value;
-              typeInput.value = val;
-              typeText.innerText = val;
-              typeOptions.style.display = 'none';
-            };
-          });
-          window.addEventListener('click', () => { if (typeOptions) typeOptions.style.display = 'none'; });
-          typeSelect.dataset.bound = '1';
+        function enableNext(currentId) {
+          const step = chain.find(s => s.current === currentId);
+          if (step) {
+            const nextEl = document.getElementById(step.next);
+            if (nextEl) {
+               nextEl.classList.remove('disabled');
+               // Flash effect
+               const trigger = nextEl.querySelector('.trigger');
+               if(trigger) {
+                  trigger.style.transition = 'border-color 0.3s';
+                  trigger.style.borderColor = 'var(--primary)';
+                  setTimeout(() => trigger.style.borderColor = '', 800);
+               }
+            }
+          }
         }
+
+        function initDropdown(id, inputId, textId) {
+           const select = document.getElementById(id);
+           const trigger = select?.querySelector('.trigger');
+           const options = select?.querySelector('.options');
+           const input = document.getElementById(inputId);
+           const text = document.getElementById(textId);
+
+           if (select && !select.dataset.bound) {
+             trigger.onclick = (e) => {
+               e.stopPropagation();
+               if (select.classList.contains('disabled')) return; 
+               
+               // Close others
+               document.querySelectorAll('.options').forEach(el => {
+                  if (el !== options) el.style.display = 'none';
+               });
+               
+               if (options) options.style.display = options.style.display === 'block' ? 'none' : 'block';
+             };
+
+             if (select && options) {
+                 select.querySelectorAll('.opt').forEach(opt => {
+                   opt.onclick = (e) => {
+                     e.stopPropagation();
+                     if (select.classList.contains('disabled')) return;
+
+                     const val = opt.dataset.value;
+                     if (input) input.value = val;
+                     if (text) text.innerText = opt.innerText;
+                     
+                     options.style.display = 'none';
+                     
+                     enableNext(id);
+                   };
+                 });
+             }
+             
+             if (select) select.dataset.bound = '1';
+           }
+        }
+
+        // Initialize All Dropdowns
+        initDropdown('new-lot-type-select', 'new-lot-type', 'selected-type-text');
+        initDropdown('new-lot-work-type-select', 'new-lot-work-type', 'selected-work-type-text');
+        initDropdown('new-lot-industry-select', 'new-lot-industry', 'selected-industry-text');
+        initDropdown('new-lot-complexity-select', 'new-lot-complexity', 'selected-complexity-text');
+        initDropdown('new-lot-funding-select', 'new-lot-funding', 'selected-funding-text');
+
+        window.addEventListener('click', () => { 
+           document.querySelectorAll('.options').forEach(o => o.style.display = 'none'); 
+        });
+
 
         const toggleEl = toggleResourcesEl();
         if (toggleEl && !toggleEl.dataset.bound) {
@@ -6439,6 +6797,8 @@
           });
           btnProjAddr.dataset.bound = '1';
         }
+
+        
 
         // Yandex Maps for Lot
         let lotMap = null;
@@ -6950,6 +7310,102 @@
           stageCb.indeterminate = (checked.length > 0 && checked.length < all.length);
         });
       }
+      // Visibility Toggle Handler
+      const visibilityToggle = document.getElementById('lot-visibility-toggle');
+      const visibilityLabel = document.getElementById('visibility-label');
+      const visibilityDescription = document.getElementById('visibility-description');
+      const visibilityInput = document.getElementById('new-lot-visibility');
+
+      if (visibilityToggle) {
+        visibilityToggle.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            visibilityLabel.textContent = 'Открытый (публичный)';
+            visibilityInput.value = 'open';
+          } else {
+            visibilityLabel.textContent = 'Закрытый (по приглашению)';
+            visibilityInput.value = 'closed';
+          }
+        });
+      }
+
+
+
+      
+      // Initialize Inline Map Immediately
+      setTimeout(() => {
+        if (typeof ymaps !== 'undefined') {
+          ymaps.ready(() => {
+            const container = document.getElementById('lot-inline-map');
+            if (!container) return;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            const defaultCenter = [41.311081, 69.240562];
+            let lotPlacemark = null;
+            
+            const map = new ymaps.Map('lot-inline-map', {
+              center: defaultCenter,
+              zoom: 13,
+              controls: ['zoomControl', 'searchControl', 'fullscreenControl']
+            });
+            
+            // Click to select address
+            map.events.add('click', (e) => {
+              const coords = e.get('coords');
+              
+              if (lotPlacemark) {
+                lotPlacemark.geometry.setCoordinates(coords);
+              } else {
+                lotPlacemark = new ymaps.Placemark(coords, {
+                  iconCaption: 'Поиск...'
+                }, {
+                  preset: 'islands#greenDotIconWithCaption'
+                });
+                map.geoObjects.add(lotPlacemark);
+              }
+              
+              // Reverse geocoding
+              ymaps.geocode(coords).then((res) => {
+                const firstGeoObject = res.geoObjects.get(0);
+                const address = firstGeoObject.getAddressLine();
+                
+                lotPlacemark.properties.set({
+                  iconCaption: address,
+                  balloonContent: address
+                });
+                
+                // Update Address Field
+                const addrInput = document.getElementById('new-lot-address');
+                if (addrInput) addrInput.value = address;
+              });
+            });
+
+            // Expose map to window if needed
+            window.lotInlineMap = map;
+          });
+        } else {
+          console.error('Yandex Maps API not loaded');
+          const container = document.getElementById('lot-inline-map');
+          if (container) container.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Ошибка загрузки карты</div>';
+        }
+      }, 500); // Delay to ensure modal is rendered
+
+      // Tab Switching Logic
+      document.querySelectorAll('.lot-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+
+          // Update tab buttons
+          document.querySelectorAll('.lot-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          // Update tab content
+          document.querySelectorAll('.lot-tab-content').forEach(content => content.classList.remove('active'));
+          const targetContent = document.querySelector(`.lot-tab-content[data-content="${tabName}"]`);
+          if (targetContent) targetContent.classList.add('active');
+        });
+      });
 
       // Save Handler
       document.getElementById('btn-create-lot-save').addEventListener('click', async () => {
@@ -7001,6 +7457,7 @@
 
           const lotType = document.getElementById("new-lot-type").value;
           const lotAddress = document.getElementById("new-lot-address").value.trim();
+          const lotVisibility = document.getElementById("new-lot-visibility")?.value || 'closed';
 
           // Call API to create tender
           await apiCreateTender({
@@ -7012,6 +7469,7 @@
             sectionIds: [],
             type: lotType,
             address: lotAddress,
+            visibility: lotVisibility,
             items: itemsPayload // Send items to backend
           });
 
@@ -7251,6 +7709,145 @@
     // renderLots(); // Закомментируем, чтобы не было двойного рендера
     loadTenders(); // Загружаем данные с сервера
   </script>
+<script>
+    // Initialize Yandex Map for Lot Address
+    window.initLotMap = function() {
+      if (typeof ymaps === 'undefined') {
+        console.error('Yandex Maps API not loaded');
+        return;
+      }
+      
+      ymaps.ready(() => {
+        const container = document.getElementById('lot-map-container');
+        if (!container) return;
+        
+        // Remove existing map if any
+        container.innerHTML = '';
+        
+        // Default center (Tashkent)
+        const defaultCenter = [41.311081, 69.240562];
+        
+        lotMap = new ymaps.Map('lot-map-container', {
+          center: defaultCenter,
+          zoom: 13,
+          controls: ['zoomControl', 'searchControl']
+        });
+        
+        lotMap.events.add('click', (e) => {
+          const coords = e.get('coords');
+          
+          if (lotPlacemark) {
+            lotPlacemark.geometry.setCoordinates(coords);
+          } else {
+            lotPlacemark = new ymaps.Placemark(coords, {
+              iconCaption: 'Поиск адреса...'
+            }, {
+              preset: 'islands#greenDotIconWithCaption'
+            });
+            lotMap.geoObjects.add(lotPlacemark);
+          }
+          
+          // Reverse geocoding
+          ymaps.geocode(coords).then((res) => {
+            const firstGeoObject = res.geoObjects.get(0);
+            const address = firstGeoObject.getAddressLine();
+            
+            lotPlacemark.properties.set({
+              iconCaption: address,
+              balloonContent: address
+            });
+            
+            // Update UI
+            document.getElementById('lot-map-address-preview').innerText = address;
+            document.getElementById('btn-confirm-map-address').disabled = false;
+            
+            // Store address for confirmation
+            document.getElementById('btn-confirm-map-address').onclick = () => {
+              const addrInput = document.getElementById('new-lot-address');
+              if (addrInput) addrInput.value = address;
+              document.getElementById('lot-map-modal').style.display = 'none';
+            };
+          });
+        });
+      });
+    };
+</script>
+<style>
+/* --- CRITICAL LAYOUT FIX (Step 1512) --- */
+/* This ensures the modal content NEVER overflows the modal container */
+
+/* 1. Reset Modal flex behavior */
+.modal {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* 2. Fixed elements should not grow */
+.modal > .row,
+.modal > .lot-creation-tabs,
+.modal > .modal-actions {
+  flex: 0 0 auto !important;
+}
+
+/* 3. Content area MUST take remaining space and trap overflow */
+.lot-tab-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important; /* KEY FIX for overflow leak */
+  height: auto !important;
+  overflow: hidden !important;
+  display: none; /* Toggled by JS */
+  flex-direction: column !important;
+  padding-bottom: 0 !important;
+}
+
+.lot-tab-content.active {
+  display: flex !important;
+}
+
+/* 4. Tab 2 Specifics */
+.lot-tab-content[data-content="works"] .modal-grid-3 {
+  flex: 1 1 auto !important;
+  min-height: 0 !important; /* KEY FIX */
+  height: 100% !important; /* Force fit */
+  margin-bottom: 0 !important;
+  padding-bottom: 1px !important; /* Prevent bottom pixel cropping */
+  overflow: hidden !important;
+}
+
+/* 5. Panels */
+.col-panel {
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* 6. Scrollable Areas */
+/* Target specific scrollable headers and bodies */
+.col-panel-body,
+.col-panel .tree-container,
+.col-panel .col-content,
+.col-panel > div[style*="overflow-y"],
+/* Fallback */
+.col-panel > div:last-child {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+  height: 0 !important; /* Trick to force flex basis to work */
+}
+
+/* Ensure headers inside panels don't shrink */
+.col-panel > div:first-child:not(.col-content):not(.tree-container) {
+  flex: 0 0 auto !important;
+}
+
+/* Tab 1 Scrolling */
+.lot-tab-content[data-content="main"] {
+  overflow-y: auto !important;
+}
+</style>
 </body>
 
 </html>
